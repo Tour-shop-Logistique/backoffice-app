@@ -1,0 +1,13 @@
+.welcome-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #282c34;
+}
+
+.welcome-logo {
+  width: 80%;
+  max-width: 400px;
+  height: auto;
+}
