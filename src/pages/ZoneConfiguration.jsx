@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchZones, addZone, editZone, deleteZone, updateZoneStatus } from '../redux/slices/zoneSlice';
+import { Loader2 } from 'lucide-react';
 import Modal from '../components/common/Modal';
 import ZoneForm from '../components/common/ZoneForm';
 
@@ -10,9 +11,10 @@ const ZoneConfiguration = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);
+  const [updatingStatus, setUpdatingStatus] = useState({});
 
   useEffect(() => {
-    dispatch(fetchZones());
+   if(!zones.length) dispatch(fetchZones());
   }, [dispatch]);
 
   const handleAddZone = (zoneData) => {
@@ -45,8 +47,23 @@ const ZoneConfiguration = () => {
     }
   };
 
-  const handleStatusChange = (zoneId) => {
-    dispatch(updateZoneStatus(zoneId));
+  const handleStatusChange = async (zoneId, currentStatus) => {
+    try {
+      setUpdatingStatus(prev => ({ ...prev, [zoneId]: true }));
+      const newStatus = !currentStatus;
+      
+      await dispatch(updateZoneStatus({ 
+        zoneId, 
+        status: newStatus 
+      })).unwrap();
+      
+      // Si on arrive ici, la mise à jour a réussi
+    } catch (error) {
+      console.error('Erreur lors du changement de statut:', error);
+      // Vous pourriez vouloir afficher un message d'erreur à l'utilisateur ici
+    } finally {
+      setUpdatingStatus(prev => ({ ...prev, [zoneId]: false }));
+    }
   };
 
   return (
@@ -82,9 +99,24 @@ const ZoneConfiguration = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{zone.nom}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{zone.pays.join(', ')}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <button onClick={() => handleStatusChange(zone.id)} className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${zone.actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {zone.actif ? 'Actif' : 'Inactif'}
-                  </button>
+                  <div className="flex items-center">
+                    {updatingStatus[zone.id] ? (
+                      <Loader2 className="animate-spin h-5 w-5 text-gray-500" />
+                    ) : (
+                      <button
+                        onClick={() => handleStatusChange(zone.id, zone.actif)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${zone.actif ? 'bg-green-500' : 'bg-gray-300'} transition-colors`}
+                        disabled={updatingStatus[zone.id]}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${zone.actif ? 'translate-x-6' : 'translate-x-1'}`}
+                        />
+                      </button>
+                    )}
+                    <span className={`ml-2 text-sm font-medium ${zone.actif ? 'text-green-700' : 'text-red-700'}`}>
+                      {zone.actif ? 'Actif' : 'Inactif'}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button onClick={() => openEditModal(zone)} className="text-indigo-600 hover:text-indigo-900">Modifier</button>

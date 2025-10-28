@@ -7,9 +7,11 @@ const initialState = {
   error: null,
 };
 
-export const fetchTarifs = createAsyncThunk('tarification/fetchTarifs', async (_, { rejectWithValue }) => {
+
+export const fetchTarifs = createAsyncThunk('tarification/fetchTarifs', async (pays, { rejectWithValue }) => {
   try {
-    const tarifs = await tarificationService.getTarifs();
+    const tarifs = await tarificationService.getTarifs(pays);
+    console.log(tarifs);
     return tarifs;
   } catch (error) {
     return rejectWithValue(error.response.data);

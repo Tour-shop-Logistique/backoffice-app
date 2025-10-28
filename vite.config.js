@@ -9,7 +9,7 @@ export default defineConfig({
     host: true,
     open: true,
     allowedHosts: [
-      'agence.nport.link',
+      'backoffice.nport.link',
     ],
   },
   build: {

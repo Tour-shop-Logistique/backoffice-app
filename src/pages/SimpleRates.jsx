@@ -9,14 +9,19 @@ const SimpleRates = () => {
   const dispatch = useDispatch();
   const { tarifs, isLoading, error } = useSelector((state) => state.tarification);
   const { zones } = useSelector((state) => state.zones);
+const pays = useSelector((state) => state.backoffice.pays);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTarif, setSelectedTarif] = useState(null);
+  
 
   useEffect(() => {
-    dispatch(fetchTarifs());
+  if (pays) { 
+    console.log("Chargement des tarifs pour le pays:", pays);
+    dispatch(fetchTarifs(pays));
+  }
     dispatch(fetchZones());
-  }, [dispatch]);
+  }, [dispatch,pays]);
 
   const handleAddTarif = (tarifData) => {
     dispatch(addSimpleTarif(tarifData)).then((result) => {

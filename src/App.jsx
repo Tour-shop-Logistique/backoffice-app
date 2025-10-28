@@ -11,25 +11,28 @@ import SimpleRates from './pages/SimpleRates';
 import GroupedRates from './pages/GroupedRates';
 import ZoneConfiguration from './pages/ZoneConfiguration';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import WelcomePage from './pages/WelcomePage';
 
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<WelcomePage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} /> {/* Ajouter la route pour l'inscription */}
       <Route 
-        path="/*"
+        path="/app/*"
         element={
           <ProtectedRoute>
             <Layout>
               <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/parcels" element={<Parcels />} />
-                <Route path="/simple-rates" element={<SimpleRates />} />
-                <Route path="/grouped-rates" element={<GroupedRates />} />
-                <Route path="/zone-configuration" element={<ZoneConfiguration />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="parcels" element={<Parcels />} />
+                <Route path="simple-rates" element={<SimpleRates />} />
+                <Route path="grouped-rates" element={<GroupedRates />} />
+                <Route path="zone-configuration" element={<ZoneConfiguration />} />
+                {/* <Route path="settings" element={<Settings />} /> */}
                 <Route 
-                  path="/agents" 
+                  path="agents" 
                   element={
                     <ProtectedRoute adminOnly={true}>
                       <Agents />
@@ -37,7 +40,7 @@ function App() {
                   } 
                 />
                 {/* Redirige toute autre route vers le tableau de bord */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </Layout>
           </ProtectedRoute>

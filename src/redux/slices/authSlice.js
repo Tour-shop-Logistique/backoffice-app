@@ -54,7 +54,7 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isAuthenticated = true;
-        state.user = action.payload.user;
+        state.user = { ...action.payload.user, role: 'is_backoffice_admin' }; // Assign the correct admin role
         state.token = action.payload.token;
       })
       .addCase(login.rejected, (state, action) => {

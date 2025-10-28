@@ -20,8 +20,8 @@ const deleteZone = async (zoneId) => {
   return response.data;
 };
 
-const updateZoneStatus = async (zoneId) => {
-  const response = await api.put(`/zones/status/${zoneId}`);
+const updateZoneStatus = async (zoneId, status) => {
+  const response = await api.put(`/zones/status/${zoneId}`, { status });
   return response.data;
 };
 

@@ -10,7 +10,7 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (adminOnly && user?.role !== 'admin') {
+  if (adminOnly && user?.role !== 'is_backoffice_admin') {
     // Redirige vers la page d'accueil si l'utilisateur n'est pas admin
     // ou affiche une page "Non autorisé"
     return <Navigate to="/" replace />;

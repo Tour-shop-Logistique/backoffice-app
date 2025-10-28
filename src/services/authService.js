@@ -2,6 +2,7 @@ import api from './api';
 
 const login = async (credentials) => {
   const response = await api.post('/login', { ...credentials, type: 'backoffice' });
+  console.log(response);
   if (response.data.token) {
     localStorage.setItem('user', JSON.stringify(response.data.user));
     localStorage.setItem('token', response.data.token);
@@ -12,6 +13,7 @@ const login = async (credentials) => {
 const register = async (userData) => {
   console.log(userData);
   const response = await api.post('/register', { ...userData, type: 'backoffice' });
+  console.log(response);
   return response.data;
 };
 

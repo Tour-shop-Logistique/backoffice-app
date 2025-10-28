@@ -3,12 +3,13 @@ import { NavLink } from 'react-router-dom';
 import { HomeIcon, UsersIcon, ArchiveBoxIcon, CurrencyDollarIcon, DocumentDuplicateIcon, Cog6ToothIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 const navigation = [
-  { name: 'Tableau de bord', href: '/dashboard', icon: HomeIcon },
-  { name: 'Agents', href: '/dashboard/agents', icon: UsersIcon, adminOnly: true },
-  { name: 'Colis', href: '/dashboard/parcels', icon: ArchiveBoxIcon },
-  { name: 'Tarification simple', href: '/dashboard/simple-rates', icon: CurrencyDollarIcon },
-  { name: 'Tarification groupé', href: '/dashboard/grouped-rates', icon: DocumentDuplicateIcon },
-  { name: 'Configuration Zone', href: '/dashboard/zone-configuration', icon: Cog6ToothIcon },
+  { name: 'Tableau de bord', href: '/app/dashboard', icon: HomeIcon },
+  { name: 'Agents', href: '/app/agents', icon: UsersIcon, adminOnly: true },
+  { name: 'Colis', href: '/app/parcels', icon: ArchiveBoxIcon },
+  { name: 'Tarification simple', href: '/app/simple-rates', icon: CurrencyDollarIcon },
+  { name: 'Tarification groupé', href: '/app/grouped-rates', icon: DocumentDuplicateIcon },
+  { name: 'Configuration Zone', href: '/app/zone-configuration', icon: Cog6ToothIcon },
+  // { name: 'Paramètres', href: '/app/settings', icon: Cog6ToothIcon },
 ];
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {

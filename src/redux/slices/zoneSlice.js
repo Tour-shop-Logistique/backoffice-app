@@ -45,12 +45,12 @@ export const deleteZone = createAsyncThunk('zones/deleteZone', async (zoneId, { 
   }
 });
 
-export const updateZoneStatus = createAsyncThunk('zones/updateZoneStatus', async (zoneId, { rejectWithValue }) => {
+export const updateZoneStatus = createAsyncThunk('zones/updateZoneStatus', async ({ zoneId, status }, { rejectWithValue }) => {
   try {
-    const updatedZone = await zoneService.updateZoneStatus(zoneId);
-    return updatedZone;
+    const updatedZone = await zoneService.updateZoneStatus(zoneId, status);
+    return { zoneId, ...updatedZone };
   } catch (error) {
-    return rejectWithValue(error.response.data);
+    return rejectWithValue(error.response?.data || error.message);
   }
 });
 
@@ -123,8 +123,9 @@ const zoneSlice = createSlice({
       })
       .addCase(updateZoneStatus.fulfilled, (state, action) => {
         state.isLoading = false;
+        const { zoneId, ...updatedData } = action.payload;
         state.zones = state.zones.map((zone) =>
-          zone.id === action.payload.id ? action.payload : zone
+          zone.id === zoneId ? { ...zone, ...updatedData } : zone
         );
       })
       .addCase(updateZoneStatus.rejected, (state, action) => {

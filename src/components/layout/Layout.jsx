@@ -1,9 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchBackofficeConfig } from '../../redux/slices/backofficeSlice';
+import SettingsModal from './SettingsModal';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const dispatch = useDispatch();
+  const { isConfigured, loading } = useSelector((state) => state.backoffice);
+
+  useEffect(() => {
+    if (loading === 'idle') {
+      dispatch(fetchBackofficeConfig());
+    }
+  }, [dispatch, loading]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen);
@@ -18,6 +29,11 @@ const Layout = ({ children }) => {
           {children}
         </main>
       </div>
+      {!isConfigured && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+            <SettingsModal closeModal={() => { /* Ne rien faire pour forcer la config */ }} />
+        </div>
+      )}
     </div>
   );
 };
