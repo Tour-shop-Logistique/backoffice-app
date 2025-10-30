@@ -1,168 +1,246 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchTarifs, addSimpleTarif, editSimpleTarif, deleteTarif, updateTarifStatus } from '../redux/slices/tarificationSlice';
-import { fetchZones } from '../redux/slices/zoneSlice';
-import Modal from '../components/common/Modal';
-import SimpleTarifForm from '../components/common/SimpleTarifForm';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchTarifs,
+  addSimpleTarif,
+  editSimpleTarif,
+  deleteTarif,
+  updateTarifStatus,
+} from "../redux/slices/tarificationSlice";
+import { fetchZones } from "../redux/slices/zoneSlice";
+import Modal from "../components/common/Modal";
+import SimpleTarifForm from "../components/common/SimpleTarifForm";
+import { Loader2, PlusCircle, Edit3, Trash2, CheckCircle, XCircle } from "lucide-react";
 
 const SimpleRates = () => {
   const dispatch = useDispatch();
   const { tarifs, isLoading, error } = useSelector((state) => state.tarification);
   const { zones } = useSelector((state) => state.zones);
-const pays = useSelector((state) => state.backoffice.pays);
+  const pays = useSelector((state) => state.backoffice.pays);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTarif, setSelectedTarif] = useState(null);
-  
 
+  // Charger les tarifs et zones
   useEffect(() => {
-  if (pays) { 
-    console.log("Chargement des tarifs pour le pays:", pays);
-    dispatch(fetchTarifs(pays));
-  }
+    if (pays) dispatch(fetchTarifs(pays));
     dispatch(fetchZones());
-  }, [dispatch,pays]);
+    
+  }, [dispatch, pays]);
 
-  const handleAddTarif = (tarifData) => {
-    dispatch(addSimpleTarif(tarifData)).then((result) => {
-      if (addSimpleTarif.fulfilled.match(result)) {
-        setIsModalOpen(false);
-        dispatch(fetchTarifs());
-      }
-    });
-  };
-
-  const handleEditTarif = (tarifData) => {
-    dispatch(editSimpleTarif({ tarifId: selectedTarif.id, tarifData })).then((result) => {
-      if (editSimpleTarif.fulfilled.match(result)) {
-        setIsEditModalOpen(false);
-        setSelectedTarif(null);
-        dispatch(fetchTarifs());
-      }
-    });
-  };
-
-  const openEditModal = () => {
-    setIsEditModalOpen(true);
-  };
-
-  const handleDeleteTarif = () => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce tarif ?')) {
-      dispatch(deleteTarif(selectedTarif.id)).then(() => {
-        setSelectedTarif(null);
-      });
+  // Ajout d’un tarif
+  const handleAddTarif = async (tarifData) => {
+    const result = await dispatch(addSimpleTarif(tarifData));
+    if (addSimpleTarif.fulfilled.match(result)) {
+      setIsModalOpen(false);
+      dispatch(fetchTarifs(pays));
     }
   };
 
-  const handleStatusChange = (tarifId) => {
-    dispatch(updateTarifStatus(tarifId)).then((result) => {
-      if (updateTarifStatus.fulfilled.match(result) && selectedTarif && selectedTarif.id === tarifId) {
-        setSelectedTarif(result.payload);
-      }
-    });
+  // Modification d’un tarif
+  const handleEditTarif = async (tarifData) => {
+    if (!selectedTarif) return;
+    const result = await dispatch(editSimpleTarif({ tarifId: selectedTarif.id, tarifData }));
+    if (editSimpleTarif.fulfilled.match(result)) {
+      setSelectedTarif(null);
+      dispatch(fetchTarifs(pays));
+    }
   };
 
+  // Suppression d’un tarif
+  const handleDeleteTarif = async (tarifId) => {
+    if (window.confirm("Voulez-vous vraiment supprimer ce tarif ?")) {
+      await dispatch(deleteTarif(tarifId));
+      if (selectedTarif?.id === tarifId) setSelectedTarif(null);
+      dispatch(fetchTarifs(pays));
+    }
+  };
+
+  // Changement de statut
+  const handleStatusChange = (tarifId) => {
+    dispatch(updateTarifStatus(tarifId)).then(() => dispatch(fetchTarifs(pays)));
+  };
+
+  // Liste filtrée
+  const simpleTarifs = tarifs.filter((t) => t.mode_expedition === "simple");
+
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Tarifs Simples</h1>
-        <button 
+    <div className="p-4 sm:p-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Tarifs Simples</h1>
+        <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md transition"
         >
-          Ajouter un Tarif Simple
+          <PlusCircle size={18} />
+          Nouveau Tarif
         </button>
       </div>
 
-      {isLoading && <p>Chargement des tarifs...</p>}
-      {error && <p className="text-red-500">Erreur: {error.message || 'Impossible de charger les tarifs'}</p>}
-      
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Indice</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix par Zone</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {tarifs.filter(t => t.mode_expedition === 'simple').map((tarif) => (
-              <tr 
-                key={tarif.id} 
-                onClick={() => setSelectedTarif(tarif)}
-                className={`cursor-pointer ${selectedTarif && selectedTarif.id === tarif.id ? 'bg-indigo-100' : 'hover:bg-gray-50'}`}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tarif.indice}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {tarif.prix_zones.length} zone(s)
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <button onClick={() => handleStatusChange(tarif.id)} className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${tarif.actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {tarif.actif ? 'Actif' : 'Inactif'}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* États de chargement ou d’erreur */}
+      {isLoading && (
+        <div className="flex justify-center items-center h-40">
+          <Loader2 className="animate-spin text-indigo-600" size={40} />
+        </div>
+      )}
+      {error && <p className="text-red-600 text-center bg-red-100 p-3 rounded-md">{error}</p>}
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Ajouter un nouveau tarif simple" size="4xl">
-        <SimpleTarifForm 
-          onSubmit={handleAddTarif} 
-          onCancel={() => setIsModalOpen(false)} 
+      {/* Tableau des tarifs */}
+      {!isLoading && !error && (
+        <>
+          {simpleTarifs.length === 0 ? (
+            <div className="text-center py-16 text-gray-500">
+              Aucun tarif simple disponible.
+              <br />
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+              >
+                Ajouter un tarif
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+              <table className="min-w-full text-sm text-gray-700">
+                <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
+                  <tr>
+                    <th className="px-6 py-3 text-left">Indice</th>
+                    <th className="px-6 py-3 text-left">Zones</th>
+                    <th className="px-6 py-3 text-left">Statut</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {simpleTarifs.map((tarif) => (
+                    <tr
+                      key={tarif.id}
+                      className={`border-b hover:bg-gray-50 transition cursor-pointer ${
+                        selectedTarif?.id === tarif.id ? "bg-indigo-50" : ""
+                      }`}
+                      onClick={() => setSelectedTarif(tarif)}
+                    >
+                      <td className="px-6 py-4 font-medium">{tarif.indice}</td>
+                      <td className="px-6 py-4">{tarif.prix_zones.length} zone(s)</td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStatusChange(tarif.id);
+                          }}
+                          className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
+                            tarif.actif ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {tarif.actif ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                          {tarif.actif ? "Actif" : "Inactif"}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-3">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setSelectedTarif(tarif); }}
+                          className="text-indigo-600 hover:text-indigo-800"
+                          title="Voir ou modifier"
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteTarif(tarif.id); }}
+                          className="text-red-600 hover:text-red-800"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Détails du tarif sélectionné */}
+      {selectedTarif && (
+        <div className="mt-6 bg-white shadow-md rounded-lg p-4 overflow-x-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Détails du Tarif - Indice {selectedTarif.indice}
+            </h2>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelectedTarif(selectedTarif)}
+                className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm flex items-center gap-1"
+              >
+                <Edit3 size={14} /> Modifier
+              </button>
+              <button
+                onClick={() => handleDeleteTarif(selectedTarif.id)}
+                className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm flex items-center gap-1"
+              >
+                <Trash2 size={14} /> Supprimer
+              </button>
+            </div>
+          </div>
+
+          <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
+              <tr>
+                <th className="px-4 py-2 text-left">Zone Destination</th>
+                <th className="px-4 py-2 text-left">Montant Base</th>
+                <th className="px-4 py-2 text-left">% Prestation</th>
+                <th className="px-4 py-2 text-left">Montant Prestation</th>
+                <th className="px-4 py-2 text-left">Montant Expédition</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {selectedTarif.prix_zones.map((pz, index) => {
+                const zone = zones.find((z) => z.id === pz.zone_destination_id);
+                return (
+                  <tr key={index}>
+                    <td className="px-4 py-2">{zone ? zone.nom : pz.zone_destination_id}</td>
+                    <td className="px-4 py-2">{pz.montant_base}</td>
+                    <td className="px-4 py-2">{pz.pourcentage_prestation}%</td>
+                    <td className="px-4 py-2">{pz.montant_prestation}</td>
+                    <td className="px-4 py-2">{pz.montant_expedition}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Modal d’ajout */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Ajouter un nouveau tarif simple"
+        size="4xl"
+      >
+        <SimpleTarifForm
+          onSubmit={handleAddTarif}
+          onCancel={() => setIsModalOpen(false)}
           isLoading={isLoading}
         />
       </Modal>
 
+      {/* Modal de modification */}
       {selectedTarif && (
-        <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Modifier le tarif simple" size="4xl">
-          <SimpleTarifForm 
-            onSubmit={handleEditTarif} 
-            onCancel={() => setIsEditModalOpen(false)} 
+        <Modal
+          isOpen={!!selectedTarif}
+          onClose={() => setSelectedTarif(null)}
+          title={`Modifier le tarif (Indice ${selectedTarif.indice})`}
+          size="4xl"
+        >
+          <SimpleTarifForm
+            onSubmit={handleEditTarif}
+            onCancel={() => setSelectedTarif(null)}
             isLoading={isLoading}
             initialData={selectedTarif}
           />
         </Modal>
-      )}
-
-      {selectedTarif && (
-        <div className="mt-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">Détails du Tarif (Indice: {selectedTarif.indice})</h2>
-            <div>
-              <button onClick={openEditModal} className="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Modifier</button>
-              <button onClick={handleDeleteTarif} className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 ml-4">Supprimer</button>
-            </div>
-          </div>
-          <div className="mt-4 bg-white shadow-md rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zone Destination</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant de Base</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Prestation</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant Prestation</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant Expédition</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {selectedTarif.prix_zones.map((pz) => {
-                  const zone = zones.find(z => z.id === pz.zone_destination_id);
-                  return (
-                    <tr key={pz.zone_destination_id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{zone ? zone.nom : pz.zone_destination_id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{pz.montant_base}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{pz.pourcentage_prestation}%</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{pz.montant_prestation}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{pz.montant_expedition}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
       )}
     </div>
   );
