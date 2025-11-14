@@ -3,6 +3,35 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setConfigured } from '../../redux/slices/backofficeSlice';
 import api from '../../services/api';
 
+const countryList = [
+  "Côte d'Ivoire",
+  "Guinée",
+  "Guinée Bissau",
+  "France",
+  "Belgique",
+  "Suisse",
+  "Sénégal",
+  "Mali",
+  "Burkina Faso",
+  "Nigeria",
+  "Ghana",
+  "Togo",
+  "Bénin",
+  "Guinée Équatoriale",
+  "Cameroun",
+  "Gabon",
+  "Congo",
+  "Zambie",
+  "Zaire",
+  "Zimbabwe",
+  "Maroc",
+  "Tunisie",
+  "Algérie",
+  "Canada",
+  "États-Unis",
+];
+
+
 const SettingsModal = ({ closeModal }) => {
   const dispatch = useDispatch();
   const { config } = useSelector((state) => state.backoffice);
@@ -93,7 +122,20 @@ const SettingsModal = ({ closeModal }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <input type="text" name="ville" value={formData.ville} onChange={handleChange} placeholder="Ville" className="p-2 border rounded" />
             <input type="text" name="commune" value={formData.commune} onChange={handleChange} placeholder="Commune" className="p-2 border rounded" />
-            <input type="text" name="pays" value={formData.pays} onChange={handleChange} placeholder="Pays" className="p-2 border rounded" />
+            
+            <select
+                name="pays"
+                value={formData.pays}
+                onChange={handleChange}
+                className="p-2 border rounded"
+            >
+                <option value="">Sélectionner un pays</option>
+                {countryList.map((country) => (
+                    <option key={country} value={country}>
+                        {country}
+                    </option>
+                ))}
+            </select>
         </div>
         <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email de contact" className="p-2 border rounded w-full" />
         
