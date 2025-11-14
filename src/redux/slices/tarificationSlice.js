@@ -8,9 +8,9 @@ const initialState = {
 };
 
 
-export const fetchTarifs = createAsyncThunk('tarification/fetchTarifs', async (pays, { rejectWithValue }) => {
+export const fetchTarifs = createAsyncThunk('tarification/fetchTarifs', async ({ rejectWithValue }) => {
   try {
-    const tarifs = await tarificationService.getTarifs(pays);
+    const tarifs = await tarificationService.getTarifs();
     console.log(tarifs);
     return tarifs;
   } catch (error) {

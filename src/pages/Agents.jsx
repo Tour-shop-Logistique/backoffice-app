@@ -67,7 +67,7 @@ const Agents = () => {
 
   // Chargement initial des agents
   useEffect(() => {
-    fetchAgents();
+  if(!agents )  fetchAgents();
   }, []);
 
   const handleInputChange = (e) => {

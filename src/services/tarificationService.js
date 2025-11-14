@@ -2,9 +2,8 @@ import api from './api';
 import { useSelector } from 'react-redux';
 
  
-const getTarifs = async (pays) => {
-  console.log(pays);
-  const response = await api.get(`/tarification/list?pays=${pays}`);
+const getTarifs = async () => {
+  const response = await api.get(`/tarification/list`);
 
   return response.data.tarifs;
 };

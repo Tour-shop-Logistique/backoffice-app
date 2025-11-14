@@ -20,8 +20,8 @@ const register = async (userData) => {
 const logout = () => {
   localStorage.removeItem('user');
   localStorage.removeItem('token');
-  // Idéalement, appeler une API de déconnexion ici si elle existe
-  // await api.post('/logout');
+  const response = api.post('/logout');
+  console.log(response);
 };
 
 const authService = {

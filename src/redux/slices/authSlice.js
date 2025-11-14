@@ -23,6 +23,7 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
   }
 });
 
+
 // Thunk pour l'inscription
 export const register = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
   try {

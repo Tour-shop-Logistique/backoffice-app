@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 
 import Layout from './components/layout/Layout';
 import Login from './pages/Login';
-import Register from './pages/Register'; // Importer la page d'inscription
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Agents from './pages/Agents';
 import Parcels from './pages/Parcels';
@@ -12,6 +12,7 @@ import GroupedRates from './pages/GroupedRates';
 import ZoneConfiguration from './pages/ZoneConfiguration';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import WelcomePage from './pages/WelcomePage';
+import AgencePartenaire from './pages/AgencePartenaire';
 
 function App() {
   return (
@@ -26,11 +27,12 @@ function App() {
             <Layout>
               <Routes>
                 <Route path="dashboard" element={<Dashboard />} />
+                <Route path="agents" element={<Agents />} />
                 <Route path="parcels" element={<Parcels />} />
                 <Route path="simple-rates" element={<SimpleRates />} />
                 <Route path="grouped-rates" element={<GroupedRates />} />
                 <Route path="zone-configuration" element={<ZoneConfiguration />} />
-                {/* <Route path="settings" element={<Settings />} /> */}
+                <Route path="agence-partenaire" element={<AgencePartenaire />} />
                 <Route 
                   path="agents" 
                   element={
