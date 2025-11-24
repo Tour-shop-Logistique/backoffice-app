@@ -5,9 +5,11 @@ import {
   Users,
   Archive,
   DollarSign,
-  FileText,
   Settings,
   X,
+  Box,
+  Blocks,
+  BadgeEuro
 } from "lucide-react"; // Lucide React
 
 const navigation = [
@@ -15,9 +17,10 @@ const navigation = [
   { name: "Agents", href: "/app/agents", icon: Users, adminOnly: true },
   { name: "Colis", href: "/app/parcels", icon: Archive },
   { name: "Tarification simple", href: "/app/simple-rates", icon: DollarSign },
-  { name: "Tarification groupé", href: "/app/grouped-rates", icon: FileText },
+  { name: "Tarification groupé", href: "/app/grouped-rates", icon: BadgeEuro },
   { name: "Configuration Zone", href: "/app/zone-configuration", icon: Settings },
-  { name: 'Agences', href: '/app/agence-partenaire', icon: Settings },
+  { name: 'Agences', href: '/app/agence-partenaire', icon: Blocks },
+  { name: 'Produits', href: '/app/produits', icon: Box },
 ];
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {

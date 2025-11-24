@@ -28,12 +28,42 @@ const updateTarifStatus = async (tarifId) => {
   return response.data;
 };
 
+const getGroupedTarifs = async () => {
+  const response = await api.get('/tarification/list-groupage');
+  return response.data.tarifs;
+};
+
+const addGroupedTarif = async (tarifData) => {
+  const response = await api.post('/tarification/add-groupage', tarifData);
+  return response.data;
+};
+
+const editGroupedTarif = async (tarifId, tarifData) => {
+  const response = await api.put(`/tarification/edit-groupage/${tarifId}`, tarifData);
+  return response.data;
+};
+
+const deleteGroupedTarif = async (tarifId) => {
+  const response = await api.delete(`/tarification/delete-groupage/${tarifId}`);
+  return response.data;
+};
+
+const updateGroupedTarifStatus = async (tarifId) => {
+  const response = await api.put(`/tarification/status-groupage/${tarifId}`);
+  return response.data;
+};
+
 const tarificationService = {
   getTarifs,
+  getGroupedTarifs,
   addSimpleTarif,
   editSimpleTarif,
   deleteTarif,
   updateTarifStatus,
+  addGroupedTarif,
+  editGroupedTarif,
+  deleteGroupedTarif,
+  updateGroupedTarifStatus,
 };
 
 export default tarificationService;

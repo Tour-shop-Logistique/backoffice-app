@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://tourshop.nport.link/api',
+  baseURL: 'https://tourshop.loophole.site/api' ? "https://tourshop.nport.link/api" : "https://tourshop.loophole.site/api",
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

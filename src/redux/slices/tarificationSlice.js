@@ -54,6 +54,43 @@ export const updateTarifStatus = createAsyncThunk('tarification/updateTarifStatu
   }
 });
 
+
+export const addGroupedTarif = createAsyncThunk('tarification/addGroupedTarif', async (tarifData, { rejectWithValue }) => {
+  try {
+    const newTarif = await tarificationService.addGroupedTarif(tarifData);
+    return newTarif;
+  } catch (error) {
+    return rejectWithValue(error.response.data);
+  }
+});
+
+export const editGroupedTarif = createAsyncThunk('tarification/editGroupedTarif', async ({ tarifId, tarifData }, { rejectWithValue }) => {
+  try {
+    const updatedTarif = await tarificationService.editGroupedTarif(tarifId, tarifData);
+    return updatedTarif;
+  } catch (error) {
+    return rejectWithValue(error.response.data);
+  }
+});
+
+export const deleteGroupedTarif = createAsyncThunk('tarification/deleteGroupedTarif', async (tarifId, { rejectWithValue }) => {
+  try {
+    await tarificationService.deleteGroupedTarif(tarifId);
+    return tarifId;
+  } catch (error) {
+    return rejectWithValue(error.response.data);
+  }
+});
+
+export const updateGroupedTarifStatus = createAsyncThunk('tarification/updateGroupedTarifStatus', async (tarifId, { rejectWithValue }) => {
+  try {
+    const updatedTarif = await tarificationService.updateGroupedTarifStatus(tarifId);
+    return updatedTarif;
+  } catch (error) {
+    return rejectWithValue(error.response.data);
+  }
+});
+
 const tarificationSlice = createSlice({
   name: 'tarification',
   initialState,
@@ -124,6 +161,62 @@ const tarificationSlice = createSlice({
         );
       })
       .addCase(updateTarifStatus.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      // Add grouped tarif
+      .addCase(addGroupedTarif.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(addGroupedTarif.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.tarifs.push(action.payload);
+      })
+      .addCase(addGroupedTarif.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      // Edit grouped tarif
+      .addCase(editGroupedTarif.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(editGroupedTarif.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.tarifs = state.tarifs.map((tarif) =>
+          tarif.id === action.payload.id ? action.payload : tarif
+        );
+      })
+      .addCase(editGroupedTarif.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      // Delete grouped tarif
+      .addCase(deleteGroupedTarif.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteGroupedTarif.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.tarifs = state.tarifs.filter((tarif) => tarif.id !== action.payload);
+      })
+      .addCase(deleteGroupedTarif.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      // Update grouped tarif status
+      .addCase(updateGroupedTarifStatus.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateGroupedTarifStatus.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.tarifs = state.tarifs.map((tarif) =>
+          tarif.id === action.payload.id ? action.payload : tarif
+        );
+      })
+      .addCase(updateGroupedTarifStatus.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       });

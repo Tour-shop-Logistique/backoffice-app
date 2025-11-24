@@ -3,6 +3,7 @@ import authReducer from './slices/authSlice';
 import zoneReducer from './slices/zoneSlice';
 import tarificationReducer from './slices/tarificationSlice';
 import backofficeReducer from './slices/backofficeSlice';
+import produitReducer from './slices/produitSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     zones: zoneReducer,
     tarification: tarificationReducer,
     backoffice: backofficeReducer,
+    produits: produitReducer,
     // Ajoutez d'autres reducers ici pour les agents, colis, etc.
   },
 });

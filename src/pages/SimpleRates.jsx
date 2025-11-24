@@ -22,7 +22,7 @@ const SimpleRates = () => {
 
   // Charger les tarifs et zones
   useEffect(() => {
-    if (!tarifs) dispatch(fetchTarifs());
+    dispatch(fetchTarifs());
     dispatch(fetchZones());
     
   }, [dispatch, ]);
@@ -32,7 +32,7 @@ const SimpleRates = () => {
     const result = await dispatch(addSimpleTarif(tarifData));
     if (addSimpleTarif.fulfilled.match(result)) {
       setIsModalOpen(false);
-      dispatch(fetchTarifs(pays));
+      dispatch(fetchTarifs());
     }
   };
 
@@ -42,7 +42,7 @@ const SimpleRates = () => {
     const result = await dispatch(editSimpleTarif({ tarifId: selectedTarif.id, tarifData }));
     if (editSimpleTarif.fulfilled.match(result)) {
       setSelectedTarif(null);
-      dispatch(fetchTarifs(pays));
+      dispatch(fetchTarifs());
     }
   };
 
@@ -51,13 +51,13 @@ const SimpleRates = () => {
     if (window.confirm("Voulez-vous vraiment supprimer ce tarif ?")) {
       await dispatch(deleteTarif(tarifId));
       if (selectedTarif?.id === tarifId) setSelectedTarif(null);
-      dispatch(fetchTarifs(pays));
+      dispatch(fetchTarifs());
     }
   };
 
   // Changement de statut
   const handleStatusChange = (tarifId) => {
-    dispatch(updateTarifStatus(tarifId)).then(() => dispatch(fetchTarifs(pays)));
+    dispatch(updateTarifStatus(tarifId)).then(() => dispatch(fetchTarifs()));
   };
 
   // Liste filtrée

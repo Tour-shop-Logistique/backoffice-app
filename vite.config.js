@@ -10,6 +10,7 @@ export default defineConfig({
     open: true,
     allowedHosts: [
       'backoffice.nport.link',
+      'backoffice.loophole.site',
     ],
   },
   build: {

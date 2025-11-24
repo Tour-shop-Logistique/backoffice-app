@@ -3,7 +3,7 @@ import zoneService from '../../services/zoneService';
 
 const initialState = {
   zones: [],
-  isLoading: false,
+  isLoading: false,   
   error: null,
 };
 

@@ -13,6 +13,7 @@ import ZoneConfiguration from './pages/ZoneConfiguration';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import WelcomePage from './pages/WelcomePage';
 import AgencePartenaire from './pages/AgencePartenaire';
+import Produits from './pages/produits';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
                 <Route path="grouped-rates" element={<GroupedRates />} />
                 <Route path="zone-configuration" element={<ZoneConfiguration />} />
                 <Route path="agence-partenaire" element={<AgencePartenaire />} />
+                <Route path="produits" element={<Produits />} />
                 <Route 
                   path="agents" 
                   element={
