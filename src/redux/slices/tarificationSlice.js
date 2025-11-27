@@ -85,6 +85,7 @@ export const deleteGroupedTarif = createAsyncThunk('tarification/deleteGroupedTa
 export const updateGroupedTarifStatus = createAsyncThunk('tarification/updateGroupedTarifStatus', async (tarifId, { rejectWithValue }) => {
   try {
     const updatedTarif = await tarificationService.updateGroupedTarifStatus(tarifId);
+    console.log(updatedTarif);
     return updatedTarif;
   } catch (error) {
     return rejectWithValue(error.response.data);

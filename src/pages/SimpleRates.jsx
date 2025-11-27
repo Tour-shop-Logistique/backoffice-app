@@ -64,7 +64,13 @@ const SimpleRates = () => {
   const simpleTarifs = tarifs.filter((t) => t.mode_expedition === "simple");
 
   return (
+
+    
     <div className="p-4 sm:p-6">
+
+
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6"></div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Tarifs Simples</h1>

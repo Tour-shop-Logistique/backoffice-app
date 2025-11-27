@@ -30,6 +30,7 @@ const updateTarifStatus = async (tarifId) => {
 
 const getGroupedTarifs = async () => {
   const response = await api.get('/tarification/list-groupage');
+  console.log(response.data.tarifs);
   return response.data.tarifs;
 };
 
