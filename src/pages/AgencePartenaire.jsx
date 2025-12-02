@@ -22,24 +22,36 @@ const AgencePartenaire = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  useEffect(() => {
-    const fetchAgences = async () => {
-      try {
-        const response = await api.get("/agence/list");
-        if (response.data?.success) {
-          setAgences(response.data.agences);
-          setFilteredAgences(response.data.agences);
-        } else {
-          throw new Error("Impossible de charger les agences");
-        }
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setIsLoading(false);
+useEffect(() => {
+  const saved = sessionStorage.getItem("agences");
+
+  if (saved) {
+    setAgences(JSON.parse(saved));
+    setFilteredAgences(JSON.parse(saved));
+    setIsLoading(false);
+    return; // ⛔ pas de fetch
+  }
+
+  const fetchAgences = async () => {
+    try {
+      const response = await api.get("/agence/list");
+      if (response.data?.success) {
+        setAgences(response.data.agences);
+        setFilteredAgences(response.data.agences);
+        sessionStorage.setItem("agences", JSON.stringify(response.data.agences)); // ✅ sauvegarde
+      } else {
+        throw new Error("Impossible de charger les agences");
       }
-    };
-    fetchAgences();
-  }, []);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchAgences();
+}, []);
+
 
   useEffect(() => {
     let result = agences;

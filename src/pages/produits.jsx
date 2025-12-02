@@ -45,10 +45,10 @@ console.log(listProduits , "listProduits");
   const notificationTimeoutRef = useRef(null);
 
   useEffect(() => {
-    if(listProduits.length != 0){
+    if(listProduits.length === 0){
       dispatch(fetchProduits());
     }
-   if(categories.length != 0){
+   if(categories.length === 0){
     dispatch(fetchCategories());
    }
   }, [dispatch]);

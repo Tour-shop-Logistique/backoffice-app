@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 
  
 const getTarifs = async () => {
-  const response = await api.get(`/tarification/list`);
+  const response = await api.get(`/tarification/list-simple`);
 
   return response.data.tarifs;
 };
