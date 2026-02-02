@@ -140,7 +140,7 @@ const tarificationSlice = createSlice({
       })
       .addCase(fetchTarifs.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.tarifs = action.payload;
+        state.tarifs = action.payload || [];
       })
       .addCase(fetchTarifs.rejected, (state, action) => {
         state.isLoading = false;
@@ -148,13 +148,17 @@ const tarificationSlice = createSlice({
       })
 
       .addCase(addSimpleTarif.fulfilled, (state, action) => {
-        state.tarifs.push(action.payload);
+        if (action.payload) {
+          state.tarifs.push(action.payload);
+        }
       })
 
       .addCase(editSimpleTarif.fulfilled, (state, action) => {
-        state.tarifs = state.tarifs.map((t) =>
-          t.id === action.payload.id ? action.payload : t
-        );
+        if (action.payload) {
+          state.tarifs = state.tarifs.map((t) =>
+            t.id === action.payload.id ? action.payload : t
+          );
+        }
       })
 
       .addCase(deleteTarif.fulfilled, (state, action) => {
@@ -162,9 +166,11 @@ const tarificationSlice = createSlice({
       })
 
       .addCase(updateTarifStatus.fulfilled, (state, action) => {
-        state.tarifs = state.tarifs.map((t) =>
-          t.id === action.payload.id ? action.payload : t
-        );
+        if (action.payload) {
+          state.tarifs = state.tarifs.map((t) =>
+            t.id === action.payload.id ? action.payload : t
+          );
+        }
       });
 
     /*---------------- GROUPED ----------------*/
@@ -175,7 +181,7 @@ const tarificationSlice = createSlice({
       })
       .addCase(fetchGroupedTarifs.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.groupedTarifs = action.payload;
+        state.groupedTarifs = action.payload || [];
       })
       .addCase(fetchGroupedTarifs.rejected, (state, action) => {
         state.isLoading = false;

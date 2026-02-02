@@ -3,11 +3,11 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import tarificationService from '../services/tarificationService';
-import { Pencil, Trash, ToggleLeft, ToggleRight, Plus, X } from "lucide-react";
+import { Pencil, Trash, ToggleLeft, ToggleRight, Plus, X, Search, Filter, Globe, Plane, Ship, Package, MoreVertical, LayoutGrid, List } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "../redux/slices/produitSlice";
-import { fetchGroupedTarifs } from "../redux/slices/tarificationSlice";
-import toast from 'react-hot-toast'; 
+import { fetchGroupedTarifs, addGroupedTarif, editGroupedTarif } from "../redux/slices/tarificationSlice";
+import toast from 'react-hot-toast';
 import Addtarifgroupe from '../components/widget/Addtarifgroupe';
 
 // Schéma de validation avec Yup
@@ -26,52 +26,44 @@ const validationSchema = yup.object().shape({
 });
 
 const GroupedRates = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [tarifToEdit, setTarifToEdit] = useState(null); // Pour stocker le tarif à éditer
+  const [tarifToEdit, setTarifToEdit] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeType, setActiveType] = useState("all");
+  const [viewMode, setViewMode] = useState("table"); // 'table' or 'grid'
 
   const dispatch = useDispatch();
   const { groupedTarifs, isLoading, error } = useSelector(
-  (state) => state.tarification
-);
+    (state) => state.tarification
+  );
   const { categories } = useSelector(state => state.produits);
 
+  const filteredTarifs = (groupedTarifs || []).filter(tarif => {
+    const matchesSearch =
+      (tarif.category?.nom || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (tarif.pays || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-  // Valeurs par défaut du formulaire
-  const defaultFormValues = {
-    id: '',
-    category_id: '',
-    tarif_minimum: 0,
-    prix_modes: [
-      { mode: 'avion', montant_base: 0, montant_expedition: 0, pourcentage_prestation: 0 },
-      { mode: 'bateau', montant_base: 0, montant_expedition: 0, pourcentage_prestation: 0 },
-      { mode: 'colis accompagné', montant_base: 0, montant_expedition: 0, pourcentage_prestation: 0 }
-    ]
-  };
+    const matchesType = activeType === "all" || tarif.type_expedition?.toUpperCase() === activeType.toUpperCase();
 
-
-
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
-    resolver: yupResolver(validationSchema),
-    defaultValues: defaultFormValues
+    return matchesSearch && matchesType;
   });
 
-  const groupedByType = groupedTarifs.reduce((acc, tarif) => {
+  const groupedByType = filteredTarifs.reduce((acc, tarif) => {
     const type = tarif.type_expedition || "non_defini";
     if (!acc[type]) acc[type] = [];
     acc[type].push(tarif);
     return acc;
-}, {});
+  }, {});
 
   // Chargement des catégories et des tarifs au montage
   useEffect(() => {
-    if(categories.length === 0){
+    if (!categories || categories.length === 0) {
       dispatch(fetchCategories());
     }
-   if(groupedTarifs.length === 0){
-    dispatch(fetchGroupedTarifs());
-   }
+    if (!groupedTarifs || groupedTarifs.length === 0) {
+      dispatch(fetchGroupedTarifs());
+    }
   }, []);
 
   // --- LOGIQUE DE CHARGEMENT ---
@@ -89,100 +81,58 @@ const GroupedRates = () => {
   //   }
   // };
 
-  // --- LOGIQUE DE CALCUL AUTOMATIQUE ---
-  useEffect(() => {
-    const subscription = watch((values) => {
-      const updatedModes = values.prix_modes.map((mode) => {
-        // S'assurer que les valeurs sont des nombres valides
-        const base = parseFloat(mode.montant_base) || 0;
-        const pourcentage = parseFloat(mode.pourcentage_prestation) || 0;
-
-        // Calcul: Montant Base + (Montant Base * Pourcentage Prestation)
-        const montantExpedition = base + (base * pourcentage / 100);
-
-        return {
-          ...mode,
-          montant_expedition: montantExpedition.toFixed(0), // Arrondi à l'entier
-        };
-      });
-
-      // Mettre à jour les champs "montant_expedition" dans le formulaire
-      updatedModes.forEach((m, index) => {
-        // Empêcher la boucle infinie en vérifiant si la valeur a changé
-        if (watch(`prix_modes.${index}.montant_expedition`) !== m.montant_expedition) {
-            setValue(`prix_modes.${index}.montant_expedition`, m.montant_expedition, { shouldValidate: true });
-        }
-      });
-    });
-
-    return () => subscription.unsubscribe();
-  }, [watch, setValue]);
-
-  // --- GESTION DU MODAL ---
   const openModal = (tarif = null) => {
     if (tarif) {
       setTarifToEdit(tarif);
-      // Préparer les données pour le formulaire en mode édition
-      const prix_modes_sorted = defaultFormValues.prix_modes.map(defaultMode => {
-        const foundMode = tarif.prix_modes.find(pm => pm.mode === defaultMode.mode) || defaultMode;
-        return {
-          ...foundMode,
-          // S'assurer que les valeurs sont des nombres pour l'affichage du formulaire
-          montant_base: parseFloat(foundMode.montant_base) || 0,
-          montant_expedition: parseFloat(foundMode.montant_expedition) || 0,
-          pourcentage_prestation: parseFloat(foundMode.pourcentage_prestation) || 0,
-        };
-      });
-
-      reset({
-        id: tarif.id,
-        category_id: tarif.category_id || '',
-        tarif_minimum: parseFloat(tarif.tarif_minimum) || 0,
-        prix_modes: prix_modes_sorted,
-      });
-
     } else {
       setTarifToEdit(null);
-      reset(defaultFormValues);
     }
-    setIsModalOpen(true);
+    setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setTarifToEdit(null);
-    reset(defaultFormValues);
   };
 
   // --- SOUMISSION DU FORMULAIRE (Ajout ou Édition) ---
   const onSubmit = async (data) => {
     try {
       setIsSubmitting(true);
+      console.log("Données reçues du formulaire:", data);
 
-      // Formater les données pour l'API
-      const formattedData = {
-        ...data,
-        mode_expedition: 'groupage',
-        tarif_minimum: parseFloat(data.tarif_minimum),
-        prix_modes: data.prix_modes.map(mode => ({
-          ...mode,
-          montant_base: parseFloat(mode.montant_base),
-          montant_expedition: parseFloat(mode.montant_expedition),
-          pourcentage_prestation: parseFloat(mode.pourcentage_prestation)
-        }))
-      };
+      // Les types DHD aérien/maritime sont déjà formatés par Addtarifgroupe
+      // Mais on s'assure que la structure est correcte
+      let formattedData = data;
+      console.log("Données formatées prêtes à l'envoi:", formattedData);
+
+      const loadingToast = toast.loading(tarifToEdit ? 'Modification en cours...' : 'Enregistrement en cours...');
 
       if (tarifToEdit) {
         // Mode Édition
-        await tarificationService.editGroupedTarif(tarifToEdit.id, formattedData);
-        toast.success('Tarif mis à jour avec succès!');
+        console.log(`Tentative de modification du tarif ${tarifToEdit.id}`);
+        const result = await dispatch(editGroupedTarif({ tarifId: tarifToEdit.id, tarifData: formattedData }));
+        if (editGroupedTarif.fulfilled.match(result)) {
+          toast.success('Tarif mis à jour avec succès!', { id: loadingToast });
+          dispatch(fetchGroupedTarifs());
+          closeModal();
+        } else {
+          console.error("Erreur dispatch editGroupedTarif:", result.error);
+          toast.error('Erreur lors de la modification', { id: loadingToast });
+        }
       } else {
         // Mode Ajout
-        await tarificationService.addGroupedTarif(formattedData);
-        toast.success('Nouveau tarif ajouté avec succès!');
+        console.log("Tentative d'ajout d'un nouveau tarif");
+        const result = await dispatch(addGroupedTarif(formattedData));
+        if (addGroupedTarif.fulfilled.match(result)) {
+          toast.success('Nouveau tarif ajouté avec succès!', { id: loadingToast });
+          dispatch(fetchGroupedTarifs());
+          closeModal();
+        } else {
+          console.error("Erreur dispatch addGroupedTarif:", result.error);
+          toast.error("Erreur lors de l'ajout", { id: loadingToast });
+        }
       }
-
-      closeModal();
 
     } catch (error) {
       console.error('Erreur lors de la soumission du tarif:', error);
@@ -219,12 +169,29 @@ const GroupedRates = () => {
     }
   };
 
+  const getTypeIcon = (type) => {
+    switch (type.toUpperCase()) {
+      case 'GROUPAGE_DHD':
+      case 'GROUPAGE_DHD_AERIEN': return <Plane className="h-4 w-4" />;
+      case 'GROUPAGE_DHD_MARITIME': return <Ship className="h-4 w-4" />;
+      case 'GROUPAGE_AFRIQUE': return <Globe className="h-4 w-4" />;
+      case 'GROUPAGE_CA': return <Package className="h-4 w-4" />;
+      default: return <Ship className="h-4 w-4" />;
+    }
+  };
+
+  const getModeIcon = (mode) => {
+    switch (mode.toLowerCase()) {
+      case 'avion': return <Plane className="h-3 w-3" />;
+      case 'bateau': return <Ship className="h-3 w-3" />;
+      default: return <Package className="h-3 w-3" />;
+    }
+  };
+
   // --- UTILITAIRE DE FORMATAGE ---
   const formatCurrency = (value) => {
     if (value === undefined || value === null) return '0 FCFA';
-    // Assurer que la valeur est un nombre avant de formater
     const numberValue = typeof value === 'string' ? parseFloat(value) : value;
-
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'XOF',
@@ -233,147 +200,320 @@ const GroupedRates = () => {
     }).format(numberValue).replace('XOF', 'FCFA');
   };
 
-  // --- RENDERING D'ÉTAT ---
-  if (isLoading) {
+  if (isLoading && (groupedTarifs || []).length === 0) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"></div>
+        <p className="text-surface-500 font-medium animate-pulse">Chargement des tarifs...</p>
       </div>
     );
   }
 
-  if (error && groupedTarifs.length === 0) {
+  if (error && (groupedTarifs || []).length === 0) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-        <strong className="font-bold">Erreur ! </strong>
-        <span className="block sm:inline">{error}</span>
+      <div className="bg-red-50 border border-red-100 p-6 rounded-2xl flex items-center gap-4 animate-shake">
+        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+          <X className="h-6 w-6" />
+        </div>
+        <div>
+          <h3 className="font-bold text-red-900">Erreur de chargement</h3>
+          <p className="text-red-700 text-sm">{error}</p>
+          <button onClick={() => dispatch(fetchGroupedTarifs())} className="mt-2 text-red-600 font-bold text-xs uppercase hover:underline">Réessayer</button>
+        </div>
       </div>
     );
   }
 
   // --- COMPOSANT PRINCIPAL ---
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6 border-b pb-4">
-        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800 flex items-center space-x-2">
-            📦 Tarification Groupée
-        </h1>
+    <div className="animate-fade-in space-y-6 pb-20 md:pb-0">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="space-y-1" >
+          <h1 className="text-3xl md:text-4xl font-extrabold text-surface-900 tracking-tight bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
+            Tarification Groupée
+          </h1>
+          <p className="text-surface-500 font-medium">Gérez vos tarifs d'expédition par catégorie et destination.</p>
+        </div>
         <button
-         onClick={() => setShowModal(true)} 
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center space-x-2"
+          onClick={() => openModal()}
+          className="btn-primary"
         >
-          <Plus className="h-5 w-5" />
-          <span>Ajouter un tarif</span>
+          <Plus className="h-5 w-5 mr-2" />
+          <span>Nouveau Tarif</span>
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      {/* Barre de recherche et filtres */}
+      <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-2xl border border-surface-200 shadow-sm">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-surface-400" />
+          <input
+            type="text"
+            placeholder="Rechercher par catégorie ou pays..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <Filter className="h-5 w-5 text-surface-400 shrink-0" />
+          <select
+            value={activeType}
+            onChange={(e) => setActiveType(e.target.value)}
+            className="flex-1 md:flex-none py-2.5 px-4 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all font-medium text-surface-700"
+          >
+            <option value="all">Tous les types</option>
+            <option value="GROUPAGE_DHD_AERIEN">DHD Aérien</option>
+            <option value="GROUPAGE_DHD_MARITIME">DHD Maritime</option>
+            <option value="GROUPAGE_CA">Colis Accompagné</option>
+            <option value="GROUPAGE_AFRIQUE">Afrique</option>
+          </select>
+        </div>
+
+        <div className="hidden md:flex items-center gap-1 bg-surface-100 p-1 rounded-xl">
+          <button
+            onClick={() => setViewMode("table")}
+            className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-white text-primary-600 shadow-sm" : "text-surface-500 hover:text-surface-700"}`}
+          >
+            <List className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`p-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-white text-primary-600 shadow-sm" : "text-surface-500 hover:text-surface-700"}`}
+          >
+            <LayoutGrid className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Vue Table (Desktop) */}
+      <div className={`hidden ${viewMode === "table" ? "md:block" : ""} bg-white rounded-2xl shadow-sm border border-surface-200 overflow-hidden`}>
         <div className="overflow-x-auto">
-          {/* Tableau pour la liste des tarifs */}
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-100">
+          <table className="min-w-full divide-y divide-surface-200">
+            <thead className="bg-surface-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Catégorie
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Pays
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Tarif Minimum
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Modes d'expédition (Prix final)
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Statut
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-surface-500 uppercase tracking-widest">Catégorie</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-surface-500 uppercase tracking-widest">Destination</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-surface-500 uppercase tracking-widest">Tarif Min.</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-surface-500 uppercase tracking-widest">Modes & Tarifs</th>
+                <th className="px-6 py-4 text-center text-xs font-bold text-surface-500 uppercase tracking-widest">Statut</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-surface-500 uppercase tracking-widest">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-              
-             {Object.entries(groupedByType).map(([type, tarifs]) => (
-  <React.Fragment key={type}>
+            <tbody className="bg-white divide-y divide-surface-100">
+              {Object.entries(groupedByType).map(([type, tarifs], groupIndex) => (
+                <React.Fragment key={`${type}-${groupIndex}`}>
+                  <tr className="bg-primary-50/30">
+                    <td colSpan="6" className="px-6 py-3">
+                      <div className="flex items-center gap-2 text-primary-700">
+                        {getTypeIcon(type)}
+                        <span className="font-bold text-xs uppercase tracking-widest">
+                          {type.replace(/_/g, ' ')}
+                        </span>
+                        <div className="h-px flex-1 bg-primary-100 ml-4"></div>
+                      </div>
+                    </td>
+                  </tr>
 
-    {/* Ligne séparation */}
-    <tr className="bg-blue-200">
-      <td colSpan="6" className="px-6 py-3 font-bold text-blue-900 uppercase">
-        {type.replace('_', ' ')}
-      </td>
-    </tr>
-
-    {tarifs.map(tarif => (
-      <tr key={tarif.id} className="hover:bg-blue-50 transition duration-150">
-        {/* ——— Ton code existant ——— */}
-        <td className="px-6 py-4 whitespace-nowrap">
-          <div className="text-sm font-medium text-gray-900">
-            {tarif.category?.nom || 'N/A'}
-          </div>
-        </td>
-
-        <td className="px-6 py-4">{tarif.pays}</td>
-
-        <td className="px-6 py-4 font-bold text-blue-600">
-          {formatCurrency(tarif.prix_unitaire)}
-        </td>
-
-        <td className="px-6 py-4">
-          {tarif.prix_modes?.map((m) => (
-            <div key={m.mode}>
-              {m.mode}: {formatCurrency(m.montant_expedition)}
-            </div>
-          ))}
-        </td>
-
-        <td className="px-6 py-4 text-center">
-          <span
-            onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
-            className={`px-3 py-1 rounded-full text-xs font-bold cursor-pointer
-              ${tarif.actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-          >
-            {tarif.actif ? 'Actif' : 'Inactif'}
-          </span>
-        </td>
-
-        <td className="px-6 py-4 text-right">
-          <button onClick={() => openModal(tarif)} className="mr-2 text-blue-600 hover:text-blue-800">
-            <Pencil className="h-5 w-5" />
-          </button>
-          <button onClick={() => handleDelete(tarif.id)} className="text-red-600 hover:text-red-800">
-            <Trash className="h-5 w-5" />
-          </button>
-        </td>
-      </tr>
-    ))}
-  </React.Fragment>
-))}
-
+                  {tarifs.map(tarif => (
+                    <tr key={tarif.id} className="group hover:bg-surface-50 transition-colors duration-200">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-bold text-surface-900 flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${tarif.category ? 'bg-primary-500' : 'bg-surface-300'}`}></div>
+                          {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5 text-sm text-surface-600 font-medium">
+                          <Globe className="h-4 w-4 text-surface-400" />
+                          {tarif.type_expedition?.includes('dhd') ? (
+                            <span className="text-primary-600 font-bold">{tarif.ligne || 'Ligne non définie'}</span>
+                          ) : (
+                            <span className="truncate max-w-[150px]">{tarif.pays || (tarif.type_expedition === 'groupage_ca' ? 'Toutes destinations' : '-')}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-extrabold text-primary-600 px-2.5 py-1 rounded-lg bg-primary-50 border border-primary-100">
+                          {formatCurrency(tarif.tarif_minimum || tarif.montant_base || tarif.prix_unitaire)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          {tarif.prix_modes ? tarif.prix_modes.map((m, idx) => (
+                            <div key={`${m.mode || 'mode'}-${idx}`} className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-lg border border-surface-200 shadow-sm hover:border-primary-200 transition-all">
+                              <div className="p-1 bg-surface-50 rounded-md text-surface-500">
+                                {getModeIcon(m.mode)}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[9px] uppercase font-bold text-surface-400 leading-none">{m.mode}</span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] font-extrabold text-surface-700">{formatCurrency(m.montant_expedition)}</span>
+                                  <span className="text-[9px] font-bold text-primary-600 bg-primary-50 px-1 rounded">+{m.pourcentage_prestation}%</span>
+                                </div>
+                              </div>
+                            </div>
+                          )) : (
+                            <div className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-lg border border-surface-200 shadow-sm hover:border-primary-200 transition-all">
+                              <div className="p-1 bg-surface-50 rounded-md text-surface-500">
+                                {getModeIcon(tarif.mode || '')}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[9px] uppercase font-bold text-surface-400 leading-none">{tarif.mode}</span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] font-extrabold text-surface-700">{formatCurrency(tarif.montant_expedition || (tarif.montant_base * (1 + tarif.pourcentage_prestation / 100)))}</span>
+                                  <span className="text-[9px] font-bold text-primary-600 bg-primary-50 px-1 rounded">+{tarif.pourcentage_prestation}%</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter transition-all duration-200
+                            ${tarif.actif
+                              ? 'bg-green-100 text-green-700 border border-green-200'
+                              : 'bg-red-100 text-red-700 border border-red-200'}`}
+                        >
+                          <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${tarif.actif ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+                          {tarif.actif ? 'Actif' : 'Inactif'}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => openModal(tarif)}
+                            className="p-2 text-surface-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                            title="Modifier"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(tarif.id)}
+                            className="p-2 text-surface-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                            title="Supprimer"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </React.Fragment>
+              ))}
             </tbody>
           </table>
         </div>
-
-        {groupedTarifs.length === 0 && !isLoading && (
-          <div className="text-center py-10 text-gray-500 bg-gray-50">
-            <p className="text-lg">😕 Aucun tarif groupé trouvé. Cliquez sur "Ajouter un tarif" pour commencer.</p>
-          </div>
-        )}
       </div>
 
-      {/* --- Modal d'ajout/édition --- */}
-   <Addtarifgroupe
-      tarifToEdit={null}
-      closeModal={() => setShowModal(false)}
-      categories={categories}
-      onSubmit={handleSubmit}
-      isSubmitting={false}
-    />
+      {/* Vue Mobile / Grid */}
+      <div className={`grid gap-4 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "md:hidden"}`}>
+        {filteredTarifs.map((tarif) => (
+          <div key={tarif.id} className="card relative p-5 space-y-4">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary-50 rounded-xl text-primary-600 shadow-sm border border-primary-100">
+                  {getTypeIcon(tarif.type_expedition || "")}
+                </div>
+                <div>
+                  <h3 className="font-bold text-surface-900 leading-tight">
+                    {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
+                  </h3>
+                  <div className="flex items-center gap-1 text-[11px] text-surface-500 font-medium">
+                    <Globe className="h-3 w-3" />
+                    {tarif.type_expedition?.includes('dhd') ? tarif.ligne : (tarif.pays || 'Toutes destinations')}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
+                className={`w-2.5 h-2.5 rounded-full shadow-sm ${tarif.actif ? "bg-green-500" : "bg-red-500"}`}
+              />
+            </div>
 
+            <div className="flex items-baseline justify-between py-2 border-y border-surface-100 border-dashed">
+              <span className="text-xs font-semibold text-surface-400">Tarif Base / Min.</span>
+              <span className="text-lg font-black text-primary-600">
+                {formatCurrency(tarif.tarif_minimum || tarif.montant_base || tarif.prix_unitaire)}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2">
+              {tarif.prix_modes ? tarif.prix_modes.map((m, idx) => (
+                <div key={`${m.mode || 'mode'}-${idx}`} className="p-2 bg-surface-50 rounded-xl border border-surface-100 flex flex-col gap-1">
+                  <div className="flex items-center justify-between text-[9px] font-black text-surface-400 uppercase tracking-tighter">
+                    {m.mode}
+                    {getModeIcon(m.mode)}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-black text-surface-800">{formatCurrency(m.montant_expedition)}</div>
+                    <div className="text-[10px] font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">+{m.pourcentage_prestation}%</div>
+                  </div>
+                </div>
+              )) : (
+                <div className="p-2 bg-surface-50 rounded-xl border border-surface-100 flex flex-col gap-1">
+                  <div className="flex items-center justify-between text-[9px] font-black text-surface-400 uppercase tracking-tighter">
+                    {tarif.mode}
+                    {getModeIcon(tarif.mode || '')}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-black text-surface-800">
+                      {formatCurrency(tarif.montant_expedition || (tarif.montant_base * (1 + tarif.pourcentage_prestation / 100)))}
+                    </div>
+                    <div className="text-[10px] font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">+{tarif.pourcentage_prestation}%</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => openModal(tarif)}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-surface-50 hover:bg-primary-50 border border-surface-200 hover:border-primary-200 text-surface-600 hover:text-primary-600 rounded-xl font-bold text-xs transition-all"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Modifier
+              </button>
+              <button
+                onClick={() => handleDelete(tarif.id)}
+                className="flex items-center justify-center p-2.5 bg-surface-50 hover:bg-red-50 border border-surface-200 hover:border-red-200 text-surface-400 hover:text-red-500 rounded-xl transition-all"
+              >
+                <Trash className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {filteredTarifs.length === 0 && !isLoading && (
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-surface-300">
+          <div className="w-16 h-16 bg-surface-100 rounded-full flex items-center justify-center mb-4">
+            <Search className="h-8 w-8 text-surface-400" />
+          </div>
+          <h3 className="text-lg font-bold text-surface-900">Aucun tarif trouvé</h3>
+          <p className="text-surface-500">Essayez de modifier vos critères de recherche.</p>
+          <button
+            onClick={() => { setSearchTerm(""); setActiveType("all"); }}
+            className="mt-4 text-primary-600 font-bold hover:underline"
+          >
+            Effacer tous les filtres
+          </button>
+        </div>
+      )}
+
+      {/* --- Modal d'ajout/édition --- */}
+      {showModal && <Addtarifgroupe
+        tarifToEdit={tarifToEdit}
+        closeModal={closeModal}
+        categories={categories}
+        onSubmit={onSubmit}
+        isSubmitting={isSubmitting}
+      />}
     </div>
   );
 };
-
 export default GroupedRates;
 

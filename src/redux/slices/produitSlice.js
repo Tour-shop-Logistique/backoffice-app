@@ -18,7 +18,7 @@ export const fetchProduits = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const listProduits = await produitService.getProduits();
-            console.log(listProduits , "Produits");
+            console.log(listProduits, "Produits");
             return listProduits;
         } catch (error) {
             return rejectWithValue(error.response?.data || "Erreur serveur");
@@ -55,8 +55,8 @@ export const deleteProduit = createAsyncThunk(
     'produits/deleteProduit',
     async (produitId, { rejectWithValue }) => {
         try {
-            await produitService.deleteProduit(produitId);
-            return produitId;
+            const res = await produitService.deleteProduit(produitId);
+            return { id: produitId, ...res };
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
         }
@@ -123,8 +123,8 @@ export const deleteCategory = createAsyncThunk(
     'produits/deleteCategory',
     async (categoryId, { rejectWithValue }) => {
         try {
-            await produitService.deleteCategory(categoryId);
-            return categoryId;
+            const res = await produitService.deleteCategory(categoryId);
+            return { id: categoryId, ...res };
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
         }
@@ -150,35 +150,91 @@ export const updateCategoryStatus = createAsyncThunk(
 const produitSlice = createSlice({
     name: 'produits',
     initialState,
-    reducers: {},
+    reducers: {
+        resetProduits: (state) => {
+            state.listProduits = [];
+            state.categories = [];
+            state.isLoading = false;
+            state.error = null;
+        }
+    },
     extraReducers: (builder) => {
         builder
-
             // FETCH CATEGORIES
             .addCase(fetchCategories.pending, (state) => {
                 state.isLoading = true;
             })
             .addCase(fetchCategories.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.categories = action.payload;  // 🔥 STOCKÉ EN REDUX
+                state.categories = action.payload || [];
             })
             .addCase(fetchCategories.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.payload;
-            });
+            })
 
-        builder
             // FETCH PRODUITS
             .addCase(fetchProduits.pending, (state) => {
                 state.isLoading = true;
             })
             .addCase(fetchProduits.fulfilled, (state, action) => {
                 state.isLoading = false;
-                 state.listProduits = action.payload; 
+                state.listProduits = action.payload || [];
             })
             .addCase(fetchProduits.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.payload;
+            })
+
+            // ADD CATEGORY
+            .addCase(addCategory.fulfilled, (state, action) => {
+                if (action.payload?.category) {
+                    state.categories.unshift(action.payload.category);
+                }
+            })
+            // EDIT CATEGORY
+            .addCase(editCategory.fulfilled, (state, action) => {
+                if (action.payload?.category) {
+                    const index = state.categories.findIndex(c => c.id === action.payload.category.id);
+                    if (index !== -1) {
+                        state.categories[index] = action.payload.category;
+                    }
+                }
+            })
+            // DELETE CATEGORY
+            .addCase(deleteCategory.fulfilled, (state, action) => {
+                state.categories = state.categories.filter(c => c.id !== action.payload.id);
+            })
+
+            // ADD PRODUIT
+            .addCase(addProduit.fulfilled, (state, action) => {
+                if (action.payload?.product) {
+                    state.listProduits.unshift(action.payload.product);
+                }
+            })
+            // EDIT PRODUIT
+            .addCase(editProduit.fulfilled, (state, action) => {
+                if (action.payload?.product) {
+                    const index = state.listProduits.findIndex(p => p.id === action.payload.product.id);
+                    if (index !== -1) {
+                        state.listProduits[index] = action.payload.product;
+                    }
+                }
+            })
+            // DELETE PRODUIT
+            .addCase(deleteProduit.fulfilled, (state, action) => {
+                state.listProduits = state.listProduits.filter(p => p.id !== action.payload.id);
+            })
+
+            // UPDATE CATEGORY STATUS
+            .addCase(updateCategoryStatus.fulfilled, (state, action) => {
+                const category = action.payload?.category || action.payload;
+                if (category) {
+                    const index = state.categories.findIndex(c => c.id === category.id);
+                    if (index !== -1) {
+                        state.categories[index] = category;
+                    }
+                }
             });
     }
 });

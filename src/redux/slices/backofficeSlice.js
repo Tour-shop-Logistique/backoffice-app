@@ -29,7 +29,15 @@ const backofficeSlice = createSlice({
   },
   reducers: {
     setConfigured: (state, action) => {
-        state.isConfigured = action.payload;
+      state.isConfigured = action.payload;
+    },
+    resetBackoffice: (state) => {
+      state.config = null;
+      state.isConfigured = true;
+      state.loading = 'idle';
+      state.backoffice_id = null;
+      state.pays = null;
+      state.error = null;
     }
   },
   extraReducers: (builder) => {
@@ -40,10 +48,12 @@ const backofficeSlice = createSlice({
       .addCase(fetchBackofficeConfig.fulfilled, (state, action) => {
         state.loading = 'succeeded';
         state.config = action.payload;
-        state.isConfigured = true;
-        state.backoffice_id = action.payload.id;
-        state.pays = action.payload.pays;
-        console.log(state.pays,"state.pays");
+        state.isConfigured = !!action.payload;
+        if (action.payload) {
+          state.backoffice_id = action.payload.id;
+          state.pays = action.payload.pays;
+          console.log(state.pays, "state.pays");
+        }
       })
       .addCase(fetchBackofficeConfig.rejected, (state, action) => {
         state.loading = 'failed';
@@ -57,6 +67,6 @@ const backofficeSlice = createSlice({
   },
 });
 
-export const { setConfigured } = backofficeSlice.actions;
+export const { setConfigured, resetBackoffice } = backofficeSlice.actions;
 
 export default backofficeSlice.reducer;

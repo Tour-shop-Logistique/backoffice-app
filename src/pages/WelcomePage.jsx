@@ -1,11 +1,27 @@
-import { Link } from "react-router-dom";
+import React, { useState } from 'react';
 import { Truck, Box, ArrowRight } from "lucide-react";
+import Modal from "../components/common/Modal";
+import LoginForm from "../components/auth/LoginForm";
+import RegisterForm from "../components/auth/RegisterForm";
 
 const WelcomePage = () => {
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+
+  const openLogin = () => {
+    setIsRegisterOpen(false);
+    setIsLoginOpen(true);
+  };
+
+  const openRegister = () => {
+    setIsLoginOpen(false);
+    setIsRegisterOpen(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row items-center justify-center bg-gradient-to-br from-gray-900 via-blue-950 to-gray-800 text-white overflow-hidden relative">
       {/* Décor de fond */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 pointer-events-none">
         <div className="absolute w-96 h-96 bg-blue-500/20 blur-3xl rounded-full top-10 left-0 animate-pulse" />
         <div className="absolute w-96 h-96 bg-indigo-500/20 blur-3xl rounded-full bottom-10 right-0 animate-pulse" />
       </div>
@@ -20,17 +36,20 @@ const WelcomePage = () => {
         </div>
 
         <p className="max-w-md text-gray-300 text-lg leading-relaxed mb-8">
-          Bienvenue dans votre espace de gestion.  
+          Bienvenue dans votre espace de gestion.
           Suivez vos expéditions, gérez vos partenaires et contrôlez vos flux en
           toute sérénité.
         </p>
 
-        <Link to="/login">
-          <button className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 font-semibold py-3 px-8 rounded-full text-lg transition-all duration-300 hover:scale-105 shadow-xl">
+        <div className="flex gap-4">
+          <button
+            onClick={openLogin}
+            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 font-semibold py-3 px-8 rounded-full text-lg transition-all duration-300 hover:scale-105 shadow-xl"
+          >
             <span>Accéder au Backoffice</span>
             <ArrowRight className="w-6 h-6 text-white" />
           </button>
-        </Link>
+        </div>
       </div>
 
       {/* Colonne droite : illustration / visuel */}
@@ -53,6 +72,29 @@ const WelcomePage = () => {
         <span className="text-blue-400">Tous Shop Logistique</span>. Tous droits
         réservés.
       </footer>
+
+      {/* Modales */}
+      <Modal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        title="Connexion"
+      >
+        <LoginForm
+          onSuccess={() => setIsLoginOpen(false)}
+          switchToRegister={openRegister}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={isRegisterOpen}
+        onClose={() => setIsRegisterOpen(false)}
+        title="Inscription"
+      >
+        <RegisterForm
+          onSuccess={() => setIsRegisterOpen(false)}
+          switchToLogin={openLogin}
+        />
+      </Modal>
     </div>
   );
 };

@@ -17,11 +17,15 @@ const register = async (userData) => {
   return response.data;
 };
 
-const logout = () => {
-  localStorage.removeItem('user');
-  localStorage.removeItem('token');
-  const response = api.post('/logout');
-  console.log(response);
+const logout = async () => {
+  try {
+    await api.post('/logout');
+  } catch (error) {
+    console.error('Erreur lors de la déconnexion API:', error);
+  } finally {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+  }
 };
 
 const authService = {

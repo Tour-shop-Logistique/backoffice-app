@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchZones } from '../../redux/slices/zoneSlice';
+import {
+  Plus,
+  Trash2,
+  DollarSign,
+  Percent,
+  MapPin,
+  Calculator,
+  Info,
+  AlertCircle,
+  ChevronDown,
+  Save,
+  X,
+  Loader2
+} from 'lucide-react';
 
 const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
   const dispatch = useDispatch();
@@ -16,25 +30,24 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
   useEffect(() => {
     dispatch(fetchZones());
 
-   if (initialData) {
-  setFormData({
-    ...initialData,
-    prix_zones: initialData.prix_zones.map(pz => {
-      const mb = parseFloat(pz.montant_base) || 0;
-      const pp = parseFloat(pz.pourcentage_prestation) || 0;
-      const mp = mb * (pp / 100);
-      const me = mb + mp;
-      return {
-        ...pz,
-        montant_base: mb,
-        pourcentage_prestation: pp,
-        montant_prestation: mp.toFixed(2),
-        montant_expedition: me.toFixed(2)
-      };
-    })
-  });
-}
-
+    if (initialData) {
+      setFormData({
+        ...initialData,
+        prix_zones: initialData.prix_zones.map(pz => {
+          const mb = parseFloat(pz.montant_base) || 0;
+          const pp = parseFloat(pz.pourcentage_prestation) || 0;
+          const mp = mb * (pp / 100);
+          const me = mb + mp;
+          return {
+            ...pz,
+            montant_base: mb,
+            pourcentage_prestation: pp,
+            montant_prestation: mp.toFixed(2),
+            montant_expedition: me.toFixed(2)
+          };
+        })
+      });
+    }
   }, [dispatch, initialData]);
 
   const handlePrixZoneChange = (index, field, value) => {
@@ -42,11 +55,13 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
     newPrixZones[index][field] = value;
 
     // recalcul automatique
-const mb = parseFloat(newPrixZones[index].montant_base) || 0;
-const pp = parseFloat(newPrixZones[index].pourcentage_prestation) || 0;
-newPrixZones[index].montant_prestation = (mb * (pp / 100)).toString();
-newPrixZones[index].montant_expedition = (mb + mb * (pp / 100)).toString();
+    const mb = parseFloat(newPrixZones[index].montant_base) || 0;
+    const pp = parseFloat(newPrixZones[index].pourcentage_prestation) || 0;
+    const mp = mb * (pp / 100);
+    const me = mb + mp;
 
+    newPrixZones[index].montant_prestation = mp.toFixed(2);
+    newPrixZones[index].montant_expedition = me.toFixed(2);
 
     setFormData({ ...formData, prix_zones: newPrixZones });
   };
@@ -70,7 +85,7 @@ newPrixZones[index].montant_expedition = (mb + mb * (pp / 100)).toString();
     e.preventDefault();
     const submissionData = {
       indice: Number(formData.indice),
-      mode_expedition: 'simple',
+      type_expedition: 'simple',
       prix_zones: formData.prix_zones.map(pz => ({
         zone_destination_id: pz.zone_destination_id,
         montant_base: Number(pz.montant_base),
@@ -80,94 +95,179 @@ newPrixZones[index].montant_expedition = (mb + mb * (pp / 100)).toString();
     onSubmit(submissionData);
   };
 
+  const inputClasses = "w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 font-medium text-gray-700";
+  const labelClasses = "block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 ml-1";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Indice</label>
-      <input
-  type="number"
-  value={formData.indice}
-  onChange={e => setFormData({ ...formData, indice: e.target.value })}
-  step="0.5"           // autorise les demi-pas
-  min="0"
-  className="w-full px-3 py-2 mt-1 border rounded-md"
-  required
-/>
+    <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in relative pb-8">
+      {/* Indice Section */}
+      <div className="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100/50 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-8 transform translate-x-4 -translate-y-4 opacity-5 group-hover:opacity-10 transition-opacity">
+          <Info size={120} />
+        </div>
+        <div className="relative">
+          <label className={labelClasses}>Indice de Tarification</label>
+          <div className="relative">
+            <Calculator className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400" size={20} />
+            <input
+              type="number"
+              value={formData.indice}
+              onChange={e => setFormData({ ...formData, indice: e.target.value })}
+              step="0.1"
+              min="0"
+              placeholder="Ex: 1.5, 2.0..."
+              className={`${inputClasses} bg-white`}
+              required
+            />
+          </div>
+          <p className="text-[10px] font-bold text-indigo-400 mt-2 px-1 uppercase tracking-wider">L'indice permet d'identifier cette grille tarifaire spécifique.</p>
+        </div>
       </div>
 
-      <h3 className="text-lg font-medium text-gray-800">Prix par Zone</h3>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Zone</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Montant Base</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">% Prestation</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Montant Prestation</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Montant Expédition</th>
-              <th className="px-4 py-2"></th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {formData.prix_zones.map((pz, index) => (
-              <tr key={index}>
-                <td className="px-4 py-2">
+      <div className="flex items-center justify-between px-2 pt-4">
+        <h3 className="text-xl font-black text-gray-900 flex items-center gap-2 tracking-tight">
+          <MapPin className="text-indigo-600" size={22} />
+          Configuration par Zone
+        </h3>
+        <span className="text-xs font-bold text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full">{formData.prix_zones.length} zones configurées</span>
+      </div>
+
+      {/* List of Zones */}
+      <div className="space-y-4 max-h-[50vh] overflow-y-auto px-1 pr-2 custom-scrollbar">
+        {formData.prix_zones.map((pz, index) => (
+          <div
+            key={index}
+            className="group relative bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-100 transition-all duration-300"
+          >
+            {/* Remove button */}
+            {formData.prix_zones.length > 1 && (
+              <button
+                type="button"
+                onClick={() => handleRemovePrixZone(index)}
+                className="absolute -top-2 -right-2 p-2 bg-white border border-red-100 text-red-500 rounded-xl shadow-lg hover:bg-red-50 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
+                title="Supprimer cette zone"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+              {/* Destination Selection */}
+              <div className="md:col-span-4">
+                <label className={labelClasses}>Zone de Destination</label>
+                <div className="relative">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <select
                     value={pz.zone_destination_id}
                     onChange={e => handlePrixZoneChange(index, 'zone_destination_id', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className={`${inputClasses} appearance-none cursor-pointer`}
                     required
                   >
-                    <option value="">Sélectionner</option>
+                    <option value="">Choisir une zone</option>
                     {zones.map(zone => (
                       <option key={zone.id} value={zone.id}>{zone.nom}</option>
                     ))}
                   </select>
-                </td>
-                <td className="px-4 py-2">
-                 <input
-  type="number"
-  value={pz.montant_base}
-  onChange={e => handlePrixZoneChange(index, 'montant_base', e.target.value)}
-  placeholder="0.00"
-  min="0"
-  className="w-full px-3 py-2 border rounded-md"
-/>
-                </td>
-                <td className="px-4 py-2">
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                </div>
+              </div>
+
+              {/* Base Price */}
+              <div className="md:col-span-4">
+                <label className={labelClasses}>Montant de Base (FCFA)</label>
+                <div className="relative">
+                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500" size={18} />
                   <input
-  type="number"
-  value={pz.pourcentage_prestation}
-  onChange={e => handlePrixZoneChange(index, 'pourcentage_prestation', e.target.value)}
-  placeholder="0"
-  min="0"
-  className="w-full px-3 py-2 border rounded-md"
-/>
-                </td>
-                <td className="px-4 py-2">
-                  <input type="text" value={pz.montant_prestation} readOnly className="w-full px-3 py-2 bg-gray-100 border rounded-md" />
-                </td>
-                <td className="px-4 py-2">
-                  <input type="text" value={pz.montant_expedition} readOnly className="w-full px-3 py-2 bg-gray-100 border rounded-md" />
-                </td>
-                <td className="px-4 py-2">
-                  {formData.prix_zones.length > 1 && (
-                    <button type="button" onClick={() => handleRemovePrixZone(index)} className="text-red-500">-</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    type="number"
+                    value={pz.montant_base}
+                    onChange={e => handlePrixZoneChange(index, 'montant_base', e.target.value)}
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    className={inputClasses}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Prestation Percentage */}
+              <div className="md:col-span-4">
+                <label className={labelClasses}>Prestation (%)</label>
+                <div className="relative">
+                  <Percent className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400" size={18} />
+                  <input
+                    type="number"
+                    value={pz.pourcentage_prestation}
+                    onChange={e => handlePrixZoneChange(index, 'pourcentage_prestation', e.target.value)}
+                    placeholder="0"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    className={inputClasses}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Results row (auto-calculated) */}
+              <div className="md:col-span-12 grid grid-cols-2 gap-4 mt-2">
+                <div className="p-4 bg-gray-50 rounded-2xl flex items-center justify-between border border-dashed border-gray-200">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Montant Prestation</span>
+                  <span className="text-sm font-bold text-gray-600">{parseFloat(pz.montant_prestation).toLocaleString()} <span className="text-[10px]">FCFA</span></span>
+                </div>
+                <div className="p-4 bg-indigo-50 rounded-2xl flex items-center justify-between border border-indigo-100">
+                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Total Expédition</span>
+                  <span className="text-base font-black text-indigo-700">{parseFloat(pz.montant_expedition).toLocaleString()} <span className="text-[10px]">FCFA</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <button type="button" onClick={handleAddPrixZone} className="text-indigo-600">+ Ajouter une zone de prix</button>
-
-      <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
-        <button type="button" onClick={onCancel} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Annuler</button>
-        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50" disabled={isLoading}>
-          {isLoading ? (initialData ? 'Modification...' : 'Ajout...') : (initialData ? 'Modifier' : 'Ajouter')}
+      {/* Actions for list */}
+      <div className="pt-2">
+        <button
+          type="button"
+          onClick={handleAddPrixZone}
+          className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-dashed border-indigo-200 text-indigo-600 rounded-2xl font-bold hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group w-full justify-center"
+        >
+          <Plus size={20} className="group-hover:scale-125 transition-transform" />
+          Ajouter une autre zone de destination
         </button>
+      </div>
+
+      {/* Footer Form Actions */}
+      <div className="pt-8 border-t border-gray-100 flex flex-col sm:flex-row gap-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="order-2 sm:order-1 flex-1 px-8 py-4 text-sm font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-2xl transition-all"
+        >
+          Annuler
+        </button>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="order-1 sm:order-2 flex-1 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+        >
+          {isLoading ? (
+            <Loader2 className="animate-spin" size={20} />
+          ) : (
+            <>
+              <Save size={20} />
+              {initialData ? 'Mettre à jour le tarif' : 'Enregistrer le tarif'}
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Warning Note */}
+      <div className="mt-6 flex gap-3 p-4 bg-orange-50 rounded-2xl border border-orange-100">
+        <AlertCircle className="text-orange-400 shrink-0" size={18} />
+        <p className="text-[10px] leading-relaxed font-bold text-orange-700 uppercase tracking-wider">
+          Vérifiez bien vos montants avant d'enregistrer. L'expédition totale est calculée automatiquement par : (Montant Base + (Montant Base * Pourcentage))
+        </p>
       </div>
     </form>
   );

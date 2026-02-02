@@ -34,12 +34,26 @@ export const register = createAsyncThunk('auth/register', async (userData, { rej
   }
 });
 
+import { resetBackoffice } from './backofficeSlice';
+
+// Thunk pour la déconnexion
+export const performLogout = createAsyncThunk('auth/performLogout', async (_, { dispatch }) => {
+  try {
+    await authService.logout();
+  } finally {
+    dispatch(authSlice.actions.logout());
+    dispatch(resetBackoffice());
+    // On force un rechargement complet de la page pour vider tous les stores Redux
+    window.location.href = '/';
+  }
+});
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
     logout: (state) => {
-      authService.logout();
+      // Nettoyage de l'état local
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;

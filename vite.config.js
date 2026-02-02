@@ -12,6 +12,16 @@ export default defineConfig({
       'backoffice.nport.link',
       'backoffice.loophole.site',
     ],
+    proxy: {
+      '/api': {
+        target: 'https://c5894f7feb53.ngrok-free.app/api',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      }
+    }
   },
   build: {
     outDir: 'dist',
@@ -28,5 +38,10 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],
+  },
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
   },
 })

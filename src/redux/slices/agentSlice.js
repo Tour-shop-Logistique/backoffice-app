@@ -8,75 +8,125 @@ const initialState = {
 };
 
 export const fetchAgents = createAsyncThunk(
-    'agent/fetchAgents',    
-    async () => {
-        const response = await agentService.getAgents();
-        console.log(response); // <- voir exactement la structure
-        // Retourne la liste correcte selon ta réponse
-        return response || response.data || [];
+    'agent/fetchAgents',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await agentService.getAgents();
+            return response || [];
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Erreur lors de la récupération des agents");
+        }
     }
 );
 
 export const addAgent = createAsyncThunk(
     'agent/addAgent',
-    async (agentData) => {
-        const response = await agentService.addAgent(agentData);
-        return response.data;
+    async (agentData, { rejectWithValue }) => {
+        try {
+            const response = await agentService.addAgent(agentData);
+            return response.data || response;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
     }
 );
 
 export const editAgent = createAsyncThunk(
     'agent/editAgent',
-    async ({ agentId, agentData }) => {
-        const response = await agentService.editAgent(agentId, agentData);
-        return response.data;
+    async ({ agentId, agentData }, { rejectWithValue }) => {
+        try {
+            const response = await agentService.editAgent(agentId, agentData);
+            return response.data || response;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
     }
 );
 
 export const deleteAgent = createAsyncThunk(
     'agent/deleteAgent',
-    async (agentId) => {
-        const response = await agentService.deleteAgent(agentId);
-        return response.data;
+    async (agentId, { rejectWithValue }) => {
+        try {
+            const res = await agentService.deleteAgent(agentId);
+            return { id: agentId, ...res };
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
     }
 );
 
 export const updateAgentStatus = createAsyncThunk(
     'agent/updateAgentStatus',
-    async (agentId) => {
-        const response = await agentService.updateAgentStatus(agentId);
-        return response.data;
+    async ({ agentId, status }, { rejectWithValue }) => {
+        try {
+            const response = await agentService.updateAgentStatus(agentId, status);
+            return response.data || response;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
     }
 );
-
 
 const agentSlice = createSlice({
     name: 'agents',
     initialState,
-    reducers: {},
+    reducers: {
+        resetAgents: (state) => {
+            state.agents = [];
+            state.isLoading = false;
+            state.error = null;
+        }
+    },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchAgents.pending, (state) => { state.isLoading = true; })
+            // FETCH
+            .addCase(fetchAgents.pending, (state) => {
+                state.isLoading = true;
+            })
             .addCase(fetchAgents.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.agents = action.payload;
+                state.agents = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
             })
             .addCase(fetchAgents.rejected, (state, action) => {
                 state.isLoading = false;
-                state.error = action.error.message;
+                state.error = action.payload;
             })
-            .addCase(addAgent.fulfilled, (state, action) => { state.agents.push(action.payload); })
+
+            // ADD
+            .addCase(addAgent.fulfilled, (state, action) => {
+                const newAgent = action.payload?.agent || action.payload;
+                if (newAgent) {
+                    state.agents.unshift(newAgent);
+                }
+            })
+
+            // EDIT
             .addCase(editAgent.fulfilled, (state, action) => {
-                const index = state.agents.findIndex(agent => agent.id === action.meta.arg.agentId);
-                if (index !== -1) state.agents[index] = action.payload;
+                const updatedAgent = action.payload?.agent || action.payload;
+                if (updatedAgent) {
+                    const index = state.agents.findIndex(agent => agent.id === updatedAgent.id);
+                    if (index !== -1) {
+                        state.agents[index] = updatedAgent;
+                    }
+                }
             })
+
+            // DELETE
             .addCase(deleteAgent.fulfilled, (state, action) => {
-                state.agents = state.agents.filter(agent => agent.id !== action.meta.arg);
+                state.agents = state.agents.filter(agent => agent.id !== action.payload.id);
             })
+
+            // STATUS
             .addCase(updateAgentStatus.fulfilled, (state, action) => {
-                const index = state.agents.findIndex(agent => agent.id === action.meta.arg.agentId);
-                if (index !== -1) state.agents[index].actif = action.payload.actif;
+                const updatedAgent = action.payload?.agent || action.payload;
+                if (updatedAgent) {
+                    const index = state.agents.findIndex(agent => agent.id === updatedAgent.id);
+                    if (index !== -1) {
+                        state.agents[index] = updatedAgent;
+                    }
+                }
             });
     },
 });
+
 export default agentSlice.reducer;

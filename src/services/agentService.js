@@ -20,8 +20,9 @@ const deleteAgent = async (agentId) => {
     return response.data;
 };
 
-const updateAgentStatus = async (agentId) => {
-    const response = await api.put(`/backoffice/status-user/${agentId}`);
+const updateAgentStatus = async (agentId, status) => {
+    // Si l'API attend un body avec le status
+    const response = await api.put(`/backoffice/status-user/${agentId}`, { status });
     return response.data;
 };
 

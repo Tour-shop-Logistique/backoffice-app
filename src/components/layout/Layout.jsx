@@ -7,6 +7,7 @@ import Topbar from './Topbar';
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(true);
   const dispatch = useDispatch();
   const { isConfigured, loading } = useSelector((state) => state.backoffice);
 
@@ -21,17 +22,23 @@ const Layout = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-surface-50">
       <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      <div className="flex-1 flex flex-col overflow-hidden md:ml-64">
+      <div className="flex-1 flex flex-col overflow-hidden md:ml-sidebar">
         <Topbar toggleSidebar={toggleSidebar} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 p-1">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-surface-100 p-4 md:p-6 lg:p-8">
+          {loading === 'failed' && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex justify-between items-center">
+              <span>Erreur lors du chargement de la configuration. Certaines fonctionnalités peuvent être limitées.</span>
+              <button onClick={() => dispatch(fetchBackofficeConfig())} className="text-sm font-bold underline">Réessayer</button>
+            </div>
+          )}
           {children}
         </main>
       </div>
-      {!isConfigured && (
+      {!isConfigured && showConfigModal && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
-            <SettingsModal closeModal={() => { /* Ne rien faire pour forcer la config */ }} />
+          <SettingsModal closeModal={() => setShowConfigModal(false)} />
         </div>
       )}
     </div>
