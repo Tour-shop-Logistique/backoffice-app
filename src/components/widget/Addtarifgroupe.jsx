@@ -303,7 +303,7 @@ const Addtarifgroupe = ({
         {/* HEADER */}
         <div className="sticky top-0 z-10 p-3 border-b bg-white rounded-t-xl border-gray-100">
           <div className="flex justify-between items-center text-surface-900">
-            <h2 className="text-2xl font-black tracking-tight">
+            <h2 className="text-2xl font-bold tracking-tight">
               {tarifToEdit ? `Modifier le tarif` : "Nouveau tarif groupée"}
             </h2>
             <button
@@ -337,7 +337,7 @@ const Addtarifgroupe = ({
           {/* DHD Ligne Configuration */}
           {(typeExpedition === 'GROUPAGE_DHD_AERIEN' || typeExpedition === 'GROUPAGE_DHD_MARITIME') && (
             <div className='pt-4 border-t border-gray-200'>
-              <h3 className="text-lg font-extrabold text-blue-700 mb-4 font-display">Itinéraire & Catégorie</h3>
+              <h3 className="text-lg font-bold text-blue-700 mb-4 font-display">Itinéraire & Catégorie</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
@@ -450,7 +450,7 @@ const Addtarifgroupe = ({
                         <label className="block text-sm font-bold text-gray-600 mb-2">
                           Total Expédition
                         </label>
-                        <div className="px-4 py-3 bg-blue-600 text-white rounded-xl font-black text-lg shadow-inner flex items-center justify-center">
+                        <div className="px-4 py-3 bg-blue-600 text-white rounded-xl font-bold text-lg shadow-inner flex items-center justify-center">
                           {formatCurrency(mode.montant_expedition)}
                         </div>
                       </div>
@@ -464,7 +464,7 @@ const Addtarifgroupe = ({
           {/* GROUPAGE AFRIQUE */}
           {typeExpedition === 'GROUPAGE_AFRIQUE' && (
             <div className='pt-4 border-t border-gray-200'>
-              <h3 className="text-lg font-extrabold text-blue-700 mb-4">Paramètres Groupage Afrique</h3>
+              <h3 className="text-lg font-bold text-blue-700 mb-4">Paramètres Groupage Afrique</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
                 <div>
@@ -539,7 +539,7 @@ const Addtarifgroupe = ({
           {/* GROUPAGE CA (Classic Render) */}
           {typeExpedition === 'GROUPAGE_CA' && (
             <div className='pt-4 border-t border-gray-200'>
-              <h3 className="text-xl font-extrabold text-blue-700 mb-6">Paramètres d'expédition CA</h3>
+              <h3 className="text-xl font-bold text-blue-700 mb-6">Paramètres d'expédition CA</h3>
 
               <div className="space-y-8">
                 {formData.prix_modes.map((mode, index) => (

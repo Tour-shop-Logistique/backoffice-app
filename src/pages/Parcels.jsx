@@ -6,7 +6,7 @@ const Parcels = () => {
     <div className="animate-fade-in space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-surface-900 tracking-tight">
+          <h1 className="text-3xl font-bold text-surface-900 tracking-tight">
             Gestion des Colis
           </h1>
           <p className="text-surface-500 mt-1">Suivez et gérez l'ensemble des expéditions en cours.</p>

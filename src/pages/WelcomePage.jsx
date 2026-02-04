@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
-import { Truck, ShieldCheck, BarChart3, ArrowRight, LayoutDashboard } from "lucide-react";
+import {
+  ArrowRight,
+  LayoutDashboard,
+  Building2,
+  Lock,
+  ChevronRight,
+  ShieldCheck,
+  Globe
+} from "lucide-react";
 import Modal from "../components/common/Modal";
 import LoginForm from "../components/auth/LoginForm";
 import RegisterForm from "../components/auth/RegisterForm";
+
+import logo from "../assets/logo_transparent.png";
+import background from "../assets/background1.jpg";
 
 const WelcomePage = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -19,105 +30,102 @@ const WelcomePage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden font-sans">
-      {/* Background Texture - Minimalist */}
+    <div className="h-screen w-full bg-slate-900 flex flex-col font-sans overflow-hidden text-white selection:bg-blue-500/30">
+
+      {/* ─── BACKGROUND LAYER ─── */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 left-0 w-full h-full opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#0f172a 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+        <img
+          src={background}
+          alt=""
+          className="w-full h-full object-cover opacity-60"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/70 to-slate-900/90 md:bg-gradient-to-r md:from-slate-900/80 md:to-transparent"></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      {/* ─── MAIN CONTENT ─── */}
+      <div className="relative z-20 flex-1 flex flex-col md:flex-row items-center justify-center md:justify-between px-6 md:px-20 max-w-7xl mx-auto w-full gap-12 md:gap-24">
 
-        {/* Left Side: Professional Branding & Trust */}
-        <div className="space-y-8 py-12">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg shadow-slate-900/20">
-              <Truck className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                Tous Shop <span className="text-slate-500 font-medium">Logistique</span>
-              </h1>
-              <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Système de Gestion Backoffice</p>
-            </div>
+        {/* Left Side: Branding & Visuals (Desktop Focus) */}
+        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-8 md:space-y-12 max-w-xl">
+          <div>
+            <img src={logo} alt="Tour Shop Logo" className="w-full h-16 md:h-20 object-contain" />
           </div>
 
-          <div className="max-w-md space-y-4">
-            <h2 className="text-4xl font-extrabold text-slate-900 leading-tight">
-              L'excellence opérationnelle pour votre logistique.
-            </h2>
-            <p className="text-slate-500 text-lg leading-relaxed">
-              Une plateforme centralisée pour piloter vos flux, gérer vos agents et optimiser vos tarifs en temps réel.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
-            <div className="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-              <ShieldCheck className="w-5 h-5 text-slate-600 shrink-0" />
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Sécurisé</h3>
-                <p className="text-xs text-slate-500">Contrôle d'accès granulaire par rôle.</p>
-              </div>
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest">
+              Backoffice Tourshop
             </div>
-            <div className="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-              <BarChart3 className="w-5 h-5 text-slate-600 shrink-0" />
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Analytique</h3>
-                <p className="text-xs text-slate-500">Suivi des performances agence.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side: Action Card */}
-        <div className="flex justify-center lg:justify-end">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl shadow-slate-200 border border-slate-200 p-10 space-y-8 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-900"></div>
-
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-50 text-slate-600 border border-slate-200 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                <LayoutDashboard className="w-3 h-3" />
-                Accès Restreint
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900">Portail Opérationnel</h3>
-              <p className="text-sm text-slate-500">Identifiez-vous pour accéder à vos outils de gestion.</p>
+              <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
+                Pilotez vos <br />
+                <span className="text-blue-400">Opérations.</span>
+              </h1>
             </div>
-
-            <div className="space-y-4">
-              <button
-                onClick={openLogin}
-                className="w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg shadow-slate-900/10 hover:shadow-slate-900/20 active:scale-[0.98]"
-              >
-                <span>Accéder au Backoffice</span>
-                <ArrowRight className="w-5 h-5" />
-              </button>
-
-              <div className="flex items-center gap-4 py-2">
-                <div className="h-px bg-slate-100 flex-1"></div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ou</span>
-                <div className="h-px bg-slate-100 flex-1"></div>
-              </div>
-
-              <button
-                onClick={openRegister}
-                className="w-full bg-white border-2 border-slate-100 hover:border-slate-200 text-slate-700 font-bold py-3.5 px-8 rounded-xl transition-all text-sm"
-              >
-                Créer un nouveau compte agence
-              </button>
-            </div>
-
-            <p className="text-[10px] text-center text-slate-400 font-medium">
-              Besoin d'assistance ? <a href="#" className="underline hover:text-slate-600 transition-colors">Contactez le support technique</a>
+            <p className="text-sm md:text-lg text-slate-200 font-medium max-w-md hidden sm:block leading-relaxed">
+              Le centre de commande local pour la gestion des expéditions de votre pays, la supervision de votre réseau d'agences et l'optimisation des flux régionaux.
             </p>
           </div>
+
+          {/* Desktop Trust Badges */}
+          <div className="hidden md:flex items-center gap-8 opacity-60">
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={20} className="text-blue-400" />
+              <span className="text-xs font-bold uppercase tracking-widest">Sécurisé</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Globe size={20} className="text-blue-400" />
+              <span className="text-xs font-bold uppercase tracking-widest">Global Sync</span>
+            </div>
+          </div>
         </div>
+
+        {/* Right Side: Auth Actions Card */}
+        <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl space-y-6">
+          <div className="space-y-2 border-l-2 border-blue-500 pl-4">
+            <h3 className="text-xl font-bold text-white uppercase tracking-tight">Accès Portail</h3>
+            <p className="text-xs text-slate-400 font-medium uppercase tracking-widest">Console Admin v3.0</p>
+          </div>
+
+          <div className="space-y-4">
+            <button
+              onClick={openLogin}
+              className="w-full group bg-white text-slate-950 h-14 rounded-lg flex items-center px-6 justify-between transition-all hover:bg-blue-50 active:scale-[0.98] shadow-lg shadow-white/5"
+            >
+              <div className="flex items-center gap-3">
+                <Lock className="w-4 h-4 text-slate-900" />
+                <span className="text-sm font-bold uppercase tracking-wide">Se Connecter</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+            </button>
+
+            <button
+              onClick={openRegister}
+              className="w-full bg-slate-900/40 border border-white/10 h-14 rounded-lg flex items-center px-6 justify-between transition-all hover:bg-slate-800 active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3">
+                <Building2 className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-bold uppercase tracking-wide">Créer un Compte</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-white/20" />
+            </button>
+          </div>
+
+          <div className="pt-6 border-t border-white/10 flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+            <span>&copy; {new Date().getFullYear()} Tour Shop</span>
+            <div className="flex gap-4">
+              <a href="#" className="hover:text-blue-400 transition-colors">Contact</a>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      {/* Footer Minimalist */}
-      <footer className="absolute bottom-6 left-0 w-full text-center text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] pointer-events-none">
-        &copy; {new Date().getFullYear()} Tous Shop Logistique &bull; Système d'Information Propriétaire
+      {/* Footer Mobile (Only visible on small screens to avoid scroll) */}
+      <footer className="md:hidden relative z-20 pb-8 px-6 text-center text-[9px] font-bold text-slate-600 uppercase tracking-[0.3em]">
+        Tour Shop Logistique
       </footer>
 
-      {/* Modales */}
+      {/* Modals */}
       <Modal
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
@@ -141,6 +149,7 @@ const WelcomePage = () => {
           switchToLogin={openLogin}
         />
       </Modal>
+
     </div>
   );
 };

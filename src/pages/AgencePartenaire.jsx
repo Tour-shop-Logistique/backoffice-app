@@ -250,7 +250,7 @@ const AgencePartenaire = () => {
                   </p>
                   <p className="text-sm font-bold text-slate-900">{selectedAgence.adresse}</p>
                   <p className="text-xs text-slate-600 mt-1">{selectedAgence.commune}, {selectedAgence.ville}</p>
-                  <p className="text-[10px] text-slate-400 uppercase font-black mt-2 tracking-tighter">{selectedAgence.pays}</p>
+                  <p className="text-[10px] text-slate-400 uppercase font-bold mt-2 tracking-tighter">{selectedAgence.pays}</p>
                 </div>
                 <div className="p-5 bg-slate-50 rounded-xl border border-slate-100">
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">

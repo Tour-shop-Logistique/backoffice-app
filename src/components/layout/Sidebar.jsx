@@ -13,6 +13,8 @@ import {
   Menu
 } from "lucide-react";
 
+import logo from "../../assets/logo_transparent.png";
+
 const navigation = [
   { name: "Tableau de bord", href: "/app/dashboard", icon: Home },
   { name: "Agents", href: "/app/agents", icon: Users, adminOnly: true },
@@ -32,8 +34,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       {/* Header */}
       <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded bg-slate-800 flex items-center justify-center border border-slate-700">
-            <Box className="h-5 w-5 text-slate-100" />
+          <div className="w-10 h-10 rounded bg-white flex items-center justify-center border border-slate-700 p-1">
+            <img src={logo} alt="Tous Shop" className="w-full h-full object-contain" />
           </div>
           <span className="text-lg font-bold text-white tracking-tight">
             TousShop

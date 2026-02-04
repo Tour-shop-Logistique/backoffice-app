@@ -11,10 +11,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       host: true,
       open: true,
-      allowedHosts: [
-        'backoffice.nport.link',
-        'backoffice.loophole.site',
-      ],
+      allowedHosts: true,
       proxy: {
         '/api': {
           target: env.VITE_API_URL,

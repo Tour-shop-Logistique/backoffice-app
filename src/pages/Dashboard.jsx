@@ -27,7 +27,7 @@ const Dashboard = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-surface-900 tracking-tight">Tableau de Bord</h1>
+          <h1 className="text-3xl font-bold text-surface-900 tracking-tight">Tableau de Bord</h1>
           <p className="text-surface-500 mt-1">Bienvenue , voici le résumé de vos activités aujourd'hui.</p>
         </div>
         <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-xl border border-surface-200 shadow-sm text-surface-600">

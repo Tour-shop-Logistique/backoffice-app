@@ -122,7 +122,7 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
       </div>
 
       <div className="flex items-center justify-between px-2 pt-4">
-        <h3 className="text-xl font-black text-gray-900 flex items-center gap-2 tracking-tight">
+        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 tracking-tight">
           <MapPin className="text-indigo-600" size={22} />
           Configuration par Zone
         </h3>
