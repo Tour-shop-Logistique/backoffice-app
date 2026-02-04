@@ -48,6 +48,7 @@ const SettingsModal = ({ closeModal }) => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [gpsSuccess, setGpsSuccess] = useState(false);
 
   useEffect(() => {
     if (config) {
@@ -57,11 +58,14 @@ const SettingsModal = ({ closeModal }) => {
   }, [config]);
 
   const getLocation = () => {
+    setGpsSuccess(false);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setFormData((prev) => ({ ...prev, localisation: `${latitude},${longitude}` }));
+          setGpsSuccess(true);
+          setTimeout(() => setGpsSuccess(false), 3000);
         },
         (err) => {
           setError("Impossible de récupérer la localisation. Veuillez l'entrer manuellement.");
@@ -102,187 +106,222 @@ const SettingsModal = ({ closeModal }) => {
 
   if (isLoading) {
     return (
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl mx-auto flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 border-4 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
-        <p className="text-surface-600 font-medium">Chargement des paramètres...</p>
+      <div className="bg-white p-12 rounded-lg shadow-xl w-full max-w-lg mx-auto flex flex-col items-center justify-center space-y-4">
+        <div className="w-10 h-10 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin"></div>
+        <p className="text-slate-500 font-medium">Chargement des paramètres...</p>
       </div>
     );
   }
 
+  const inputBase = "w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-sm font-medium text-slate-700";
+  const sectionTitle = "text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2";
+  const microCopy = "text-[10px] text-slate-400 mb-4 font-medium italic";
+
   return (
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-auto overflow-hidden animate-in zoom-in-95 duration-200">
-      {/* Header */}
-      <div className="px-8 py-3 border-b border-surface-100 flex items-center justify-between bg-surface-50">
+    <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-auto overflow-hidden flex flex-col max-h-[90vh]">
+      {/* Header cleanup: smaller, cleaner */}
+      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
         <div>
-          <h2 className="text-xl font-bold text-surface-900">Paramètres de l'Agence</h2>
-          <p className="text-sm text-surface-500 mt-1">Configurez les informations de votre organisation</p>
+          <h2 className="text-lg font-bold text-slate-900">Configuration de l'Agence</h2>
+          <p className="text-xs text-slate-500">Mettez à jour les informations légales et opérationnelles.</p>
         </div>
         <button
           onClick={closeModal}
-          className="p-2 text-surface-400 hover:text-surface-600 hover:bg-surface-200 rounded-lg transition-all"
+          className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
         >
           <X className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="px-8 py-5">
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center space-x-3 mb-6" role="alert">
-            <span className="text-red-500">⚠️</span>
-            <p className="text-sm font-medium">{error}</p>
-          </div>
-        )}
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+        <div className="px-8 py-6 space-y-8 overflow-y-auto custom-scrollbar">
+          {error && (
+            <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-lg flex items-center gap-3" role="alert">
+              <span className="text-sm font-bold">L'opération a échoué :</span>
+              <p className="text-xs">{error}</p>
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-surface-700 ml-1">Nom de l'organisation</label>
-              <div className="relative">
-                <Building className="absolute left-3 top-2.5 h-4.5 w-4.5 text-surface-400" />
+          {/* Section 1: Identité */}
+          <section>
+            <h3 className={sectionTitle}>
+              <Building size={14} />
+              Identité de l'agence
+            </h3>
+            <p className={microCopy}>Ces informations apparaîtront sur vos factures et documents officiels.</p>
+
+            <div className="space-y-5">
+              {/* Highlight prioritized field */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-700 ml-1 uppercase tracking-wide">Nom de l'organisation <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <Building className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    name="nom_organisation"
+                    value={formData.nom_organisation}
+                    onChange={handleChange}
+                    placeholder="Ex: TousShop International Services"
+                    className={`${inputBase} pl-10 text-base font-bold bg-white border-slate-300 py-3 shadow-sm`}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-700 ml-1 uppercase tracking-wide">Email Professionnel <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="contact@tousshop.com"
+                      className={`${inputBase} pl-10`}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-700 ml-1 uppercase tracking-wide">Ligne Téléphonique <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      name="telephone"
+                      value={formData.telephone}
+                      onChange={handleChange}
+                      placeholder="+224 6XX XX XX XX"
+                      className={`${inputBase} pl-10`}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 2: Localisation */}
+          <section>
+            <h3 className={sectionTitle}>
+              <MapPin size={14} />
+              Localisation & Siège social
+            </h3>
+            <p className={microCopy}>Précisez l'emplacement physique de votre agence principale.</p>
+
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-700 ml-1 uppercase tracking-wide">Pays <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                    <select
+                      name="pays"
+                      value={formData.pays}
+                      onChange={handleChange}
+                      className={`${inputBase} pl-10 appearance-none cursor-pointer`}
+                      required
+                    >
+                      <option value="">Sélectionner</option>
+                      {countryList.map((country) => (
+                        <option key={country} value={country}>{country}</option>
+                      ))}
+                    </select>
+                    <LucideChevronDown className="absolute right-3 top-3 h-4 w-4 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+                <div className="space-y-1.5 md:col-span-1">
+                  <label className="text-[11px] font-bold text-slate-700 ml-1 uppercase tracking-wide">Ville <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    name="ville"
+                    value={formData.ville}
+                    onChange={handleChange}
+                    placeholder="Ex: Conakry"
+                    className={inputBase}
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-700 ml-1 uppercase tracking-wide">Commune</label>
+                  <input
+                    type="text"
+                    name="commune"
+                    value={formData.commune}
+                    onChange={handleChange}
+                    placeholder="Ex: Kaloum"
+                    className={inputBase}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-700 ml-1 uppercase tracking-wide">Adresse précises (Rue/Quartier) <span className="text-red-500">*</span></label>
                 <input
                   type="text"
-                  name="nom_organisation"
-                  value={formData.nom_organisation}
+                  name="adresse"
+                  value={formData.adresse}
                   onChange={handleChange}
-                  placeholder="Ex: Ma Super Agence"
-                  className="w-full pl-10 pr-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all placeholder:text-surface-400"
+                  placeholder="Ex: Rue KA 002, Secteur 4..."
+                  className={inputBase}
                   required
                 />
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-surface-700 ml-1">Téléphone</label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-2.5 h-4.5 w-4.5 text-surface-400" />
-                <input
-                  type="text"
-                  name="telephone"
-                  value={formData.telephone}
-                  onChange={handleChange}
-                  placeholder="+224 6XX XX XX XX"
-                  className="w-full pl-10 pr-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all"
-                  required
-                />
+
+              {/* GPS with UX feedback */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-700 ml-1 uppercase tracking-wide flex justify-between">
+                  Coordonnées GPS
+                  {gpsSuccess && <span className="text-green-600 animate-pulse flex items-center gap-1 font-bold text-[9px] uppercase"><MapPin size={10} /> Position capturée !</span>}
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      name="localisation"
+                      value={formData.localisation}
+                      onChange={handleChange}
+                      placeholder="Latitude, Longitude"
+                      className={`${inputBase} pl-10 font-mono text-xs`}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={getLocation}
+                    className={`px-4 py-2 text-xs font-bold rounded-lg transition-all border whitespace-nowrap ${gpsSuccess ? 'bg-green-600 border-green-600 text-white' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-900 hover:text-white hover:border-slate-900'}`}
+                  >
+                    Auto-détection
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </section>
+        </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-surface-700 ml-1">Localisation GPS</label>
-            <div className="flex items-center space-x-3">
-              <div className="relative flex-1">
-                <MapPin className="absolute left-3 top-2.5 h-4.5 w-4.5 text-surface-400" />
-                <input
-                  type="text"
-                  name="localisation"
-                  value={formData.localisation}
-                  onChange={handleChange}
-                  placeholder="Latitude, Longitude"
-                  className="w-full pl-10 pr-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={getLocation}
-                className="px-4 py-2.5 bg-primary-50 text-primary-600 font-semibold rounded-xl hover:bg-primary-100 transition-all border border-primary-200 whitespace-nowrap"
-              >
-                Ma position
-              </button>
-            </div>
-          </div>
+        {/* Sticky Footer */}
+        <div className="px-8 py-5 border-t border-slate-100 bg-slate-50 flex items-center justify-between shrink-0">
+          <button
+            type="button"
+            onClick={closeModal}
+            className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest"
+          >
+            Annuler les changements
+          </button>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-surface-700 ml-1">Adresse complète</label>
-            <input
-              type="text"
-              name="adresse"
-              value={formData.adresse}
-              onChange={handleChange}
-              placeholder="Rue, Quartier, Secteur..."
-              className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-surface-700 ml-1">Ville</label>
-              <input
-                type="text"
-                name="ville"
-                value={formData.ville}
-                onChange={handleChange}
-                placeholder="Ville"
-                className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all"
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-surface-700 ml-1">Commune</label>
-              <input
-                type="text"
-                name="commune"
-                value={formData.commune}
-                onChange={handleChange}
-                placeholder="Commune"
-                className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-surface-700 ml-1">Pays</label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-2.5 h-4.5 w-4.5 text-surface-400 pointer-events-none" />
-                <select
-                  name="pays"
-                  value={formData.pays}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all appearance-none cursor-pointer"
-                  required
-                >
-                  <option value="">Sélectionner</option>
-                  {countryList.map((country) => (
-                    <option key={country} value={country}>{country}</option>
-                  ))}
-                </select>
-                <LucideChevronDown className="absolute right-3 top-3 h-4 w-4 text-surface-400 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-surface-700 ml-1">Email de contact</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-2.5 h-4.5 w-4.5 text-surface-400" />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="contact@agence.com"
-                className="w-full pl-10 pr-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-4 pt-4 border-t border-surface-100">
-            <button
-              type="button"
-              onClick={closeModal}
-              className="px-6 py-2.5 text-surface-600 font-semibold hover:bg-surface-100 rounded-xl transition-all"
-            >
-              Plus tard
-            </button>
+          <div className="flex gap-3">
             <button
               type="submit"
               disabled={isLoading}
-              className="px-8 py-2.5 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest shadow-lg shadow-slate-900/10"
             >
-              {isLoading ? 'Enregistrement...' : 'Sauvegarder les paramètres'}
+              {isLoading ? 'Enregistrement...' : 'Valider la configuration'}
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 };

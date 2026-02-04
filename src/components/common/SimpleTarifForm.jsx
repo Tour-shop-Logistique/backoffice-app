@@ -85,8 +85,8 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
     e.preventDefault();
     const submissionData = {
       indice: Number(formData.indice),
-      type_expedition: 'simple',
-      prix_zones: formData.prix_zones.map(pz => ({
+      zones: formData.prix_zones.map(pz => ({
+        id: pz.id, // optional for edit
         zone_destination_id: pz.zone_destination_id,
         montant_base: Number(pz.montant_base),
         pourcentage_prestation: Number(pz.pourcentage_prestation),
@@ -95,20 +95,17 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
     onSubmit(submissionData);
   };
 
-  const inputClasses = "w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 font-medium text-gray-700";
-  const labelClasses = "block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 ml-1";
+  const inputClasses = "w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-gray-400 text-sm font-medium text-gray-700";
+  const labelClasses = "block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in relative pb-8">
+    <form onSubmit={handleSubmit} className="space-y-6 relative pb-8">
       {/* Indice Section */}
-      <div className="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100/50 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-8 transform translate-x-4 -translate-y-4 opacity-5 group-hover:opacity-10 transition-opacity">
-          <Info size={120} />
-        </div>
+      <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 relative overflow-hidden">
         <div className="relative">
           <label className={labelClasses}>Indice de Tarification</label>
           <div className="relative">
-            <Calculator className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400" size={20} />
+            <Calculator className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
               type="number"
               value={formData.indice}
@@ -120,7 +117,7 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
               required
             />
           </div>
-          <p className="text-[10px] font-bold text-indigo-400 mt-2 px-1 uppercase tracking-wider">L'indice permet d'identifier cette grille tarifaire spécifique.</p>
+          <p className="text-[10px] font-bold text-slate-400 mt-2 px-1 uppercase tracking-wider">L'indice permet d'identifier cette grille tarifaire spécifique.</p>
         </div>
       </div>
 
@@ -137,7 +134,7 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
         {formData.prix_zones.map((pz, index) => (
           <div
             key={index}
-            className="group relative bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-100 transition-all duration-300"
+            className="group relative bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all"
           >
             {/* Remove button */}
             {formData.prix_zones.length > 1 && (
@@ -211,13 +208,13 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
 
               {/* Results row (auto-calculated) */}
               <div className="md:col-span-12 grid grid-cols-2 gap-4 mt-2">
-                <div className="p-4 bg-gray-50 rounded-2xl flex items-center justify-between border border-dashed border-gray-200">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Montant Prestation</span>
+                <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between border border-gray-200">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Montant Prestation</span>
                   <span className="text-sm font-bold text-gray-600">{parseFloat(pz.montant_prestation).toLocaleString()} <span className="text-[10px]">FCFA</span></span>
                 </div>
-                <div className="p-4 bg-indigo-50 rounded-2xl flex items-center justify-between border border-indigo-100">
-                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Total Expédition</span>
-                  <span className="text-base font-black text-indigo-700">{parseFloat(pz.montant_expedition).toLocaleString()} <span className="text-[10px]">FCFA</span></span>
+                <div className="p-3 bg-slate-50 rounded-lg flex items-center justify-between border border-slate-200">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Expédition</span>
+                  <span className="text-sm font-bold text-slate-900">{parseFloat(pz.montant_expedition).toLocaleString()} <span className="text-[10px]">FCFA</span></span>
                 </div>
               </div>
             </div>
@@ -230,42 +227,42 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
         <button
           type="button"
           onClick={handleAddPrixZone}
-          className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-dashed border-indigo-200 text-indigo-600 rounded-2xl font-bold hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group w-full justify-center"
+          className="flex items-center gap-2 px-6 py-3 bg-white border border-dashed border-slate-300 text-slate-600 rounded-lg font-semibold hover:border-slate-400 hover:bg-slate-50 transition-colors w-full justify-center text-sm"
         >
-          <Plus size={20} className="group-hover:scale-125 transition-transform" />
+          <Plus size={18} />
           Ajouter une autre zone de destination
         </button>
       </div>
 
       {/* Footer Form Actions */}
-      <div className="pt-8 border-t border-gray-100 flex flex-col sm:flex-row gap-4">
+      <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
         <button
           type="button"
           onClick={onCancel}
-          className="order-2 sm:order-1 flex-1 px-8 py-4 text-sm font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-2xl transition-all"
+          className="order-2 sm:order-1 flex-1 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
         >
           Annuler
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="order-1 sm:order-2 flex-1 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+          className="order-1 sm:order-2 flex-1 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 text-xs"
         >
           {isLoading ? (
-            <Loader2 className="animate-spin" size={20} />
+            <Loader2 className="animate-spin" size={16} />
           ) : (
             <>
-              <Save size={20} />
-              {initialData ? 'Mettre à jour le tarif' : 'Enregistrer le tarif'}
+              <Save size={16} />
+              {initialData ? 'Mettre à jour' : 'Enregistrer'}
             </>
           )}
         </button>
       </div>
 
       {/* Warning Note */}
-      <div className="mt-6 flex gap-3 p-4 bg-orange-50 rounded-2xl border border-orange-100">
-        <AlertCircle className="text-orange-400 shrink-0" size={18} />
-        <p className="text-[10px] leading-relaxed font-bold text-orange-700 uppercase tracking-wider">
+      <div className="mt-6 flex gap-3 p-4 bg-amber-50 rounded-lg border border-amber-100">
+        <AlertCircle className="text-amber-500 shrink-0" size={16} />
+        <p className="text-[10px] leading-relaxed font-bold text-amber-700 uppercase tracking-wider">
           Vérifiez bien vos montants avant d'enregistrer. L'expédition totale est calculée automatiquement par : (Montant Base + (Montant Base * Pourcentage))
         </p>
       </div>

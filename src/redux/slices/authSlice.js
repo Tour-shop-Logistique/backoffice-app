@@ -43,7 +43,6 @@ export const performLogout = createAsyncThunk('auth/performLogout', async (_, { 
   } finally {
     dispatch(authSlice.actions.logout());
     dispatch(resetBackoffice());
-    // On force un rechargement complet de la page pour vider tous les stores Redux
     window.location.href = '/';
   }
 });
@@ -53,7 +52,6 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout: (state) => {
-      // Nettoyage de l'état local
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
@@ -61,7 +59,6 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Login
       .addCase(login.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -83,7 +80,6 @@ const authSlice = createSlice({
       })
       .addCase(register.fulfilled, (state) => {
         state.isLoading = false;
-        // Vous pouvez choisir de connecter l'utilisateur automatiquement après l'inscription ou non
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;

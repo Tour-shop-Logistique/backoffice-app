@@ -34,16 +34,21 @@ const LoginForm = ({ onSuccess, switchToRegister }) => {
 
     return (
         <div className="space-y-6">
+            <div className="space-y-1">
+                <p className="text-sm text-slate-500 font-medium">Bon retour parmi nous. Veuillez saisir vos identifiants opérationnels.</p>
+            </div>
+
             {error && (
-                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg">
-                    {error.message || 'Erreur de connexion'}
+                <div className="p-4 text-xs font-bold text-red-600 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0"></span>
+                    {error.message || 'Identifiants invalides ou erreur serveur.'}
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Téléphone
+            <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-1.5">
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider ml-1">
+                        Numéro de téléphone
                     </label>
                     <input
                         name="telephone"
@@ -51,22 +56,27 @@ const LoginForm = ({ onSuccess, switchToRegister }) => {
                         required
                         value={formData.telephone}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-sm font-medium text-slate-700"
                         placeholder="Ex: 0102030405"
                     />
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Mot de passe
-                    </label>
+                <div className="space-y-1.5">
+                    <div className="flex items-center justify-between ml-1">
+                        <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                            Mot de passe
+                        </label>
+                        <button type="button" className="text-[10px] font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">
+                            Oublié ?
+                        </button>
+                    </div>
                     <input
                         name="password"
                         type="password"
                         required
                         value={formData.password}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-sm font-medium text-slate-700"
                         placeholder="••••••••"
                     />
                 </div>
@@ -74,27 +84,29 @@ const LoginForm = ({ onSuccess, switchToRegister }) => {
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
                 >
                     {isLoading ? (
                         <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            <span>Connexion...</span>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Authentification...</span>
                         </>
                     ) : (
-                        'Se connecter'
+                        'Ouvrir la session'
                     )}
                 </button>
             </form>
 
-            <div className="text-center text-sm text-gray-500">
-                Pas encore de compte ?{' '}
-                <button
-                    onClick={switchToRegister}
-                    className="text-blue-600 font-medium hover:underline focus:outline-none"
-                >
-                    Créer un compte
-                </button>
+            <div className="pt-4 border-t border-slate-100 text-center">
+                <p className="text-xs font-medium text-slate-500">
+                    Première connexion ?{' '}
+                    <button
+                        onClick={switchToRegister}
+                        className="text-slate-900 font-bold hover:underline focus:outline-none"
+                    >
+                        Enregistrer une nouvelle agence
+                    </button>
+                </p>
             </div>
         </div>
     );

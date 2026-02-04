@@ -33,25 +33,27 @@ const Modal = ({ isOpen, onClose, title, children, size = 'lg' }) => {
           >
             {/* Modal Content */}
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              initial={{ scale: 0.98, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              exit={{ scale: 0.98, opacity: 0, y: 10 }}
               onClick={(e) => e.stopPropagation()}
-              className={`relative w-full ${sizeClasses[size] || sizeClasses['lg']} bg-white rounded-2xl shadow-2xl overflow-hidden`}
+              className={`relative w-full ${sizeClasses[size] || sizeClasses['lg']} bg-white rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden border border-slate-200`}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+              <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 bg-slate-50/50">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 leading-none">{title}</h3>
+                </div>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-200/50 transition-all"
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Body */}
-              <div className="p-6 max-h-[80vh] overflow-y-auto">
+              <div className="p-8 max-h-[85vh] overflow-y-auto custom-scrollbar">
                 {children}
               </div>
             </motion.div>

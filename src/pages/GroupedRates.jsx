@@ -226,146 +226,141 @@ const GroupedRates = () => {
 
   // --- COMPOSANT PRINCIPAL ---
   return (
-    <div className="animate-fade-in space-y-6 pb-20 md:pb-0">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-1" >
-          <h1 className="text-3xl md:text-4xl font-extrabold text-surface-900 tracking-tight bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
-            Tarification Groupée
+    <div className="animate-fade-in space-y-6 pb-20 md:pb-8">
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="max-w-2xl">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Tarifs de Groupage
           </h1>
-          <p className="text-surface-500 font-medium">Gérez vos tarifs d'expédition par catégorie et destination.</p>
+          <p className="text-slate-500 text-sm mt-1 leading-relaxed">
+            Configurez les grilles tarifaires pour les expéditions groupées. Ces tarifs sont appliqués en fonction de la catégorie de marchandise et de la ligne logistique choisie.
+          </p>
         </div>
         <button
           onClick={() => openModal()}
-          className="btn-primary"
+          className="inline-flex items-center justify-center px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 transition-all shadow-sm shrink-0"
         >
-          <Plus className="h-5 w-5 mr-2" />
+          <Plus className="h-4 w-4 mr-2" />
           <span>Nouveau Tarif</span>
         </button>
       </div>
 
-      {/* Barre de recherche et filtres */}
-      <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-2xl border border-surface-200 shadow-sm">
+      {/* Barre de recherche et filtres - Slate Design */}
+      <div className="flex flex-col md:flex-row gap-3 items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
         <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-surface-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Rechercher par catégorie ou pays..."
+            placeholder="Rechercher par catégorie, pays ou ligne..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all"
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-slate-900 focus:border-slate-900 outline-none transition-all"
           />
         </div>
 
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <Filter className="h-5 w-5 text-surface-400 shrink-0" />
           <select
             value={activeType}
             onChange={(e) => setActiveType(e.target.value)}
-            className="flex-1 md:flex-none py-2.5 px-4 bg-surface-50 border border-surface-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all font-medium text-surface-700"
+            className="flex-1 md:flex-none py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-slate-900 outline-none transition-all font-medium text-slate-700"
           >
-            <option value="all">Tous les types</option>
+            <option value="all">Toutes les catégories</option>
             <option value="GROUPAGE_DHD_AERIEN">DHD Aérien</option>
             <option value="GROUPAGE_DHD_MARITIME">DHD Maritime</option>
             <option value="GROUPAGE_CA">Colis Accompagné</option>
             <option value="GROUPAGE_AFRIQUE">Afrique</option>
           </select>
-        </div>
 
-        <div className="hidden md:flex items-center gap-1 bg-surface-100 p-1 rounded-xl">
-          <button
-            onClick={() => setViewMode("table")}
-            className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-white text-primary-600 shadow-sm" : "text-surface-500 hover:text-surface-700"}`}
-          >
-            <List className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setViewMode("grid")}
-            className={`p-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-white text-primary-600 shadow-sm" : "text-surface-500 hover:text-surface-700"}`}
-          >
-            <LayoutGrid className="h-5 w-5" />
-          </button>
+          <div className="hidden md:flex items-center border border-slate-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-2 transition-colors ${viewMode === "table" ? "bg-slate-100 text-slate-900" : "bg-white text-slate-400 hover:text-slate-600"}`}
+              title="Vue Table"
+            >
+              <List className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-2 transition-colors ${viewMode === "grid" ? "bg-slate-100 text-slate-900" : "bg-white text-slate-400 hover:text-slate-600"}`}
+              title="Vue Grille"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Vue Table (Desktop) */}
-      <div className={`hidden ${viewMode === "table" ? "md:block" : ""} bg-white rounded-2xl shadow-sm border border-surface-200 overflow-hidden`}>
+      <div className={`hidden ${viewMode === "table" ? "md:block" : ""} bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden`}>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-surface-200">
-            <thead className="bg-surface-50">
+          <table className="min-w-full divide-y divide-slate-100">
+            <thead className="bg-slate-50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-surface-500 uppercase tracking-widest">Catégorie</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-surface-500 uppercase tracking-widest">Destination</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-surface-500 uppercase tracking-widest">Tarif Min.</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-surface-500 uppercase tracking-widest">Modes & Tarifs</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-surface-500 uppercase tracking-widest">Statut</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-surface-500 uppercase tracking-widest">Actions</th>
+                <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Marchandise / Catégorie</th>
+                <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Destination / Ligne</th>
+                <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Base Min.</th>
+                <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Modes Actifs</th>
+                <th className="px-6 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">Statut</th>
+                <th className="px-6 py-3 text-right text-[10px] font-bold text-slate-500 uppercase tracking-widest">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-surface-100">
+            <tbody className="divide-y divide-slate-50">
               {Object.entries(groupedByType).map(([type, tarifs], groupIndex) => (
                 <React.Fragment key={`${type}-${groupIndex}`}>
-                  <tr className="bg-primary-50/30">
-                    <td colSpan="6" className="px-6 py-3">
-                      <div className="flex items-center gap-2 text-primary-700">
+                  <tr className="bg-slate-50/50">
+                    <td colSpan="6" className="px-6 py-2">
+                      <div className="flex items-center gap-2 text-slate-500">
                         {getTypeIcon(type)}
-                        <span className="font-bold text-xs uppercase tracking-widest">
+                        <span className="font-bold text-[10px] uppercase tracking-widest">
                           {type.replace(/_/g, ' ')}
                         </span>
-                        <div className="h-px flex-1 bg-primary-100 ml-4"></div>
                       </div>
                     </td>
                   </tr>
 
                   {tarifs.map(tarif => (
-                    <tr key={tarif.id} className="group hover:bg-surface-50 transition-colors duration-200">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-bold text-surface-900 flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${tarif.category ? 'bg-primary-500' : 'bg-surface-300'}`}></div>
+                    <tr key={tarif.id} className="group hover:bg-slate-50 transition-colors duration-150">
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-semibold text-slate-900">
                           {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
                         </div>
+                        <div className="text-[10px] text-slate-400 font-medium uppercase mt-0.5">ID: {tarif.id.substring(0, 8)}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 text-sm text-surface-600 font-medium">
-                          <Globe className="h-4 w-4 text-surface-400" />
+                        <div className="flex items-center gap-1.5 text-sm text-slate-600 font-medium">
                           {tarif.type_expedition?.includes('dhd') ? (
-                            <span className="text-primary-600 font-bold">{tarif.ligne || 'Ligne non définie'}</span>
+                            <span className="font-bold text-slate-900">{tarif.ligne || 'Ligne'}</span>
                           ) : (
-                            <span className="truncate max-w-[150px]">{tarif.pays || (tarif.type_expedition === 'groupage_ca' ? 'Toutes destinations' : '-')}</span>
+                            <span className="truncate max-w-[200px]">{tarif.pays || 'Toutes destinations'}</span>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm font-extrabold text-primary-600 px-2.5 py-1 rounded-lg bg-primary-50 border border-primary-100">
+                        <span className="text-sm font-bold text-slate-900 underline underline-offset-4 decoration-slate-200">
                           {formatCurrency(tarif.tarif_minimum || tarif.montant_base || tarif.prix_unitaire)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          {tarif.prix_modes ? tarif.prix_modes.map((m, idx) => (
-                            <div key={`${m.mode || 'mode'}-${idx}`} className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-lg border border-surface-200 shadow-sm hover:border-primary-200 transition-all">
-                              <div className="p-1 bg-surface-50 rounded-md text-surface-500">
-                                {getModeIcon(m.mode)}
+                        <div className="flex items-center gap-2">
+                          {tarif.prix_modes ? (
+                            <>
+                              <div className="flex -space-x-1">
+                                {tarif.prix_modes.map((m, idx) => (
+                                  <div key={idx} className="p-1 bg-white border border-slate-200 rounded text-slate-500" title={m.mode}>
+                                    {getModeIcon(m.mode)}
+                                  </div>
+                                ))}
                               </div>
-                              <div className="flex flex-col">
-                                <span className="text-[9px] uppercase font-bold text-surface-400 leading-none">{m.mode}</span>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[11px] font-extrabold text-surface-700">{formatCurrency(m.montant_expedition)}</span>
-                                  <span className="text-[9px] font-bold text-primary-600 bg-primary-50 px-1 rounded">+{m.pourcentage_prestation}%</span>
-                                </div>
-                              </div>
-                            </div>
-                          )) : (
-                            <div className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-lg border border-surface-200 shadow-sm hover:border-primary-200 transition-all">
-                              <div className="p-1 bg-surface-50 rounded-md text-surface-500">
+                              <span className="text-xs font-medium text-slate-500">
+                                {tarif.prix_modes.length} mode{tarif.prix_modes.length > 1 ? 's' : ''}
+                              </span>
+                            </>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <div className="p-1 bg-white border border-slate-200 rounded text-slate-500">
                                 {getModeIcon(tarif.mode || '')}
                               </div>
-                              <div className="flex flex-col">
-                                <span className="text-[9px] uppercase font-bold text-surface-400 leading-none">{tarif.mode}</span>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[11px] font-extrabold text-surface-700">{formatCurrency(tarif.montant_expedition || (tarif.montant_base * (1 + tarif.pourcentage_prestation / 100)))}</span>
-                                  <span className="text-[9px] font-bold text-primary-600 bg-primary-50 px-1 rounded">+{tarif.pourcentage_prestation}%</span>
-                                </div>
-                              </div>
+                              <span className="text-xs font-medium text-slate-500 uppercase">{tarif.mode}</span>
                             </div>
                           )}
                         </div>
@@ -373,31 +368,45 @@ const GroupedRates = () => {
                       <td className="px-6 py-4 text-center">
                         <button
                           onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter transition-all duration-200
-                            ${tarif.actif
-                              ? 'bg-green-100 text-green-700 border border-green-200'
-                              : 'bg-red-100 text-red-700 border border-red-200'}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold transition-all
+                            ${tarif.actif ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}
                         >
-                          <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${tarif.actif ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
-                          {tarif.actif ? 'Actif' : 'Inactif'}
+                          <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${tarif.actif ? 'bg-green-500' : 'bg-slate-400'}`} />
+                          {tarif.actif ? 'ACTIF' : 'INACTIF'}
                         </button>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => openModal(tarif)}
-                            className="p-2 text-surface-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-md transition-all"
                             title="Modifier"
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
-                          <button
-                            onClick={() => handleDelete(tarif.id)}
-                            className="p-2 text-surface-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                            title="Supprimer"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </button>
+
+                          {/* Menu vertical pour les actions secondaires */}
+                          <div className="relative group/menu">
+                            <button className="p-1.5 text-slate-400 hover:text-slate-900 rounded-md">
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                            <div className="absolute right-0 top-full mt-1 hidden group-hover/menu:block bg-white border border-slate-200 rounded-lg shadow-xl z-10 w-40 overflow-hidden">
+                              <button
+                                onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
+                                className="w-full text-left px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                              >
+                                {tarif.actif ? <ToggleLeft size={14} /> : <ToggleRight size={14} />}
+                                {tarif.actif ? 'Désactiver' : 'Activer'}
+                              </button>
+                              <button
+                                onClick={() => handleDelete(tarif.id)}
+                                className="w-full text-left px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-100"
+                              >
+                                <Trash size={14} />
+                                Supprimer
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -409,79 +418,40 @@ const GroupedRates = () => {
         </div>
       </div>
 
-      {/* Vue Mobile / Grid */}
+      {/* Vue Mobile / Grid - Simplifiée */}
       <div className={`grid gap-4 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "md:hidden"}`}>
         {filteredTarifs.map((tarif) => (
-          <div key={tarif.id} className="card relative p-5 space-y-4">
+          <div key={tarif.id} className="bg-white rounded-xl border border-slate-200 p-4 space-y-4 hover:border-slate-300 transition-all shadow-sm">
             <div className="flex justify-between items-start">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary-50 rounded-xl text-primary-600 shadow-sm border border-primary-100">
-                  {getTypeIcon(tarif.type_expedition || "")}
-                </div>
-                <div>
-                  <h3 className="font-bold text-surface-900 leading-tight">
-                    {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
-                  </h3>
-                  <div className="flex items-center gap-1 text-[11px] text-surface-500 font-medium">
-                    <Globe className="h-3 w-3" />
-                    {tarif.type_expedition?.includes('dhd') ? tarif.ligne : (tarif.pays || 'Toutes destinations')}
-                  </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">
+                  {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
+                </h3>
+                <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium lowercase">
+                  <Globe className="h-3 w-3" />
+                  {tarif.type_expedition?.includes('dhd') ? tarif.ligne : (tarif.pays || 'tous pays')}
                 </div>
               </div>
-              <button
-                onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
-                className={`w-2.5 h-2.5 rounded-full shadow-sm ${tarif.actif ? "bg-green-500" : "bg-red-500"}`}
-              />
+              <div className={`w-2 h-2 rounded-full ${tarif.actif ? "bg-green-500" : "bg-slate-300"}`} />
             </div>
 
-            <div className="flex items-baseline justify-between py-2 border-y border-surface-100 border-dashed">
-              <span className="text-xs font-semibold text-surface-400">Tarif Base / Min.</span>
-              <span className="text-lg font-black text-primary-600">
+            <div className="flex items-baseline justify-between py-2 border-y border-slate-50">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tarif Min.</span>
+              <span className="text-base font-bold text-slate-900">
                 {formatCurrency(tarif.tarif_minimum || tarif.montant_base || tarif.prix_unitaire)}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 gap-2">
-              {tarif.prix_modes ? tarif.prix_modes.map((m, idx) => (
-                <div key={`${m.mode || 'mode'}-${idx}`} className="p-2 bg-surface-50 rounded-xl border border-surface-100 flex flex-col gap-1">
-                  <div className="flex items-center justify-between text-[9px] font-black text-surface-400 uppercase tracking-tighter">
-                    {m.mode}
-                    {getModeIcon(m.mode)}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-black text-surface-800">{formatCurrency(m.montant_expedition)}</div>
-                    <div className="text-[10px] font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">+{m.pourcentage_prestation}%</div>
-                  </div>
-                </div>
-              )) : (
-                <div className="p-2 bg-surface-50 rounded-xl border border-surface-100 flex flex-col gap-1">
-                  <div className="flex items-center justify-between text-[9px] font-black text-surface-400 uppercase tracking-tighter">
-                    {tarif.mode}
-                    {getModeIcon(tarif.mode || '')}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-black text-surface-800">
-                      {formatCurrency(tarif.montant_expedition || (tarif.montant_base * (1 + tarif.pourcentage_prestation / 100)))}
-                    </div>
-                    <div className="text-[10px] font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">+{tarif.pourcentage_prestation}%</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <div className="text-[10px] font-medium text-slate-400">
+                {tarif.prix_modes ? `${tarif.prix_modes.length} modes actifs` : '1 mode'}
+              </div>
               <button
                 onClick={() => openModal(tarif)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-surface-50 hover:bg-primary-50 border border-surface-200 hover:border-primary-200 text-surface-600 hover:text-primary-600 rounded-xl font-bold text-xs transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold transition-all"
               >
-                <Pencil className="h-3.5 w-3.5" />
+                <Pencil className="h-3 w-3" />
                 Modifier
-              </button>
-              <button
-                onClick={() => handleDelete(tarif.id)}
-                className="flex items-center justify-center p-2.5 bg-surface-50 hover:bg-red-50 border border-surface-200 hover:border-red-200 text-surface-400 hover:text-red-500 rounded-xl transition-all"
-              >
-                <Trash className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
@@ -489,18 +459,10 @@ const GroupedRates = () => {
       </div>
 
       {filteredTarifs.length === 0 && !isLoading && (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-surface-300">
-          <div className="w-16 h-16 bg-surface-100 rounded-full flex items-center justify-center mb-4">
-            <Search className="h-8 w-8 text-surface-400" />
-          </div>
-          <h3 className="text-lg font-bold text-surface-900">Aucun tarif trouvé</h3>
-          <p className="text-surface-500">Essayez de modifier vos critères de recherche.</p>
-          <button
-            onClick={() => { setSearchTerm(""); setActiveType("all"); }}
-            className="mt-4 text-primary-600 font-bold hover:underline"
-          >
-            Effacer tous les filtres
-          </button>
+        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-slate-200">
+          <Search className="h-8 w-8 text-slate-200 mb-4" />
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Aucun résultat</h3>
+          <p className="text-xs text-slate-400 mt-1">Ajustez vos filtres ou effectuez une nouvelle recherche.</p>
         </div>
       )}
 

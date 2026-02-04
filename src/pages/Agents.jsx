@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { PlusCircle, Loader2, X, Trash2, AlertTriangle, User, Edit, Phone, Mail, Shield } from 'lucide-react';
+import { PlusCircle, Loader2, X, Trash2, AlertTriangle, User, Edit, Phone, Mail, Shield, ChevronDown as LucideChevronDown } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import NotificationPortal from '../components/widget/notification';
 import { fetchAgents, addAgent, editAgent, deleteAgent, updateAgentStatus } from '../redux/slices/agentSlice';
@@ -148,114 +148,118 @@ const Agents = () => {
   };
 
   // --- Styles ---
-  const inputStyle = "w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50";
+  const inputStyle = "w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 bg-slate-50";
 
   if (isLoading && agents.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Loader2 className="animate-spin text-blue-600" size={48} />
-        <p className="text-gray-500 font-medium text-lg">Chargement des agents...</p>
+        <Loader2 className="animate-spin text-slate-900" size={40} />
+        <p className="text-slate-500 font-medium text-sm tracking-wide uppercase">Chargement des agents...</p>
       </div>
     );
   }
 
   return (
-    <div className="animate-fade-in space-y-6 sm:space-y-8 pb-10">
+    <div className="space-y-6 pb-12">
       <NotificationPortal notification={notification} onClose={() => setNotification(null)} />
 
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mr-0 sm:mr-6">
+      {/* Header cleanup path */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             Gestion des Agents
           </h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Gérez les accès et les comptes des agents de votre agence.</p>
+          <p className="text-slate-500 mt-1 text-sm">Contrôlez les accès et les permissions des membres de votre équipe.</p>
         </div>
         <button
           onClick={() => { setEditingAgent(null); closeModal(); setIsModalOpen(true); }}
-          className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-blue-600 text-white font-semibold shadow-lg shadow-blue-500/20 hover:bg-blue-700 hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]"
+          className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/10"
         >
-          <PlusCircle className="h-5 w-5 mr-2" />
+          <PlusCircle className="h-4 w-4 mr-2" />
           <span>Nouvel Agent</span>
         </button>
       </header>
 
       {error && !isLoading && (
-        <div className="text-red-700 bg-red-50 p-4 rounded-xl shadow-sm border border-red-200 flex items-center gap-2 mr-0 sm:mr-6">
-          <AlertTriangle size={20} /> {error}
+        <div className="text-red-700 bg-red-50 p-4 rounded-lg border border-red-100 flex items-center gap-2">
+          <AlertTriangle size={18} />
+          <span className="text-xs font-bold uppercase tracking-wide">{error}</span>
         </div>
       )}
 
       {agents.length === 0 && !isLoading ? (
-        <div className="text-center p-12 bg-white rounded-2xl shadow-sm border border-gray-100 mr-0 sm:mr-6">
-          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User size={32} className="text-gray-400" />
+        <div className="text-center py-20 bg-white rounded-lg border border-slate-200">
+          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+            <User size={32} className="text-slate-300" />
           </div>
-          <p className="text-lg font-semibold text-gray-800">Aucun agent trouvé.</p>
-          <p className="text-gray-500 mt-2">Commencez par ajouter votre premier agent.</p>
+          <p className="text-lg font-bold text-slate-800 tracking-tight">Aucun agent enregistré</p>
+          <p className="text-slate-500 mt-2 text-sm max-w-xs mx-auto">Vous n'avez pas encore d'agents configurés pour cette agence.</p>
+          <button
+            onClick={() => { setEditingAgent(null); closeModal(); setIsModalOpen(true); }}
+            className="mt-6 px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm font-bold rounded-lg transition-colors"
+          >
+            Créer le premier agent
+          </button>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sm:mr-6">
-
-          {/* Desktop Table View */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          {/* Desktop Table View - Optimized for enterprise look */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50">
                 <tr>
-                  {['Agent', 'Contact', 'Type', 'Statut', 'Actions'].map(header => (
-                    <th key={header} className={`px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest ${header === 'Actions' ? 'text-right' : ''}`}>{header}</th>
+                  {['Membre', 'Contact', 'Rôle', 'Statut', 'Actions'].map(header => (
+                    <th key={header} className={`px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest ${header === 'Actions' ? 'text-right' : ''}`}>{header}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
+              <tbody className="bg-white divide-y divide-slate-50">
                 {agents.map(agent => (
-                  <tr key={agent.id} className="hover:bg-gray-50 transition-colors duration-200">
+                  <tr key={agent.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold border border-blue-100 mr-3">
+                        <div className="w-9 h-9 rounded bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200 mr-3 text-xs">
                           {agent.nom?.[0]}{agent.prenoms?.[0]}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-gray-900">{agent.prenoms} {agent.nom}</p>
-                          <p className="text-xs text-gray-500 leading-none mt-1">{agent.email}</p>
+                          <p className="text-sm font-bold text-slate-900">{agent.prenoms} {agent.nom}</p>
+                          <p className="text-[11px] text-slate-400 font-medium">{agent.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {agent.telephone}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <p className="text-xs font-semibold text-slate-600 tracking-tight">{agent.telephone}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${agent.type === 'backoffice' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
+                      <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${agent.type === 'backoffice' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
                         {agent.type}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
-                        <button
-                          onClick={() => toggleUserStatus(agent)}
-                          disabled={isSubmitting}
-                          className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${agent.actif ? 'bg-green-500' : 'bg-gray-300'}`}>
-                          <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${agent.actif ? 'translate-x-5' : 'translate-x-0'}`} />
-                        </button>
-                        <span className={`text-[10px] font-bold uppercase ${agent.actif ? 'text-green-600' : 'text-red-500'}`}>
-                          {agent.actif ? 'Actif' : 'Inactif'}
-                        </span>
-                      </div>
+                      <button
+                        onClick={() => toggleUserStatus(agent)}
+                        disabled={isSubmitting}
+                        className={`group flex items-center gap-2 py-1 px-3 rounded-full border transition-all ${agent.actif ? 'bg-green-50 border-green-100 text-green-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}
+                      >
+                        <div className={`w-1.5 h-1.5 rounded-full ${agent.actif ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.4)]' : 'bg-slate-300'}`} />
+                        <span className="text-[10px] font-bold uppercase tracking-tight">{agent.actif ? 'Actif' : 'Inactif'}</span>
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex justify-end items-center space-x-1">
+                      <div className="flex justify-end gap-1">
                         <button
                           onClick={() => openEditModal(agent)}
                           disabled={isSubmitting}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                          className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
                         >
-                          <Edit size={18} />
+                          <Edit size={16} />
                         </button>
                         <button
                           onClick={() => setAgentToDelete(agent)}
                           disabled={isSubmitting}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -265,56 +269,53 @@ const Agents = () => {
             </table>
           </div>
 
-          {/* Mobile Card View */}
-          <div className="md:hidden divide-y divide-gray-100">
+          {/* Mobile Card View - Cleaner */}
+          <div className="md:hidden divide-y divide-slate-100">
             {agents.map(agent => (
               <div key={agent.id} className="p-4 space-y-4">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold border border-blue-100">
+                    <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200 text-xs">
                       {agent.nom?.[0]}{agent.prenoms?.[0]}
                     </div>
                     <div>
-                      <h4 className="font-bold text-gray-900">{agent.prenoms} {agent.nom}</h4>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border mt-1 ${agent.type === 'backoffice' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
+                      <h4 className="text-sm font-bold text-slate-900">{agent.prenoms} {agent.nom}</h4>
+                      <span className={`inline-flex px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider border mt-1 ${agent.type === 'backoffice' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
                         {agent.type}
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEditModal(agent)} className="p-2 text-blue-600 bg-blue-50 rounded-lg">
-                      <Edit size={18} />
+                  <div className="flex gap-1.5">
+                    <button onClick={() => openEditModal(agent)} className="p-2 text-slate-500 hover:text-slate-900 bg-slate-50 rounded-lg border border-slate-100">
+                      <Edit size={16} />
                     </button>
-                    <button onClick={() => setAgentToDelete(agent)} className="p-2 text-red-600 bg-red-50 rounded-lg">
-                      <Trash2 size={18} />
+                    <button onClick={() => setAgentToDelete(agent)} className="p-2 text-red-500 bg-red-50 rounded-lg border border-red-100">
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <Mail size={14} className="text-gray-400" />
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-500">
+                  <div className="flex items-center gap-1.5">
+                    <Mail size={12} className="text-slate-300" />
                     <span className="truncate">{agent.email}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone size={14} className="text-gray-400" />
+                  <div className="flex items-center gap-1.5">
+                    <Phone size={12} className="text-slate-300" />
                     <span>{agent.telephone}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => toggleUserStatus(agent)}
-                      disabled={isSubmitting}
-                      className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${agent.actif ? 'bg-green-500' : 'bg-gray-300'}`}>
-                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${agent.actif ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
-                    <span className={`text-xs font-bold uppercase ${agent.actif ? 'text-green-600' : 'text-red-500'}`}>
-                      {agent.actif ? 'Actif' : 'Inactif'}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-gray-400 font-medium">ID: {agent.id.substring(0, 8)}...</span>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                  <button
+                    onClick={() => toggleUserStatus(agent)}
+                    disabled={isSubmitting}
+                    className={`flex items-center gap-2 py-1 px-3 rounded-full border transition-all ${agent.actif ? 'bg-green-50 border-green-100 text-green-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}
+                  >
+                    <div className={`w-1 h-1 rounded-full ${agent.actif ? 'bg-green-500' : 'bg-slate-300'}`} />
+                    <span className="text-[9px] font-bold tracking-tight uppercase">{agent.actif ? 'Actif' : 'Inactif'}</span>
+                  </button>
+                  <span className="text-[8px] text-slate-300 font-bold uppercase tracking-widest">ID: {agent.id.substring(0, 6)}</span>
                 </div>
               </div>
             ))}
@@ -322,117 +323,127 @@ const Agents = () => {
         </div>
       )}
 
-      {/* MODAL SUPPRESSION */}
+      {/* MODAL SUPPRESSION - Clean style */}
       {agentToDelete && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-100">
-            <div className="flex items-center mb-5 border-b border-gray-100 pb-3">
-              <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mr-4">
-                <AlertTriangle className="text-red-600" size={24} />
+        <div className="fixed inset-0 bg-slate-950/60 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 border border-slate-100 overflow-hidden">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                <AlertTriangle className="text-red-500" size={24} />
               </div>
-              <h3 className="text-xl font-bold text-gray-900">Confirmer la suppression</h3>
+              <h3 className="text-lg font-bold text-slate-900">Supprimer l'accès ?</h3>
+              <p className="mt-2 text-sm text-slate-500">
+                Êtes-vous sûr de vouloir retirer <span className="font-bold text-slate-900">{agentToDelete.prenoms} {agentToDelete.nom}</span> de votre équipe ? Cette action est immédiate.
+              </p>
             </div>
-            <p className="mb-8 text-gray-600 leading-relaxed">
-              Êtes-vous sûr de vouloir supprimer <span className="font-bold text-gray-900">{agentToDelete.prenoms} {agentToDelete.nom}</span> ?
-              <br />
-              <span className="text-sm text-red-500 font-medium">Cette action est irréversible et retirera tous les accès à cet agent.</span>
-            </p>
-            <div className="flex justify-end gap-3">
+
+            <div className="grid grid-cols-2 gap-3 mt-8">
               <button
                 onClick={() => setAgentToDelete(null)}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest"
               >
                 Annuler
               </button>
               <button
                 onClick={handleDeleteAgent}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 font-semibold flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 transition-all disabled:opacity-50"
+                className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-red-600/10"
               >
-                {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}
-                Supprimer l'agent
+                {isSubmitting ? <Loader2 className="animate-spin" size={14} /> : <Trash2 size={14} />}
+                Supprimer
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL AJOUT / MODIF */}
+      {/* MODAL AJOUT / MODIF - Unified style */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex justify-center items-center z-50 p-2 sm:p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200 flex flex-col max-h-[95vh]">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
-                {editingAgent ? <Edit className="text-blue-600" size={22} /> : <PlusCircle className="text-blue-600" size={22} />}
-                {editingAgent ? 'Modifier l\'agent' : 'Nouvel Agent'}
-              </h2>
-              <button onClick={closeModal} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition-colors">
+        <div className="fixed inset-0 bg-slate-950/60 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                  {editingAgent ? 'Édition de l\'Agent' : 'Nouveau Compte Agent'}
+                </h2>
+                <p className="text-xs text-slate-400 font-medium">Remplissez les informations de connexion de l'agent.</p>
+              </div>
+              <button onClick={closeModal} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-colors">
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitAgent} className="p-6 space-y-5 overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Prénoms <span className="text-red-500">*</span></label>
-                  <input type="text" name="prenoms" value={agentForm.prenoms || ""} onChange={handleInputChange} placeholder="Ex: Jean" className={inputStyle} required />
+            <form onSubmit={handleSubmitAgent} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Prénoms <span className="text-red-500">*</span></label>
+                    <input type="text" name="prenoms" value={agentForm.prenoms || ""} onChange={handleInputChange} placeholder="Ex: Jean" className={inputStyle} required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Nom <span className="text-red-500">*</span></label>
+                    <input type="text" name="nom" value={agentForm.nom || ""} onChange={handleInputChange} placeholder="Ex: Dupont" className={inputStyle} required />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nom <span className="text-red-500">*</span></label>
-                  <input type="text" name="nom" value={agentForm.nom || ""} onChange={handleInputChange} placeholder="Ex: Dupont" className={inputStyle} required />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Mobile Pro <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                      <input type="text" name="telephone" value={agentForm.telephone || ""} onChange={handleInputChange} placeholder="+225 ..." className={`${inputStyle} pl-10`} required />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Type de Profil <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <select name="type" value={agentForm.type || "backoffice"} onChange={handleInputChange} className={`${inputStyle} appearance-none cursor-pointer`}>
+                        <option value="backoffice">Accès Backoffice</option>
+                        <option value="agence">Accès Agence</option>
+                      </select>
+                      <LucideChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                    </div>
+                  </div>
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                    <input type="email" name="email" value={agentForm.email || ""} onChange={handleInputChange} placeholder="agent@tousshop.com" className={`${inputStyle} pl-10`} required />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">{editingAgent ? 'Changer MDP' : 'Mot de passe'} {!editingAgent && <span className="text-red-500">*</span>}</label>
+                    <input type="password" name="password" value={agentForm.password || ""} onChange={handleInputChange} placeholder="••••••••" className={inputStyle} required={!editingAgent} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Confirmation</label>
+                    <input type="password" name="password_confirmation" value={agentForm.password_confirmation || ""} onChange={handleInputChange} placeholder="••••••••" className={inputStyle} required={!editingAgent} />
+                  </div>
+                </div>
+
+                {editingAgent && (
+                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg flex gap-3 text-slate-500 text-[10px] font-medium leading-relaxed italic uppercase tracking-wider">
+                    <Shield size={14} className="shrink-0 text-slate-400" />
+                    <p>Laissez les champs "Mot de passe" vides pour conserver l'actuel.</p>
+                  </div>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Téléphone <span className="text-red-500">*</span></label>
-                  <input type="text" name="telephone" value={agentForm.telephone || ""} onChange={handleInputChange} placeholder="Ex: +225 ..." className={inputStyle} required />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Type d'accès <span className="text-red-500">*</span></label>
-                  <select name="type" value={agentForm.type || "backoffice"} onChange={handleInputChange} className={inputStyle}>
-                    <option value="backoffice">Backoffice</option>
-                    <option value="agence">Agence</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email Professionnel <span className="text-red-500">*</span></label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <input type="email" name="email" value={agentForm.email || ""} onChange={handleInputChange} placeholder="agent@agence.com" className={`${inputStyle} pl-10`} required />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Mot de passe {editingAgent && '(Optionnel)'}</label>
-                  <input type="password" name="password" value={agentForm.password || ""} onChange={handleInputChange} placeholder="••••••••" className={inputStyle} required={!editingAgent} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Confirmation</label>
-                  <input type="password" name="password_confirmation" value={agentForm.password_confirmation || ""} onChange={handleInputChange} placeholder="••••••••" className={inputStyle} required={!editingAgent} />
-                </div>
-              </div>
-
-              {editingAgent && (
-                <div className="bg-amber-50 border border-amber-100 p-3 rounded-xl flex gap-3 text-amber-800 text-xs leading-relaxed">
-                  <Shield size={16} className="shrink-0" />
-                  <p>Laissez les champs "Mot de passe" vides si vous ne souhaitez pas les modifier.</p>
-                </div>
-              )}
-
-              <div className="pt-4 flex flex-col sm:flex-row gap-3">
-                <button type="button" onClick={closeModal} className="px-5 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold transition-all flex-1 order-2 sm:order-1">
+              {/* Sticky Footer for Modal */}
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
+                <button type="button" onClick={closeModal} className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors">
                   Annuler
                 </button>
-                <button type="submit" disabled={isSubmitting} className="px-5 py-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 flex-1 order-1 sm:order-2 disabled:opacity-50">
+                <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 rounded-lg bg-slate-900 text-white text-xs font-bold uppercase tracking-widest shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                   {isSubmitting ? (
-                    <Loader2 className="animate-spin h-5 w-5" />
+                    <Loader2 className="animate-spin h-4 w-4" />
                   ) : (
-                    editingAgent ? 'Enregistrer les modifications' : 'Créer le compte agent'
+                    editingAgent ? 'Sauvegarder' : 'Créer l\'agent'
                   )}
                 </button>
               </div>
