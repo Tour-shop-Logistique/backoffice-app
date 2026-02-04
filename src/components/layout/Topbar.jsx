@@ -16,8 +16,8 @@ const Topbar = ({ toggleSidebar }) => {
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 flex items-center justify-between px-4 md:px-8">
-        <div className="flex items-center space-x-4">
+      <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 flex items-center justify-between px-4 md:px-6">
+        <div className="flex items-center space-x-2">
           {/* Bouton de menu mobile */}
           <button
             onClick={toggleSidebar}

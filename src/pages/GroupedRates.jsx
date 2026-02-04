@@ -324,7 +324,7 @@ const GroupedRates = () => {
                         <div className="text-sm font-semibold text-slate-900">
                           {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
                         </div>
-                        <div className="text-[10px] text-slate-400 font-medium uppercase mt-0.5">ID: {tarif.id.substring(0, 8)}</div>
+                        <div className="text-[10px] text-slate-400 font-medium uppercase mt-0.5">ID: {tarif.id ? String(tarif.id).substring(0, 8) : '...'}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1.5 text-sm text-slate-600 font-medium">

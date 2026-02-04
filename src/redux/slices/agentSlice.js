@@ -75,6 +75,13 @@ const agentSlice = createSlice({
             state.agents = [];
             state.isLoading = false;
             state.error = null;
+        },
+        setAgentStatus: (state, action) => {
+            const { id, actif } = action.payload;
+            const index = state.agents.findIndex(agent => agent.id === id);
+            if (index !== -1) {
+                state.agents[index].actif = actif;
+            }
         }
     },
     extraReducers: (builder) => {
@@ -129,4 +136,5 @@ const agentSlice = createSlice({
     },
 });
 
+export const { resetAgents, setAgentStatus } = agentSlice.actions;
 export default agentSlice.reducer;

@@ -216,7 +216,7 @@ const AgencePartenaire = () => {
                 </div>
                 <div>
                   <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Fiche Établissement</h2>
-                  <p className="text-[10px] font-medium text-slate-400 uppercase tracking-tighter">ID Réseau: {selectedAgence.id.substring(0, 8)}</p>
+                  <p className="text-[10px] font-medium text-slate-400 uppercase tracking-tighter">ID Réseau: {selectedAgence.id ? String(selectedAgence.id).substring(0, 8) : '...'}</p>
                 </div>
               </div>
               <button

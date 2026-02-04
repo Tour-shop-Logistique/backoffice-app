@@ -38,7 +38,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             <img src={logo} alt="Tous Shop" className="w-full h-full object-contain" />
           </div>
           <span className="text-lg font-bold text-white tracking-tight">
-            TousShop
+            Tour Shop
           </span>
         </div>
         <button
