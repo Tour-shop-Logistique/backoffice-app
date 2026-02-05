@@ -2,6 +2,9 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { hideNotification } from './redux/slices/uiSlice';
+import NotificationPortal from './components/widget/notification';
 import { ROUTES } from './routes';
 
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -30,8 +33,15 @@ const LoadingSpinner = () => (
 );
 
 function App() {
+  const dispatch = useDispatch();
+  const { notification } = useSelector(state => state.ui);
+
   return (
     <>
+      <NotificationPortal
+        notification={notification}
+        onClose={() => dispatch(hideNotification())}
+      />
       <Toaster position="top-right" />
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>

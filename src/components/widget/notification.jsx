@@ -7,8 +7,19 @@ const NotificationPortal = ({ notification, onClose }) => {
 
   useEffect(() => {
     setMounted(true);
-    return () => setMounted(false);
-  }, []);
+
+    let timer;
+    if (notification) {
+      timer = setTimeout(() => {
+        onClose();
+      }, 4000);
+    }
+
+    return () => {
+      setMounted(false);
+      if (timer) clearTimeout(timer);
+    };
+  }, [notification, onClose]);
 
   if (!mounted || !notification) return null;
 

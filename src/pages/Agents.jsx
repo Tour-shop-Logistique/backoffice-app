@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PlusCircle, Loader2, X, Trash2, AlertTriangle, User, Edit, Phone, Mail, Shield, RefreshCw, ChevronDown as LucideChevronDown, CheckCircle2, XCircle, Search, Edit2, Edit3, Mail as MailIcon, Phone as PhoneIcon, UserCircle2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import NotificationPortal from '../components/widget/notification';
+import { showNotification } from '../redux/slices/uiSlice';
 import { fetchAgents, addAgent, editAgent, deleteAgent, updateAgentStatus, setAgentStatus } from '../redux/slices/agentSlice';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
@@ -13,12 +13,10 @@ const Agents = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState(null);
   const [agentToDelete, setAgentToDelete] = useState(null);
-  const [notification, setNotification] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const notificationTimeoutRef = useRef(null);
 
   const [agentForm, setAgentForm] = useState({
     nom: '',
@@ -30,16 +28,6 @@ const Agents = () => {
     type: 'backoffice',
   });
 
-  const showNotification = useCallback((type, message) => {
-    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
-    setNotification({ type, message });
-    notificationTimeoutRef.current = setTimeout(() => setNotification(null), 4000);
-  }, []);
-
-  useEffect(() => () => {
-    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
-  }, []);
-
   useEffect(() => {
     if (!hasLoaded) {
       dispatch(fetchAgents());
@@ -50,9 +38,9 @@ const Agents = () => {
     setIsRefreshing(true);
     try {
       await dispatch(fetchAgents({ silent: true })).unwrap();
-      showNotification('success', 'Liste des agents mise à jour.');
+      dispatch(showNotification({ type: 'success', message: 'Liste des agents mise à jour.' }));
     } catch (err) {
-      showNotification('error', 'Erreur lors du rafraîchissement.');
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors du rafraîchissement.' }));
     } finally {
       setIsRefreshing(false);
     }
@@ -98,13 +86,13 @@ const Agents = () => {
     try {
       const result = await dispatch(deleteAgent(agentToDelete.id)).unwrap();
       if (result.success || result) { // handle potential different API response formats
-        showNotification('success', `L'agent ${agentToDelete.nom} a été supprimé.`);
+        dispatch(showNotification({ type: 'success', message: `L'agent ${agentToDelete.nom} a été supprimé.` }));
         setAgentToDelete(null);
       } else {
-        showNotification('error', 'Erreur lors de la suppression');
+        dispatch(showNotification({ type: 'error', message: 'Erreur lors de la suppression' }));
       }
     } catch (err) {
-      showNotification('error', err.message || 'Erreur lors de la suppression');
+      dispatch(showNotification({ type: 'error', message: err.message || 'Erreur lors de la suppression' }));
     } finally {
       setIsSubmitting(false);
     }
@@ -116,7 +104,7 @@ const Agents = () => {
 
     // Basic validation
     if (!agentForm.nom || !agentForm.prenoms || !agentForm.telephone || !agentForm.email) {
-      return showNotification('error', 'Veuillez remplir tous les champs obligatoires.');
+      return dispatch(showNotification({ type: 'error', message: 'Veuillez remplir tous les champs obligatoires.' }));
     }
 
     setIsSubmitting(true);
@@ -129,26 +117,26 @@ const Agents = () => {
         }
         const result = await dispatch(editAgent({ agentId: id, agentData: updateData })).unwrap();
         if (result.success || result) {
-          showNotification('success', 'Agent modifié avec succès.');
+          dispatch(showNotification({ type: 'success', message: 'Agent modifié avec succès.' }));
           closeModal();
         } else {
-          showNotification('error', 'Erreur lors de la modification');
+          dispatch(showNotification({ type: 'error', message: 'Erreur lors de la modification' }));
         }
       } else {
         if (!agentForm.password) {
           setIsSubmitting(false);
-          return showNotification('error', 'Le mot de passe est requis pour un nouvel agent.');
+          return dispatch(showNotification({ type: 'error', message: 'Le mot de passe est requis pour un nouvel agent.' }));
         }
         const result = await dispatch(addAgent(agentForm)).unwrap();
         if (result.success || result) {
-          showNotification('success', 'Agent créé avec succès.');
+          dispatch(showNotification({ type: 'success', message: 'Agent créé avec succès.' }));
           closeModal();
         } else {
-          showNotification('error', "Erreur lors de l'ajout");
+          dispatch(showNotification({ type: 'error', message: "Erreur lors de l'ajout" }));
         }
       }
     } catch (err) {
-      showNotification('error', err.message || 'Erreur lors de la soumission.');
+      dispatch(showNotification({ type: 'error', message: err.message || 'Erreur lors de la soumission.' }));
     } finally {
       setIsSubmitting(false);
     }
@@ -163,10 +151,10 @@ const Agents = () => {
 
     try {
       await dispatch(updateAgentStatus({ agentId: agent.id, status: newStatusNumeric })).unwrap();
-      showNotification('success', `Statut mis à jour.`);
+      dispatch(showNotification({ type: 'success', message: `Statut mis à jour.` }));
     } catch (error) {
       dispatch(setAgentStatus({ id: agent.id, actif: previousStatus }));
-      showNotification('error', 'Erreur lors du changement de statut');
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors du changement de statut' }));
     }
   };
 
@@ -192,7 +180,6 @@ const Agents = () => {
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
-      <NotificationPortal notification={notification} onClose={() => setNotification(null)} />
 
       {/* HEADER - Mobile Optimized */}
       <header className="space-y-3 md:space-y-0">

@@ -24,25 +24,12 @@ import {
     Edit2,
     Package
 } from "lucide-react";
-import NotificationPortal from '../components/widget/notification';
+import { showNotification } from '../redux/slices/uiSlice';
 
 const SimpleRates = () => {
     const dispatch = useDispatch();
-    const [notification, setNotification] = useState(null);
-    const notificationTimeoutRef = useRef(null);
-
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-
-    const showNotification = useCallback((type, message) => {
-        if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
-        setNotification({ type, message });
-        notificationTimeoutRef.current = setTimeout(() => setNotification(null), 4000);
-    }, []);
-
-    useEffect(() => () => {
-        if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
-    }, []);
 
     const { tarifs, isLoading, error, hasLoaded: hasLoadedTarifs } = useSelector((state) => state.tarification);
     const { zones, hasLoaded: hasLoadedZones } = useSelector((state) => state.zones);
@@ -63,9 +50,9 @@ const SimpleRates = () => {
                 dispatch(fetchTarifs({ silent: true })).unwrap(),
                 dispatch(fetchZones({ silent: true })).unwrap()
             ]);
-            showNotification('success', 'Tarifs et zones mis à jour.');
+            dispatch(showNotification({ type: 'success', message: 'Tarifs et zones mis à jour.' }));
         } catch (error) {
-            showNotification('error', 'Erreur lors du rafraîchissement.');
+            dispatch(showNotification({ type: 'error', message: 'Erreur lors du rafraîchissement.' }));
         } finally {
             setIsRefreshing(false);
         }
@@ -95,9 +82,9 @@ const SimpleRates = () => {
 
             await Promise.all(promises);
             setIsModalOpen(false);
-            showNotification('success', 'Nouveaux tarifs ajoutés avec succès.');
+            dispatch(showNotification({ type: 'success', message: 'Nouveaux tarifs ajoutés avec succès.' }));
         } catch (error) {
-            showNotification('error', "Erreur lors de l'ajout des tarifs.");
+            dispatch(showNotification({ type: 'error', message: "Erreur lors de l'ajout des tarifs." }));
         } finally {
             setIsSubmitting(false);
         }
@@ -130,9 +117,9 @@ const SimpleRates = () => {
             await Promise.all(promises);
             setIsEditingModalOpen(false);
             setSelectedTarif(null);
-            showNotification('success', 'Grille tarifaire mise à jour.');
+            dispatch(showNotification({ type: 'success', message: 'Grille tarifaire mise à jour.' }));
         } catch (error) {
-            showNotification('error', 'Erreur lors de la modification.');
+            dispatch(showNotification({ type: 'error', message: 'Erreur lors de la modification.' }));
         } finally {
             setIsSubmitting(false);
         }
@@ -158,9 +145,9 @@ const SimpleRates = () => {
             }
             setIsDeleteModalOpen(false);
             setTarifToDelete(null);
-            showNotification('success', 'Grille tarifaire supprimée.');
+            dispatch(showNotification({ type: 'success', message: 'Grille tarifaire supprimée.' }));
         } catch (error) {
-            showNotification('error', 'Erreur lors de la suppression.');
+            dispatch(showNotification({ type: 'error', message: 'Erreur lors de la suppression.' }));
         } finally {
             setIsDeleting(false);
         }
@@ -172,9 +159,9 @@ const SimpleRates = () => {
                 dispatch(updateTarifStatus(pz.id))
             );
             await Promise.all(promises);
-            showNotification('success', 'Statut mis à jour.');
+            dispatch(showNotification({ type: 'success', message: 'Statut mis à jour.' }));
         } catch (error) {
-            showNotification('error', 'Erreur lors du changement de statut.');
+            dispatch(showNotification({ type: 'error', message: 'Erreur lors du changement de statut.' }));
         }
     };
 
@@ -216,7 +203,6 @@ const SimpleRates = () => {
 
     return (
         <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
-            <NotificationPortal notification={notification} onClose={() => setNotification(null)} />
 
             {/* HEADER - Mobile Optimized */}
             <header className="space-y-3 md:space-y-0">

@@ -14,7 +14,7 @@ import {
 } from "../redux/slices/produitSlice"
 
 import { PlusCircle, Loader2, X, Trash2, AlertTriangle, Edit2, Save, XCircle, RefreshCw, CheckCircle2, Search, Package, Tag, Edit3, ChevronLeft, ChevronRight, Filter, ChevronDown, Check } from 'lucide-react';
-import NotificationPortal from '../components/widget/notification';
+import { showNotification } from "../redux/slices/uiSlice"
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 
@@ -45,8 +45,6 @@ export default function Produits() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [notification, setNotification] = useState(null);
-  const notificationTimeoutRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -70,9 +68,9 @@ export default function Produits() {
     try {
       console.log("Refreshing produits...");
       await dispatch(fetchProduits({ silent: true })).unwrap();
-      showNotification('success', 'Produits mis à jour.');
+      dispatch(showNotification({ type: 'success', message: 'Produits mis à jour.' }));
     } catch (error) {
-      showNotification('error', 'Erreur lors du rafraîchissement des produits.');
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors du rafraîchissement des produits.' }));
     } finally {
       setIsRefreshingProduits(false);
     }
@@ -82,25 +80,13 @@ export default function Produits() {
     setIsRefreshingCategories(true);
     try {
       await dispatch(fetchCategories({ silent: true })).unwrap();
-      showNotification('success', 'Catégories mises à jour.');
+      dispatch(showNotification({ type: 'success', message: 'Catégories mises à jour.' }));
     } catch (error) {
-      showNotification('error', 'Erreur lors du rafraîchissement des catégories.');
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors du rafraîchissement des catégories.' }));
     } finally {
       setIsRefreshingCategories(false);
     }
   };
-
-  const showNotification = useCallback((type, message) => {
-    if (notificationTimeoutRef.current) {
-      clearTimeout(notificationTimeoutRef.current);
-    }
-
-    setNotification({ type, message });
-
-    notificationTimeoutRef.current = setTimeout(() => {
-      setNotification(null);
-    }, 4000);
-  }, []);
 
   useEffect(() => {
     if (!hasLoadedProduits) {
@@ -148,13 +134,13 @@ export default function Produits() {
       const response = await dispatch(deleteProduit(produitToDelete.id)).unwrap();
 
       if (response.success) {
-        showNotification("success", "Produit supprimé avec succès !");
+        dispatch(showNotification({ type: "success", message: "Produit supprimé avec succès !" }));
         setProduitToDelete(null);
       } else {
-        showNotification("error", "Erreur lors de la suppression !");
+        dispatch(showNotification({ type: "error", message: "Erreur lors de la suppression !" }));
       }
     } catch (error) {
-      showNotification("error", error.message || "Erreur lors de la suppression !");
+      dispatch(showNotification({ type: "error", message: error.message || "Erreur lors de la suppression !" }));
     } finally {
       setIsSubmitting(false);
     }
@@ -165,7 +151,7 @@ export default function Produits() {
   // -------------------------------
   const handleEditProduit = async () => {
     if (!editingProduit.category_id || !editingProduit.designation || !editingProduit.reference) {
-      return showNotification("error", "Veuillez remplir tous les champs !");
+      return dispatch(showNotification({ type: "error", message: "Veuillez remplir tous les champs !" }));
     }
 
     setIsSubmitting(true);
@@ -180,13 +166,13 @@ export default function Produits() {
       })).unwrap();
 
       if (response.success) {
-        showNotification("success", "Produit modifié avec succès !");
+        dispatch(showNotification({ type: "success", message: "Produit modifié avec succès !" }));
         setEditingProduit(null);
       } else {
-        showNotification("error", "Erreur lors de la modification !");
+        dispatch(showNotification({ type: "error", message: "Erreur lors de la modification !" }));
       }
     } catch (error) {
-      showNotification("error", error.message || "Erreur lors de la modification !");
+      dispatch(showNotification({ type: "error", message: error.message || "Erreur lors de la modification !" }));
     } finally {
       setIsSubmitting(false);
     }
@@ -197,7 +183,7 @@ export default function Produits() {
   // -------------------------------
   const handleAddCategory = async () => {
     if (!categoryForm.nom) {
-      return showNotification("error", "Le nom de la catégorie est requis !");
+      return dispatch(showNotification({ type: "error", message: "Le nom de la catégorie est requis !" }));
     }
 
     const payload = {
@@ -211,16 +197,16 @@ export default function Produits() {
           categoryId: editingCategory.id,
           categoryData: { nom: payload.nom }
         })).unwrap();
-        showNotification("success", "Catégorie modifiée avec succès !");
+        dispatch(showNotification({ type: "success", message: "Catégorie modifiée avec succès !" }));
       } else {
         await dispatch(addCategory(payload)).unwrap();
-        showNotification("success", "Catégorie ajoutée avec succès !");
+        dispatch(showNotification({ type: "success", message: "Catégorie ajoutée avec succès !" }));
       }
 
       setCategoryForm({ nom: "" });
       setEditingCategory(null);
     } catch (error) {
-      showNotification("error", editingCategory ? "Erreur lors de la modification !" : "Erreur lors de l'ajout !");
+      dispatch(showNotification({ type: "error", message: editingCategory ? "Erreur lors de la modification !" : "Erreur lors de l'ajout !" }));
     } finally {
       setIsSubmitting(false);
     }
@@ -235,13 +221,13 @@ export default function Produits() {
     try {
       const response = await dispatch(deleteCategory(categoryToDelete.id)).unwrap();
       if (response.success) {
-        showNotification("success", "Catégorie supprimée avec succès !");
+        dispatch(showNotification({ type: "success", message: "Catégorie supprimée avec succès !" }));
         setCategoryToDelete(null);
       } else {
-        showNotification("error", "Erreur lors de la suppression !");
+        dispatch(showNotification({ type: "error", message: "Erreur lors de la suppression !" }));
       }
     } catch (error) {
-      showNotification("error", error.message || "Erreur lors de la suppression !");
+      dispatch(showNotification({ type: "error", message: error.message || "Erreur lors de la suppression !" }));
     } finally {
       setIsSubmitting(false);
     }
@@ -255,9 +241,9 @@ export default function Produits() {
     try {
       const newStatus = cat.actif ? 0 : 1;
       await dispatch(updateCategoryStatus({ categoryId: cat.id, status: newStatus })).unwrap();
-      showNotification("success", `Catégorie ${cat.actif ? 'désactivée' : 'activée'} !`);
+      dispatch(showNotification({ type: "success", message: `Catégorie ${cat.actif ? 'désactivée' : 'activée'} !` }));
     } catch (error) {
-      showNotification("error", "Erreur lors du changement de statut");
+      dispatch(showNotification({ type: "error", message: "Erreur lors du changement de statut" }));
     } finally {
       setIsSubmitting(false);
     }
@@ -271,9 +257,9 @@ export default function Produits() {
     try {
       const newStatus = produit.actif ? 0 : 1;
       await dispatch(updateProduitStatus({ produitId: produit.id, status: newStatus })).unwrap();
-      showNotification("success", `Produit ${produit.actif ? 'désactivé' : 'activé'} !`);
+      dispatch(showNotification({ type: "success", message: `Produit ${produit.actif ? 'désactivé' : 'activé'} !` }));
     } catch (error) {
-      showNotification("error", "Erreur lors du changement de statut");
+      dispatch(showNotification({ type: "error", message: "Erreur lors du changement de statut" }));
     } finally {
       setIsSubmitting(false);
     }
@@ -292,7 +278,6 @@ export default function Produits() {
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
-      <NotificationPortal notification={notification} onClose={() => setNotification(null)} />
 
       {/* HEADER - Mobile Optimized */}
       <header className="space-y-3 md:space-y-0">
@@ -829,6 +814,21 @@ export default function Produits() {
           </div>
         </div>
       </Modal>
+      <DeleteModal
+        isOpen={!!produitToDelete}
+        onClose={() => setProduitToDelete(null)}
+        onConfirm={handleDeleteProduit}
+        itemName={produitToDelete?.designation}
+        isLoading={isSubmitting}
+      />
+
+      <DeleteModal
+        isOpen={!!categoryToDelete}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={handleDeleteCategory}
+        itemName={categoryToDelete?.nom}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

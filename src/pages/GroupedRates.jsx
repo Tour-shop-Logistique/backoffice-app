@@ -18,7 +18,7 @@ import {
   LayoutGrid
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import NotificationPortal from '../components/widget/notification';
+import { showNotification } from '../redux/slices/uiSlice';
 import { fetchCategories } from "../redux/slices/produitSlice";
 import { fetchGroupedTarifs, addGroupedTarif, editGroupedTarif, updateGroupedTarifStatus, deleteGroupedTarif } from "../redux/slices/tarificationSlice";
 import Addtarifgroupe from '../components/widget/Addtarifgroupe';
@@ -27,9 +27,6 @@ import DeleteModal from '../components/common/DeleteModal';
 
 const GroupedRates = () => {
   const dispatch = useDispatch();
-  const [notification, setNotification] = useState(null);
-  const notificationTimeoutRef = useRef(null);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tarifToEdit, setTarifToEdit] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -45,16 +42,6 @@ const GroupedRates = () => {
   );
   const { categories, hasLoadedCategories } = useSelector(state => state.produits);
 
-  const showNotification = useCallback((type, message) => {
-    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
-    setNotification({ type, message });
-    notificationTimeoutRef.current = setTimeout(() => setNotification(null), 4000);
-  }, []);
-
-  useEffect(() => () => {
-    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
-  }, []);
-
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -62,9 +49,9 @@ const GroupedRates = () => {
         dispatch(fetchGroupedTarifs({ silent: true })).unwrap(),
         dispatch(fetchCategories({ silent: true })).unwrap()
       ]);
-      showNotification('success', 'Tarifs et catégories mis à jour.');
+      dispatch(showNotification({ type: 'success', message: 'Tarifs et catégories mis à jour.' }));
     } catch (error) {
-      showNotification('error', 'Erreur lors du rafraîchissement.');
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors du rafraîchissement.' }));
     } finally {
       setIsRefreshing(false);
     }
@@ -86,18 +73,18 @@ const GroupedRates = () => {
       if (tarifToEdit) {
         const result = await dispatch(editGroupedTarif({ tarifId: tarifToEdit.id, tarifData: data })).unwrap();
         if (result) {
-          showNotification('success', 'Tarif mis à jour avec succès!');
+          dispatch(showNotification({ type: 'success', message: 'Tarif mis à jour avec succès!' }));
           closeModal();
         }
       } else {
         const result = await dispatch(addGroupedTarif(data)).unwrap();
         if (result) {
-          showNotification('success', 'Nouveau tarif ajouté avec succès!');
+          dispatch(showNotification({ type: 'success', message: 'Nouveau tarif ajouté avec succès!' }));
           closeModal();
         }
       }
     } catch (error) {
-      showNotification('error', error.message || "Une erreur est survenue.");
+      dispatch(showNotification({ type: 'error', message: error.message || "Une erreur est survenue." }));
     } finally {
       setIsSubmitting(false);
     }
@@ -105,10 +92,10 @@ const GroupedRates = () => {
 
   const handleStatusToggle = async (tarifId) => {
     try {
-      await dispatch(updateGroupedTarifStatus(tarifId)).unwrap();
-      showNotification('success', `Statut mis à jour.`);
+      await dispatch(updateGroupedTarifStatus({ tarifId, status: null })).unwrap(); // The slice handles the toggle if status is null or we provide it
+      dispatch(showNotification({ type: 'success', message: 'Statut mis à jour.' }));
     } catch (err) {
-      showNotification('error', 'Erreur lors de la mise à jour du statut.');
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors de la mise à jour du statut.' }));
     }
   };
 
@@ -117,14 +104,15 @@ const GroupedRates = () => {
     setIsDeleting(true);
     try {
       await dispatch(deleteGroupedTarif(tarifToDelete.id)).unwrap();
-      showNotification('success', 'Tarif supprimé avec succès!');
+      dispatch(showNotification({ type: 'success', message: 'Tarif supprimé avec succès!' }));
       setTarifToDelete(null);
     } catch (err) {
-      showNotification('error', 'Erreur lors de la suppression.');
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors de la suppression.' }));
     } finally {
       setIsDeleting(false);
     }
   };
+
 
   const getTypeIcon = (type) => {
     switch (type?.toUpperCase()) {
@@ -161,7 +149,6 @@ const GroupedRates = () => {
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
-      <NotificationPortal notification={notification} onClose={() => setNotification(null)} />
 
       {/* HEADER - Mobile Optimized */}
       <header className="space-y-3 md:space-y-0">

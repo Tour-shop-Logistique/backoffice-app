@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import Modal from '../components/common/Modal';
 import ZoneForm from '../components/common/ZoneForm';
-import NotificationPortal from '../components/widget/notification';
+import { showNotification } from '../redux/slices/uiSlice';
 import DeleteModal from '../components/common/DeleteModal';
 
 const ZoneConfiguration = () => {
@@ -35,17 +35,6 @@ const ZoneConfiguration = () => {
   const [notification, setNotification] = useState(null);
   const [zoneToDelete, setZoneToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const notificationTimeoutRef = useRef(null);
-
-  const showNotification = useCallback((type, message) => {
-    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
-    setNotification({ type, message });
-    notificationTimeoutRef.current = setTimeout(() => setNotification(null), 4000);
-  }, []);
-
-  useEffect(() => () => {
-    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
-  }, []);
 
   useEffect(() => {
     if (!hasLoaded) {
@@ -57,29 +46,37 @@ const ZoneConfiguration = () => {
     setIsRefreshing(true);
     try {
       await dispatch(fetchZones({ silent: true })).unwrap();
-      showNotification('success', 'Liste des zones mise à jour.');
+      dispatch(showNotification({ type: 'success', message: 'Liste des zones mise à jour.' }));
     } catch (error) {
-      showNotification('error', 'Erreur lors du rafraîchissement.');
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors du rafraîchissement.' }));
     } finally {
       setIsRefreshing(false);
     }
   };
 
-  const handleAddZone = (zoneData) => {
-    dispatch(addZone(zoneData)).then((result) => {
-      if (addZone.fulfilled.match(result)) {
+  const handleAddZone = async (zoneData) => {
+    try {
+      const result = await dispatch(addZone(zoneData)).unwrap();
+      if (result) {
         setIsModalOpen(false);
+        dispatch(showNotification({ type: 'success', message: 'Zone ajoutée avec succès.' }));
       }
-    });
+    } catch (error) {
+      dispatch(showNotification({ type: 'error', message: "Erreur lors de l'ajout de la zone." }));
+    }
   };
 
-  const handleEditZone = (zoneData) => {
-    dispatch(editZone({ zoneId: selectedZone.id, zoneData })).then((result) => {
-      if (editZone.fulfilled.match(result)) {
+  const handleEditZone = async (zoneData) => {
+    try {
+      const result = await dispatch(editZone({ zoneId: selectedZone.id, zoneData })).unwrap();
+      if (result) {
         setIsEditModalOpen(false);
         setSelectedZone(null);
+        dispatch(showNotification({ type: 'success', message: 'Zone modifiée avec succès.' }));
       }
-    });
+    } catch (error) {
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors de la modification de la zone.' }));
+    }
   };
 
   const openEditModal = (zone) => {
@@ -93,10 +90,10 @@ const ZoneConfiguration = () => {
     setIsDeleting(true);
     try {
       await dispatch(deleteZone(zoneToDelete.id)).unwrap();
-      showNotification('success', 'Zone supprimée avec succès.');
+      dispatch(showNotification({ type: 'success', message: 'Zone supprimée avec succès.' }));
       setZoneToDelete(null);
     } catch (error) {
-      showNotification('error', 'Erreur lors de la suppression.');
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors de la suppression.' }));
     } finally {
       setIsDeleting(false);
     }
@@ -111,8 +108,10 @@ const ZoneConfiguration = () => {
         zoneId,
         status: newStatus
       })).unwrap();
+      dispatch(showNotification({ type: 'success', message: 'Statut mis à jour.' }));
     } catch (error) {
       console.error('Erreur lors du changement de statut:', error);
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors du changement de statut.' }));
     } finally {
       setUpdatingStatus(prev => ({ ...prev, [zoneId]: false }));
     }
@@ -134,7 +133,6 @@ const ZoneConfiguration = () => {
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
-      <NotificationPortal notification={notification} onClose={() => setNotification(null)} />
 
       {/* HEADER - Mobile Optimized */}
       <header className="space-y-3 md:space-y-0">
