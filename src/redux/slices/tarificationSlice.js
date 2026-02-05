@@ -156,7 +156,11 @@ const tarificationSlice = createSlice({
       .addCase(addSimpleTarif.fulfilled, (state, action) => {
         const newTarif = action.payload?.data || action.payload;
         if (newTarif) {
-          state.tarifs.unshift(newTarif);
+          state.tarifs.unshift({
+            ...action.meta.arg,
+            ...newTarif,
+            actif: newTarif.actif !== undefined ? newTarif.actif : true
+          });
         }
       })
 
@@ -204,7 +208,11 @@ const tarificationSlice = createSlice({
       .addCase(addGroupedTarif.fulfilled, (state, action) => {
         const newTarif = action.payload?.data || action.payload;
         if (newTarif) {
-          state.groupedTarifs.unshift(newTarif);
+          state.groupedTarifs.unshift({
+            ...action.meta.arg,
+            ...newTarif,
+            actif: newTarif.actif !== undefined ? newTarif.actif : true
+          });
         }
       })
 

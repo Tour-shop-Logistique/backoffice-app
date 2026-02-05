@@ -21,7 +21,7 @@ const navigation = [
   { name: "Colis", href: "/app/parcels", icon: Archive },
   { name: "Tarification simple", href: "/app/simple-rates", icon: DollarSign },
   { name: "Tarification groupée", href: "/app/grouped-rates", icon: BadgeEuro },
-  { name: "Configuration Zone", href: "/app/zone-configuration", icon: Settings },
+  { name: "Zones d'expéditions", href: "/app/zone-configuration", icon: Settings },
   { name: 'Produits & Catégories', href: '/app/produits', icon: Box },
   { name: "Agents Backoffice", href: "/app/agents", icon: Users, adminOnly: true },
 ];

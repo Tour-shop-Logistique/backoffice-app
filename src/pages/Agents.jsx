@@ -291,8 +291,8 @@ const Agents = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredAgents.map(agent => (
-                    <tr key={agent.id} className="hover:bg-slate-50/50 transition-colors">
+                  {filteredAgents.map((agent, index) => (
+                    <tr key={agent.id || `agent-${index}`} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 font-bold border border-slate-200 text-xs">
@@ -357,8 +357,8 @@ const Agents = () => {
 
             {/* Mobile Cards - Native App Style */}
             <div className="md:hidden divide-y divide-slate-100">
-              {filteredAgents.map(agent => (
-                <div key={agent.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
+              {filteredAgents.map((agent, index) => (
+                <div key={agent.id || `agent-mobile-${index}`} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 font-bold border border-slate-200 text-[10px] shrink-0">

@@ -8,9 +8,6 @@ import {
   Edit2,
   Trash2,
   Globe2,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
   Search,
   Eye,
   RefreshCw,
@@ -93,7 +90,7 @@ const ZoneConfiguration = () => {
       dispatch(showNotification({ type: 'success', message: 'Zone supprimée avec succès.' }));
       setZoneToDelete(null);
     } catch (error) {
-      dispatch(showNotification({ type: 'error', message: 'Erreur lors de la suppression.' }));
+      dispatch(showNotification({ type: 'error', message: error.message || 'Erreur lors de la suppression.' }));
     } finally {
       setIsDeleting(false);
     }
@@ -139,7 +136,7 @@ const ZoneConfiguration = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-              Configuration des Zones
+              Gestion des Zones
             </h1>
             <p className="text-xs md:text-sm text-slate-500 mt-0.5">
               Gérez les zones géographiques de livraison
@@ -259,7 +256,7 @@ const ZoneConfiguration = () => {
                             className="inline-flex items-center gap-1 px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md text-xs font-medium transition-all"
                           >
                             <Globe2 className="h-3 w-3" />
-                            {zone.pays.length} pays
+                            {zone.pays?.length || 0} pays
                           </button>
                         </div>
                       </td>

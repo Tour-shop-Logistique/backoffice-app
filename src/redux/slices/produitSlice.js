@@ -198,8 +198,13 @@ const produitSlice = createSlice({
 
             // ADD CATEGORY
             .addCase(addCategory.fulfilled, (state, action) => {
-                if (action.payload?.category) {
-                    state.categories.unshift(action.payload.category);
+                const newCat = action.payload?.category || action.payload;
+                if (newCat) {
+                    state.categories.unshift({
+                        ...action.meta.arg,
+                        ...newCat,
+                        actif: newCat.actif !== undefined ? newCat.actif : true
+                    });
                 }
             })
             // EDIT CATEGORY
@@ -218,8 +223,13 @@ const produitSlice = createSlice({
 
             // ADD PRODUIT
             .addCase(addProduit.fulfilled, (state, action) => {
-                if (action.payload?.product) {
-                    state.listProduits.unshift(action.payload.product);
+                const newProduct = action.payload?.product || action.payload;
+                if (newProduct) {
+                    state.listProduits.unshift({
+                        ...action.meta.arg,
+                        ...newProduct,
+                        actif: newProduct.actif !== undefined ? newProduct.actif : true
+                    });
                 }
             })
             // EDIT PRODUIT

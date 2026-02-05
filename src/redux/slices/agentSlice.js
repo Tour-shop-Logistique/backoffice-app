@@ -108,7 +108,12 @@ const agentSlice = createSlice({
             .addCase(addAgent.fulfilled, (state, action) => {
                 const newAgent = action.payload?.agent || action.payload;
                 if (newAgent) {
-                    state.agents.unshift(newAgent);
+                    // Merge form data with result and ensure it's active by default
+                    state.agents.unshift({
+                        ...action.meta.arg,
+                        ...newAgent,
+                        actif: newAgent.actif !== undefined ? newAgent.actif : true
+                    });
                 }
             })
 

@@ -87,7 +87,15 @@ const zoneSlice = createSlice({
         state.isLoading = false;
         const newZone = action.payload?.data || action.payload;
         if (newZone) {
-          state.zones.unshift(newZone);
+          // Ensure pays exists and actif is true by default
+          // Merge with form data (meta.arg) to ensure all display fields are present
+          const zoneToAdd = {
+            pays: [],
+            actif: true,
+            ...action.meta.arg,
+            ...newZone
+          };
+          state.zones.unshift(zoneToAdd);
         }
       })
       .addCase(addZone.rejected, (state, action) => {
