@@ -6,13 +6,15 @@ const initialState = {
   groupedTarifs: [],
   isLoading: false,
   error: null,
+  hasLoaded: false,
+  groupedHasLoaded: false,
 };
 
 /*--------------------------- SIMPLE TARIFS ---------------------------*/
 
 export const fetchTarifs = createAsyncThunk(
   'tarification/fetchTarifs',
-  async (_, { rejectWithValue }) => {
+  async (options = {}, { rejectWithValue }) => {
     try {
       return await tarificationService.getTarifs();
     } catch (error) {
@@ -70,7 +72,7 @@ export const updateTarifStatus = createAsyncThunk(
 
 export const fetchGroupedTarifs = createAsyncThunk(
   'tarification/fetchGroupedTarifs',
-  async (_, { rejectWithValue }) => {
+  async (options = {}, { rejectWithValue }) => {
     try {
       return await tarificationService.getGroupedTarifs();
     } catch (error) {
@@ -134,13 +136,16 @@ const tarificationSlice = createSlice({
 
     /*---------------- SIMPLE ----------------*/
     builder
-      .addCase(fetchTarifs.pending, (state) => {
-        state.isLoading = true;
+      .addCase(fetchTarifs.pending, (state, action) => {
+        if (!action.meta.arg?.silent) {
+          state.isLoading = true;
+        }
         state.error = null;
       })
       .addCase(fetchTarifs.fulfilled, (state, action) => {
         state.isLoading = false;
         state.tarifs = action.payload || [];
+        state.hasLoaded = true;
       })
       .addCase(fetchTarifs.rejected, (state, action) => {
         state.isLoading = false;
@@ -175,13 +180,16 @@ const tarificationSlice = createSlice({
 
     /*---------------- GROUPED ----------------*/
     builder
-      .addCase(fetchGroupedTarifs.pending, (state) => {
-        state.isLoading = true;
+      .addCase(fetchGroupedTarifs.pending, (state, action) => {
+        if (!action.meta.arg?.silent) {
+          state.isLoading = true;
+        }
         state.error = null;
       })
       .addCase(fetchGroupedTarifs.fulfilled, (state, action) => {
         state.isLoading = false;
         state.groupedTarifs = action.payload || [];
+        state.groupedHasLoaded = true;
       })
       .addCase(fetchGroupedTarifs.rejected, (state, action) => {
         state.isLoading = false;

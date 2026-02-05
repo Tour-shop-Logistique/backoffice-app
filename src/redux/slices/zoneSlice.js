@@ -3,8 +3,9 @@ import zoneService from '../../services/zoneService';
 
 const initialState = {
   zones: [],
-  isLoading: false,   
+  isLoading: false,
   error: null,
+  hasLoaded: false,
 };
 
 // Thunk pour récupérer les zones
@@ -61,13 +62,16 @@ const zoneSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Fetch zones
-      .addCase(fetchZones.pending, (state) => {
-        state.isLoading = true;
+      .addCase(fetchZones.pending, (state, action) => {
+        if (!action.meta.arg?.silent) {
+          state.isLoading = true;
+        }
         state.error = null;
       })
       .addCase(fetchZones.fulfilled, (state, action) => {
         state.isLoading = false;
         state.zones = action.payload;
+        state.hasLoaded = true;
       })
       .addCase(fetchZones.rejected, (state, action) => {
         state.isLoading = false;

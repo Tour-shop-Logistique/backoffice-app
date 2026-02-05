@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { PlusCircle, Loader2, X, Trash2, AlertTriangle, User, Edit, Phone, Mail, Shield, RefreshCw, ChevronDown as LucideChevronDown } from 'lucide-react';
+import { PlusCircle, Loader2, X, Trash2, AlertTriangle, User, Edit, Phone, Mail, Shield, RefreshCw, ChevronDown as LucideChevronDown, CheckCircle2, XCircle, Search } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import NotificationPortal from '../components/widget/notification';
 import { fetchAgents, addAgent, editAgent, deleteAgent, updateAgentStatus, setAgentStatus } from '../redux/slices/agentSlice';
@@ -7,13 +7,15 @@ import Modal from '../components/common/Modal';
 
 const Agents = () => {
   const dispatch = useDispatch();
-  const { agents, isLoading, error } = useSelector((state) => state.agents);
+  const { agents, isLoading, error, hasLoaded } = useSelector((state) => state.agents);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState(null);
   const [agentToDelete, setAgentToDelete] = useState(null);
   const [notification, setNotification] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const notificationTimeoutRef = useRef(null);
 
@@ -38,13 +40,15 @@ const Agents = () => {
   }, []);
 
   useEffect(() => {
-    dispatch(fetchAgents());
-  }, [dispatch]);
+    if (!hasLoaded) {
+      dispatch(fetchAgents());
+    }
+  }, [dispatch, hasLoaded]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await dispatch(fetchAgents()).unwrap();
+      await dispatch(fetchAgents({ silent: true })).unwrap();
       showNotification('success', 'Liste des agents mise à jour.');
     } catch (err) {
       showNotification('error', 'Erreur lors du rafraîchissement.');
@@ -168,14 +172,7 @@ const Agents = () => {
   // --- Styles ---
   const inputStyle = "w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 bg-slate-50";
 
-  if (isLoading && agents.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Loader2 className="animate-spin text-slate-900" size={40} />
-        <p className="text-slate-500 font-medium text-sm tracking-wide uppercase">Chargement des agents...</p>
-      </div>
-    );
-  }
+
 
   return (
     <div className="space-y-6 pb-12">
@@ -183,30 +180,100 @@ const Agents = () => {
 
       {/* Header cleanup path */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Gestion des Agents
-          </h1>
-          <p className="text-slate-500 mt-1 text-sm">Contrôlez les accès et les permissions des membres de votre équipe.</p>
+        <div className="flex items-center space-x-3">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Gestion des Agents
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Gérez les membres de votre équipe
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+
+
+        <div className="flex items-center space-x-2">
           <button
             onClick={handleRefresh}
-            disabled={isRefreshing || isLoading}
-            className="inline-flex items-center justify-center p-3 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
-            title="Rafraîchir la liste"
+            disabled={isRefreshing}
+            className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
+            title="Rafraîchir"
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing || isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>Rafraîchir la liste</span>
           </button>
           <button
             onClick={() => { setEditingAgent(null); closeModal(); setIsModalOpen(true); }}
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-colors"
+            className="inline-flex items-center justify-center p-3 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
           >
             <PlusCircle className="h-4 w-4 mr-2" />
-            <span>Nouvel Agent</span>
+            <span>Ajouter un Agent</span>
           </button>
         </div>
       </header>
+
+      {/* Barre unifiée Stats + Recherche */}
+      <div className="flex flex-col lg:flex-row gap-4 mb-8 items-stretch lg:items-center">
+        <div className="grid grid-cols-2 gap-4 lg:flex lg:gap-4 shrink-0">
+          {/* Actives */}
+          <div
+            onClick={() => setFilterStatus(filterStatus === 'active' ? 'all' : 'active')}
+            className={`flex-1 lg:w-64 rounded-lg px-4 py-2 shadow-sm border transition-all cursor-pointer hover:shadow-md ${filterStatus === 'active'
+              ? 'bg-emerald-100 border-emerald-500 ring-2 ring-emerald-500/10'
+              : 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-200'
+              }`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-xs md:text-sm font-medium mb-1 ${filterStatus === 'active' ? 'text-emerald-800' : 'text-emerald-600/70'}`}>Actifs</p>
+                <p className={`text-xl md:text-2xl font-bold ${filterStatus === 'active' ? 'text-emerald-900' : 'text-emerald-700'}`}>
+                  {agents.filter(a => a.actif).length}
+                </p>
+              </div>
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${filterStatus === 'active' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-white text-emerald-500 border-emerald-100'
+                }`}>
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+
+          {/* Inactives */}
+          <div
+            onClick={() => setFilterStatus(filterStatus === 'inactive' ? 'all' : 'inactive')}
+            className={`flex-1 lg:w-64 rounded-lg px-4 py-2 shadow-sm border transition-all cursor-pointer hover:shadow-md ${filterStatus === 'inactive'
+              ? 'bg-rose-100 border-rose-500 ring-2 ring-rose-500/10'
+              : 'bg-rose-50/50 border-rose-100 hover:border-rose-200'
+              }`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-xs md:text-sm font-medium mb-1 ${filterStatus === 'inactive' ? 'text-rose-800' : 'text-rose-600/70'}`}>Inactifs</p>
+                <p className={`text-xl md:text-2xl font-bold ${filterStatus === 'inactive' ? 'text-rose-900' : 'text-rose-700'}`}>
+                  {agents.filter(a => !a.actif).length}
+                </p>
+              </div>
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${filterStatus === 'inactive' ? 'bg-rose-500 text-white border-rose-400' : 'bg-white text-rose-500 border-rose-100'
+                }`}>
+                <XCircle className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recherche */}
+        <div className="flex-1 relative group">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+          </div>
+          <input
+            type="text"
+            placeholder="Rechercher par nom, téléphone ou email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-full min-h-[50px] md:min-h-[72px] pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm font-bold placeholder:text-slate-300 placeholder:font-medium"
+          />
+        </div>
+      </div>
 
       {error && !isLoading && (
         <div className="text-red-700 bg-red-50 p-4 rounded-lg border border-red-100 flex items-center gap-2">
@@ -215,7 +282,14 @@ const Agents = () => {
         </div>
       )}
 
-      {agents.length === 0 && !isLoading ? (
+      {isLoading && agents.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="h-12 w-12 text-indigo-600 animate-spin mb-4" />
+          <p className="text-gray-500">Chargement des agents...</p>
+        </div>
+      )}
+
+      {!isLoading && agents.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-lg border border-slate-200">
           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
             <User size={32} className="text-slate-300" />
@@ -230,123 +304,160 @@ const Agents = () => {
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-          {/* Desktop Table View - Optimized for enterprise look */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100">
-              <thead className="bg-slate-50">
-                <tr>
-                  {['Membre', 'Téléphone', 'Email', 'Statut', 'Actions'].map(header => (
-                    <th key={header} className={`px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest ${header === 'Actions' ? 'text-right' : ''}`}>{header}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-50">
-                {agents.map(agent => (
-                  <tr key={agent.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-9 h-9 rounded bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200 mr-3 text-xs">
+        agents.length > 0 && (
+          <div className="">
+            {/* Desktop Table View - Optimized for enterprise look */}
+            <div className="hidden md:block bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
+                  <tr>
+                    {['Membre', 'Téléphone', 'Email', 'Statut', 'Actions'].map(header => (
+                      <th key={header} className={`px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest ${header === 'Actions' ? 'text-right' : ''}`}>{header}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-slate-200">
+                  {agents
+                    .filter(agent => {
+                      const matchesSearch = agent.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        agent.prenoms?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        agent.telephone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        agent.email?.toLowerCase().includes(searchTerm.toLowerCase());
+                      const matchesStatus = filterStatus === 'all' ||
+                        (filterStatus === 'active' && agent.actif) ||
+                        (filterStatus === 'inactive' && !agent.actif);
+                      return matchesSearch && matchesStatus;
+                    })
+                    .map(agent => (
+                      <tr key={agent.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="w-9 h-9 rounded bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200 mr-3 text-xs">
+                              {agent.nom?.[0]}{agent.prenoms?.[0]}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-slate-900">{agent.nom} {agent.prenoms}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <p className="text-xs font-semibold text-slate-600 tracking-tight">{agent.telephone}</p>
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <p className="text-xs font-semibold text-slate-600 tracking-tight">{agent.email}</p>
+                        </td>
+
+
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            {isSubmitting ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-500" />
+                            ) : (
+                              <button
+                                onClick={() => toggleUserStatus(agent)}
+                                className={`w-8 h-4 rounded-full relative transition-colors duration-200 border ${agent.actif ? 'bg-indigo-600 border-indigo-600' : 'bg-slate-200 border-slate-300'}`}
+                              >
+                                <span className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-white transition-all duration-200 ${agent.actif ? 'left-[18px]' : 'left-0.5'}`} />
+                              </button>
+                            )}
+                            <span className={`text-[11px] font-medium p-0.5 rounded ${agent.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
+                              {agent.actif ? 'Actif' : 'Inactif'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="flex justify-end gap-1">
+                            <button
+                              onClick={() => openEditModal(agent)}
+                              disabled={isSubmitting}
+                              className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => setAgentToDelete(agent)}
+                              disabled={isSubmitting}
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View - Separated Blocks */}
+            <div className="md:hidden space-y-4">
+              {agents
+                .filter(agent => {
+                  const matchesSearch = agent.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    agent.prenoms?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    agent.telephone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    agent.email?.toLowerCase().includes(searchTerm.toLowerCase());
+                  const matchesStatus = filterStatus === 'all' ||
+                    (filterStatus === 'active' && agent.actif) ||
+                    (filterStatus === 'inactive' && !agent.actif);
+                  return matchesSearch && matchesStatus;
+                })
+                .map(agent => (
+                  <div key={agent.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200 text-xs text-center uppercase">
                           {agent.nom?.[0]}{agent.prenoms?.[0]}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900">{agent.nom} {agent.prenoms}</p>
+                          <h4 className="text-sm font-bold text-slate-900">{agent.nom} {agent.prenoms}</h4>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-xs font-semibold text-slate-600 tracking-tight">{agent.telephone}</p>
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-xs font-semibold text-slate-600 tracking-tight">{agent.email}</p>
-                    </td>
-
-
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => toggleUserStatus(agent)}
-                        disabled={isSubmitting}
-                        className={`group flex items-center gap-2 py-1 px-3 rounded-full border transition-all ${agent.actif ? 'bg-green-50 border-green-100 text-green-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}
-                      >
-                        <div className={`w-1.5 h-1.5 rounded-full ${agent.actif ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.4)]' : 'bg-slate-300'}`} />
-                        <span className="text-[10px] font-bold uppercase tracking-tight">{agent.actif ? 'Actif' : 'Inactif'}</span>
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex justify-end gap-1">
-                        <button
-                          onClick={() => openEditModal(agent)}
-                          disabled={isSubmitting}
-                          className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
-                        >
+                      <div className="flex gap-1.5">
+                        <button onClick={() => openEditModal(agent)} className="p-2 text-slate-500 hover:text-slate-900 bg-slate-50 rounded-lg border border-slate-100">
                           <Edit size={16} />
                         </button>
-                        <button
-                          onClick={() => setAgentToDelete(agent)}
-                          disabled={isSubmitting}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        >
+                        <button onClick={() => setAgentToDelete(agent)} className="p-2 text-red-500 bg-red-50 rounded-lg border border-red-100">
                           <Trash2 size={16} />
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-500">
+                      <div className="flex items-center gap-1.5">
+                        <Mail size={12} className="text-slate-300" />
+                        <span className="truncate">{agent.email}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Phone size={12} className="text-slate-300" />
+                        <span>{agent.telephone}</span>
+                      </div>
+                    </div>
+
+                  <div className="flex items-center justify-between border-t border-slate-50">
+                      <div className="flex items-center gap-2">
+                        {isSubmitting ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-500" />
+                        ) : (
+                          <button
+                            onClick={() => toggleUserStatus(agent)}
+                            className={`w-8 h-4 rounded-full relative transition-colors duration-200 border ${agent.actif ? 'bg-indigo-600 border-indigo-600' : 'bg-slate-200 border-slate-300'}`}
+                          >
+                            <span className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-white transition-all duration-200 ${agent.actif ? 'right-0.5' : 'left-0.5'}`} />
+                          </button>
+                        )}
+                        <span className={`text-[11px] font-medium ${agent.actif ? 'text-emerald-500' : 'text-slate-300'}`}>
+                          {agent.actif ? 'Actif' : 'Inactif'}
+                        </span>
+                      </div>
+                    <span className="text-[8px] text-slate-300 font-bold uppercase tracking-widest">ID: {agent.id ? String(agent.id).substring(0, 6) : '...'}</span>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+            </div>
           </div>
-
-          {/* Mobile Card View - Cleaner */}
-          <div className="md:hidden divide-y divide-slate-200">
-            {agents.map(agent => (
-              <div key={agent.id} className="p-4 space-y-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200 text-xs">
-                      {agent.nom?.[0]}{agent.prenoms?.[0]}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">{agent.nom} {agent.prenoms}</h4>
-
-                    </div>
-                  </div>
-                  <div className="flex gap-1.5">
-                    <button onClick={() => openEditModal(agent)} className="p-2 text-slate-500 hover:text-slate-900 bg-slate-50 rounded-lg border border-slate-100">
-                      <Edit size={16} />
-                    </button>
-                    <button onClick={() => setAgentToDelete(agent)} className="p-2 text-red-500 bg-red-50 rounded-lg border border-red-100">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-500">
-                  <div className="flex items-center gap-1.5">
-                    <Mail size={12} className="text-slate-300" />
-                    <span className="truncate">{agent.email}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Phone size={12} className="text-slate-300" />
-                    <span>{agent.telephone}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-slate-50">
-                  <button
-                    onClick={() => toggleUserStatus(agent)}
-                    disabled={isSubmitting}
-                    className={`flex items-center gap-2 py-1 px-3 rounded-full border transition-all ${agent.actif ? 'bg-green-50 border-green-100 text-green-600' : 'bg-slate-50 border-slate-200 text-slate-400'}`}
-                  >
-                    <div className={`w-1 h-1 rounded-full ${agent.actif ? 'bg-green-500' : 'bg-slate-300'}`} />
-                    <span className="text-[9px] font-bold tracking-tight uppercase">{agent.actif ? 'Actif' : 'Inactif'}</span>
-                  </button>
-                  <span className="text-[8px] text-slate-300 font-bold uppercase tracking-widest">ID: {agent.id ? String(agent.id).substring(0, 6) : '...'}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )
       )}
 
       {/* MODAL SUPPRESSION */}

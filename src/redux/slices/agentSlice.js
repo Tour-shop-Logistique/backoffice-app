@@ -5,11 +5,12 @@ const initialState = {
     agents: [],
     isLoading: false,
     error: null,
+    hasLoaded: false,
 };
 
 export const fetchAgents = createAsyncThunk(
     'agent/fetchAgents',
-    async (_, { rejectWithValue }) => {
+    async (options = {}, { rejectWithValue }) => {
         try {
             const response = await agentService.getAgents();
             return response || [];
@@ -75,6 +76,7 @@ const agentSlice = createSlice({
             state.agents = [];
             state.isLoading = false;
             state.error = null;
+            state.hasLoaded = false;
         },
         setAgentStatus: (state, action) => {
             const { id, actif } = action.payload;
@@ -87,12 +89,15 @@ const agentSlice = createSlice({
     extraReducers: (builder) => {
         builder
             // FETCH
-            .addCase(fetchAgents.pending, (state) => {
-                state.isLoading = true;
+            .addCase(fetchAgents.pending, (state, action) => {
+                if (!action.meta.arg?.silent) {
+                    state.isLoading = true;
+                }
             })
             .addCase(fetchAgents.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.agents = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+                state.hasLoaded = true;
             })
             .addCase(fetchAgents.rejected, (state, action) => {
                 state.isLoading = false;

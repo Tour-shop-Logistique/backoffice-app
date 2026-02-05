@@ -6,6 +6,8 @@ const initialState = {
     categories: [],
     isLoading: false,
     error: null,
+    hasLoadedProduits: false,
+    hasLoadedCategories: false,
 };
 
 /* -----------------------------
@@ -15,7 +17,7 @@ const initialState = {
 // === FETCH PRODUITS ===
 export const fetchProduits = createAsyncThunk(
     'produits/fetchProduits',
-    async (_, { rejectWithValue }) => {
+    async (options = {}, { rejectWithValue }) => {
         try {
             const listProduits = await produitService.getProduits();
             console.log(listProduits, "Produits");
@@ -82,7 +84,7 @@ export const updateProduitStatus = createAsyncThunk(
 // === FETCH CATEGORIES ===
 export const fetchCategories = createAsyncThunk(
     'produits/fetchCategories',
-    async (_, { rejectWithValue }) => {
+    async (options = {}, { rejectWithValue }) => {
         try {
             const categories = await produitService.getCategories();
             return categories;
@@ -161,12 +163,15 @@ const produitSlice = createSlice({
     extraReducers: (builder) => {
         builder
             // FETCH CATEGORIES
-            .addCase(fetchCategories.pending, (state) => {
-                state.isLoading = true;
+            .addCase(fetchCategories.pending, (state, action) => {
+                if (!action.meta.arg?.silent) {
+                    state.isLoading = true;
+                }
             })
             .addCase(fetchCategories.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.categories = action.payload || [];
+                state.hasLoadedCategories = true;
             })
             .addCase(fetchCategories.rejected, (state, action) => {
                 state.isLoading = false;
@@ -174,12 +179,15 @@ const produitSlice = createSlice({
             })
 
             // FETCH PRODUITS
-            .addCase(fetchProduits.pending, (state) => {
-                state.isLoading = true;
+            .addCase(fetchProduits.pending, (state, action) => {
+                if (!action.meta.arg?.silent) {
+                    state.isLoading = true;
+                }
             })
             .addCase(fetchProduits.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.listProduits = action.payload || [];
+                state.hasLoadedProduits = true;
             })
             .addCase(fetchProduits.rejected, (state, action) => {
                 state.isLoading = false;

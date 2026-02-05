@@ -35,14 +35,14 @@ const Topbar = ({ toggleSidebar }) => {
         {/* Section droite */}
         <div className="flex items-center space-x-2 md:space-x-4">
           {/* Barre de recherche */}
-          <div className="hidden lg:flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 w-64 focus-within:ring-2 focus-within:ring-slate-900/5 focus-within:border-slate-900 transition-all">
+          {/* <div className="hidden lg:flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 w-64 focus-within:ring-2 focus-within:ring-slate-900/5 focus-within:border-slate-900 transition-all">
             <Search className="h-4 w-4 text-slate-400 mr-2" />
             <input
               type="text"
               placeholder="Rechercher..."
               className="bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none w-full"
             />
-          </div>
+          </div> */}
 
           {/* Notifications */}
           <button

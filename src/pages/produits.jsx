@@ -13,13 +13,13 @@ import {
   updateProduitStatus,
 } from "../redux/slices/produitSlice"
 
-import { PlusCircle, Loader2, X, Trash2, AlertTriangle, Edit2, Save } from 'lucide-react';
+import { PlusCircle, Loader2, X, Trash2, AlertTriangle, Edit2, Save, XCircle, RefreshCw, CheckCircle2, Search } from 'lucide-react';
 import NotificationPortal from '../components/widget/notification';
 
 export default function Produits() {
   const dispatch = useDispatch();
-  const { listProduits, isLoading, categories } = useSelector(state => state.produits);
-  console.log(listProduits, "listProduits");
+  const { listProduits, isLoading, categories, hasLoadedProduits, hasLoadedCategories } = useSelector(state => state.produits);
+
   // PRODUITS
   const [editingProduit, setEditingProduit] = useState(null);
   const [produitToDelete, setProduitToDelete] = useState(null);
@@ -30,9 +30,7 @@ export default function Produits() {
     reference: "",
   });
 
-
   const [isModalOpen, setIsModalOpen] = useState(false);
-
 
   // CATEGORIES
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -49,15 +47,24 @@ export default function Produits() {
 
   const [notification, setNotification] = useState(null);
   const notificationTimeoutRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    if (listProduits.length === 0) {
-      dispatch(fetchProduits());
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        dispatch(fetchProduits({ silent: true })).unwrap(),
+        dispatch(fetchCategories({ silent: true })).unwrap()
+      ]);
+      showNotification('success', 'Produits et catégories mis à jour.');
+    } catch (error) {
+      showNotification('error', 'Erreur lors du rafraîchissement.');
+    } finally {
+      setIsRefreshing(false);
     }
-    if (categories.length === 0) {
-      dispatch(fetchCategories());
-    }
-  }, [dispatch]);
+  };
 
   const showNotification = useCallback((type, message) => {
     if (notificationTimeoutRef.current) {
@@ -70,7 +77,6 @@ export default function Produits() {
       setNotification(null);
     }, 4000);
   }, []);
-
 
   // -------------------------------
   // 🚀 AJOUTER UN PRODUIT
@@ -88,7 +94,6 @@ export default function Produits() {
         showNotification("success", "Produit ajouté avec succès !");
         setProduitForm({ category_id: "", designation: "", reference: "" });
         setIsModalOpen(false);
-        // Rafraîchir la liste silencieusement
         dispatch(fetchProduits());
       } else {
         showNotification("error", "Erreur lors de l'ajout du produit !");
@@ -113,7 +118,6 @@ export default function Produits() {
       if (response.success) {
         showNotification("success", "Produit supprimé avec succès !");
         setProduitToDelete(null);
-        // Rafraîchir sans recharger
         dispatch(fetchProduits());
       } else {
         showNotification("error", "Erreur lors de la suppression !");
@@ -147,7 +151,6 @@ export default function Produits() {
       if (response.success) {
         showNotification("success", "Produit modifié avec succès !");
         setEditingProduit(null);
-        // Rafraîchir la liste silencieusement
         dispatch(fetchProduits());
       } else {
         showNotification("error", "Erreur lors de la modification !");
@@ -158,7 +161,6 @@ export default function Produits() {
       setIsSubmitting(false);
     }
   };
-
 
   // -------------------------------
   // 🚀 AJOUTER UNE CATÉGORIE
@@ -191,7 +193,6 @@ export default function Produits() {
 
       setCategoryForm({ nom: "", prix_kg_paris: "", prix_kg_autres: "" });
       setEditingCategory(null);
-      // Rafraîchir les catégories silencieusement
       dispatch(fetchCategories());
     } catch (error) {
       showNotification("error", editingCategory ? "Erreur lors de la modification !" : "Erreur lors de l'ajout !");
@@ -232,669 +233,367 @@ export default function Produits() {
     }
   };
 
-  // Uniquement au premier chargement
-  if (isLoading && listProduits.length === 0 && categories.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Loader2 className="animate-spin text-blue-600" size={40} />
-        <p className="text-gray-500 font-medium text-lg">Chargement de vos produits...</p>
-      </div>
-    );
-  }
-
   return (
     <div>
-
-
-
       {/* HEADER */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8 sm:mr-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 sm:mr-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">
+            Gestion des produits
+          </h1>
+          <p className="text-sm text-gray-500 font-medium">Gérez vos références et catégories de marchandises.</p>
+        </div>
 
-          {/* Titre avec sous-titre */}
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">
-              Gestion des produits
-            </h1>
-            <p className="text-sm text-gray-600">
-              Gérez vos produits et catégories en toute simplicité
-            </p>
-          </div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-3 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+            title="Rafraîchir"
+          >
+            <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
 
-          {/* Boutons d'action */}
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 hover:shadow-md active:scale-95 transition-all duration-200 font-medium"
-            >
-              <PlusCircle size={20} strokeWidth={2.5} />
-              <span>Ajouter un produit</span>
-            </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-lg hover:bg-slate-800 transition-all font-bold shadow-lg shadow-slate-900/10"
+          >
+            <PlusCircle size={20} />
+            <span>NOUVEAU PRODUIT</span>
+          </button>
 
-            <button
-              onClick={() => setIsCategoryModalOpen(true)}
-              className="flex items-center gap-2 bg-white text-indigo-600 px-5 py-2.5 rounded-lg border-2 border-indigo-600 hover:bg-indigo-600 hover:text-white hover:shadow-md active:scale-95 transition-all duration-200 font-medium"
-            >
-              <PlusCircle size={20} strokeWidth={2.5} />
-              <span>Catégories</span>
-            </button>
-          </div>
-
+          <button
+            onClick={() => setIsCategoryModalOpen(true)}
+            className="flex items-center gap-2 bg-white text-indigo-600 px-6 py-2.5 rounded-lg border-2 border-indigo-600 hover:bg-indigo-50 transition-all font-bold"
+          >
+            <PlusCircle size={20} />
+            <span>CATÉGORIES</span>
+          </button>
         </div>
       </div>
 
-      {/* NOTIFICATION */}
-      <div className="relative z-50">
-        <NotificationPortal
-          notification={notification}
-          onClose={() => setNotification(null)}
-        />
+      {/* Barre unifiée Stats + Recherche */}
+      <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center mb-8 sm:mr-6">
+        <div className="grid grid-cols-2 gap-4 lg:flex lg:gap-4 shrink-0">
+          {/* Actives */}
+          <div
+            onClick={() => setFilterStatus(filterStatus === 'active' ? 'all' : 'active')}
+            className={`flex-1 lg:w-64 rounded-xl px-4 py-3 shadow-sm border transition-all cursor-pointer hover:shadow-md ${filterStatus === 'active'
+              ? 'bg-emerald-100 border-emerald-500 ring-2 ring-emerald-500/10'
+              : 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-200'
+              }`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${filterStatus === 'active' ? 'text-emerald-800' : 'text-emerald-600/70'}`}>Produits Actifs</p>
+                <p className={`text-2xl font-black ${filterStatus === 'active' ? 'text-emerald-900' : 'text-emerald-700'}`}>
+                  {listProduits.filter(p => p.actif).length}
+                </p>
+              </div>
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${filterStatus === 'active' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-white text-emerald-500 border-emerald-100'
+                }`}>
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+
+          {/* Inactives */}
+          <div
+            onClick={() => setFilterStatus(filterStatus === 'inactive' ? 'all' : 'inactive')}
+            className={`flex-1 lg:w-64 rounded-xl px-4 py-3 shadow-sm border transition-all cursor-pointer hover:shadow-md ${filterStatus === 'inactive'
+              ? 'bg-rose-100 border-rose-500 ring-2 ring-rose-500/10'
+              : 'bg-rose-50/50 border-rose-100 hover:border-rose-200'
+              }`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${filterStatus === 'inactive' ? 'text-rose-800' : 'text-rose-600/70'}`}>Produits Inactifs</p>
+                <p className={`text-2xl font-black ${filterStatus === 'inactive' ? 'text-rose-900' : 'text-rose-700'}`}>
+                  {listProduits.filter(p => !p.actif).length}
+                </p>
+              </div>
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${filterStatus === 'inactive' ? 'bg-rose-500 text-white border-rose-400' : 'bg-white text-rose-500 border-rose-100'
+                }`}>
+                <XCircle className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recherche */}
+        <div className="flex-1 relative group">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-slate-300 group-focus-within:text-slate-900 transition-colors" />
+          </div>
+          <input
+            type="text"
+            placeholder="Rechercher par référence ou désignation..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-full min-h-[72px] pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm font-bold placeholder:text-slate-300 placeholder:font-medium"
+          />
+        </div>
       </div>
 
-      {/* -------------------- MODAL CATEGORIES -------------------- */}
+      <NotificationPortal notification={notification} onClose={() => setNotification(null)} />
+
+      {/* MODAL CATEGORIES */}
       {isCategoryModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white w-full max-w-xl rounded-xl shadow-lg p-3 sm:p-5 relative max-h-[95vh] overflow-y-auto">
+          <div className="bg-white w-full max-w-xl rounded-xl shadow-lg p-5 relative max-h-[95vh] overflow-y-auto">
+            <button onClick={() => setIsCategoryModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500"><X size={24} /></button>
+            <h2 className="text-xl font-bold mb-6 text-gray-800">Gestion des catégories</h2>
 
-            {/* Close Button */}
-            <button
-              onClick={() => setIsCategoryModalOpen(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-red-500 transition"
-            >
-              <X size={22} />
-            </button>
-
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">
-              Gestion des catégories
-            </h2>
-
-            {/* Formulaire d'ajout / modification */}
-            <div className="mb-4 border p-3 rounded-lg bg-gray-50">
-              <h3 className="font-medium text-gray-700 mb-3">
-                {editingCategory ? "Modifier la catégorie" : "Ajouter une catégorie"}
-              </h3>
-
-              <div className="flex flex-col gap-4">
+            <div className="mb-8 p-4 rounded-xl bg-gray-50 border border-gray-100">
+              <h3 className="font-bold text-gray-700 mb-4">{editingCategory ? "Modifier la catégorie" : "Nouvelle catégorie"}</h3>
+              <div className="space-y-4">
                 <input
                   type="text"
-                  placeholder="Nom de la catégorie (ex: Denrée alimentaire)"
+                  placeholder="Nom de la catégorie"
                   value={categoryForm.nom || ""}
-                  onChange={(e) =>
-                    setCategoryForm({ ...categoryForm, nom: e.target.value })
-                  }
+                  onChange={(e) => setCategoryForm({ ...categoryForm, nom: e.target.value })}
                   disabled={!!editingCategory || isSubmitting}
-                  className={`border p-2 rounded w-full ${editingCategory ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Prix ligne Paris (Fcfa/kg)</label>
-                    <input
-                      type="number"
-                      placeholder="Prix Paris"
-                      value={categoryForm.prix_kg_paris || ""}
-                      onChange={(e) =>
-                        setCategoryForm({ ...categoryForm, prix_kg_paris: e.target.value })
-                      }
-                      disabled={isSubmitting}
-                      className="border p-2 rounded w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Prix autres lignes (Fcfa/kg)</label>
-                    <input
-                      type="number"
-                      placeholder="Prix Autres"
-                      value={categoryForm.prix_kg_autres || ""}
-                      onChange={(e) =>
-                        setCategoryForm({ ...categoryForm, prix_kg_autres: e.target.value })
-                      }
-                      disabled={isSubmitting}
-                      className="border p-2 rounded w-full"
-                    />
-                  </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="number"
+                    placeholder="Prix Paris"
+                    value={categoryForm.prix_kg_paris || ""}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, prix_kg_paris: e.target.value })}
+                    className="border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Prix Autres"
+                    value={categoryForm.prix_kg_autres || ""}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, prix_kg_autres: e.target.value })}
+                    className="border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={handleAddCategory} disabled={isSubmitting} className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2">
+                    {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                    {editingCategory ? "Mettre à jour" : "Ajouter"}
+                  </button>
+                  {editingCategory && (
+                    <button onClick={() => { setEditingCategory(null); setCategoryForm({ nom: "", prix_kg_paris: "", prix_kg_autres: "" }); }} className="bg-gray-200 px-6 rounded-lg font-bold">Annuler</button>
+                  )}
                 </div>
               </div>
-
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={handleAddCategory}
-                  disabled={isSubmitting}
-                  className={`mt-1 ${editingCategory ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white px-4 py-1.5 rounded flex-1 flex items-center gap-2 justify-center transition-all disabled:opacity-50`}
-                >
-                  {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : (editingCategory ? <Save size={18} /> : <PlusCircle size={18} />)}
-                  {editingCategory ? "Mettre à jour" : "Ajouter la catégorie"}
-                </button>
-                {editingCategory && (
-                  <button
-                    onClick={() => {
-                      setEditingCategory(null);
-                      setCategoryForm({ nom: "", prix_kg_paris: "", prix_kg_autres: "" });
-                    }}
-                    className="mt-1 bg-gray-200 text-gray-700 px-4 py-1.5 rounded hover:bg-gray-300"
-                  >
-                    Annuler
-                  </button>
-                )}
-              </div>
             </div>
 
-            {/* LISTE DES CATÉGORIES */}
-            <h3 className="font-medium text-gray-700 mb-3">Liste des catégories</h3>
-
-            <div className="max-h-64 overflow-y-auto border rounded-xl overflow-x-auto">
-              {categories.length === 0 ? (
-                <p className="p-4 text-gray-500">Aucune catégorie trouvée</p>
-              ) : (
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-gray-100 text-gray-700">
-                    <tr>
-                      <th className="p-2">Nom</th>
-                      <th className="p-2">Prix Paris</th>
-                      <th className="p-2">Prix Autres</th>
-                      <th className="p-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map((cat) => {
-                      const parisPrice = Array.isArray(cat.prix_kg) ? cat.prix_kg.find(p => p.ligne === 'paris')?.prix : cat.prix_kg;
-                      const autresPrice = Array.isArray(cat.prix_kg) ? cat.prix_kg.find(p => p.ligne === 'autres')?.prix : '-';
-
-                      return (
-                        <tr key={cat.id} className="border-b">
-                          <td className="p-2 font-medium">{cat.nom}</td>
-                          <td className="p-2">{parisPrice} Fcfa</td>
-                          <td className="p-2">{autresPrice} {autresPrice !== '-' && 'Fcfa'}</td>
-                          <td className="p-2">
-                            <div className="flex gap-2 items-center">
-                              <button
-                                onClick={() => {
-                                  setEditingCategory(cat);
-                                  setCategoryForm({
-                                    nom: cat.nom,
-                                    prix_kg_paris: parisPrice || "",
-                                    prix_kg_autres: autresPrice !== '-' ? autresPrice : ""
-                                  });
-                                }}
-                                className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                title="Modifier les prix"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteCategory(cat.id)}
-                                disabled={isSubmitting}
-                                className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
-                                title="Supprimer la catégorie"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                              <button
-                                onClick={() => handleToggleCategoryStatus(cat)}
-                                disabled={isSubmitting}
-                                className={`font-semibold px-2 py-0.5 rounded-full text-[10px] transition-all ${cat.actif
-                                  ? 'bg-green-50 text-green-600 hover:bg-green-100'
-                                  : 'bg-red-50 text-red-500 hover:bg-red-100'
-                                  }`}
-                                title={cat.actif ? "Désactiver" : "Activer"}
-                              >
-                                {cat.actif ? 'Actif' : 'Inactif'}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
+            <h3 className="font-bold text-gray-700 mb-4 uppercase text-xs tracking-wider">Catégories enregistrées</h3>
+            <div className="border rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="p-3 text-left">Nom</th>
+                    <th className="p-3 text-center">Paris</th>
+                    <th className="p-3 text-center">Lignes</th>
+                    <th className="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {categories.map((cat) => {
+                    const parisPrice = Array.isArray(cat.prix_kg) ? cat.prix_kg.find(p => p.ligne === 'paris')?.prix : cat.prix_kg;
+                    const autresPrice = Array.isArray(cat.prix_kg) ? cat.prix_kg.find(p => p.ligne === 'autres')?.prix : '-';
+                    return (
+                      <tr key={cat.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="p-3 font-medium">{cat.nom}</td>
+                        <td className="p-3 text-center">{parisPrice}</td>
+                        <td className="p-3 text-center">{autresPrice}</td>
+                        <td className="p-3 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => { setEditingCategory(cat); setCategoryForm({ nom: cat.nom, prix_kg_paris: parisPrice || "", prix_kg_autres: autresPrice !== '-' ? autresPrice : "" }); }} className="text-blue-600 p-1.5 hover:bg-blue-50 rounded"><Edit2 size={16} /></button>
+                            <button onClick={() => handleDeleteCategory(cat.id)} className="text-red-500 p-1.5 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                            <button onClick={() => handleToggleCategoryStatus(cat)} className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${cat.actif ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{cat.actif ? 'OUI' : 'NON'}</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-
           </div>
         </div>
-      )
-      }
+      )}
 
-      {/* -------------------- MODAL AJOUT PRODUIT -------------------- */}
-      {
-        isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl relative animate-fadeIn">
-
-              {/* Header du modal */}
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 rounded-t-xl">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <PlusCircle size={24} />
-                    Ajouter un produit
-                  </h2>
-                  <button
-                    onClick={() => {
-                      setIsModalOpen(false);
-                      setProduitForm({ category_id: "", designation: "", reference: "" });
-                    }}
-                    className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
-                  >
-                    <X size={22} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Corps du modal */}
-              <div className="p-6 space-y-5">
-
-                {/* Champ Catégorie */}
+      {/* MODAL AJOUT PRODUIT */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-fadeIn">
+            <div className="bg-blue-600 p-4 flex justify-between items-center text-white">
+              <h2 className="text-xl font-bold flex items-center gap-2"><PlusCircle size={24} /> Ajouter un produit</h2>
+              <button onClick={() => { setIsModalOpen(false); setProduitForm({ category_id: "", designation: "", reference: "" }); }} className="hover:bg-blue-500 p-1 rounded-lg"><X size={24} /></button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Catégorie <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={produitForm.category_id || ""}
-                    onChange={(e) => setProduitForm({ ...produitForm, category_id: e.target.value })}
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                  >
-                    <option value="">Sélectionnez une catégorie</option>
-                    {categories.map((cat) => {
-                      const parisPrice = Array.isArray(cat.prix_kg) ? cat.prix_kg.find(p => p.ligne === 'paris')?.prix : cat.prix_kg;
-                      const autresPrice = Array.isArray(cat.prix_kg) ? cat.prix_kg.find(p => p.ligne === 'autres')?.prix : null;
-                      const priceLabel = autresPrice ? `${parisPrice}/${autresPrice}` : parisPrice;
-
-                      return (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.nom} ({priceLabel} Fcfa/kg)
-                        </option>
-                      );
-                    })}
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Catégorie</label>
+                  <select value={produitForm.category_id} onChange={(e) => setProduitForm({ ...produitForm, category_id: e.target.value })} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="">Choisir une catégorie</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.nom}</option>
+                    ))}
                   </select>
                 </div>
-
-                {/* Champ Désignation */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Désignation <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Vêtement"
-                    value={produitForm.designation || ""}
-                    onChange={(e) => setProduitForm({ ...produitForm, designation: e.target.value })}
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                  />
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Désignation</label>
+                  <input type="text" placeholder="Désignation" value={produitForm.designation} onChange={(e) => setProduitForm({ ...produitForm, designation: e.target.value })} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                 </div>
-
-                {/* Champ Référence */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Référence <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: VETM"
-                    value={produitForm.reference || ""}
-                    onChange={(e) => setProduitForm({ ...produitForm, reference: e.target.value.toUpperCase() })}
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all uppercase"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    La référence sera automatiquement en majuscules
-                  </p>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Référence</label>
+                  <input type="text" placeholder="REF-001" value={produitForm.reference} onChange={(e) => setProduitForm({ ...produitForm, reference: e.target.value.toUpperCase() })} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none uppercase" />
                 </div>
-
               </div>
-
-              {/* Footer du modal */}
-              <div className="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setProduitForm({ category_id: "", designation: "", reference: "" });
-                  }}
-                  className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleAddProduit}
-                  disabled={isSubmitting}
-                  className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
-                >
-                  {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <PlusCircle size={18} />}
+              <div className="flex gap-3 mt-8">
+                <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3 font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Annuler</button>
+                <button onClick={handleAddProduit} disabled={isSubmitting} className="flex-1 py-3 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
+                  {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
                   Enregistrer
                 </button>
               </div>
-
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
-      {/* CONTENU PRINCIPAL - LISTE DES PRODUITS */}
+      {/* LISTE DES PRODUITS */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sm:mr-6">
-
-        {/* En-tête de la liste */}
-        <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">Liste des produits</h2>
-              <p className="text-sm text-gray-600 mt-0.5">
-                {listProduits?.length ?? 0} produit{(listProduits?.length ?? 0) > 1 ? 's' : ''}
-                enregistré{(listProduits?.length ?? 0) > 1 ? 's' : ''}
-              </p>
-            </div>
-
-            {/* Filtre rapide */}
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                placeholder="Rechercher..."
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-              />
-            </div>
+        <div className="bg-slate-50 p-5 border-b flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">Liste des produits</h2>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Données synchronisées</p>
+          </div>
+          <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+            <span className="text-xs font-bold text-slate-500 uppercase">{listProduits.length} références</span>
           </div>
         </div>
 
-        {/* Corps de la liste - Table visible sur Desktop */}
-        <div className="hidden md:block overflow-x-auto">
-          {listProduits.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-4">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <AlertTriangle size={32} className="text-gray-400" />
+        {isLoading && listProduits.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24">
+            <Loader2 className="animate-spin text-blue-600 mb-4" size={48} strokeWidth={1.5} />
+            <p className="text-slate-500 font-bold text-xs tracking-[0.2em] uppercase">Initialisation des stocks...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            {listProduits.length === 0 ? (
+              <div className="py-20 text-center">
+                <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><AlertTriangle className="text-gray-400" /></div>
+                <h3 className="font-bold text-gray-900">Aucun produit</h3>
+                <p className="text-gray-500 text-sm">Cliquez sur Ajouter un produit pour commencer.</p>
               </div>
-              <h3 className="text-lg font-medium text-gray-800 mb-2">Aucun produit trouvé</h3>
-              <p className="text-sm text-gray-500 text-center max-w-md">
-                Commencez par ajouter votre premier produit en cliquant sur le bouton "Ajouter un produit"
-              </p>
-            </div>
-          ) : (
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Référence</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Désignation</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Catégorie</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Statut</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date de création</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {listProduits.map((produit) => {
-                  const category = categories.find(cat => cat.id === produit.category_id);
-                  return (
-                    <tr key={produit.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                            <span className="text-blue-600 font-bold text-sm">{produit.reference?.substring(0, 2) || 'PR'}</span>
-                          </div>
-                          <span className="text-sm font-medium text-gray-900">{produit.reference}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{produit.designation}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {category ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">{category.nom}</span>
-                        ) : (
-                          <span className="text-sm text-gray-400 italic">Non définie</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {produit.actif ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></span>Actif
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                            <span className="w-1.5 h-1.5 bg-red-500 rounded-full mr-2"></span>Inactif
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">{new Date(produit.created_at).toLocaleDateString()}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => setEditingProduit(produit)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit2 size={20} /></button>
-                          <button onClick={() => setProduitToDelete(produit)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={20} /></button>
-                        </div>
-                      </td>
+            ) : (
+              <>
+                <table className="w-full hidden md:table border-collapse">
+                  <thead className="bg-gray-50/50 text-gray-500 uppercase text-[10px] font-bold tracking-widest border-b">
+                    <tr>
+                      <th className="px-6 py-4 text-left">Référence</th>
+                      <th className="px-6 py-4 text-left">Désignation</th>
+                      <th className="px-6 py-4 text-left">Catégorie</th>
+                      <th className="px-6 py-4 text-center">Statut</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {/* Mobile Cards - Visible sur mobile uniquement */}
-        <div className="md:hidden">
-          {listProduits.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-4">
-              <AlertTriangle size={32} className="text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-800 mb-2">Aucun produit trouvé</h3>
-            </div>
-          ) : (
-            <div className="flex flex-col divide-y divide-gray-100">
-              {listProduits.map((produit) => {
-                const category = categories.find(cat => cat.id === produit.category_id);
-                return (
-                  <div key={produit.id} className="p-4 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <span className="text-blue-600 font-bold text-xs">{produit.reference?.substring(0, 2) || 'PR'}</span>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {listProduits
+                      .filter(p => {
+                        const matchesSearch = p.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.designation.toLowerCase().includes(searchTerm.toLowerCase());
+                        const matchesStatus = filterStatus === 'all' ||
+                          (filterStatus === 'active' && p.actif) ||
+                          (filterStatus === 'inactive' && !p.actif);
+                        return matchesSearch && matchesStatus;
+                      })
+                      .map((produit) => {
+                        const category = categories.find(cat => cat.id === produit.category_id);
+                        return (
+                          <tr key={produit.id} className="hover:bg-blue-50/30 transition-colors group">
+                            <td className="px-6 py-4 font-bold text-blue-600 text-sm">{produit.reference}</td>
+                            <td className="px-6 py-4 font-semibold text-gray-800">{produit.designation}</td>
+                            <td className="px-6 py-4"><span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold border border-indigo-100">{category?.nom || '---'}</span></td>
+                            <td className="px-6 py-4 text-center">
+                              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-tighter ${produit.actif ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${produit.actif ? 'bg-green-500' : 'bg-red-500'}`} />
+                                {produit.actif ? 'ACTIF' : 'INACTIF'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => setEditingProduit(produit)} className="p-2 hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-blue-100 text-blue-600"><Edit2 size={18} /></button>
+                                <button onClick={() => setProduitToDelete(produit)} className="p-2 hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-red-100 text-red-500"><Trash2 size={18} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+                <div className="md:hidden divide-y">
+                  {listProduits.map(produit => (
+                    <div key={produit.id} className="p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="font-black text-blue-600">{produit.reference}</div>
+                        <div className="flex gap-2">
+                          <button onClick={() => setEditingProduit(produit)} className="text-blue-600 p-2 bg-blue-50 rounded-lg"><Edit2 size={18} /></button>
+                          <button onClick={() => setProduitToDelete(produit)} className="text-red-500 p-2 bg-red-50 rounded-lg"><Trash2 size={18} /></button>
                         </div>
-                        <div>
-                          <p className="text-xs font-bold text-blue-600">{produit.reference}</p>
-                          <h4 className="font-semibold text-gray-900">{produit.designation}</h4>
-                        </div>
                       </div>
-                      <div className="flex gap-1">
-                        <button onClick={() => setEditingProduit(produit)} className="p-2 text-blue-600 bg-blue-50 rounded-lg">
-                          <Edit2 size={16} />
-                        </button>
-                        <button onClick={() => setProduitToDelete(produit)} className="p-2 text-red-600 bg-red-50 rounded-lg">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                      <div className="font-bold text-gray-800">{produit.designation}</div>
+                      <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-black ${produit.actif ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>{produit.actif ? 'ACTIF' : 'INACTIF'}</div>
                     </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <div className="flex items-center gap-2">
-                        {category ? (
-                          <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[10px] font-medium border border-indigo-100">
-                            {category.nom}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 italic text-[10px]">Sans catégorie</span>
-                        )}
-                        {produit.actif ? (
-                          <span className="flex items-center gap-1 text-[10px] font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                            <div className="w-1 h-1 bg-green-500 rounded-full" /> Actif
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
-                            <div className="w-1 h-1 bg-red-500 rounded-full" /> Inactif
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-gray-400">
-                        {new Date(produit.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-
-
-
-        {/* -------------------- MODAL MODIFICATION PRODUIT -------------------- */}
-        {editingProduit && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl relative animate-fadeIn">
-              <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-4 rounded-t-xl">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Edit2 size={24} />
-                    Modifier le produit
-                  </h2>
-                  <button
-                    onClick={() => setEditingProduit(null)}
-                    className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
-                  >
-                    <X size={22} />
-                  </button>
+                  ))}
                 </div>
-              </div>
-
-              <div className="p-6 space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Catégorie <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={editingProduit?.category_id || ""}
-                    onChange={(e) => setEditingProduit({ ...editingProduit, category_id: e.target.value })}
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
-                  >
-                    <option value="">Sélectionnez une catégorie</option>
-                    {categories.map((cat) => {
-                      const parisPrice = Array.isArray(cat.prix_kg) ? cat.prix_kg.find(p => p.ligne === 'paris')?.prix : cat.prix_kg;
-                      const autresPrice = Array.isArray(cat.prix_kg) ? cat.prix_kg.find(p => p.ligne === 'autres')?.prix : null;
-                      const priceLabel = autresPrice ? `${parisPrice}/${autresPrice}` : parisPrice;
-
-                      return (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.nom} ({priceLabel} Fcfa/kg)
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Désignation <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Vêtement"
-                    value={editingProduit?.designation || ""}
-                    onChange={(e) => setEditingProduit({ ...editingProduit, designation: e.target.value })}
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Référence <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: VETM"
-                    value={editingProduit?.reference || ""}
-                    onChange={(e) => setEditingProduit({ ...editingProduit, reference: e.target.value.toUpperCase() })}
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all uppercase"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end gap-3">
-                <button
-                  onClick={() => setEditingProduit(null)}
-                  className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleEditProduit}
-                  disabled={isSubmitting}
-                  className="px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
-                >
-                  {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                  Enregistrer les modifications
-                </button>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         )}
-
-        {/* -------------------- MODAL CONFIRMATION SUPPRESSION -------------------- */}
-        {produitToDelete && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white w-full max-w-md rounded-xl shadow-2xl relative animate-fadeIn">
-              <div className="p-6">
-                <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
-                  <AlertTriangle size={32} className="text-red-600" />
-                </div>
-
-                <h2 className="text-xl font-bold text-gray-900 text-center mb-2">
-                  Confirmer la suppression
-                </h2>
-
-                <p className="text-gray-600 text-center mb-6">
-                  Êtes-vous sûr de vouloir supprimer le produit <br />
-                  <span className="font-semibold text-gray-900">"{produitToDelete.designation}"</span> ?
-                  <br />
-                  <span className="text-sm text-red-600">Cette action est irréversible.</span>
-                </p>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setProduitToDelete(null)}
-                    className="flex-1 px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    onClick={handleDeleteProduit}
-                    className="flex-1 px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <Trash2 size={18} />
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-
-        {/* Pagination (optionnelle) */}
-        {listProduits.length > 0 && (
-          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
-                Affichage de <span className="font-medium">1</span> à <span className="font-medium">{listProduits.length}</span> sur <span className="font-medium">{listProduits.length}</span> résultats
-              </div>
-
-              <div className="flex gap-2">
-                <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                  Précédent
-                </button>
-                <button className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-                  1
-                </button>
-                <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                  Suivant
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
       </div>
 
-    </div >
+      {editingProduit && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-zoomIn">
+            <div className="p-6 bg-amber-500 text-white flex justify-between items-center">
+              <h2 className="text-xl font-bold flex items-center gap-2"><Edit2 size={24} /> Modifier le produit</h2>
+              <button onClick={() => setEditingProduit(null)} className="p-1 hover:bg-amber-400 rounded-lg"><X size={24} /></button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="space-y-4">
+                <select value={editingProduit.category_id} onChange={(e) => setEditingProduit({ ...editingProduit, category_id: e.target.value })} className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+                  {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.nom}</option>)}
+                </select>
+                <input type="text" value={editingProduit.designation} onChange={(e) => setEditingProduit({ ...editingProduit, designation: e.target.value })} className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" />
+                <input type="text" value={editingProduit.reference} onChange={(e) => setEditingProduit({ ...editingProduit, reference: e.target.value.toUpperCase() })} className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button onClick={() => setEditingProduit(null)} className="flex-1 py-4 font-bold text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200">Annuler</button>
+                <button onClick={handleEditProduit} disabled={isSubmitting} className="flex-1 py-4 font-bold text-white bg-amber-600 rounded-xl hover:bg-amber-700 flex items-center justify-center gap-2 shadow-lg shadow-amber-600/20">
+                  {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                  Mettre à jour
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {produitToDelete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 text-center animate-shake">
+            <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-red-100"><Trash2 size={40} /></div>
+            <h2 className="text-2xl font-black text-gray-900 mb-2">SUPRESSION DÉFINITIVE</h2>
+            <p className="text-gray-500 mb-8 font-medium italic">Confirmez-vous la suppression de <span className="text-red-600 not-italic font-bold">"{produitToDelete.designation}"</span> ?</p>
+            <div className="flex gap-4">
+              <button onClick={() => setProduitToDelete(null)} className="flex-1 py-4 font-bold text-gray-400 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all">ANNULER</button>
+              <button onClick={handleDeleteProduit} disabled={isSubmitting} className="flex-1 py-4 font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 shadow-xl shadow-red-600/20 flex items-center justify-center gap-2">
+                {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : "OUI, SUPPRIMER"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

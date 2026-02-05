@@ -3,8 +3,9 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import tarificationService from '../services/tarificationService';
-import { Pencil, Trash, ToggleLeft, ToggleRight, Plus, X, Search, Filter, Globe, Plane, Ship, Package, MoreVertical, LayoutGrid, List } from "lucide-react";
+import { Pencil, Trash, ToggleLeft, ToggleRight, Plus, X, Search, Loader2, Globe, Plane, Ship, Package, MoreVertical, LayoutGrid, List, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+import NotificationPortal from '../components/widget/notification';
 import { fetchCategories } from "../redux/slices/produitSlice";
 import { fetchGroupedTarifs, addGroupedTarif, editGroupedTarif } from "../redux/slices/tarificationSlice";
 import toast from 'react-hot-toast';
@@ -26,18 +27,32 @@ const validationSchema = yup.object().shape({
 });
 
 const GroupedRates = () => {
+  const [notification, setNotification] = useState(null);
+  const notificationTimeoutRef = React.useRef(null);
+
+  const showNotification = React.useCallback((type, message) => {
+    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
+    setNotification({ type, message });
+    notificationTimeoutRef.current = setTimeout(() => setNotification(null), 4000);
+  }, []);
+
+  React.useEffect(() => () => {
+    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
+  }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tarifToEdit, setTarifToEdit] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState('all');
   const [activeType, setActiveType] = useState("all");
-  const [viewMode, setViewMode] = useState("table"); // 'table' or 'grid'
+  const [viewMode, setViewMode] = useState("table");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const dispatch = useDispatch();
-  const { groupedTarifs, isLoading, error } = useSelector(
+  const { groupedTarifs, isLoading, error, groupedHasLoaded } = useSelector(
     (state) => state.tarification
   );
-  const { categories } = useSelector(state => state.produits);
+  const { categories, hasLoadedCategories } = useSelector(state => state.produits);
 
   const filteredTarifs = (groupedTarifs || []).filter(tarif => {
     const matchesSearch =
@@ -46,7 +61,11 @@ const GroupedRates = () => {
 
     const matchesType = activeType === "all" || tarif.type_expedition?.toUpperCase() === activeType.toUpperCase();
 
-    return matchesSearch && matchesType;
+    const matchesStatus = filterStatus === 'all' ||
+      (filterStatus === 'active' && tarif.actif) ||
+      (filterStatus === 'inactive' && !tarif.actif);
+
+    return matchesSearch && matchesType && matchesStatus;
   });
 
   const groupedByType = filteredTarifs.reduce((acc, tarif) => {
@@ -56,15 +75,20 @@ const GroupedRates = () => {
     return acc;
   }, {});
 
-  // Chargement des catégories et des tarifs au montage
-  useEffect(() => {
-    if (!categories || categories.length === 0) {
-      dispatch(fetchCategories());
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        dispatch(fetchGroupedTarifs({ silent: true })).unwrap(),
+        dispatch(fetchCategories({ silent: true })).unwrap()
+      ]);
+      showNotification('success', 'Tarifs et catégories mis à jour.');
+    } catch (error) {
+      showNotification('error', 'Erreur lors du rafraîchissement.');
+    } finally {
+      setIsRefreshing(false);
     }
-    if (!groupedTarifs || groupedTarifs.length === 0) {
-      dispatch(fetchGroupedTarifs());
-    }
-  }, []);
+  };
 
   // --- LOGIQUE DE CHARGEMENT ---
   // const loadGroupedTarifs = async () => {
@@ -200,14 +224,7 @@ const GroupedRates = () => {
     }).format(numberValue).replace('XOF', 'FCFA');
   };
 
-  if (isLoading && (groupedTarifs || []).length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-500"></div>
-        <p className="text-surface-500 font-medium animate-pulse">Chargement des tarifs...</p>
-      </div>
-    );
-  }
+
 
   if (error && (groupedTarifs || []).length === 0) {
     return (
@@ -236,234 +253,303 @@ const GroupedRates = () => {
             Configurez les grilles tarifaires pour les expéditions groupées. Ces tarifs sont appliqués en fonction de la catégorie de marchandise et de la ligne logistique choisie.
           </p>
         </div>
-        <button
-          onClick={() => openModal()}
-          className="inline-flex items-center justify-center px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 transition-all shadow-sm shrink-0"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          <span>Nouveau Tarif</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-3 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+            title="Rafraîchir"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={() => openModal()}
+            className="inline-flex items-center justify-center px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 shrink-0"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            <span>Nouveau Tarif</span>
+          </button>
+        </div>
       </div>
 
-      {/* Barre de recherche et filtres - Slate Design */}
-      <div className="flex flex-col md:flex-row gap-3 items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Rechercher par catégorie, pays ou ligne..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-slate-900 focus:border-slate-900 outline-none transition-all"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <select
-            value={activeType}
-            onChange={(e) => setActiveType(e.target.value)}
-            className="flex-1 md:flex-none py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-slate-900 outline-none transition-all font-medium text-slate-700"
+      {/* Barre unifiée Stats + Recherche */}
+      <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+        <div className="grid grid-cols-2 gap-4 lg:flex lg:gap-4 shrink-0">
+          {/* Actives */}
+          <div
+            onClick={() => setFilterStatus(filterStatus === 'active' ? 'all' : 'active')}
+            className={`flex-1 lg:w-64 rounded-xl px-4 py-3 shadow-sm border transition-all cursor-pointer hover:shadow-md ${filterStatus === 'active'
+              ? 'bg-emerald-100 border-emerald-500 ring-2 ring-emerald-500/10'
+              : 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-200'
+              }`}
           >
-            <option value="all">Toutes les catégories</option>
-            <option value="GROUPAGE_DHD_AERIEN">DHD Aérien</option>
-            <option value="GROUPAGE_DHD_MARITIME">DHD Maritime</option>
-            <option value="GROUPAGE_CA">Colis Accompagné</option>
-            <option value="GROUPAGE_AFRIQUE">Afrique</option>
-          </select>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${filterStatus === 'active' ? 'text-emerald-800' : 'text-emerald-600/70'}`}>Tarifs Actifs</p>
+                <p className={`text-2xl font-black ${filterStatus === 'active' ? 'text-emerald-900' : 'text-emerald-700'}`}>
+                  {(groupedTarifs || []).filter(t => t.actif).length}
+                </p>
+              </div>
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${filterStatus === 'active' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-white text-emerald-500 border-emerald-100'
+                }`}>
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
 
-          <div className="hidden md:flex items-center border border-slate-200 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setViewMode("table")}
-              className={`p-2 transition-colors ${viewMode === "table" ? "bg-slate-100 text-slate-900" : "bg-white text-slate-400 hover:text-slate-600"}`}
-              title="Vue Table"
-            >
-              <List className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 transition-colors ${viewMode === "grid" ? "bg-slate-100 text-slate-900" : "bg-white text-slate-400 hover:text-slate-600"}`}
-              title="Vue Grille"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
+          {/* Inactives */}
+          <div
+            onClick={() => setFilterStatus(filterStatus === 'inactive' ? 'all' : 'inactive')}
+            className={`flex-1 lg:w-64 rounded-xl px-4 py-3 shadow-sm border transition-all cursor-pointer hover:shadow-md ${filterStatus === 'inactive'
+              ? 'bg-rose-100 border-rose-500 ring-2 ring-rose-500/10'
+              : 'bg-rose-50/50 border-rose-100 hover:border-rose-200'
+              }`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${filterStatus === 'inactive' ? 'text-rose-800' : 'text-rose-600/70'}`}>Tarifs Inactifs</p>
+                <p className={`text-2xl font-black ${filterStatus === 'inactive' ? 'text-rose-900' : 'text-rose-700'}`}>
+                  {(groupedTarifs || []).filter(t => !t.actif).length}
+                </p>
+              </div>
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${filterStatus === 'inactive' ? 'bg-rose-500 text-white border-rose-400' : 'bg-white text-rose-500 border-rose-100'
+                }`}>
+                <XCircle className="h-6 w-6" />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Vue Table (Desktop) */}
-      <div className={`hidden ${viewMode === "table" ? "md:block" : ""} bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden`}>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Marchandise / Catégorie</th>
-                <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Destination / Ligne</th>
-                <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Base Min.</th>
-                <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Modes Actifs</th>
-                <th className="px-6 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">Statut</th>
-                <th className="px-6 py-3 text-right text-[10px] font-bold text-slate-500 uppercase tracking-widest">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {Object.entries(groupedByType).map(([type, tarifs], groupIndex) => (
-                <React.Fragment key={`${type}-${groupIndex}`}>
-                  <tr className="bg-slate-50/50">
-                    <td colSpan="6" className="px-6 py-2">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        {getTypeIcon(type)}
-                        <span className="font-bold text-[10px] uppercase tracking-widest">
-                          {type.replace(/_/g, ' ')}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
+        {/* Recherche et Filtre de type */}
+        <div className="flex-1 flex flex-col md:flex-row gap-3 items-stretch bg-white p-3 rounded-xl border border-slate-200 shadow-sm relative group">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+            <input
+              type="text"
+              placeholder="Rechercher par catégorie, pays..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-slate-900 focus:border-slate-900 outline-none transition-all"
+            />
+          </div>
 
-                  {tarifs.map(tarif => (
-                    <tr key={tarif.id} className="group hover:bg-slate-50 transition-colors duration-150">
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-semibold text-slate-900">
-                          {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-medium uppercase mt-0.5">ID: {tarif.id ? String(tarif.id).substring(0, 8) : '...'}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 text-sm text-slate-600 font-medium">
-                          {tarif.type_expedition?.includes('dhd') ? (
-                            <span className="font-bold text-slate-900">{tarif.ligne || 'Ligne'}</span>
-                          ) : (
-                            <span className="truncate max-w-[200px]">{tarif.pays || 'Toutes destinations'}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-bold text-slate-900 underline underline-offset-4 decoration-slate-200">
-                          {formatCurrency(tarif.tarif_minimum || tarif.montant_base || tarif.prix_unitaire)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          {tarif.prix_modes ? (
-                            <>
-                              <div className="flex -space-x-1">
-                                {tarif.prix_modes.map((m, idx) => (
-                                  <div key={idx} className="p-1 bg-white border border-slate-200 rounded text-slate-500" title={m.mode}>
-                                    {getModeIcon(m.mode)}
-                                  </div>
-                                ))}
-                              </div>
-                              <span className="text-xs font-medium text-slate-500">
-                                {tarif.prix_modes.length} mode{tarif.prix_modes.length > 1 ? 's' : ''}
-                              </span>
-                            </>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <div className="p-1 bg-white border border-slate-200 rounded text-slate-500">
-                                {getModeIcon(tarif.mode || '')}
-                              </div>
-                              <span className="text-xs font-medium text-slate-500 uppercase">{tarif.mode}</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold transition-all
-                            ${tarif.actif ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}
-                        >
-                          <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${tarif.actif ? 'bg-green-500' : 'bg-slate-400'}`} />
-                          {tarif.actif ? 'ACTIF' : 'INACTIF'}
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => openModal(tarif)}
-                            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-md transition-all"
-                            title="Modifier"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
+          <div className="flex items-center gap-2">
+            <select
+              value={activeType}
+              onChange={(e) => setActiveType(e.target.value)}
+              className="flex-1 md:flex-none py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-slate-900 outline-none transition-all font-bold text-slate-700"
+            >
+              <option value="all">Toutes les lignes</option>
+              <option value="GROUPAGE_DHD_AERIEN">DHD Aérien</option>
+              <option value="GROUPAGE_DHD_MARITIME">DHD Maritime</option>
+              <option value="GROUPAGE_CA">Colis Accompagné</option>
+              <option value="GROUPAGE_AFRIQUE">Afrique</option>
+            </select>
 
-                          {/* Menu vertical pour les actions secondaires */}
-                          <div className="relative group/menu">
-                            <button className="p-1.5 text-slate-400 hover:text-slate-900 rounded-md">
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
-                            <div className="absolute right-0 top-full mt-1 hidden group-hover/menu:block bg-white border border-slate-200 rounded-lg shadow-xl z-10 w-40 overflow-hidden">
-                              <button
-                                onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
-                                className="w-full text-left px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                              >
-                                {tarif.actif ? <ToggleLeft size={14} /> : <ToggleRight size={14} />}
-                                {tarif.actif ? 'Désactiver' : 'Activer'}
-                              </button>
-                              <button
-                                onClick={() => handleDelete(tarif.id)}
-                                className="w-full text-left px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-100"
-                              >
-                                <Trash size={14} />
-                                Supprimer
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Vue Mobile / Grid - Simplifiée */}
-      <div className={`grid gap-4 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "md:hidden"}`}>
-        {filteredTarifs.map((tarif) => (
-          <div key={tarif.id} className="bg-white rounded-xl border border-slate-200 p-4 space-y-4 hover:border-slate-300 transition-all shadow-sm">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-bold text-slate-900 text-sm">
-                  {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
-                </h3>
-                <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium lowercase">
-                  <Globe className="h-3 w-3" />
-                  {tarif.type_expedition?.includes('dhd') ? tarif.ligne : (tarif.pays || 'tous pays')}
-                </div>
-              </div>
-              <div className={`w-2 h-2 rounded-full ${tarif.actif ? "bg-green-500" : "bg-slate-300"}`} />
-            </div>
-
-            <div className="flex items-baseline justify-between py-2 border-y border-slate-50">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tarif Min.</span>
-              <span className="text-base font-bold text-slate-900">
-                {formatCurrency(tarif.tarif_minimum || tarif.montant_base || tarif.prix_unitaire)}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between gap-2 pt-1">
-              <div className="text-[10px] font-medium text-slate-400">
-                {tarif.prix_modes ? `${tarif.prix_modes.length} modes actifs` : '1 mode'}
-              </div>
+            <div className="hidden md:flex items-center border border-slate-200 rounded-lg overflow-hidden">
               <button
-                onClick={() => openModal(tarif)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold transition-all"
+                onClick={() => setViewMode("table")}
+                className={`p-2 transition-colors ${viewMode === "table" ? "bg-slate-900 text-white" : "bg-white text-slate-400 hover:text-slate-600"}`}
+                title="Vue Table"
               >
-                <Pencil className="h-3 w-3" />
-                Modifier
+                <List className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2 transition-colors ${viewMode === "grid" ? "bg-slate-900 text-white" : "bg-white text-slate-400 hover:text-slate-600"}`}
+                title="Vue Grille"
+              >
+                <LayoutGrid className="h-4 w-4" />
               </button>
             </div>
           </div>
-        ))}
+        </div>
       </div>
 
-      {filteredTarifs.length === 0 && !isLoading && (
-        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-slate-200">
-          <Search className="h-8 w-8 text-slate-200 mb-4" />
-          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Aucun résultat</h3>
-          <p className="text-xs text-slate-400 mt-1">Ajustez vos filtres ou effectuez une nouvelle recherche.</p>
+      {isLoading && (groupedTarifs || []).length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-900 mb-4" />
+          <p className="text-slate-500 font-medium text-sm tracking-wide uppercase">Chargement des tarifs...</p>
         </div>
+      ) : (
+        <>
+
+          {/* Vue Table (Desktop) */}
+          <div className={`hidden ${viewMode === "table" ? "md:block" : ""} bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden`}>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-100">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Marchandise / Catégorie</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Destination / Ligne</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Base Min.</th>
+                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Modes Actifs</th>
+                    <th className="px-6 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">Statut</th>
+                    <th className="px-6 py-3 text-right text-[10px] font-bold text-slate-500 uppercase tracking-widest">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {Object.entries(groupedByType).map(([type, tarifs], groupIndex) => (
+                    <React.Fragment key={`${type}-${groupIndex}`}>
+                      <tr className="bg-slate-50/50">
+                        <td colSpan="6" className="px-6 py-2">
+                          <div className="flex items-center gap-2 text-slate-500">
+                            {getTypeIcon(type)}
+                            <span className="font-bold text-[10px] uppercase tracking-widest">
+                              {type.replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {tarifs.map(tarif => (
+                        <tr key={tarif.id} className="group hover:bg-slate-50 transition-colors duration-150">
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-semibold text-slate-900">
+                              {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-medium uppercase mt-0.5">ID: {tarif.id ? String(tarif.id).substring(0, 8) : '...'}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-1.5 text-sm text-slate-600 font-medium">
+                              {tarif.type_expedition?.includes('dhd') ? (
+                                <span className="font-bold text-slate-900">{tarif.ligne || 'Ligne'}</span>
+                              ) : (
+                                <span className="truncate max-w-[200px]">{tarif.pays || 'Toutes destinations'}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-sm font-bold text-slate-900 underline underline-offset-4 decoration-slate-200">
+                              {formatCurrency(tarif.tarif_minimum || tarif.montant_base || tarif.prix_unitaire)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              {tarif.prix_modes ? (
+                                <>
+                                  <div className="flex -space-x-1">
+                                    {tarif.prix_modes.map((m, idx) => (
+                                      <div key={idx} className="p-1 bg-white border border-slate-200 rounded text-slate-500" title={m.mode}>
+                                        {getModeIcon(m.mode)}
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <span className="text-xs font-medium text-slate-500">
+                                    {tarif.prix_modes.length} mode{tarif.prix_modes.length > 1 ? 's' : ''}
+                                  </span>
+                                </>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <div className="p-1 bg-white border border-slate-200 rounded text-slate-500">
+                                    {getModeIcon(tarif.mode || '')}
+                                  </div>
+                                  <span className="text-xs font-medium text-slate-500 uppercase">{tarif.mode}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <button
+                              onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold transition-all
+                            ${tarif.actif ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}
+                            >
+                              <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${tarif.actif ? 'bg-green-500' : 'bg-slate-400'}`} />
+                              {tarif.actif ? 'ACTIF' : 'INACTIF'}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => openModal(tarif)}
+                                className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-md transition-all"
+                                title="Modifier"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+
+                              {/* Menu vertical pour les actions secondaires */}
+                              <div className="relative group/menu">
+                                <button className="p-1.5 text-slate-400 hover:text-slate-900 rounded-md">
+                                  <MoreVertical className="h-4 w-4" />
+                                </button>
+                                <div className="absolute right-0 top-full mt-1 hidden group-hover/menu:block bg-white border border-slate-200 rounded-lg shadow-xl z-10 w-40 overflow-hidden">
+                                  <button
+                                    onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
+                                    className="w-full text-left px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                  >
+                                    {tarif.actif ? <ToggleLeft size={14} /> : <ToggleRight size={14} />}
+                                    {tarif.actif ? 'Désactiver' : 'Activer'}
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(tarif.id)}
+                                    className="w-full text-left px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-100"
+                                  >
+                                    <Trash size={14} />
+                                    Supprimer
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Vue Mobile / Grid - Simplifiée */}
+          <div className={`grid gap-4 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "md:hidden"}`}>
+            {filteredTarifs.map((tarif) => (
+              <div key={tarif.id} className="bg-white rounded-xl border border-slate-200 p-4 space-y-4 hover:border-slate-300 transition-all shadow-sm">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
+                    </h3>
+                    <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium lowercase">
+                      <Globe className="h-3 w-3" />
+                      {tarif.type_expedition?.includes('dhd') ? tarif.ligne : (tarif.pays || 'tous pays')}
+                    </div>
+                  </div>
+                  <div className={`w-2 h-2 rounded-full ${tarif.actif ? "bg-green-500" : "bg-slate-300"}`} />
+                </div>
+
+                <div className="flex items-baseline justify-between py-2 border-y border-slate-50">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tarif Min.</span>
+                  <span className="text-base font-bold text-slate-900">
+                    {formatCurrency(tarif.tarif_minimum || tarif.montant_base || tarif.prix_unitaire)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <div className="text-[10px] font-medium text-slate-400">
+                    {tarif.prix_modes ? `${tarif.prix_modes.length} modes actifs` : '1 mode'}
+                  </div>
+                  <button
+                    onClick={() => openModal(tarif)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold transition-all"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Modifier
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {filteredTarifs.length === 0 && !isLoading && (
+            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-slate-200">
+              <Search className="h-8 w-8 text-slate-200 mb-4" />
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Aucun résultat</h3>
+              <p className="text-xs text-slate-400 mt-1">Ajustez vos filtres ou effectuez une nouvelle recherche.</p>
+            </div>
+          )}
+        </>
       )}
 
       {/* --- Modal d'ajout/édition --- */}
@@ -474,6 +560,14 @@ const GroupedRates = () => {
         onSubmit={onSubmit}
         isSubmitting={isSubmitting}
       />}
+
+      {notification && (
+        <NotificationPortal
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 };
