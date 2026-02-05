@@ -17,13 +17,13 @@ import logo from "../../assets/logo_transparent.png";
 
 const navigation = [
   { name: "Tableau de bord", href: "/app/dashboard", icon: Home },
-  { name: "Agents", href: "/app/agents", icon: Users, adminOnly: true },
+  { name: 'Agences partenaires', href: '/app/agence-partenaire', icon: Blocks },
   { name: "Colis", href: "/app/parcels", icon: Archive },
   { name: "Tarification simple", href: "/app/simple-rates", icon: DollarSign },
-  { name: "Tarification groupé", href: "/app/grouped-rates", icon: BadgeEuro },
+  { name: "Tarification groupée", href: "/app/grouped-rates", icon: BadgeEuro },
   { name: "Configuration Zone", href: "/app/zone-configuration", icon: Settings },
-  { name: 'Agences', href: '/app/agence-partenaire', icon: Blocks },
-  { name: 'Produits', href: '/app/produits', icon: Box },
+  { name: 'Produits & Catégories', href: '/app/produits', icon: Box },
+  { name: "Agents Backoffice", href: "/app/agents", icon: Users, adminOnly: true },
 ];
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {

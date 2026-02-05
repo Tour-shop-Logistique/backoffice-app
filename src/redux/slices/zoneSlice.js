@@ -85,9 +85,10 @@ const zoneSlice = createSlice({
       })
       .addCase(addZone.fulfilled, (state, action) => {
         state.isLoading = false;
-        // Idéalement, la réponse de l'API renvoie la nouvelle zone qui peut être ajoutée à l'état
-        // Pour l'instant, nous allons juste supposer que l'ajout a réussi.
-        // Pour une meilleure UX, il faudrait rafraîchir la liste des zones.
+        const newZone = action.payload?.data || action.payload;
+        if (newZone) {
+          state.zones.unshift(newZone);
+        }
       })
       .addCase(addZone.rejected, (state, action) => {
         state.isLoading = false;
@@ -100,9 +101,12 @@ const zoneSlice = createSlice({
       })
       .addCase(editZone.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.zones = state.zones.map((zone) =>
-          zone.id === action.payload.id ? action.payload : zone
-        );
+        const updatedZone = action.payload?.data || action.payload;
+        if (updatedZone) {
+          state.zones = state.zones.map((zone) =>
+            zone.id === updatedZone.id ? updatedZone : zone
+          );
+        }
       })
       .addCase(editZone.rejected, (state, action) => {
         state.isLoading = false;
@@ -128,10 +132,13 @@ const zoneSlice = createSlice({
       })
       .addCase(updateZoneStatus.fulfilled, (state, action) => {
         state.isLoading = false;
-        const { zoneId, ...updatedData } = action.payload;
-        state.zones = state.zones.map((zone) =>
-          zone.id === zoneId ? { ...zone, ...updatedData } : zone
-        );
+        const updatedZone = action.payload?.data || action.payload;
+        if (updatedZone) {
+          const zoneId = updatedZone.id || action.meta.arg.zoneId;
+          state.zones = state.zones.map((zone) =>
+            zone.id === zoneId ? { ...zone, ...updatedZone } : zone
+          );
+        }
       })
       .addCase(updateZoneStatus.rejected, (state, action) => {
         state.isLoading = false;

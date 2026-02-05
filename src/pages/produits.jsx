@@ -13,9 +13,10 @@ import {
   updateProduitStatus,
 } from "../redux/slices/produitSlice"
 
-import { PlusCircle, Loader2, X, Trash2, AlertTriangle, Edit2, Save, XCircle, RefreshCw, CheckCircle2, Search, Package, Tag, Edit3, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlusCircle, Loader2, X, Trash2, AlertTriangle, Edit2, Save, XCircle, RefreshCw, CheckCircle2, Search, Package, Tag, Edit3, ChevronLeft, ChevronRight, Filter, ChevronDown, Check } from 'lucide-react';
 import NotificationPortal from '../components/widget/notification';
 import Modal from '../components/common/Modal';
+import DeleteModal from '../components/common/DeleteModal';
 
 export default function Produits() {
   const dispatch = useDispatch();
@@ -36,6 +37,7 @@ export default function Produits() {
   // CATEGORIES
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
 
   const [categoryForm, setCategoryForm] = useState({
     nom: "",
@@ -50,6 +52,18 @@ export default function Produits() {
   const [filterCategory, setFilterCategory] = useState('all');
   const [isRefreshingProduits, setIsRefreshingProduits] = useState(false);
   const [isRefreshingCategories, setIsRefreshingCategories] = useState(false);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target)) {
+        setIsCategoryDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleRefreshProduits = async () => {
     setIsRefreshingProduits(true);
@@ -113,7 +127,6 @@ export default function Produits() {
         showNotification("success", "Produit ajouté avec succès !");
         setProduitForm({ category_id: "", designation: "", reference: "" });
         setIsModalOpen(false);
-        dispatch(fetchProduits());
       } else {
         showNotification("error", "Erreur lors de l'ajout du produit !");
       }
@@ -137,7 +150,6 @@ export default function Produits() {
       if (response.success) {
         showNotification("success", "Produit supprimé avec succès !");
         setProduitToDelete(null);
-        dispatch(fetchProduits());
       } else {
         showNotification("error", "Erreur lors de la suppression !");
       }
@@ -170,7 +182,6 @@ export default function Produits() {
       if (response.success) {
         showNotification("success", "Produit modifié avec succès !");
         setEditingProduit(null);
-        dispatch(fetchProduits());
       } else {
         showNotification("error", "Erreur lors de la modification !");
       }
@@ -208,7 +219,6 @@ export default function Produits() {
 
       setCategoryForm({ nom: "" });
       setEditingCategory(null);
-      dispatch(fetchCategories());
     } catch (error) {
       showNotification("error", editingCategory ? "Erreur lors de la modification !" : "Erreur lors de l'ajout !");
     } finally {
@@ -216,18 +226,17 @@ export default function Produits() {
     }
   };
 
-  // -------------------------------
   // 🚀 SUPPRIMER UNE CATÉGORIE
   // -------------------------------
-  const handleDeleteCategory = async (id) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette catégorie ? Cela pourrait impacter les produits associés.")) return;
+  const handleDeleteCategory = async () => {
+    if (!categoryToDelete) return;
 
     setIsSubmitting(true);
     try {
-      const response = await dispatch(deleteCategory(id)).unwrap();
+      const response = await dispatch(deleteCategory(categoryToDelete.id)).unwrap();
       if (response.success) {
         showNotification("success", "Catégorie supprimée avec succès !");
-        dispatch(fetchCategories());
+        setCategoryToDelete(null);
       } else {
         showNotification("error", "Erreur lors de la suppression !");
       }
@@ -263,7 +272,6 @@ export default function Produits() {
       const newStatus = produit.actif ? 0 : 1;
       await dispatch(updateProduitStatus({ produitId: produit.id, status: newStatus })).unwrap();
       showNotification("success", `Produit ${produit.actif ? 'désactivé' : 'activé'} !`);
-      dispatch(fetchProduits());
     } catch (error) {
       showNotification("error", "Erreur lors du changement de statut");
     } finally {
@@ -291,7 +299,7 @@ export default function Produits() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-              Gestion des produits
+              Produits et Catégories
             </h1>
             <p className="text-xs md:text-sm text-slate-500 mt-0.5">
               Gérez vos produits et catégories en toute simplicité
@@ -307,15 +315,6 @@ export default function Produits() {
             >
               <RefreshCw className={`h-4 w-4 ${isRefreshingProduits ? 'animate-spin' : ''}`} />
               <span className="hidden md:inline md:ml-2">Rafraîchir</span>
-            </button>
-
-            <button
-              onClick={() => setIsCategoryModalOpen(true)}
-              className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
-              title="Catégories"
-            >
-              <Tag className="h-4 w-4" />
-              <span className="hidden md:inline md:ml-2">Catégories</span>
             </button>
 
             <button
@@ -343,18 +342,65 @@ export default function Produits() {
           />
         </div>
 
-        <div className="relative sm:w-64">
-          <Tag className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-slate-400" />
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm appearance-none cursor-pointer"
+        <div className="grid grid-cols-2 items-center gap-3">
+          <div className="relative" ref={categoryDropdownRef}>
+            <button
+              onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+              className="flex items-center justify-between w-full px-4 py-3 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-all text-sm font-medium text-slate-700"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Filter className={`h-4 w-4 transition-colors ${isCategoryDropdownOpen ? 'text-slate-900' : 'text-slate-400'}`} />
+                <span className="truncate pl-1 pr-2">
+                  {filterCategory === 'all'
+                    ? 'Toutes les catégories'
+                    : categories.find(c => String(c.id) === String(filterCategory))?.nom || 'Sélectionner'
+                  }
+                </span>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isCategoryDropdownOpen && (
+              <div className="absolute w-48 top-full left-0 right-0 mt-2 py-1.5 bg-white border border-slate-200 rounded-lg shadow-xl shadow-slate-200/50 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+                  <button
+                    onClick={() => {
+                      setFilterCategory('all');
+                      setIsCategoryDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${filterCategory === 'all' ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    <span>Toutes les catégories</span>
+                    {filterCategory === 'all' && <Check className="h-4 w-4 text-slate-900" />}
+                  </button>
+
+                  <div className="h-px bg-slate-100 my-1 mx-2" />
+
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        setFilterCategory(cat.id);
+                        setIsCategoryDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${String(filterCategory) === String(cat.id) ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      <span className="truncate">{cat.nom}</span>
+                      {String(filterCategory) === String(cat.id) && <Check className="h-4 w-4 text-slate-900" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => setIsCategoryModalOpen(true)}
+            className="inline-flex items-center justify-center p-3 rounded-lg border border-slate-200 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 transition-all disabled:opacity-50"
+            title="Catégories"
           >
-            <option value="all">Toutes les catégories</option>
-            {categories.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.nom}</option>
-            ))}
-          </select>
+            <Tag className="h-4 w-4" />
+            <span className="inline md:inline ml-2">Catégories</span>
+          </button>
         </div>
       </div>
 
@@ -417,7 +463,7 @@ export default function Produits() {
                     <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Référence</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Désignation</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Catégorie</th>
-                    <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
                     <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -426,22 +472,22 @@ export default function Produits() {
                     const category = categories.find(cat => cat.id === produit.category_id);
                     return (
                       <tr key={produit.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-3">
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4 text-slate-400" />
-                            <span className="font-bold text-slate-900">{produit.reference}</span>
+                            <span className="font-semibold text-slate-900">{produit.reference}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-3">
                           <span className="text-sm text-slate-600">{produit.designation}</span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-3">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium">
                             <Tag className="h-3 w-3" />
                             {category?.nom || 'Sans catégorie'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-6 py-3">
                           <button
                             onClick={() => handleToggleProduitStatus(produit)}
                             disabled={isSubmitting}
@@ -451,12 +497,12 @@ export default function Produits() {
                             <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${produit.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                               <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${produit.actif ? 'translate-x-5' : 'translate-x-0'}`} />
                             </div>
-                            <span className={`text-[10px] font-medium uppercase tracking-wider ${produit.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
+                            <span className={`text-[10px] font-medium ${produit.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
                               {produit.actif ? 'Actif' : 'Inactif'}
                             </span>
                           </button>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-3">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => setEditingProduit(produit)}
@@ -482,7 +528,7 @@ export default function Produits() {
             </div>
 
             {/* Mobile Cards - Native App Style */}
-            <div className="md:hidden divide-y divide-slate-100">
+            <div className="md:hidden divide-y divide-slate-200">
               {filteredProduits.map((produit) => {
                 const category = categories.find(cat => cat.id === produit.category_id);
                 return (
@@ -491,7 +537,7 @@ export default function Produits() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Package className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                          <span className="font-bold text-slate-900 text-sm truncate">{produit.reference}</span>
+                          <span className="font-semibold text-slate-900 text-sm truncate">{produit.reference}</span>
                         </div>
                         <p className="text-xs text-slate-600 line-clamp-2">{produit.designation}</p>
                       </div>
@@ -503,8 +549,8 @@ export default function Produits() {
                         <div className={`relative w-8 h-4 rounded-full transition-colors ${produit.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                           <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${produit.actif ? 'translate-x-4' : 'translate-x-0'}`} />
                         </div>
-                        <span className={`text-[9px] font-black tracking-tighter ${produit.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
-                          {produit.actif ? 'ACTIF' : 'INACTIF'}
+                        <span className={`text-[9px] font-medium ${produit.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
+                          {produit.actif ? 'Actif' : 'Inactif'}
                         </span>
                       </button>
                     </div>
@@ -666,40 +712,22 @@ export default function Produits() {
       </Modal>
 
       {/* MODAL SUPPRESSION PRODUIT */}
-      <Modal
+      <DeleteModal
         isOpen={!!produitToDelete}
         onClose={() => setProduitToDelete(null)}
-        title="Supprimer le produit ?"
-        size="md"
-        footer={(
-          <>
-            <button
-              onClick={() => setProduitToDelete(null)}
-              disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={handleDeleteProduit}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-red-600/10"
-            >
-              {isSubmitting ? <Loader2 className="animate-spin" size={14} /> : <Trash2 size={14} />}
-              Supprimer
-            </button>
-          </>
-        )}
-      >
-        <div className="flex flex-col items-center text-center">
-          <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
-            <AlertTriangle className="text-red-500" size={24} />
-          </div>
-          <p className="text-sm text-slate-500">
-            Êtes-vous sûr de vouloir supprimer <span className="font-bold text-slate-900">"{produitToDelete?.designation}"</span> ? Cette action est irréversible.
-          </p>
-        </div>
-      </Modal>
+        onConfirm={handleDeleteProduit}
+        itemName={produitToDelete?.designation}
+        isLoading={isSubmitting}
+      />
+
+      <DeleteModal
+        isOpen={!!categoryToDelete}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={handleDeleteCategory}
+        itemName={categoryToDelete?.nom}
+        message={categoryToDelete ? `Êtes-vous sûr de vouloir supprimer la catégorie "${categoryToDelete.nom}" ? Cela pourrait impacter les produits associés.` : ""}
+        isLoading={isSubmitting}
+      />
 
       {/* MODAL GESTION DES CATÉGORIES */}
       <Modal
@@ -780,7 +808,7 @@ export default function Produits() {
                             <Edit2 size={16} />
                           </button>
                           <button
-                            onClick={() => handleDeleteCategory(cat.id)}
+                            onClick={() => setCategoryToDelete(cat)}
                             className="text-red-500 p-1.5 hover:bg-red-50 rounded"
                           >
                             <Trash2 size={16} />

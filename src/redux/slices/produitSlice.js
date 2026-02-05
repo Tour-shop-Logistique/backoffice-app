@@ -245,6 +245,16 @@ const produitSlice = createSlice({
                         state.categories[index] = category;
                     }
                 }
+            })
+            // UPDATE PRODUIT STATUS
+            .addCase(updateProduitStatus.fulfilled, (state, action) => {
+                const product = action.payload?.product || action.payload;
+                if (product) {
+                    const index = state.listProduits.findIndex(p => p.id === product.id);
+                    if (index !== -1) {
+                        state.listProduits[index] = product;
+                    }
+                }
             });
     }
 });

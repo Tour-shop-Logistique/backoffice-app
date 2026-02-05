@@ -9,6 +9,7 @@ import {
 } from "../redux/slices/tarificationSlice";
 import { fetchZones } from "../redux/slices/zoneSlice";
 import Modal from "../components/common/Modal";
+import DeleteModal from "../components/common/DeleteModal";
 import SimpleTarifForm from "../components/common/SimpleTarifForm";
 import {
     CheckCircle2,
@@ -94,7 +95,6 @@ const SimpleRates = () => {
 
             await Promise.all(promises);
             setIsModalOpen(false);
-            dispatch(fetchTarifs());
             showNotification('success', 'Nouveaux tarifs ajoutés avec succès.');
         } catch (error) {
             showNotification('error', "Erreur lors de l'ajout des tarifs.");
@@ -130,7 +130,6 @@ const SimpleRates = () => {
             await Promise.all(promises);
             setIsEditingModalOpen(false);
             setSelectedTarif(null);
-            dispatch(fetchTarifs());
             showNotification('success', 'Grille tarifaire mise à jour.');
         } catch (error) {
             showNotification('error', 'Erreur lors de la modification.');
@@ -159,7 +158,6 @@ const SimpleRates = () => {
             }
             setIsDeleteModalOpen(false);
             setTarifToDelete(null);
-            dispatch(fetchTarifs());
             showNotification('success', 'Grille tarifaire supprimée.');
         } catch (error) {
             showNotification('error', 'Erreur lors de la suppression.');
@@ -174,7 +172,6 @@ const SimpleRates = () => {
                 dispatch(updateTarifStatus(pz.id))
             );
             await Promise.all(promises);
-            dispatch(fetchTarifs());
             showNotification('success', 'Statut mis à jour.');
         } catch (error) {
             showNotification('error', 'Erreur lors du changement de statut.');
@@ -489,40 +486,13 @@ const SimpleRates = () => {
                 )}
             </Modal>
 
-            <Modal
+            <DeleteModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
-                title="Supprimer la grille ?"
-                size="sm"
-                footer={(
-                    <>
-                        <button
-                            onClick={() => setIsDeleteModalOpen(false)}
-                            disabled={isDeleting}
-                            className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-200 transition-colors uppercase tracking-widest"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            onClick={handleDeleteTarif}
-                            disabled={isDeleting}
-                            className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-red-600/10"
-                        >
-                            {isDeleting ? <Loader2 className="animate-spin h-4 w-4" /> : <Trash2 size={14} />}
-                            Supprimer
-                        </button>
-                    </>
-                )}
-            >
-                <div className="flex flex-col items-center text-center p-2">
-                    <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center mb-3">
-                        <Trash2 className="text-red-500" size={20} />
-                    </div>
-                    <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                        Voulez-vous vraiment supprimer la grille <span className="font-bold text-slate-900">#{tarifToDelete?.indice}</span> ({tarifToDelete?.pays}) ? Cette action est irréversible.
-                    </p>
-                </div>
-            </Modal>
+                onConfirm={handleDeleteTarif}
+                itemName={`#${tarifToDelete?.indice} (${tarifToDelete?.pays})`}
+                isLoading={isDeleting}
+            />
         </div>
     );
 };

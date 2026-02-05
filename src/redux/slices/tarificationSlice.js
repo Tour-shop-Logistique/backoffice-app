@@ -154,15 +154,17 @@ const tarificationSlice = createSlice({
       })
 
       .addCase(addSimpleTarif.fulfilled, (state, action) => {
-        if (action.payload) {
-          state.tarifs.push(action.payload);
+        const newTarif = action.payload?.data || action.payload;
+        if (newTarif) {
+          state.tarifs.unshift(newTarif);
         }
       })
 
       .addCase(editSimpleTarif.fulfilled, (state, action) => {
-        if (action.payload) {
+        const updated = action.payload?.data || action.payload;
+        if (updated) {
           state.tarifs = state.tarifs.map((t) =>
-            t.id === action.payload.id ? action.payload : t
+            t.id === updated.id ? updated : t
           );
         }
       })
@@ -172,9 +174,10 @@ const tarificationSlice = createSlice({
       })
 
       .addCase(updateTarifStatus.fulfilled, (state, action) => {
-        if (action.payload) {
+        const updated = action.payload?.data || action.payload;
+        if (updated) {
           state.tarifs = state.tarifs.map((t) =>
-            t.id === action.payload.id ? action.payload : t
+            t.id === updated.id ? updated : t
           );
         }
       });
@@ -199,13 +202,19 @@ const tarificationSlice = createSlice({
       })
 
       .addCase(addGroupedTarif.fulfilled, (state, action) => {
-        state.groupedTarifs.push(action.payload);
+        const newTarif = action.payload?.data || action.payload;
+        if (newTarif) {
+          state.groupedTarifs.unshift(newTarif);
+        }
       })
 
       .addCase(editGroupedTarif.fulfilled, (state, action) => {
-        state.groupedTarifs = state.groupedTarifs.map((t) =>
-          t.id === action.payload.id ? action.payload : t
-        );
+        const updated = action.payload?.data || action.payload;
+        if (updated) {
+          state.groupedTarifs = state.groupedTarifs.map((t) =>
+            t.id === updated.id ? updated : t
+          );
+        }
       })
 
       .addCase(deleteGroupedTarif.fulfilled, (state, action) => {
@@ -215,9 +224,12 @@ const tarificationSlice = createSlice({
       })
 
       .addCase(updateGroupedTarifStatus.fulfilled, (state, action) => {
-        state.groupedTarifs = state.groupedTarifs.map((t) =>
-          t.id === action.payload.id ? action.payload : t
-        );
+        const updated = action.payload?.data || action.payload;
+        if (updated) {
+          state.groupedTarifs = state.groupedTarifs.map((t) =>
+            t.id === updated.id ? updated : t
+          );
+        }
       });
   },
 });

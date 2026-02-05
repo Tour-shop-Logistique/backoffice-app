@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import NotificationPortal from '../components/widget/notification';
 import { fetchAgents, addAgent, editAgent, deleteAgent, updateAgentStatus, setAgentStatus } from '../redux/slices/agentSlice';
 import Modal from '../components/common/Modal';
+import DeleteModal from '../components/common/DeleteModal';
 
 const Agents = () => {
   const dispatch = useDispatch();
@@ -98,7 +99,6 @@ const Agents = () => {
       const result = await dispatch(deleteAgent(agentToDelete.id)).unwrap();
       if (result.success || result) { // handle potential different API response formats
         showNotification('success', `L'agent ${agentToDelete.nom} a été supprimé.`);
-        dispatch(fetchAgents());
         setAgentToDelete(null);
       } else {
         showNotification('error', 'Erreur lors de la suppression');
@@ -130,7 +130,6 @@ const Agents = () => {
         const result = await dispatch(editAgent({ agentId: id, agentData: updateData })).unwrap();
         if (result.success || result) {
           showNotification('success', 'Agent modifié avec succès.');
-          dispatch(fetchAgents());
           closeModal();
         } else {
           showNotification('error', 'Erreur lors de la modification');
@@ -143,7 +142,6 @@ const Agents = () => {
         const result = await dispatch(addAgent(agentForm)).unwrap();
         if (result.success || result) {
           showNotification('success', 'Agent créé avec succès.');
-          dispatch(fetchAgents());
           closeModal();
         } else {
           showNotification('error', "Erreur lors de l'ajout");
@@ -301,7 +299,7 @@ const Agents = () => {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Membre</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
-                    <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
                     <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -331,7 +329,7 @@ const Agents = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-6 py-4">
                         <button
                           onClick={() => toggleUserStatus(agent)}
                           disabled={isSubmitting}
@@ -341,7 +339,7 @@ const Agents = () => {
                           <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${agent.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                             <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${agent.actif ? 'translate-x-5' : 'translate-x-0'}`} />
                           </div>
-                          <span className={`text-[10px] font-medium uppercase tracking-wider ${agent.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
+                          <span className={`text-[10px] font-medium ${agent.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
                             {agent.actif ? 'Actif' : 'Inactif'}
                           </span>
                         </button>
@@ -392,8 +390,8 @@ const Agents = () => {
                       <div className={`relative w-8 h-4 rounded-full transition-colors ${agent.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                         <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${agent.actif ? 'translate-x-4' : 'translate-x-0'}`} />
                       </div>
-                      <span className={`text-[9px] font-black tracking-tighter ${agent.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
-                        {agent.actif ? 'ACTIF' : 'INACTIF'}
+                      <span className={`text-[9px] font-medium ${agent.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
+                        {agent.actif ? 'Actif' : 'Inactif'}
                       </span>
                     </button>
                   </div>
@@ -496,41 +494,13 @@ const Agents = () => {
         </form>
       </Modal>
 
-      {/* Suppression Modal */}
-      <Modal
+      <DeleteModal
         isOpen={!!agentToDelete}
         onClose={() => setAgentToDelete(null)}
-        title="Supprimer l'agent ?"
-        size="sm"
-        footer={(
-          <>
-            <button
-              onClick={() => setAgentToDelete(null)}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-200 transition-colors uppercase tracking-widest"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={handleDeleteAgent}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-red-600/10"
-            >
-              {isSubmitting ? <Loader2 className="animate-spin" size={14} /> : <Trash2 size={14} />}
-              Supprimer
-            </button>
-          </>
-        )}
-      >
-        <div className="flex flex-col items-center text-center p-2">
-          <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center mb-3">
-            <AlertTriangle className="text-red-500" size={20} />
-          </div>
-          <p className="text-sm text-slate-600 leading-relaxed font-medium">
-            Êtes-vous sûr de vouloir retirer <span className="font-bold text-slate-900">{agentToDelete?.nom} {agentToDelete?.prenoms}</span> ?
-          </p>
-        </div>
-      </Modal>
+        onConfirm={handleDeleteAgent}
+        itemName={`${agentToDelete?.nom} ${agentToDelete?.prenoms}`}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 };

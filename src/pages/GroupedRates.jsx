@@ -23,6 +23,7 @@ import { fetchCategories } from "../redux/slices/produitSlice";
 import { fetchGroupedTarifs, addGroupedTarif, editGroupedTarif, updateGroupedTarifStatus, deleteGroupedTarif } from "../redux/slices/tarificationSlice";
 import Addtarifgroupe from '../components/widget/Addtarifgroupe';
 import Modal from '../components/common/Modal';
+import DeleteModal from '../components/common/DeleteModal';
 
 const GroupedRates = () => {
   const dispatch = useDispatch();
@@ -37,6 +38,7 @@ const GroupedRates = () => {
   const [activeType, setActiveType] = useState("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [tarifToDelete, setTarifToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { groupedTarifs, isLoading, error, groupedHasLoaded } = useSelector(
     (state) => state.tarification
@@ -85,14 +87,12 @@ const GroupedRates = () => {
         const result = await dispatch(editGroupedTarif({ tarifId: tarifToEdit.id, tarifData: data })).unwrap();
         if (result) {
           showNotification('success', 'Tarif mis à jour avec succès!');
-          dispatch(fetchGroupedTarifs());
           closeModal();
         }
       } else {
         const result = await dispatch(addGroupedTarif(data)).unwrap();
         if (result) {
           showNotification('success', 'Nouveau tarif ajouté avec succès!');
-          dispatch(fetchGroupedTarifs());
           closeModal();
         }
       }
@@ -107,7 +107,6 @@ const GroupedRates = () => {
     try {
       await dispatch(updateGroupedTarifStatus(tarifId)).unwrap();
       showNotification('success', `Statut mis à jour.`);
-      dispatch(fetchGroupedTarifs());
     } catch (err) {
       showNotification('error', 'Erreur lors de la mise à jour du statut.');
     }
@@ -115,13 +114,15 @@ const GroupedRates = () => {
 
   const handleDelete = async () => {
     if (!tarifToDelete) return;
+    setIsDeleting(true);
     try {
       await dispatch(deleteGroupedTarif(tarifToDelete.id)).unwrap();
       showNotification('success', 'Tarif supprimé avec succès!');
       setTarifToDelete(null);
-      dispatch(fetchGroupedTarifs());
     } catch (err) {
       showNotification('error', 'Erreur lors de la suppression.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -443,38 +444,13 @@ const GroupedRates = () => {
         />
       </Modal>
 
-      <Modal
+      <DeleteModal
         isOpen={!!tarifToDelete}
         onClose={() => setTarifToDelete(null)}
-        title="Supprimer le tarif ?"
-        size="sm"
-        footer={(
-          <>
-            <button
-              onClick={() => setTarifToDelete(null)}
-              className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-200 transition-colors uppercase tracking-widest"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-red-600/10"
-            >
-              <Trash2 size={14} />
-              Supprimer
-            </button>
-          </>
-        )}
-      >
-        <div className="flex flex-col items-center text-center p-2">
-          <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center mb-3">
-            <Trash2 className="text-red-500" size={20} />
-          </div>
-          <p className="text-sm text-slate-600 leading-relaxed font-medium">
-            Voulez-vous vraiment supprimer le tarif pour <span className="font-bold text-slate-900">{tarifToDelete?.category?.nom}</span> ({tarifToDelete?.pays}) ?
-          </p>
-        </div>
-      </Modal>
+        onConfirm={handleDelete}
+        itemName={`${tarifToDelete?.category?.nom} (${tarifToDelete?.pays})`}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

@@ -19,6 +19,7 @@ import {
 import Modal from '../components/common/Modal';
 import ZoneForm from '../components/common/ZoneForm';
 import NotificationPortal from '../components/widget/notification';
+import DeleteModal from '../components/common/DeleteModal';
 
 const ZoneConfiguration = () => {
   const dispatch = useDispatch();
@@ -32,6 +33,8 @@ const ZoneConfiguration = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewCountries, setViewCountries] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [zoneToDelete, setZoneToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const notificationTimeoutRef = useRef(null);
 
   const showNotification = useCallback((type, message) => {
@@ -66,7 +69,6 @@ const ZoneConfiguration = () => {
     dispatch(addZone(zoneData)).then((result) => {
       if (addZone.fulfilled.match(result)) {
         setIsModalOpen(false);
-        dispatch(fetchZones());
       }
     });
   };
@@ -76,7 +78,6 @@ const ZoneConfiguration = () => {
       if (editZone.fulfilled.match(result)) {
         setIsEditModalOpen(false);
         setSelectedZone(null);
-        dispatch(fetchZones());
       }
     });
   };
@@ -86,9 +87,18 @@ const ZoneConfiguration = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteZone = (zoneId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette zone ?')) {
-      dispatch(deleteZone(zoneId));
+  const handleDeleteZone = async () => {
+    if (!zoneToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteZone(zoneToDelete.id)).unwrap();
+      showNotification('success', 'Zone supprimée avec succès.');
+      setZoneToDelete(null);
+    } catch (error) {
+      showNotification('error', 'Erreur lors de la suppression.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -238,24 +248,24 @@ const ZoneConfiguration = () => {
                 <tbody className="divide-y divide-slate-100">
                   {filteredZones.map((zone) => (
                     <tr key={zone.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-3">
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-slate-400" />
-                          <span className="font-bold text-slate-900">{zone.nom}</span>
+                          <span className="font-semibold text-slate-900">{zone.nom}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-3">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setViewCountries(zone)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-medium transition-all"
+                            className="inline-flex items-center gap-1 px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md text-xs font-medium transition-all"
                           >
                             <Globe2 className="h-3 w-3" />
                             {zone.pays.length} pays
                           </button>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-6 py-3">
                         <button
                           onClick={() => handleStatusChange(zone.id, zone.actif)}
                           disabled={updatingStatus[zone.id]}
@@ -265,12 +275,12 @@ const ZoneConfiguration = () => {
                           <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${zone.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                             <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${zone.actif ? 'translate-x-5' : 'translate-x-0'}`} />
                           </div>
-                          <span className={`text-[10px] font-medium uppercase tracking-wider ${zone.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
+                          <span className={`text-[10px] font-medium ${zone.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
                             {zone.actif ? 'Actif' : 'Inactif'}
                           </span>
                         </button>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-3">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEditModal(zone)}
@@ -280,7 +290,7 @@ const ZoneConfiguration = () => {
                             <Edit2 size={16} />
                           </button>
                           <button
-                            onClick={() => handleDeleteZone(zone.id)}
+                            onClick={() => setZoneToDelete(zone)}
                             className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
                             title="Supprimer"
                           >
@@ -295,18 +305,18 @@ const ZoneConfiguration = () => {
             </div>
 
             {/* Mobile Cards - Native App Style */}
-            <div className="md:hidden divide-y divide-slate-100">
+            <div className="md:hidden divide-y divide-slate-200">
               {filteredZones.map((zone) => (
                 <div key={zone.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-1">
+                      <div className="flex items-center gap-1.5 mb-2">
                         <MapPin className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                        <span className="font-bold text-slate-900 text-sm truncate">{zone.nom}</span>
+                        <span className="font-semibold text-slate-900 text-sm truncate">{zone.nom}</span>
                       </div>
                       <button
                         onClick={() => setViewCountries(zone)}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 active:bg-slate-200 text-slate-700 rounded-md text-[11px] font-medium transition-all"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 active:bg-blue-200 text-blue-700 rounded-md text-sm font-medium transition-all"
                       >
                         <Globe2 className="h-3 w-3" />
                         {zone.pays.length} pays
@@ -320,13 +330,13 @@ const ZoneConfiguration = () => {
                       <div className={`relative w-8 h-4 rounded-full transition-colors ${zone.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                         <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${zone.actif ? 'translate-x-4' : 'translate-x-0'}`} />
                       </div>
-                      <span className={`text-[9px] font-black tracking-tighter ${zone.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
-                        {zone.actif ? 'ACTIF' : 'INACTIF'}
+                      <span className={`text-[9px] font-medium ${zone.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
+                        {zone.actif ? 'Actif' : 'Inactif'}
                       </span>
                     </button>
                   </div>
 
-                  <div className="flex gap-2 pt-1">
+                  <div className="flex gap-2">
                     <button
                       onClick={() => openEditModal(zone)}
                       className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
@@ -335,7 +345,7 @@ const ZoneConfiguration = () => {
                       Modifier
                     </button>
                     <button
-                      onClick={() => handleDeleteZone(zone.id)}
+                      onClick={() => setZoneToDelete(zone)}
                       className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
                     >
                       <Trash2 size={15} />
@@ -404,6 +414,14 @@ const ZoneConfiguration = () => {
           ))}
         </div>
       </Modal>
+
+      <DeleteModal
+        isOpen={!!zoneToDelete}
+        onClose={() => setZoneToDelete(null)}
+        onConfirm={handleDeleteZone}
+        itemName={zoneToDelete?.nom}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };
