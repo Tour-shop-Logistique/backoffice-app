@@ -1,79 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import tarificationService from '../services/tarificationService';
-import { Pencil, Trash, ToggleLeft, ToggleRight, Plus, X, Search, Loader2, Globe, Plane, Ship, Package, MoreVertical, LayoutGrid, List, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import {
+  PlusCircle,
+  Loader2,
+  X,
+  Trash2,
+  Globe,
+  Plane,
+  Ship,
+  Package,
+  RefreshCw,
+  CheckCircle2,
+  XCircle,
+  Search,
+  Edit2,
+  Edit3,
+  Tag,
+  LayoutGrid
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import NotificationPortal from '../components/widget/notification';
 import { fetchCategories } from "../redux/slices/produitSlice";
-import { fetchGroupedTarifs, addGroupedTarif, editGroupedTarif } from "../redux/slices/tarificationSlice";
-import toast from 'react-hot-toast';
+import { fetchGroupedTarifs, addGroupedTarif, editGroupedTarif, updateGroupedTarifStatus, deleteGroupedTarif } from "../redux/slices/tarificationSlice";
 import Addtarifgroupe from '../components/widget/Addtarifgroupe';
-
-// Schéma de validation avec Yup
-const validationSchema = yup.object().shape({
-  id: yup.string().optional(), // Pour l'édition
-  category_id: yup.string().required('La catégorie est requise'),
-  tarif_minimum: yup.number().required('Le tarif minimum est requis').positive('Le tarif doit être positif'),
-  prix_modes: yup.array().of(
-    yup.object().shape({
-      mode: yup.string().required('Le mode est requis'),
-      montant_base: yup.number().required('Le montant de base est requis').positive('Le montant doit être positif'),
-      montant_expedition: yup.number().required("Le montant d'expédition est requis").positive('Le montant doit être positif'),
-      pourcentage_prestation: yup.number().required('Le pourcentage est requis').min(0, 'Le pourcentage doit être positif ou zéro') // Ajout de min(0)
-    })
-  )
-});
+import Modal from '../components/common/Modal';
 
 const GroupedRates = () => {
+  const dispatch = useDispatch();
   const [notification, setNotification] = useState(null);
-  const notificationTimeoutRef = React.useRef(null);
+  const notificationTimeoutRef = useRef(null);
 
-  const showNotification = React.useCallback((type, message) => {
-    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
-    setNotification({ type, message });
-    notificationTimeoutRef.current = setTimeout(() => setNotification(null), 4000);
-  }, []);
-
-  React.useEffect(() => () => {
-    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
-  }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tarifToEdit, setTarifToEdit] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState('all');
   const [activeType, setActiveType] = useState("all");
-  const [viewMode, setViewMode] = useState("table");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [tarifToDelete, setTarifToDelete] = useState(null);
 
-  const dispatch = useDispatch();
   const { groupedTarifs, isLoading, error, groupedHasLoaded } = useSelector(
     (state) => state.tarification
   );
   const { categories, hasLoadedCategories } = useSelector(state => state.produits);
 
-  const filteredTarifs = (groupedTarifs || []).filter(tarif => {
-    const matchesSearch =
-      (tarif.category?.nom || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (tarif.pays || "").toLowerCase().includes(searchTerm.toLowerCase());
+  const showNotification = useCallback((type, message) => {
+    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
+    setNotification({ type, message });
+    notificationTimeoutRef.current = setTimeout(() => setNotification(null), 4000);
+  }, []);
 
-    const matchesType = activeType === "all" || tarif.type_expedition?.toUpperCase() === activeType.toUpperCase();
-
-    const matchesStatus = filterStatus === 'all' ||
-      (filterStatus === 'active' && tarif.actif) ||
-      (filterStatus === 'inactive' && !tarif.actif);
-
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  const groupedByType = filteredTarifs.reduce((acc, tarif) => {
-    const type = tarif.type_expedition || "non_defini";
-    if (!acc[type]) acc[type] = [];
-    acc[type].push(tarif);
-    return acc;
-  }, {});
+  useEffect(() => () => {
+    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
+  }, []);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -90,27 +68,8 @@ const GroupedRates = () => {
     }
   };
 
-  // --- LOGIQUE DE CHARGEMENT ---
-  // const loadGroupedTarifs = async () => {
-  //   try {
-  //     setLoading(true);
-  //     dispatch(fetchGroupedTarifs());
-  //     setError(null);
-  //   } catch (err) {
-  //     console.error('Erreur lors du chargement des tarifs groupés:', err);
-  //     setError('Erreur lors du chargement des tarifs groupés');
-  //     toast.error('Erreur lors du chargement des tarifs.');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const openModal = (tarif = null) => {
-    if (tarif) {
-      setTarifToEdit(tarif);
-    } else {
-      setTarifToEdit(null);
-    }
+    setTarifToEdit(tarif);
     setShowModal(true);
   };
 
@@ -119,457 +78,405 @@ const GroupedRates = () => {
     setTarifToEdit(null);
   };
 
-  // --- SOUMISSION DU FORMULAIRE (Ajout ou Édition) ---
   const onSubmit = async (data) => {
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
-      console.log("Données reçues du formulaire:", data);
-
-      // Les types DHD aérien/maritime sont déjà formatés par Addtarifgroupe
-      // Mais on s'assure que la structure est correcte
-      let formattedData = data;
-      console.log("Données formatées prêtes à l'envoi:", formattedData);
-
-      const loadingToast = toast.loading(tarifToEdit ? 'Modification en cours...' : 'Enregistrement en cours...');
-
       if (tarifToEdit) {
-        // Mode Édition
-        console.log(`Tentative de modification du tarif ${tarifToEdit.id}`);
-        const result = await dispatch(editGroupedTarif({ tarifId: tarifToEdit.id, tarifData: formattedData }));
-        if (editGroupedTarif.fulfilled.match(result)) {
-          toast.success('Tarif mis à jour avec succès!', { id: loadingToast });
+        const result = await dispatch(editGroupedTarif({ tarifId: tarifToEdit.id, tarifData: data })).unwrap();
+        if (result) {
+          showNotification('success', 'Tarif mis à jour avec succès!');
           dispatch(fetchGroupedTarifs());
           closeModal();
-        } else {
-          console.error("Erreur dispatch editGroupedTarif:", result.error);
-          toast.error('Erreur lors de la modification', { id: loadingToast });
         }
       } else {
-        // Mode Ajout
-        console.log("Tentative d'ajout d'un nouveau tarif");
-        const result = await dispatch(addGroupedTarif(formattedData));
-        if (addGroupedTarif.fulfilled.match(result)) {
-          toast.success('Nouveau tarif ajouté avec succès!', { id: loadingToast });
+        const result = await dispatch(addGroupedTarif(data)).unwrap();
+        if (result) {
+          showNotification('success', 'Nouveau tarif ajouté avec succès!');
           dispatch(fetchGroupedTarifs());
           closeModal();
-        } else {
-          console.error("Erreur dispatch addGroupedTarif:", result.error);
-          toast.error("Erreur lors de l'ajout", { id: loadingToast });
         }
       }
-
     } catch (error) {
-      console.error('Erreur lors de la soumission du tarif:', error);
-      toast.error(`Erreur: ${error.message || "Une erreur est survenue."}`);
-      setError('Erreur lors de la soumission du tarif');
+      showNotification('error', error.message || "Une erreur est survenue.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-
-  // --- GESTION DES ACTIONS (Statut/Suppression) ---
-  const handleStatusToggle = async (tarifId, currentStatus) => {
+  const handleStatusToggle = async (tarifId) => {
     try {
-      await tarificationService.updateGroupedTarifStatus(tarifId);
-      toast.success(`Statut du tarif mis à jour à ${currentStatus ? 'Inactif' : 'Actif'}!`);
+      await dispatch(updateGroupedTarifStatus(tarifId)).unwrap();
+      showNotification('success', `Statut mis à jour.`);
       dispatch(fetchGroupedTarifs());
     } catch (err) {
-      console.error('Erreur lors de la mise à jour du statut:', err);
-      toast.error('Erreur lors de la mise à jour du statut.');
+      showNotification('error', 'Erreur lors de la mise à jour du statut.');
     }
   };
 
-  const handleDelete = async (tarifId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer définitivement ce tarif ? Cette action est irréversible.')) {
-      try {
-        await tarificationService.deleteGroupedTarif(tarifId);
-        toast.success('Tarif supprimé avec succès!');
-        dispatch(fetchGroupedTarifs());
-      } catch (err) {
-        console.error('Erreur lors de la suppression du tarif:', err);
-        toast.error('Erreur lors de la suppression du tarif.');
-      }
+  const handleDelete = async () => {
+    if (!tarifToDelete) return;
+    try {
+      await dispatch(deleteGroupedTarif(tarifToDelete.id)).unwrap();
+      showNotification('success', 'Tarif supprimé avec succès!');
+      setTarifToDelete(null);
+      dispatch(fetchGroupedTarifs());
+    } catch (err) {
+      showNotification('error', 'Erreur lors de la suppression.');
     }
   };
 
   const getTypeIcon = (type) => {
-    switch (type.toUpperCase()) {
-      case 'GROUPAGE_DHD':
+    switch (type?.toUpperCase()) {
       case 'GROUPAGE_DHD_AERIEN': return <Plane className="h-4 w-4" />;
       case 'GROUPAGE_DHD_MARITIME': return <Ship className="h-4 w-4" />;
-      case 'GROUPAGE_AFRIQUE': return <Globe className="h-4 w-4" />;
-      case 'GROUPAGE_CA': return <Package className="h-4 w-4" />;
-      default: return <Ship className="h-4 w-4" />;
+      default: return <Package className="h-4 w-4" />;
     }
   };
 
-  const getModeIcon = (mode) => {
-    switch (mode.toLowerCase()) {
-      case 'avion': return <Plane className="h-3 w-3" />;
-      case 'bateau': return <Ship className="h-3 w-3" />;
-      default: return <Package className="h-3 w-3" />;
+  const getTypeLabel = (type) => {
+    switch (type?.toUpperCase()) {
+      case 'GROUPAGE_DHD_AERIEN': return 'Aérien';
+      case 'GROUPAGE_DHD_MARITIME': return 'Maritime';
+      case 'GROUPAGE_SIMPLE': return 'Simple';
+      default: return type || 'N/A';
     }
   };
 
-  // --- UTILITAIRE DE FORMATAGE ---
-  const formatCurrency = (value) => {
-    if (value === undefined || value === null) return '0 FCFA';
-    const numberValue = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(numberValue).replace('XOF', 'FCFA');
-  };
+  const filteredTarifs = useMemo(() => {
+    return (groupedTarifs || []).filter(tarif => {
+      const matchesSearch =
+        (tarif.category?.nom || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (tarif.pays || "").toLowerCase().includes(searchTerm.toLowerCase());
 
+      const matchesType = activeType === "all" || tarif.type_expedition?.toUpperCase() === activeType.toUpperCase();
 
+      const matchesStatus = filterStatus === 'all' ||
+        (filterStatus === 'active' && tarif.actif) ||
+        (filterStatus === 'inactive' && !tarif.actif);
 
-  if (error && (groupedTarifs || []).length === 0) {
-    return (
-      <div className="bg-red-50 border border-red-100 p-6 rounded-2xl flex items-center gap-4 animate-shake">
-        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600">
-          <X className="h-6 w-6" />
-        </div>
-        <div>
-          <h3 className="font-bold text-red-900">Erreur de chargement</h3>
-          <p className="text-red-700 text-sm">{error}</p>
-          <button onClick={() => dispatch(fetchGroupedTarifs())} className="mt-2 text-red-600 font-bold text-xs uppercase hover:underline">Réessayer</button>
-        </div>
-      </div>
-    );
-  }
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [groupedTarifs, searchTerm, activeType, filterStatus]);
 
-  // --- COMPOSANT PRINCIPAL ---
   return (
-    <div className="animate-fade-in space-y-6 pb-20 md:pb-8">
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-        <div className="max-w-2xl">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Tarifs de Groupage
-          </h1>
-          <p className="text-slate-500 text-sm mt-1 leading-relaxed">
-            Configurez les grilles tarifaires pour les expéditions groupées. Ces tarifs sont appliqués en fonction de la catégorie de marchandise et de la ligne logistique choisie.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="p-3 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
-            title="Rafraîchir"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </button>
-          <button
-            onClick={() => openModal()}
-            className="inline-flex items-center justify-center px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 shrink-0"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            <span>Nouveau Tarif</span>
-          </button>
-        </div>
-      </div>
+    <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
+      <NotificationPortal notification={notification} onClose={() => setNotification(null)} />
 
-      {/* Barre unifiée Stats + Recherche */}
-      <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
-        <div className="grid grid-cols-2 gap-4 lg:flex lg:gap-4 shrink-0">
-          {/* Actives */}
-          <div
-            onClick={() => setFilterStatus(filterStatus === 'active' ? 'all' : 'active')}
-            className={`flex-1 lg:w-64 rounded-xl px-4 py-3 shadow-sm border transition-all cursor-pointer hover:shadow-md ${filterStatus === 'active'
-              ? 'bg-emerald-100 border-emerald-500 ring-2 ring-emerald-500/10'
-              : 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-200'
-              }`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${filterStatus === 'active' ? 'text-emerald-800' : 'text-emerald-600/70'}`}>Tarifs Actifs</p>
-                <p className={`text-2xl font-black ${filterStatus === 'active' ? 'text-emerald-900' : 'text-emerald-700'}`}>
-                  {(groupedTarifs || []).filter(t => t.actif).length}
-                </p>
-              </div>
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${filterStatus === 'active' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-white text-emerald-500 border-emerald-100'
-                }`}>
-                <CheckCircle2 className="h-6 w-6" />
-              </div>
-            </div>
-          </div>
-
-          {/* Inactives */}
-          <div
-            onClick={() => setFilterStatus(filterStatus === 'inactive' ? 'all' : 'inactive')}
-            className={`flex-1 lg:w-64 rounded-xl px-4 py-3 shadow-sm border transition-all cursor-pointer hover:shadow-md ${filterStatus === 'inactive'
-              ? 'bg-rose-100 border-rose-500 ring-2 ring-rose-500/10'
-              : 'bg-rose-50/50 border-rose-100 hover:border-rose-200'
-              }`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${filterStatus === 'inactive' ? 'text-rose-800' : 'text-rose-600/70'}`}>Tarifs Inactifs</p>
-                <p className={`text-2xl font-black ${filterStatus === 'inactive' ? 'text-rose-900' : 'text-rose-700'}`}>
-                  {(groupedTarifs || []).filter(t => !t.actif).length}
-                </p>
-              </div>
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${filterStatus === 'inactive' ? 'bg-rose-500 text-white border-rose-400' : 'bg-white text-rose-500 border-rose-100'
-                }`}>
-                <XCircle className="h-6 w-6" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recherche et Filtre de type */}
-        <div className="flex-1 flex flex-col md:flex-row gap-3 items-stretch bg-white p-3 rounded-xl border border-slate-200 shadow-sm relative group">
-          <div className="relative flex-1 group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
-            <input
-              type="text"
-              placeholder="Rechercher par catégorie, pays..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-slate-900 focus:border-slate-900 outline-none transition-all"
-            />
+      {/* HEADER - Mobile Optimized */}
+      <header className="space-y-3 md:space-y-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+              Tarifs Groupés
+            </h1>
+            <p className="text-xs md:text-sm text-slate-500 mt-0.5">
+              Gestion des prix DHD Aérien et Maritime
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <select
-              value={activeType}
-              onChange={(e) => setActiveType(e.target.value)}
-              className="flex-1 md:flex-none py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-slate-900 outline-none transition-all font-bold text-slate-700"
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
+              title="Rafraîchir"
             >
-              <option value="all">Toutes les lignes</option>
-              <option value="GROUPAGE_DHD_AERIEN">DHD Aérien</option>
-              <option value="GROUPAGE_DHD_MARITIME">DHD Maritime</option>
-              <option value="GROUPAGE_CA">Colis Accompagné</option>
-              <option value="GROUPAGE_AFRIQUE">Afrique</option>
-            </select>
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden md:inline md:ml-2">Rafraîchir</span>
+            </button>
 
-            <div className="hidden md:flex items-center border border-slate-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setViewMode("table")}
-                className={`p-2 transition-colors ${viewMode === "table" ? "bg-slate-900 text-white" : "bg-white text-slate-400 hover:text-slate-600"}`}
-                title="Vue Table"
-              >
-                <List className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 transition-colors ${viewMode === "grid" ? "bg-slate-900 text-white" : "bg-white text-slate-400 hover:text-slate-600"}`}
-                title="Vue Grille"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-            </div>
+            <button
+              onClick={() => openModal()}
+              className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg hover:shadow-lg transition-colors"
+              title="Ajouter"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span className="hidden md:inline md:ml-2">Ajouter</span>
+            </button>
           </div>
+        </div>
+      </header>
+
+      {/* FILTERS & SEARCH - Mobile Optimized */}
+      <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Rechercher par pays ou catégorie..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400"
+          />
+        </div>
+        <div className="relative sm:w-64">
+          <LayoutGrid className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <select
+            value={activeType}
+            onChange={(e) => setActiveType(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm appearance-none cursor-pointer font-medium text-slate-700"
+          >
+            <option value="all">Tous les modes</option>
+            <option value="GROUPAGE_DHD_AERIEN">DHD Aérien</option>
+            <option value="GROUPAGE_DHD_MARITIME">DHD Maritime</option>
+            <option value="GROUPAGE_SIMPLE">Groupage Simple</option>
+          </select>
         </div>
       </div>
 
-      {isLoading && (groupedTarifs || []).length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-slate-200 shadow-sm">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-900 mb-4" />
-          <p className="text-slate-500 font-medium text-sm tracking-wide uppercase">Chargement des tarifs...</p>
+      {/* TABS + CONTENT - Mobile Optimized */}
+      <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* Tabs */}
+        <div className="border-b border-slate-200 bg-slate-50/50">
+          <div className="flex overflow-x-auto">
+            <button
+              onClick={() => setFilterStatus('all')}
+              className={`px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap transition-all ${filterStatus === 'all'
+                ? 'text-slate-900 border-b-2 border-slate-900 bg-white'
+                : 'text-slate-500 hover:text-slate-700'
+                }`}
+            >
+              Toutes ({groupedTarifs.length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('active')}
+              className={`px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap transition-all ${filterStatus === 'active'
+                ? 'text-emerald-600 border-b-2 border-emerald-600 bg-white'
+                : 'text-slate-500 hover:text-slate-700'
+                }`}
+            >
+              Actives ({groupedTarifs.filter(t => t.actif).length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('inactive')}
+              className={`px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap transition-all ${filterStatus === 'inactive'
+                ? 'text-rose-600 border-b-2 border-rose-600 bg-white'
+                : 'text-slate-500 hover:text-slate-700'
+                }`}
+            >
+              Inactives ({groupedTarifs.filter(t => !t.actif).length})
+            </button>
+          </div>
         </div>
-      ) : (
-        <>
 
-          {/* Vue Table (Desktop) */}
-          <div className={`hidden ${viewMode === "table" ? "md:block" : ""} bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden`}>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-100">
-                <thead className="bg-slate-50">
+        {/* Body Content */}
+        {isLoading && (groupedTarifs || []).length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24">
+            <Loader2 className="animate-spin text-slate-900 mb-4" size={48} strokeWidth={1.5} />
+            <p className="text-slate-500 font-medium text-sm">Chargement des tarifs...</p>
+          </div>
+        ) : filteredTarifs.length === 0 ? (
+          <div className="py-20 text-center">
+            <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+              <Tag className="text-slate-400" size={32} />
+            </div>
+            <h3 className="font-bold text-slate-900 text-lg">Aucun tarif trouvé</h3>
+            <p className="text-slate-500 text-sm mt-2">Essayez d'ajuster vos filtres.</p>
+          </div>
+        ) : (
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50/50 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Marchandise / Catégorie</th>
-                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Destination / Ligne</th>
-                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Base Min.</th>
-                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Modes Actifs</th>
-                    <th className="px-6 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">Statut</th>
-                    <th className="px-6 py-3 text-right text-[10px] font-bold text-slate-500 uppercase tracking-widest">Actions</th>
+                    <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Catégorie</th>
+                    <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Pays / Mode</th>
+                    <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Détails Prix</th>
+                    <th className="px-6 py-4 text-center font-bold text-slate-500 uppercase tracking-wider text-xs">Statut</th>
+                    <th className="px-6 py-4 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {Object.entries(groupedByType).map(([type, tarifs], groupIndex) => (
-                    <React.Fragment key={`${type}-${groupIndex}`}>
-                      <tr className="bg-slate-50/50">
-                        <td colSpan="6" className="px-6 py-2">
-                          <div className="flex items-center gap-2 text-slate-500">
-                            {getTypeIcon(type)}
-                            <span className="font-bold text-[10px] uppercase tracking-widest">
-                              {type.replace(/_/g, ' ')}
-                            </span>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredTarifs.map((tarif) => (
+                    <tr key={tarif.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-900">{tarif.category?.nom}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-3 w-3 text-slate-400" />
+                            <span className="font-medium text-slate-700">{tarif.pays}</span>
                           </div>
-                        </td>
-                      </tr>
-
-                      {tarifs.map(tarif => (
-                        <tr key={tarif.id} className="group hover:bg-slate-50 transition-colors duration-150">
-                          <td className="px-6 py-4">
-                            <div className="text-sm font-semibold text-slate-900">
-                              {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-medium uppercase mt-0.5">ID: {tarif.id ? String(tarif.id).substring(0, 8) : '...'}</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-1.5 text-sm text-slate-600 font-medium">
-                              {tarif.type_expedition?.includes('dhd') ? (
-                                <span className="font-bold text-slate-900">{tarif.ligne || 'Ligne'}</span>
-                              ) : (
-                                <span className="truncate max-w-[200px]">{tarif.pays || 'Toutes destinations'}</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="text-sm font-bold text-slate-900 underline underline-offset-4 decoration-slate-200">
-                              {formatCurrency(tarif.tarif_minimum || tarif.montant_base || tarif.prix_unitaire)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              {tarif.prix_modes ? (
-                                <>
-                                  <div className="flex -space-x-1">
-                                    {tarif.prix_modes.map((m, idx) => (
-                                      <div key={idx} className="p-1 bg-white border border-slate-200 rounded text-slate-500" title={m.mode}>
-                                        {getModeIcon(m.mode)}
-                                      </div>
-                                    ))}
-                                  </div>
-                                  <span className="text-xs font-medium text-slate-500">
-                                    {tarif.prix_modes.length} mode{tarif.prix_modes.length > 1 ? 's' : ''}
-                                  </span>
-                                </>
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <div className="p-1 bg-white border border-slate-200 rounded text-slate-500">
-                                    {getModeIcon(tarif.mode || '')}
-                                  </div>
-                                  <span className="text-xs font-medium text-slate-500 uppercase">{tarif.mode}</span>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <button
-                              onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold transition-all
-                            ${tarif.actif ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}
-                            >
-                              <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${tarif.actif ? 'bg-green-500' : 'bg-slate-400'}`} />
-                              {tarif.actif ? 'ACTIF' : 'INACTIF'}
-                            </button>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => openModal(tarif)}
-                                className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-md transition-all"
-                                title="Modifier"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </button>
-
-                              {/* Menu vertical pour les actions secondaires */}
-                              <div className="relative group/menu">
-                                <button className="p-1.5 text-slate-400 hover:text-slate-900 rounded-md">
-                                  <MoreVertical className="h-4 w-4" />
-                                </button>
-                                <div className="absolute right-0 top-full mt-1 hidden group-hover/menu:block bg-white border border-slate-200 rounded-lg shadow-xl z-10 w-40 overflow-hidden">
-                                  <button
-                                    onClick={() => handleStatusToggle(tarif.id, tarif.actif)}
-                                    className="w-full text-left px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                                  >
-                                    {tarif.actif ? <ToggleLeft size={14} /> : <ToggleRight size={14} />}
-                                    {tarif.actif ? 'Désactiver' : 'Activer'}
-                                  </button>
-                                  <button
-                                    onClick={() => handleDelete(tarif.id)}
-                                    className="w-full text-left px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-100"
-                                  >
-                                    <Trash size={14} />
-                                    Supprimer
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </React.Fragment>
+                          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase">
+                            {getTypeIcon(tarif.type_expedition)}
+                            {getTypeLabel(tarif.type_expedition)}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          <div className="inline-flex flex-col">
+                            <span className="text-[10px] text-slate-400 uppercase font-bold">Base</span>
+                            <span className="font-bold text-slate-900">{tarif.tarif_minimum}</span>
+                          </div>
+                          <div className="inline-flex flex-col">
+                            <span className="text-[10px] text-slate-400 uppercase font-bold">Exp</span>
+                            <span className="font-bold text-slate-900">{tarif.montant_expedition}</span>
+                          </div>
+                          <div className="inline-flex flex-col">
+                            <span className="text-[10px] text-slate-400 uppercase font-bold">Prest</span>
+                            <span className="font-bold text-slate-900">{tarif.pourcentage_prestation}%</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => handleStatusToggle(tarif.id)}
+                          className="group relative flex items-center gap-3 transition-all active:scale-95"
+                          title={`Cliquez pour ${tarif.actif ? 'désactiver' : 'activer'}`}
+                        >
+                          <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                            <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-5' : 'translate-x-0'}`} />
+                          </div>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${tarif.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
+                            {tarif.actif ? 'ACTIF' : 'INACTIF'}
+                          </span>
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => openModal(tarif)}
+                            className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                            title="Modifier"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => setTarifToDelete(tarif)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                            title="Supprimer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
 
-          {/* Vue Mobile / Grid - Simplifiée */}
-          <div className={`grid gap-4 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "md:hidden"}`}>
-            {filteredTarifs.map((tarif) => (
-              <div key={tarif.id} className="bg-white rounded-xl border border-slate-200 p-4 space-y-4 hover:border-slate-300 transition-all shadow-sm">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-sm">
-                      {tarif.category?.nom || (tarif.type_expedition === 'groupage_ca' ? 'Colis Accompagné' : 'Tarif Général')}
-                    </h3>
-                    <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium lowercase">
-                      <Globe className="h-3 w-3" />
-                      {tarif.type_expedition?.includes('dhd') ? tarif.ligne : (tarif.pays || 'tous pays')}
+            {/* Mobile Cards - Native App Style */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filteredTarifs.map((tarif) => (
+                <div key={tarif.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 border border-slate-200 shrink-0">
+                        {getTypeIcon(tarif.type_expedition)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-900 text-xs truncate leading-tight">{tarif.category?.nom}</p>
+                        <p className="text-[11px] text-slate-500 truncate flex items-center gap-1">
+                          <Globe size={10} />
+                          {tarif.pays}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleStatusToggle(tarif.id)}
+                      className="flex items-center gap-2 active:scale-95 transition-all"
+                    >
+                      <div className={`relative w-8 h-4 rounded-full transition-colors ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                        <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${tarif.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                      </div>
+                      <span className={`text-[9px] font-black tracking-tighter ${tarif.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
+                        {tarif.actif ? 'ACTIF' : 'INACTIF'}
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 text-center">
+                    <div>
+                      <p className="text-[8px] text-slate-400 uppercase font-black">Base</p>
+                      <p className="text-xs font-bold text-slate-900">{tarif.tarif_minimum}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] text-slate-400 uppercase font-black">Exp</p>
+                      <p className="text-xs font-bold text-slate-900">{tarif.montant_expedition}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] text-slate-400 uppercase font-black">Prest</p>
+                      <p className="text-xs font-bold text-slate-900">{tarif.pourcentage_prestation}%</p>
                     </div>
                   </div>
-                  <div className={`w-2 h-2 rounded-full ${tarif.actif ? "bg-green-500" : "bg-slate-300"}`} />
-                </div>
 
-                <div className="flex items-baseline justify-between py-2 border-y border-slate-50">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tarif Min.</span>
-                  <span className="text-base font-bold text-slate-900">
-                    {formatCurrency(tarif.tarif_minimum || tarif.montant_base || tarif.prix_unitaire)}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-2 pt-1">
-                  <div className="text-[10px] font-medium text-slate-400">
-                    {tarif.prix_modes ? `${tarif.prix_modes.length} modes actifs` : '1 mode'}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openModal(tarif)}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
+                    >
+                      <Edit3 size={13} />
+                      Modifier
+                    </button>
+                    <button
+                      onClick={() => setTarifToDelete(tarif)}
+                      className="inline-flex items-center justify-center p-2 text-red-500 bg-white border border-red-100 rounded-lg transition-all active:scale-95"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => openModal(tarif)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold transition-all"
-                  >
-                    <Pencil className="h-3 w-3" />
-                    Modifier
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredTarifs.length === 0 && !isLoading && (
-            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-slate-200">
-              <Search className="h-8 w-8 text-slate-200 mb-4" />
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Aucun résultat</h3>
-              <p className="text-xs text-slate-400 mt-1">Ajustez vos filtres ou effectuez une nouvelle recherche.</p>
+              ))}
             </div>
-          )}
-        </>
-      )}
+          </>
+        )}
+      </div>
 
-      {/* --- Modal d'ajout/édition --- */}
-      {showModal && <Addtarifgroupe
-        tarifToEdit={tarifToEdit}
-        closeModal={closeModal}
-        categories={categories}
-        onSubmit={onSubmit}
-        isSubmitting={isSubmitting}
-      />}
-
-      {notification && (
-        <NotificationPortal
-          type={notification.type}
-          message={notification.message}
-          onClose={() => setNotification(null)}
+      {/* MODALS */}
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={tarifToEdit ? 'Modifier Tarif Groupé' : 'Nouveau Tarif Groupé'}
+        subtitle="Configurez les prix pour les expéditions DHD"
+        size="xl"
+      >
+        <Addtarifgroupe
+          onClose={closeModal}
+          onSubmit={onSubmit}
+          initialData={tarifToEdit}
+          categories={categories}
+          isLoading={isSubmitting}
         />
-      )}
+      </Modal>
+
+      <Modal
+        isOpen={!!tarifToDelete}
+        onClose={() => setTarifToDelete(null)}
+        title="Supprimer le tarif ?"
+        size="sm"
+        footer={(
+          <>
+            <button
+              onClick={() => setTarifToDelete(null)}
+              className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-200 transition-colors uppercase tracking-widest"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-red-600/10"
+            >
+              <Trash2 size={14} />
+              Supprimer
+            </button>
+          </>
+        )}
+      >
+        <div className="flex flex-col items-center text-center p-2">
+          <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center mb-3">
+            <Trash2 className="text-red-500" size={20} />
+          </div>
+          <p className="text-sm text-slate-600 leading-relaxed font-medium">
+            Voulez-vous vraiment supprimer le tarif pour <span className="font-bold text-slate-900">{tarifToDelete?.category?.nom}</span> ({tarifToDelete?.pays}) ?
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 };
-export default GroupedRates;
 
+export default GroupedRates;

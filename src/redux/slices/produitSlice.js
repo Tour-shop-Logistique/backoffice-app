@@ -170,7 +170,8 @@ const produitSlice = createSlice({
             })
             .addCase(fetchCategories.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.categories = action.payload || [];
+                const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+                state.categories = data;
                 state.hasLoadedCategories = true;
             })
             .addCase(fetchCategories.rejected, (state, action) => {
@@ -186,7 +187,8 @@ const produitSlice = createSlice({
             })
             .addCase(fetchProduits.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.listProduits = action.payload || [];
+                const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+                state.listProduits = data;
                 state.hasLoadedProduits = true;
             })
             .addCase(fetchProduits.rejected, (state, action) => {

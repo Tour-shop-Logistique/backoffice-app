@@ -144,7 +144,8 @@ const tarificationSlice = createSlice({
       })
       .addCase(fetchTarifs.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.tarifs = action.payload || [];
+        const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+        state.tarifs = data;
         state.hasLoaded = true;
       })
       .addCase(fetchTarifs.rejected, (state, action) => {
@@ -188,7 +189,8 @@ const tarificationSlice = createSlice({
       })
       .addCase(fetchGroupedTarifs.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.groupedTarifs = action.payload || [];
+        const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+        state.groupedTarifs = data;
         state.groupedHasLoaded = true;
       })
       .addCase(fetchGroupedTarifs.rejected, (state, action) => {

@@ -11,7 +11,6 @@ import { fetchZones } from "../redux/slices/zoneSlice";
 import Modal from "../components/common/Modal";
 import SimpleTarifForm from "../components/common/SimpleTarifForm";
 import {
-    ArrowRight,
     CheckCircle2,
     XCircle,
     Search,
@@ -20,12 +19,9 @@ import {
     ListOrdered,
     Edit3,
     Trash2,
-    ChevronRight,
-    Info,
-    Layers,
     Loader2,
-    MapPin,
-    DollarSign
+    Edit2,
+    Package
 } from "lucide-react";
 import NotificationPortal from '../components/widget/notification';
 
@@ -87,7 +83,6 @@ const SimpleRates = () => {
     const handleAddTarif = async (tarifData) => {
         setIsSubmitting(true);
         try {
-            // New API requires individual requests for each zone
             const promises = tarifData.zones.map(zone =>
                 dispatch(addSimpleTarif({
                     indice: tarifData.indice,
@@ -100,8 +95,9 @@ const SimpleRates = () => {
             await Promise.all(promises);
             setIsModalOpen(false);
             dispatch(fetchTarifs());
+            showNotification('success', 'Nouveaux tarifs ajoutés avec succès.');
         } catch (error) {
-            console.error("Erreur lors de l'ajout des tarifs:", error);
+            showNotification('error', "Erreur lors de l'ajout des tarifs.");
         } finally {
             setIsSubmitting(false);
         }
@@ -110,10 +106,6 @@ const SimpleRates = () => {
     const handleEditTarif = async (tarifData) => {
         setIsSubmitting(true);
         try {
-            // For editing, we need to handle each zone update individually
-            // Note: In the group design, some might be new, some existing.
-            // For simplicity based on current flow: delete then re-add or update individual records
-            // Assuming the simpleTarifForm returns the full state
             const promises = tarifData.zones.map(zone => {
                 if (zone.id) {
                     return dispatch(editSimpleTarif({
@@ -139,8 +131,9 @@ const SimpleRates = () => {
             setIsEditingModalOpen(false);
             setSelectedTarif(null);
             dispatch(fetchTarifs());
+            showNotification('success', 'Grille tarifaire mise à jour.');
         } catch (error) {
-            console.error("Erreur lors de la modification des tarifs:", error);
+            showNotification('error', 'Erreur lors de la modification.');
         } finally {
             setIsSubmitting(false);
         }
@@ -155,7 +148,6 @@ const SimpleRates = () => {
         if (!tarifToDelete) return;
         setIsDeleting(true);
         try {
-            // Since the API is now per-zone, deleting a "group" means deleting each record in it
             const promises = tarifToDelete.prix_zones.map(pz =>
                 dispatch(deleteTarif(pz.id))
             );
@@ -168,8 +160,9 @@ const SimpleRates = () => {
             setIsDeleteModalOpen(false);
             setTarifToDelete(null);
             dispatch(fetchTarifs());
+            showNotification('success', 'Grille tarifaire supprimée.');
         } catch (error) {
-            console.error("Erreur lors de la suppression des tarifs:", error);
+            showNotification('error', 'Erreur lors de la suppression.');
         } finally {
             setIsDeleting(false);
         }
@@ -182,408 +175,354 @@ const SimpleRates = () => {
             );
             await Promise.all(promises);
             dispatch(fetchTarifs());
+            showNotification('success', 'Statut mis à jour.');
         } catch (error) {
-            console.error("Erreur lors du changement de statut:", error);
+            showNotification('error', 'Erreur lors du changement de statut.');
         }
     };
 
     const simpleTarifs = useMemo(() => {
-        if (!tarifs) return [];
-        const raw = tarifs.filter((t) => t.type_expedition === "simple");
+        if (!Array.isArray(tarifs)) return [];
+
+        const raw = tarifs.filter((t) => t && t.type_expedition === "simple");
 
         const filtered = raw.filter(tarif => {
-            const matchesSearch = tarif.indice.toString().includes(searchTerm) ||
-                tarif.pays.toLowerCase().includes(searchTerm.toLowerCase());
+            const indice = tarif.indice?.toString() || '';
+            const pays = tarif.pays?.toLowerCase() || '';
+            const search = searchTerm.toLowerCase();
+
+            const matchesSearch = indice.includes(search) || pays.includes(search);
             const matchesStatus = filterStatus === 'all' ||
                 (filterStatus === 'active' && tarif.actif) ||
                 (filterStatus === 'inactive' && !tarif.actif);
             return matchesSearch && matchesStatus;
         });
 
-        const groups = {};
+        const grouped = {};
         filtered.forEach(tarif => {
             const key = `${tarif.indice}-${tarif.pays}`;
-            if (!groups[key]) {
-                groups[key] = {
-                    ...tarif,
+            if (!grouped[key]) {
+                grouped[key] = {
+                    key,
+                    indice: tarif.indice,
+                    pays: tarif.pays,
+                    actif: true,
                     prix_zones: []
                 };
             }
-            groups[key].prix_zones.push(tarif);
+            grouped[key].prix_zones.push(tarif);
+            if (!tarif.actif) grouped[key].actif = false;
         });
 
-        return Object.values(groups).sort((a, b) => parseFloat(a.indice) - parseFloat(b.indice));
+        return Object.values(grouped).sort((a, b) => (a.indice || 0) - (b.indice || 0));
     }, [tarifs, searchTerm, filterStatus]);
 
-
-
     return (
-        <div className="p-4 sm:p-6 space-y-6">
-            {/* Main Header - Clean and Professional */}
-            <header className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                        Tarification Standard
-                    </h1>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={handleRefresh}
-                        disabled={isRefreshing}
-                        className="p-3 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
-                        title="Rafraîchir"
-                    >
-                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    </button>
-                    <button
-                        onClick={handleOpenAddModal}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-bold transition-all shadow-lg shadow-slate-900/10"
-                    >
-                        <PlusCircle size={16} />
-                        Nouvelle Grille
-                    </button>
+        <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
+            <NotificationPortal notification={notification} onClose={() => setNotification(null)} />
+
+            {/* HEADER - Mobile Optimized */}
+            <header className="space-y-3 md:space-y-0">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+                            Tarifs Simples
+                        </h1>
+                        <p className="text-xs md:text-sm text-slate-500 mt-0.5">
+                            Gérez les prix par indice d'expédition
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                            className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
+                            title="Rafraîchir"
+                        >
+                            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                            <span className="hidden md:inline md:ml-2">Rafraîchir</span>
+                        </button>
+
+                        <button
+                            onClick={handleOpenAddModal}
+                            className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg hover:shadow-lg transition-colors"
+                            title="Ajouter"
+                        >
+                            <PlusCircle className="h-4 w-4" />
+                            <span className="hidden md:inline md:ml-2">Ajouter</span>
+                        </button>
+                    </div>
                 </div>
             </header>
 
-            {/* Barre unifiée Stats + Recherche */}
-            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
-                <div className="grid grid-cols-2 gap-4 lg:flex lg:gap-4 shrink-0">
-                    {/* Actives */}
-                    <div
-                        onClick={() => setFilterStatus(filterStatus === 'active' ? 'all' : 'active')}
-                        className={`flex-1 lg:w-64 rounded-xl px-4 py-3 shadow-sm border transition-all cursor-pointer hover:shadow-md ${filterStatus === 'active'
-                            ? 'bg-emerald-100 border-emerald-500 ring-2 ring-emerald-500/10'
-                            : 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-200'
-                            }`}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${filterStatus === 'active' ? 'text-emerald-800' : 'text-emerald-600/70'}`}>Grilles Actives</p>
-                                <p className={`text-2xl font-black ${filterStatus === 'active' ? 'text-emerald-900' : 'text-emerald-700'}`}>
-                                    {tarifs.filter(t => t.type_expedition === 'simple' && t.actif).length}
-                                </p>
-                            </div>
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${filterStatus === 'active' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-white text-emerald-500 border-emerald-100'
-                                }`}>
-                                <CheckCircle2 className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Inactives */}
-                    <div
-                        onClick={() => setFilterStatus(filterStatus === 'inactive' ? 'all' : 'inactive')}
-                        className={`flex-1 lg:w-64 rounded-xl px-4 py-3 shadow-sm border transition-all cursor-pointer hover:shadow-md ${filterStatus === 'inactive'
-                            ? 'bg-rose-100 border-rose-500 ring-2 ring-rose-500/10'
-                            : 'bg-rose-50/50 border-rose-100 hover:border-rose-200'
-                            }`}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${filterStatus === 'inactive' ? 'text-rose-800' : 'text-rose-600/70'}`}>Grilles Inactives</p>
-                                <p className={`text-2xl font-black ${filterStatus === 'inactive' ? 'text-rose-900' : 'text-rose-700'}`}>
-                                    {tarifs.filter(t => t.type_expedition === 'simple' && !t.actif).length}
-                                </p>
-                            </div>
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${filterStatus === 'inactive' ? 'bg-rose-500 text-white border-rose-400' : 'bg-white text-rose-500 border-rose-100'
-                                }`}>
-                                <XCircle className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Recherche */}
-                <div className="flex-1 relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
-                    </div>
-                    <input
-                        type="text"
-                        placeholder="Rechercher par indice ou pays..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full h-full min-h-[72px] pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm font-bold placeholder:text-slate-300 placeholder:font-medium"
-                    />
-                </div>
+            {/* SEARCH BAR - Mobile Optimized */}
+            <div className="relative">
+                <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-slate-400" />
+                <input
+                    type="text"
+                    placeholder="Rechercher par indice ou pays de départ..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400"
+                />
             </div>
 
-            {error && (
-                <div className="p-4 bg-red-50 border border-red-100 rounded-lg flex items-center gap-3 text-red-700 font-bold text-xs uppercase tracking-wide">
-                    <XCircle size={16} />
-                    {error}
-                </div>
-            )}
-
-            {isLoading && simpleTarifs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-slate-200 shadow-sm">
-                    <Loader2 className="animate-spin text-indigo-600 mb-4" size={40} />
-                    <p className="text-slate-500 font-medium text-sm tracking-wide uppercase">Chargement des tarifs...</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Left Column: Simplified List */}
-                    <div className="lg:col-span-5 space-y-4">
-                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                            <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Grilles Disponibles</span>
-                                <span className="text-[10px] font-bold text-slate-400">{simpleTarifs.length} total</span>
-                            </div>
-
-                            {simpleTarifs.length === 0 ? (
-                                <div className="p-12 text-center">
-                                    <ListOrdered size={32} className="text-slate-200 mx-auto mb-3" />
-                                    <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Aucun tarif configuré</p>
-                                </div>
-                            ) : (
-                                <div className="divide-y divide-slate-100 max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar">
-                                    {simpleTarifs.map((tarif) => {
-                                        const isSelected = selectedTarif?.indice === tarif.indice && selectedTarif?.pays === tarif.pays;
-                                        return (
-                                            <div
-                                                key={`${tarif.indice}-${tarif.pays}`}
-                                                onClick={() => setSelectedTarif(tarif)}
-                                                className={`group relative flex items-center justify-between p-4 cursor-pointer transition-all hover:bg-slate-50 ${isSelected ? 'bg-slate-50 ring-1 ring-inset ring-slate-900/5' : ''}`}
-                                            >
-                                                {/* Selection Marker */}
-                                                {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-slate-900" />}
-
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`w-8 h-8 rounded flex items-center justify-center font-bold text-xs ${isSelected ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                                                        {tarif.indice}
-                                                    </div>
-                                                    <div>
-                                                        <p className={`text-sm font-bold ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>
-                                                            Configuration {tarif.indice}
-                                                        </p>
-                                                        <p className="text-[11px] text-slate-400 font-medium uppercase tracking-tight">{tarif.pays}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-3">
-                                                    {/* Actions hidden until hover, except on mobile where they are always visible or handled differently */}
-                                                    <div className="hidden group-hover:flex items-center gap-1">
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleOpenEditModal(tarif); }}
-                                                            className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-white rounded border border-transparent hover:border-slate-200 transition-all"
-                                                        >
-                                                            <Edit3 size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleOpenDeleteModal(tarif); }}
-                                                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded border border-transparent hover:border-red-100 transition-all"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
-
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleStatusChange(tarif); }}
-                                                        className={`w-2 h-2 rounded-full ${tarif.actif ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.4)]' : 'bg-slate-300'}`}
-                                                        title={tarif.actif ? 'Actif' : 'Inactif'}
-                                                    />
-
-                                                    <ChevronRight size={16} className={`transition-transform duration-200 ${isSelected ? 'text-slate-900 translate-x-1' : 'text-slate-300'}`} />
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                        {/* Professional Micro-copy */}
-                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex gap-3">
-                            <Info size={16} className="text-slate-400 shrink-0 mt-0.5" />
-                            <p className="text-[11px] leading-relaxed text-slate-500 font-medium">
-                                Les grilles tarifaires standard s'appliquent automatiquement aux expéditions de type "Simple". Les tarifs sont calculés sur une base fixe par zone, à laquelle s'ajoute une commission de prestation.
-                            </p>
-                        </div>
+            {/* TABS + CONTENT - Mobile Optimized */}
+            <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                {/* Tabs */}
+                <div className="border-b border-slate-200 bg-slate-50/50">
+                    <div className="flex overflow-x-auto">
+                        <button
+                            onClick={() => setFilterStatus('all')}
+                            className={`px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap transition-all ${filterStatus === 'all'
+                                ? 'text-slate-900 border-b-2 border-slate-900 bg-white'
+                                : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            Toutes ({simpleTarifs.length})
+                        </button>
+                        <button
+                            onClick={() => setFilterStatus('active')}
+                            className={`px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap transition-all ${filterStatus === 'active'
+                                ? 'text-emerald-600 border-b-2 border-emerald-600 bg-white'
+                                : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            Actives ({simpleTarifs.filter(t => t.actif).length})
+                        </button>
+                        <button
+                            onClick={() => setFilterStatus('inactive')}
+                            className={`px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap transition-all ${filterStatus === 'inactive'
+                                ? 'text-rose-600 border-b-2 border-rose-600 bg-white'
+                                : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            Inactives ({simpleTarifs.filter(t => !t.actif).length})
+                        </button>
                     </div>
+                </div>
 
-                    {/* Right Column: Refined Detail Panel */}
-                    <div className="lg:col-span-7">
-                        <div className="sticky top-6">
-                            {selectedTarif ? (
-                                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                                    {/* Compact Detail Header */}
-                                    <div className="px-6 py-4 border-b border-slate-100 bg-white flex justify-between items-center">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-1.5 bg-slate-100 rounded text-slate-600">
-                                                <Layers size={16} />
+                {/* Body Content */}
+                {isLoading && simpleTarifs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <Loader2 className="h-10 w-10 text-slate-900 animate-spin mb-3" />
+                        <p className="text-slate-500 text-sm font-medium">Chargement des tarifs...</p>
+                    </div>
+                ) : simpleTarifs.length === 0 ? (
+                    <div className="py-20 text-center">
+                        <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                            <ListOrdered className="text-slate-400" size={32} />
+                        </div>
+                        <h3 className="font-bold text-slate-900 text-lg">Aucune grille trouvée</h3>
+                        <p className="text-slate-500 text-sm mt-2">Ajustez votre recherche ou ajoutez un nouveau tarif.</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* Desktop Table */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-slate-50/50 border-b border-slate-200">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Indice</th>
+                                        <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Départ</th>
+                                        <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Détails Zones</th>
+                                        <th className="px-6 py-4 text-center font-bold text-slate-500 uppercase tracking-wider text-xs">Statut</th>
+                                        <th className="px-6 py-4 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {simpleTarifs.map((groupe) => (
+                                        <tr key={groupe.key} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="inline-flex items-center justify-center px-2.5 py-1 rounded bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200">
+                                                    #{groupe.indice}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <p className="font-bold text-slate-900">{groupe.pays}</p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {groupe.prix_zones.map(pz => {
+                                                        const zoneName = zones.find(z => z.id === pz.zone_destination_id)?.nom || 'Zone ?';
+                                                        return (
+                                                            <span key={pz.id} className="inline-flex items-center text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 font-bold">
+                                                                {zoneName}: {pz.montant_base}/{pz.pourcentage_prestation}%
+                                                            </span>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <button
+                                                    onClick={() => handleStatusChange(groupe)}
+                                                    className="group relative flex items-center gap-3 transition-all active:scale-95"
+                                                    title={`Cliquez pour ${groupe.actif ? 'désactiver' : 'activer'}`}
+                                                >
+                                                    <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${groupe.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                        <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${groupe.actif ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                    </div>
+                                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${groupe.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
+                                                        {groupe.actif ? 'ACTIF' : 'INACTIF'}
+                                                    </span>
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleOpenEditModal(groupe)}
+                                                        className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                                                        title="Modifier"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleOpenDeleteModal(groupe)}
+                                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                        title="Supprimer"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile Cards - Native App Style */}
+                        <div className="md:hidden divide-y divide-slate-100">
+                            {simpleTarifs.map((groupe) => (
+                                <div key={groupe.key} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 shrink-0">
+                                                #{groupe.indice}
                                             </div>
-                                            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Détails de la Grille #{selectedTarif.indice}</h2>
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-slate-900 text-sm truncate">{groupe.pays}</p>
+                                                <p className="text-[11px] text-slate-500 truncate">{groupe.prix_zones.length} zone(s)</p>
+                                            </div>
                                         </div>
                                         <button
-                                            onClick={() => handleOpenEditModal(selectedTarif)}
-                                            className="text-[10px] font-bold text-slate-500 hover:text-slate-900 uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors"
+                                            onClick={() => handleStatusChange(groupe)}
+                                            className="flex items-center gap-2 active:scale-95 transition-all"
                                         >
-                                            <Edit3 size={12} /> Modifier la grille
+                                            <div className={`relative w-8 h-4 rounded-full transition-colors ${groupe.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${groupe.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                                            </div>
+                                            <span className={`text-[9px] font-black tracking-tighter ${groupe.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                {groupe.actif ? 'ACTIF' : 'INACTIF'}
+                                            </span>
                                         </button>
                                     </div>
 
-                                    <div className="p-6 space-y-8 overflow-y-auto max-h-[calc(100vh-250px)] custom-scrollbar">
-                                        {/* Key Info Cards */}
-                                        <div className="grid grid-cols-3 gap-4">
-                                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Zones</p>
-                                                <p className="text-lg font-bold text-slate-900">{selectedTarif.prix_zones.length}</p>
-                                            </div>
-                                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pays cible</p>
-                                                <p className="text-sm font-bold text-slate-900 truncate">{selectedTarif.pays}</p>
-                                            </div>
-                                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Statut</p>
-                                                <span className={`text-[10px] font-bold uppercase tracking-tight py-0.5 px-2 rounded-full border ${selectedTarif.actif ? 'bg-green-50 border-green-100 text-green-600' : 'bg-slate-100 border-slate-200 text-slate-400'}`}>
-                                                    {selectedTarif.actif ? 'Opérationnel' : 'Désactivé'}
+                                    <div className="bg-slate-50 rounded-lg p-2 flex flex-wrap gap-1.5">
+                                        {groupe.prix_zones.map(pz => {
+                                            const zoneName = zones.find(z => z.id === pz.zone_destination_id)?.nom || '?';
+                                            return (
+                                                <span key={pz.id} className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-100 font-bold">
+                                                    {zoneName}: <span className="ml-1 text-slate-900">{pz.montant_base}</span>
                                                 </span>
-                                            </div>
-                                        </div>
+                                            );
+                                        })}
+                                    </div>
 
-                                        {/* Detailed Grids Section */}
-                                        <section className="space-y-4">
-                                            <div className="flex items-center gap-4">
-                                                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Ventilation par zone</h3>
-                                                <div className="h-px bg-slate-100 w-full" />
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                {selectedTarif.prix_zones.map((pz, index) => {
-                                                    const zone = zones.find((z) => z.id === pz.zone_destination_id);
-                                                    return (
-                                                        <div key={index} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-lg hover:border-slate-200 transition-colors">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-100 text-slate-400">
-                                                                    <MapPin size={14} />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-sm font-bold text-slate-800">{zone?.nom || `Zone ${pz.zone_destination_id}`}</p>
-                                                                    <p className="text-[10px] font-medium text-slate-400 italic">Prestation de {pz.pourcentage_prestation}% incluse</p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <p className="text-sm font-bold text-slate-900">{pz.montant_expedition.toLocaleString()} FCFA</p>
-                                                                <div className="flex items-center justify-end gap-2 mt-0.5">
-                                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Base: {pz.montant_base.toLocaleString()}</span>
-                                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">+</span>
-                                                                    <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-tighter">{pz.montant_prestation.toLocaleString()}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </section>
-
-                                        {/* Secondary Action: Delete */}
-                                        <div className="pt-6 border-t border-slate-50 flex justify-end">
-                                            <button
-                                                onClick={() => handleOpenDeleteModal(selectedTarif)}
-                                                className="text-[9px] font-bold text-slate-300 hover:text-red-500 uppercase tracking-widest transition-colors flex items-center gap-1.5"
-                                            >
-                                                <Trash2 size={10} /> Supprimer cette grille tarifaire
-                                            </button>
-                                        </div>
+                                    <div className="flex gap-2 pt-1">
+                                        <button
+                                            onClick={() => handleOpenEditModal(groupe)}
+                                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
+                                        >
+                                            <Edit3 size={13} />
+                                            Modifier
+                                        </button>
+                                        <button
+                                            onClick={() => handleOpenDeleteModal(groupe)}
+                                            className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
+                                        >
+                                            <Trash2 size={15} />
+                                        </button>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="bg-white rounded-xl border border-dashed border-slate-200 p-16 text-center shadow-sm">
-                                    <div className="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center mx-auto mb-6 border border-slate-100">
-                                        <ArrowRight size={24} className="text-slate-300" />
-                                    </div>
-                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Gestion des Tarifs</h3>
-                                    <p className="text-xs text-slate-400 mt-2 max-w-[240px] mx-auto leading-relaxed">
-                                        Sélectionnez une grille tarifaire dans la liste de gauche pour consulter ou modifier la répartition des prix par zone.
-                                    </p>
-                                    <div className="mt-8 pt-8 border-t border-slate-50">
-                                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter italic">"La précision des tarifs garantit la transparence client"</p>
-                                    </div>
-                                </div>
-                            )}
+                            ))}
                         </div>
-                    </div>
-                </div>
-            )}
+                    </>
+                )}
+            </div>
 
-            {/* Modals - Unified with standard design */}
+            {/* MODALS */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title="Configuration Grille Tarifaire"
-                size="4xl"
+                title="Configuration Tarif Simple"
+                subtitle="Définissez les prix de base et les pourcentages par zone"
+                size="xl"
             >
-                <div className="p-4">
-                    <SimpleTarifForm
-                        onSubmit={handleAddTarif}
-                        onCancel={() => setIsModalOpen(false)}
-                        isLoading={isSubmitting}
-                        zones={zones}
-                        tarifs={tarifs}
-                    />
-                </div>
+                <SimpleTarifForm
+                    onSubmit={handleAddTarif}
+                    onCancel={() => setIsModalOpen(false)}
+                    zones={zones}
+                    isLoading={isSubmitting}
+                />
             </Modal>
 
-            {selectedTarif && (
-                <Modal
-                    isOpen={isEditingModalOpen}
-                    onClose={() => setIsEditingModalOpen(false)}
-                    title={`Édition Grille #${selectedTarif.indice}`}
-                    size="4xl"
-                >
-                    <div className="p-4">
-                        <SimpleTarifForm
-                            onSubmit={handleEditTarif}
-                            onCancel={() => setIsEditingModalOpen(false)}
-                            isLoading={isSubmitting}
-                            initialData={selectedTarif}
-                            zones={zones}
-                            tarifs={tarifs}
-                        />
-                    </div>
-                </Modal>
-            )}
+            <Modal
+                isOpen={isEditingModalOpen}
+                onClose={() => setIsEditingModalOpen(false)}
+                title="Modification Tarif Simple"
+                subtitle={`Mise à jour de la grille pour l'indice #${selectedTarif?.indice}`}
+                size="xl"
+            >
+                {selectedTarif && (
+                    <SimpleTarifForm
+                        initialData={{
+                            indice: selectedTarif.indice,
+                            zones: selectedTarif.prix_zones
+                        }}
+                        onSubmit={handleEditTarif}
+                        onCancel={() => setIsEditingModalOpen(false)}
+                        zones={zones}
+                        isLoading={isSubmitting}
+                    />
+                )}
+            </Modal>
 
-            {/* Modal de suppression - Enterprise Clean */}
             <Modal
                 isOpen={isDeleteModalOpen}
-                onClose={() => !isDeleting && setIsDeleteModalOpen(false)}
-                title="Validation de suppression"
-                size="md"
-            >
-                <div className="p-6 flex flex-col items-center">
-                    <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-5 border border-red-100">
-                        <Trash2 size={24} />
-                    </div>
-                    <h4 className="text-lg font-bold text-slate-900 mb-2">Retirer cette tarification ?</h4>
-                    <p className="text-slate-500 text-sm text-center mb-8 px-4 leading-relaxed">
-                        Vous êtes sur le point de supprimer définitivement la grille <span className="font-bold text-slate-900">#{tarifToDelete?.indice}</span>. Cette opération impactera les calculs de prix futurs.
-                    </p>
-                    <div className="grid grid-cols-2 gap-3 w-full">
+                onClose={() => setIsDeleteModalOpen(false)}
+                title="Supprimer la grille ?"
+                size="sm"
+                footer={(
+                    <>
                         <button
                             onClick={() => setIsDeleteModalOpen(false)}
                             disabled={isDeleting}
-                            className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-200 transition-colors"
+                            className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-200 transition-colors uppercase tracking-widest"
                         >
                             Annuler
                         </button>
                         <button
                             onClick={handleDeleteTarif}
                             disabled={isDeleting}
-                            className="px-4 py-2.5 bg-red-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-600/10"
+                            className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-red-600/10"
                         >
-                            {isDeleting ? <Loader2 size={14} className="animate-spin" /> : "Supprimer"}
+                            {isDeleting ? <Loader2 className="animate-spin h-4 w-4" /> : <Trash2 size={14} />}
+                            Supprimer
                         </button>
+                    </>
+                )}
+            >
+                <div className="flex flex-col items-center text-center p-2">
+                    <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center mb-3">
+                        <Trash2 className="text-red-500" size={20} />
                     </div>
+                    <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                        Voulez-vous vraiment supprimer la grille <span className="font-bold text-slate-900">#{tarifToDelete?.indice}</span> ({tarifToDelete?.pays}) ? Cette action est irréversible.
+                    </p>
                 </div>
             </Modal>
-
-            {notification && (
-                <NotificationPortal
-                    type={notification.type}
-                    message={notification.message}
-                    onClose={() => setNotification(null)}
-                />
-            )}
         </div>
     );
 };

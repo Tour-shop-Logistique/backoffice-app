@@ -70,7 +70,8 @@ const zoneSlice = createSlice({
       })
       .addCase(fetchZones.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.zones = action.payload;
+        const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+        state.zones = data;
         state.hasLoaded = true;
       })
       .addCase(fetchZones.rejected, (state, action) => {
