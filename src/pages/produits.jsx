@@ -113,6 +113,7 @@ export default function Produits() {
         showNotification("success", "Produit ajouté avec succès !");
         setProduitForm({ category_id: "", designation: "", reference: "" });
         setIsModalOpen(false);
+        dispatch(fetchProduits({ silent: true }));
       } else {
         showNotification("error", "Erreur lors de l'ajout du produit !");
       }
@@ -136,6 +137,7 @@ export default function Produits() {
       if (response.success) {
         dispatch(showNotification({ type: "success", message: "Produit supprimé avec succès !" }));
         setProduitToDelete(null);
+        dispatch(fetchProduits({ silent: true }));
       } else {
         dispatch(showNotification({ type: "error", message: "Erreur lors de la suppression !" }));
       }
@@ -168,6 +170,7 @@ export default function Produits() {
       if (response.success) {
         dispatch(showNotification({ type: "success", message: "Produit modifié avec succès !" }));
         setEditingProduit(null);
+        dispatch(fetchProduits({ silent: true }));
       } else {
         dispatch(showNotification({ type: "error", message: "Erreur lors de la modification !" }));
       }
@@ -198,9 +201,11 @@ export default function Produits() {
           categoryData: { nom: payload.nom }
         })).unwrap();
         dispatch(showNotification({ type: "success", message: "Catégorie modifiée avec succès !" }));
+        dispatch(fetchCategories({ silent: true }));
       } else {
         await dispatch(addCategory(payload)).unwrap();
         dispatch(showNotification({ type: "success", message: "Catégorie ajoutée avec succès !" }));
+        dispatch(fetchCategories({ silent: true }));
       }
 
       setCategoryForm({ nom: "" });
@@ -223,6 +228,7 @@ export default function Produits() {
       if (response.success) {
         dispatch(showNotification({ type: "success", message: "Catégorie supprimée avec succès !" }));
         setCategoryToDelete(null);
+        dispatch(fetchCategories({ silent: true }));
       } else {
         dispatch(showNotification({ type: "error", message: "Erreur lors de la suppression !" }));
       }
@@ -452,7 +458,7 @@ export default function Produits() {
                     <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-200">
                   {filteredProduits.map((produit) => {
                     const category = categories.find(cat => cat.id === produit.category_id);
                     return (

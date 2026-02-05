@@ -75,12 +75,14 @@ const GroupedRates = () => {
         if (result) {
           dispatch(showNotification({ type: 'success', message: 'Tarif mis à jour avec succès!' }));
           closeModal();
+          dispatch(fetchGroupedTarifs({ silent: true }));
         }
       } else {
         const result = await dispatch(addGroupedTarif(data)).unwrap();
         if (result) {
           dispatch(showNotification({ type: 'success', message: 'Nouveau tarif ajouté avec succès!' }));
           closeModal();
+          dispatch(fetchGroupedTarifs({ silent: true }));
         }
       }
     } catch (error) {
@@ -425,9 +427,9 @@ const GroupedRates = () => {
         <Addtarifgroupe
           onClose={closeModal}
           onSubmit={onSubmit}
-          initialData={tarifToEdit}
+          tarifToEdit={tarifToEdit}
           categories={categories}
-          isLoading={isSubmitting}
+          isSubmitting={isSubmitting}
         />
       </Modal>
 

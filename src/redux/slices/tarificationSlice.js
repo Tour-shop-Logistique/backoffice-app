@@ -177,6 +177,20 @@ const tarificationSlice = createSlice({
         state.tarifs = state.tarifs.filter((t) => t.id !== action.payload);
       })
 
+      .addCase(updateTarifStatus.pending, (state, action) => {
+        const tarifId = action.meta.arg;
+        const index = state.tarifs.findIndex(t => t.id === tarifId);
+        if (index !== -1) {
+          state.tarifs[index].actif = !state.tarifs[index].actif;
+        }
+      })
+      .addCase(updateTarifStatus.rejected, (state, action) => {
+        const tarifId = action.meta.arg;
+        const index = state.tarifs.findIndex(t => t.id === tarifId);
+        if (index !== -1) {
+          state.tarifs[index].actif = !state.tarifs[index].actif;
+        }
+      })
       .addCase(updateTarifStatus.fulfilled, (state, action) => {
         const updated = action.payload?.data || action.payload;
         if (updated) {
@@ -231,6 +245,20 @@ const tarificationSlice = createSlice({
         );
       })
 
+      .addCase(updateGroupedTarifStatus.pending, (state, action) => {
+        const tarifId = action.meta.arg;
+        const index = state.groupedTarifs.findIndex(t => t.id === tarifId);
+        if (index !== -1) {
+          state.groupedTarifs[index].actif = !state.groupedTarifs[index].actif;
+        }
+      })
+      .addCase(updateGroupedTarifStatus.rejected, (state, action) => {
+        const tarifId = action.meta.arg;
+        const index = state.groupedTarifs.findIndex(t => t.id === tarifId);
+        if (index !== -1) {
+          state.groupedTarifs[index].actif = !state.groupedTarifs[index].actif;
+        }
+      })
       .addCase(updateGroupedTarifStatus.fulfilled, (state, action) => {
         const updated = action.payload?.data || action.payload;
         if (updated) {

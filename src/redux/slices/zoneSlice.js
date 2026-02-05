@@ -134,9 +134,21 @@ const zoneSlice = createSlice({
         state.error = action.payload;
       })
       // Update zone status
-      .addCase(updateZoneStatus.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
+      .addCase(updateZoneStatus.pending, (state, action) => {
+        const { zoneId } = action.meta.arg;
+        const index = state.zones.findIndex(z => z.id === zoneId);
+        if (index !== -1) {
+          state.zones[index].actif = !state.zones[index].actif;
+        }
+      })
+      .addCase(updateZoneStatus.rejected, (state, action) => {
+        const { zoneId } = action.meta.arg;
+        const index = state.zones.findIndex(z => z.id === zoneId);
+        if (index !== -1) {
+          state.zones[index].actif = !state.zones[index].actif;
+        }
+        state.isLoading = false;
+        state.error = action.payload;
       })
       .addCase(updateZoneStatus.fulfilled, (state, action) => {
         state.isLoading = false;
@@ -147,10 +159,6 @@ const zoneSlice = createSlice({
             zone.id === zoneId ? { ...zone, ...updatedZone } : zone
           );
         }
-      })
-      .addCase(updateZoneStatus.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
       });
   },
 });

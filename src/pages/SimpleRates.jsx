@@ -13,7 +13,7 @@ import DeleteModal from "../components/common/DeleteModal";
 import SimpleTarifForm from "../components/common/SimpleTarifForm";
 import {
     CheckCircle2,
-    XCircle,
+    MapPin,
     Search,
     RefreshCw,
     PlusCircle,
@@ -71,20 +71,13 @@ const SimpleRates = () => {
     const handleAddTarif = async (tarifData) => {
         setIsSubmitting(true);
         try {
-            const promises = tarifData.zones.map(zone =>
-                dispatch(addSimpleTarif({
-                    indice: tarifData.indice,
-                    montant_base: zone.montant_base,
-                    zone_destination_id: zone.zone_destination_id,
-                    pourcentage_prestation: zone.pourcentage_prestation
-                }))
-            );
-
-            await Promise.all(promises);
+            await dispatch(addSimpleTarif(tarifData)).unwrap();
             setIsModalOpen(false);
-            dispatch(showNotification({ type: 'success', message: 'Nouveaux tarifs ajoutés avec succès.' }));
+            dispatch(showNotification({ type: 'success', message: 'Nouveau tarif ajouté avec succès.' }));
+            // Refresh in background
+            dispatch(fetchTarifs({ silent: true }));
         } catch (error) {
-            dispatch(showNotification({ type: 'error', message: "Erreur lors de l'ajout des tarifs." }));
+            dispatch(showNotification({ type: 'error', message: error.message || "Erreur lors de l'ajout du tarif." }));
         } finally {
             setIsSubmitting(false);
         }
@@ -93,33 +86,29 @@ const SimpleRates = () => {
     const handleEditTarif = async (tarifData) => {
         setIsSubmitting(true);
         try {
-            const promises = tarifData.zones.map(zone => {
-                if (zone.id) {
-                    return dispatch(editSimpleTarif({
-                        tarifId: zone.id,
-                        tarifData: {
-                            indice: tarifData.indice,
-                            montant_base: zone.montant_base,
-                            zone_destination_id: zone.zone_destination_id,
-                            pourcentage_prestation: zone.pourcentage_prestation
-                        }
-                    }));
-                } else {
-                    return dispatch(addSimpleTarif({
-                        indice: tarifData.indice,
-                        montant_base: zone.montant_base,
-                        zone_destination_id: zone.zone_destination_id,
-                        pourcentage_prestation: zone.pourcentage_prestation
-                    }));
-                }
-            });
+            const { id, zone_destination_id, montant_base, pourcentage_prestation } = tarifData;
 
-            await Promise.all(promises);
+            // Body restricted as per user specs for modification
+            const modificationPayload = {
+                zone_destination_id,
+                montant_base,
+                pourcentage_prestation
+            };
+
+            if (id) {
+                await dispatch(editSimpleTarif({
+                    tarifId: id,
+                    tarifData: modificationPayload
+                })).unwrap();
+            }
+
             setIsEditingModalOpen(false);
             setSelectedTarif(null);
-            dispatch(showNotification({ type: 'success', message: 'Grille tarifaire mise à jour.' }));
+            dispatch(showNotification({ type: 'success', message: 'Tarif mis à jour.' }));
+            // Refresh in background
+            dispatch(fetchTarifs({ silent: true }));
         } catch (error) {
-            dispatch(showNotification({ type: 'error', message: 'Erreur lors de la modification.' }));
+            dispatch(showNotification({ type: 'error', message: error.message || 'Erreur lors de la modification.' }));
         } finally {
             setIsSubmitting(false);
         }
@@ -134,18 +123,13 @@ const SimpleRates = () => {
         if (!tarifToDelete) return;
         setIsDeleting(true);
         try {
-            const promises = tarifToDelete.prix_zones.map(pz =>
-                dispatch(deleteTarif(pz.id))
-            );
+            await dispatch(deleteTarif(tarifToDelete.id)).unwrap();
 
-            await Promise.all(promises);
-
-            if (selectedTarif?.indice === tarifToDelete.indice && selectedTarif?.pays === tarifToDelete.pays) {
-                setSelectedTarif(null);
-            }
             setIsDeleteModalOpen(false);
             setTarifToDelete(null);
-            dispatch(showNotification({ type: 'success', message: 'Grille tarifaire supprimée.' }));
+            dispatch(showNotification({ type: 'success', message: 'Tarif supprimé avec succès.' }));
+            // Refresh in background
+            dispatch(fetchTarifs({ silent: true }));
         } catch (error) {
             dispatch(showNotification({ type: 'error', message: 'Erreur lors de la suppression.' }));
         } finally {
@@ -153,12 +137,9 @@ const SimpleRates = () => {
         }
     };
 
-    const handleStatusChange = async (tarifGroup) => {
+    const handleStatusChange = async (tarif) => {
         try {
-            const promises = tarifGroup.prix_zones.map(pz =>
-                dispatch(updateTarifStatus(pz.id))
-            );
-            await Promise.all(promises);
+            await dispatch(updateTarifStatus(tarif.id)).unwrap();
             dispatch(showNotification({ type: 'success', message: 'Statut mis à jour.' }));
         } catch (error) {
             dispatch(showNotification({ type: 'error', message: 'Erreur lors du changement de statut.' }));
@@ -182,23 +163,10 @@ const SimpleRates = () => {
             return matchesSearch && matchesStatus;
         });
 
-        const grouped = {};
-        filtered.forEach(tarif => {
-            const key = `${tarif.indice}-${tarif.pays}`;
-            if (!grouped[key]) {
-                grouped[key] = {
-                    key,
-                    indice: tarif.indice,
-                    pays: tarif.pays,
-                    actif: true,
-                    prix_zones: []
-                };
-            }
-            grouped[key].prix_zones.push(tarif);
-            if (!tarif.actif) grouped[key].actif = false;
+        return filtered.sort((a, b) => {
+            if (a.indice !== b.indice) return (a.indice || 0) - (b.indice || 0);
+            return (a.pays || '').localeCompare(b.pays || '');
         });
-
-        return Object.values(grouped).sort((a, b) => (a.indice || 0) - (b.indice || 0));
     }, [tarifs, searchTerm, filterStatus]);
 
     return (
@@ -307,129 +275,154 @@ const SimpleRates = () => {
                             <table className="w-full text-sm">
                                 <thead className="bg-slate-50/50 border-b border-slate-200">
                                     <tr>
-                                        <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Indice</th>
-                                        <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Départ</th>
-                                        <th className="px-6 py-4 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Détails Zones</th>
-                                        <th className="px-6 py-4 text-center font-bold text-slate-500 uppercase tracking-wider text-xs">Statut</th>
-                                        <th className="px-6 py-4 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
+                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Indice</th>
+                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Destination</th>
+                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Montant Base</th>
+                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Prestation</th>
+                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Total</th>
+                                        <th className="px-6 py-3 text-center font-bold text-slate-500 uppercase tracking-wider text-xs">Statut</th>
+                                        <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {simpleTarifs.map((groupe) => (
-                                        <tr key={groupe.key} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="inline-flex items-center justify-center px-2.5 py-1 rounded bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200">
-                                                    #{groupe.indice}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <p className="font-bold text-slate-900">{groupe.pays}</p>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {groupe.prix_zones.map(pz => {
-                                                        const zoneName = zones.find(z => z.id === pz.zone_destination_id)?.nom || 'Zone ?';
-                                                        return (
-                                                            <span key={pz.id} className="inline-flex items-center text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 font-bold">
-                                                                {zoneName}: {pz.montant_base}/{pz.pourcentage_prestation}%
-                                                            </span>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <button
-                                                    onClick={() => handleStatusChange(groupe)}
-                                                    className="group relative flex items-center gap-3 transition-all active:scale-95"
-                                                    title={`Cliquez pour ${groupe.actif ? 'désactiver' : 'activer'}`}
-                                                >
-                                                    <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${groupe.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                                                        <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${groupe.actif ? 'translate-x-5' : 'translate-x-0'}`} />
+                                <tbody className="divide-y divide-slate-200">
+                                    {simpleTarifs.map((tarif) => {
+                                        const zoneName = zones.find(z => z.id === tarif.zone_destination_id)?.nom || tarif.pays || 'Zone ?';
+                                        const mb = parseFloat(tarif.montant_base) || 0;
+                                        const pp = parseFloat(tarif.pourcentage_prestation) || 0;
+                                        const mp = mb * (pp / 100);
+                                        const total = mb + mp;
+
+                                        return (
+                                            <tr key={tarif.id} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="px-6 py-3">
+                                                    <div className="inline-flex items-center justify-center px-2.5 py-1 rounded bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200">
+                                                        {tarif.indice}
                                                     </div>
-                                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${groupe.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
-                                                        {groupe.actif ? 'ACTIF' : 'INACTIF'}
-                                                    </span>
-                                                </button>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex justify-end gap-2">
+                                                </td>
+                                                <td className="px-6 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <MapPin size={14} className="text-slate-400" />
+                                                        <p className="font-semibold text-slate-900">{zoneName}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-3">
+                                                    <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-[10px]">FCFA</span></p>
+                                                </td>
+                                                <td className="px-6 py-3">
+                                                    <div className="flex flex-row gap-2">
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold w-fit">
+                                                            {pp}%
+                                                        </span>
+                                                        <span className="text-slate-400 font-medium mt-0.5 whitespace-nowrap">
+                                                            ({mp.toLocaleString()} <span className="text-[10px]">FCFA</span>)
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-3">
+                                                    <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-[10px]">FCFA</span></p>
+                                                </td>
+                                                <td className="px-6 py-3 text-center">
                                                     <button
-                                                        onClick={() => handleOpenEditModal(groupe)}
-                                                        className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-                                                        title="Modifier"
+                                                        onClick={() => handleStatusChange(tarif)}
+                                                        className="group relative flex items-center gap-3 transition-all active:scale-95 mx-auto"
+                                                        title={`Cliquez pour ${tarif.actif ? 'désactiver' : 'activer'}`}
                                                     >
-                                                        <Edit2 size={16} />
+                                                        <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                            <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                        </div>
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleOpenDeleteModal(groupe)}
-                                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                        title="Supprimer"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                </td>
+                                                <td className="px-6 py-3">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleOpenEditModal(tarif)}
+                                                            className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                                                            title="Modifier"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleOpenDeleteModal(tarif)}
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                            title="Supprimer"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
 
                         {/* Mobile Cards - Native App Style */}
-                        <div className="md:hidden divide-y divide-slate-100">
-                            {simpleTarifs.map((groupe) => (
-                                <div key={groupe.key} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 shrink-0">
-                                                #{groupe.indice}
+                        <div className="md:hidden divide-y divide-slate-200">
+                            {simpleTarifs.map((tarif) => {
+                                const mb = parseFloat(tarif.montant_base) || 0;
+                                const pp = parseFloat(tarif.pourcentage_prestation) || 0;
+                                const mp = mb * (pp / 100);
+                                const total = mb + mp;
+
+                                return (
+                                    <div key={tarif.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <div className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 shrink-0">
+                                                    {tarif.indice}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="font-semibold text-slate-900 text-sm truncate">
+                                                        {zones.find(z => z.id === tarif.zone_destination_id)?.nom || tarif.pays || '?'}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500 font-bold uppercase">
+                                                        {total.toLocaleString()} FCFA
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div className="min-w-0">
-                                                <p className="font-bold text-slate-900 text-sm truncate">{groupe.pays}</p>
-                                                <p className="text-[11px] text-slate-500 truncate">{groupe.prix_zones.length} zone(s)</p>
+                                            <button
+                                                onClick={() => handleStatusChange(tarif)}
+                                                className="flex items-center gap-2 active:scale-95 transition-all"
+                                            >
+                                                <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                    <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                </div>
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
+                                                <span className="text-[9px] text-slate-400 font-bold">Montant Base</span>
+                                                <span className="text-xs font-semibold text-slate-700">{mb.toLocaleString()}</span>
+                                            </div>
+                                            <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
+                                                <span className="text-[9px] text-slate-400 font-bold">Prestation</span>
+                                                <div className="flex flex-row items-center gap-2">
+                                                    <span className="text-xs font-semibold text-orange-600">{pp}%</span>
+                                                    <span className="text-xs text-slate-400 font-medium">({mp.toLocaleString()} F)</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => handleStatusChange(groupe)}
-                                            className="flex items-center gap-2 active:scale-95 transition-all"
-                                        >
-                                            <div className={`relative w-8 h-4 rounded-full transition-colors ${groupe.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                                                <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${groupe.actif ? 'translate-x-4' : 'translate-x-0'}`} />
-                                            </div>
-                                            <span className={`text-[9px] font-black tracking-tighter ${groupe.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                                {groupe.actif ? 'ACTIF' : 'INACTIF'}
-                                            </span>
-                                        </button>
-                                    </div>
 
-                                    <div className="bg-slate-50 rounded-lg p-2 flex flex-wrap gap-1.5">
-                                        {groupe.prix_zones.map(pz => {
-                                            const zoneName = zones.find(z => z.id === pz.zone_destination_id)?.nom || '?';
-                                            return (
-                                                <span key={pz.id} className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-100 font-bold">
-                                                    {zoneName}: <span className="ml-1 text-slate-900">{pz.montant_base}</span>
-                                                </span>
-                                            );
-                                        })}
+                                        <div className="flex gap-2 pt-1">
+                                            <button
+                                                onClick={() => handleOpenEditModal(tarif)}
+                                                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
+                                            >
+                                                <Edit3 size={13} />
+                                                Modifier
+                                            </button>
+                                            <button
+                                                onClick={() => handleOpenDeleteModal(tarif)}
+                                                className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
+                                            >
+                                                <Trash2 size={15} />
+                                            </button>
+                                        </div>
                                     </div>
-
-                                    <div className="flex gap-2 pt-1">
-                                        <button
-                                            onClick={() => handleOpenEditModal(groupe)}
-                                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
-                                        >
-                                            <Edit3 size={13} />
-                                            Modifier
-                                        </button>
-                                        <button
-                                            onClick={() => handleOpenDeleteModal(groupe)}
-                                            className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
-                                        >
-                                            <Trash2 size={15} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </>
                 )}
@@ -460,10 +453,7 @@ const SimpleRates = () => {
             >
                 {selectedTarif && (
                     <SimpleTarifForm
-                        initialData={{
-                            indice: selectedTarif.indice,
-                            zones: selectedTarif.prix_zones
-                        }}
+                        initialData={selectedTarif}
                         onSubmit={handleEditTarif}
                         onCancel={() => setIsEditingModalOpen(false)}
                         zones={zones}
@@ -476,7 +466,7 @@ const SimpleRates = () => {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleDeleteTarif}
-                itemName={`#${tarifToDelete?.indice} (${tarifToDelete?.pays})`}
+                itemName={`${tarifToDelete?.indice} KG (${zones.find(z => z.id === tarifToDelete?.zone_destination_id)?.nom || tarifToDelete?.pays || '?'})`}
                 isLoading={isDeleting}
             />
         </div>

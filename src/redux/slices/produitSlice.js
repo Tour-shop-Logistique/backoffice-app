@@ -247,6 +247,21 @@ const produitSlice = createSlice({
             })
 
             // UPDATE CATEGORY STATUS
+            .addCase(updateCategoryStatus.pending, (state, action) => {
+                const { categoryId } = action.meta.arg;
+                const index = state.categories.findIndex(c => c.id === categoryId);
+                if (index !== -1) {
+                    state.categories[index].actif = !state.categories[index].actif;
+                }
+            })
+            .addCase(updateCategoryStatus.rejected, (state, action) => {
+                const { categoryId } = action.meta.arg;
+                const index = state.categories.findIndex(c => c.id === categoryId);
+                if (index !== -1) {
+                    state.categories[index].actif = !state.categories[index].actif;
+                }
+                state.error = action.payload;
+            })
             .addCase(updateCategoryStatus.fulfilled, (state, action) => {
                 const category = action.payload?.category || action.payload;
                 if (category) {
@@ -257,6 +272,21 @@ const produitSlice = createSlice({
                 }
             })
             // UPDATE PRODUIT STATUS
+            .addCase(updateProduitStatus.pending, (state, action) => {
+                const { produitId } = action.meta.arg;
+                const index = state.listProduits.findIndex(p => p.id === produitId);
+                if (index !== -1) {
+                    state.listProduits[index].actif = !state.listProduits[index].actif;
+                }
+            })
+            .addCase(updateProduitStatus.rejected, (state, action) => {
+                const { produitId } = action.meta.arg;
+                const index = state.listProduits.findIndex(p => p.id === produitId);
+                if (index !== -1) {
+                    state.listProduits[index].actif = !state.listProduits[index].actif;
+                }
+                state.error = action.payload;
+            })
             .addCase(updateProduitStatus.fulfilled, (state, action) => {
                 const product = action.payload?.product || action.payload;
                 if (product) {

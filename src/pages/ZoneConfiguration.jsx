@@ -57,6 +57,7 @@ const ZoneConfiguration = () => {
       if (result) {
         setIsModalOpen(false);
         dispatch(showNotification({ type: 'success', message: 'Zone ajoutée avec succès.' }));
+        dispatch(fetchZones({ silent: true }));
       }
     } catch (error) {
       dispatch(showNotification({ type: 'error', message: "Erreur lors de l'ajout de la zone." }));
@@ -70,6 +71,7 @@ const ZoneConfiguration = () => {
         setIsEditModalOpen(false);
         setSelectedZone(null);
         dispatch(showNotification({ type: 'success', message: 'Zone modifiée avec succès.' }));
+        dispatch(fetchZones({ silent: true }));
       }
     } catch (error) {
       dispatch(showNotification({ type: 'error', message: 'Erreur lors de la modification de la zone.' }));
@@ -89,6 +91,7 @@ const ZoneConfiguration = () => {
       await dispatch(deleteZone(zoneToDelete.id)).unwrap();
       dispatch(showNotification({ type: 'success', message: 'Zone supprimée avec succès.' }));
       setZoneToDelete(null);
+      dispatch(fetchZones({ silent: true }));
     } catch (error) {
       dispatch(showNotification({ type: 'error', message: error.message || 'Erreur lors de la suppression.' }));
     } finally {
@@ -240,7 +243,7 @@ const ZoneConfiguration = () => {
                     <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-200">
                   {filteredZones.map((zone) => (
                     <tr key={zone.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-3">

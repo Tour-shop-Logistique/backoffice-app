@@ -119,6 +119,7 @@ const Agents = () => {
         if (result.success || result) {
           dispatch(showNotification({ type: 'success', message: 'Agent modifié avec succès.' }));
           closeModal();
+          dispatch(fetchAgents({ silent: true }));
         } else {
           dispatch(showNotification({ type: 'error', message: 'Erreur lors de la modification' }));
         }
@@ -131,6 +132,7 @@ const Agents = () => {
         if (result.success || result) {
           dispatch(showNotification({ type: 'success', message: 'Agent créé avec succès.' }));
           closeModal();
+          dispatch(fetchAgents({ silent: true }));
         } else {
           dispatch(showNotification({ type: 'error', message: "Erreur lors de l'ajout" }));
         }
@@ -290,7 +292,7 @@ const Agents = () => {
                     <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-200">
                   {filteredAgents.map((agent, index) => (
                     <tr key={agent.id || `agent-${index}`} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4">

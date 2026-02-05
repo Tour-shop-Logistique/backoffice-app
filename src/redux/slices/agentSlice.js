@@ -134,6 +134,21 @@ const agentSlice = createSlice({
             })
 
             // STATUS
+            .addCase(updateAgentStatus.pending, (state, action) => {
+                const { agentId } = action.meta.arg;
+                const index = state.agents.findIndex(agent => agent.id === agentId);
+                if (index !== -1) {
+                    state.agents[index].actif = !state.agents[index].actif;
+                }
+            })
+            .addCase(updateAgentStatus.rejected, (state, action) => {
+                const { agentId } = action.meta.arg;
+                const index = state.agents.findIndex(agent => agent.id === agentId);
+                if (index !== -1) {
+                    state.agents[index].actif = !state.agents[index].actif;
+                }
+                state.error = action.payload;
+            })
             .addCase(updateAgentStatus.fulfilled, (state, action) => {
                 const updatedAgent = action.payload?.agent || action.payload;
                 if (updatedAgent) {
