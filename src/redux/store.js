@@ -5,6 +5,7 @@ import tarificationReducer from './slices/tarificationSlice';
 import backofficeReducer from './slices/backofficeSlice';
 import produitReducer from './slices/produitSlice';
 import agentReducer from './slices/agentSlice';
+import agenceReducer from './slices/agenceSlice';
 import uiReducer from './slices/uiSlice';
 
 export const store = configureStore({
@@ -15,6 +16,7 @@ export const store = configureStore({
     backoffice: backofficeReducer,
     produits: produitReducer,
     agents: agentReducer,
+    agences: agenceReducer,
     ui: uiReducer,
   },
 });

@@ -482,13 +482,13 @@ export default function Produits() {
                     return (
                       <tr key={produit.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-3">
-                          <div className="flex items-center gap-2">
-                            <Package className="h-4 w-4 text-slate-400" />
-                            <span className="font-semibold text-slate-900">{produit.reference}</span>
-                          </div>
+                          <span className="font-semibold text-slate-900">{produit.reference}</span>
                         </td>
                         <td className="px-6 py-3">
-                          <span className="text-sm text-slate-600">{produit.designation}</span>
+                          <div className="flex items-center gap-2">
+                            <Package className="h-4 w-4 text-slate-400" />
+                            <span className="text-sm font-semibold text-slate-600">{produit.designation}</span>
+                          </div>
                         </td>
                         <td className="px-6 py-3">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium">
