@@ -96,7 +96,11 @@ const agentSlice = createSlice({
             })
             .addCase(fetchAgents.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.agents = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+                const data = Array.isArray(action.payload) ? action.payload : (action.payload?.users || action.payload?.data || []);
+                state.agents = data.map(agent => ({
+                    ...agent,
+                    actif: agent.actif === true || agent.actif === 1 || agent.actif === "1"
+                }));
                 state.hasLoaded = true;
             })
             .addCase(fetchAgents.rejected, (state, action) => {
@@ -106,12 +110,16 @@ const agentSlice = createSlice({
 
             // ADD
             .addCase(addAgent.fulfilled, (state, action) => {
-                const newAgent = action.payload?.agent || action.payload;
-                if (newAgent) {
-                    // Merge form data with result and ensure it's active by default
+                const newAgent = action.payload?.agent || action.payload?.data || action.payload;
+                const agentData = action.meta.arg;
+
+                if (newAgent && typeof newAgent === 'object') {
                     state.agents.unshift({
-                        ...action.meta.arg,
+                        ...agentData,
                         ...newAgent,
+                        // Ensure password fields aren't in state
+                        password: undefined,
+                        password_confirmation: undefined,
                         actif: newAgent.actif !== undefined ? newAgent.actif : true
                     });
                 }
@@ -119,13 +127,14 @@ const agentSlice = createSlice({
 
             // EDIT
             .addCase(editAgent.fulfilled, (state, action) => {
-                const updatedAgent = action.payload?.agent || action.payload;
-                if (updatedAgent) {
-                    const index = state.agents.findIndex(agent => agent.id === updatedAgent.id);
-                    if (index !== -1) {
-                        state.agents[index] = updatedAgent;
-                    }
-                }
+                const updatedAgent = action.payload?.agent || action.payload?.data || action.payload;
+                const { agentId, agentData } = action.meta.arg;
+
+                state.agents = state.agents.map(agent =>
+                    agent.id === agentId
+                        ? { ...agent, ...agentData, ...(updatedAgent && updatedAgent.id ? updatedAgent : {}) }
+                        : agent
+                );
             })
 
             // DELETE
@@ -150,12 +159,15 @@ const agentSlice = createSlice({
                 state.error = action.payload;
             })
             .addCase(updateAgentStatus.fulfilled, (state, action) => {
-                const updatedAgent = action.payload?.agent || action.payload;
-                if (updatedAgent) {
-                    const index = state.agents.findIndex(agent => agent.id === updatedAgent.id);
-                    if (index !== -1) {
-                        state.agents[index] = updatedAgent;
-                    }
+                const updatedAgent = action.payload?.agent || action.payload?.data || action.payload;
+                const { agentId } = action.meta.arg;
+
+                if (updatedAgent && updatedAgent.id) {
+                    state.agents = state.agents.map(agent =>
+                        agent.id === agentId ? updatedAgent : agent
+                    );
+                } else {
+                    // If API doesn't return the full object, the pending state already toggled 'actif'
                 }
             });
     },

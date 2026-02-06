@@ -110,11 +110,13 @@ const zoneSlice = createSlice({
       .addCase(editZone.fulfilled, (state, action) => {
         state.isLoading = false;
         const updatedZone = action.payload?.data || action.payload;
-        if (updatedZone) {
-          state.zones = state.zones.map((zone) =>
-            zone.id === updatedZone.id ? updatedZone : zone
-          );
-        }
+        const { zoneId, zoneData } = action.meta.arg;
+
+        state.zones = state.zones.map((zone) =>
+          zone.id === zoneId
+            ? { ...zone, ...zoneData, ...(updatedZone && updatedZone.id ? updatedZone : {}) }
+            : zone
+        );
       })
       .addCase(editZone.rejected, (state, action) => {
         state.isLoading = false;
@@ -153,11 +155,14 @@ const zoneSlice = createSlice({
       .addCase(updateZoneStatus.fulfilled, (state, action) => {
         state.isLoading = false;
         const updatedZone = action.payload?.data || action.payload;
-        if (updatedZone) {
-          const zoneId = updatedZone.id || action.meta.arg.zoneId;
+        const { zoneId } = action.meta.arg;
+
+        if (updatedZone && updatedZone.id) {
           state.zones = state.zones.map((zone) =>
-            zone.id === zoneId ? { ...zone, ...updatedZone } : zone
+            zone.id === zoneId ? updatedZone : zone
           );
+        } else {
+          // Logic already toggled in pending
         }
       });
   },

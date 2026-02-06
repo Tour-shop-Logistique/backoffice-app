@@ -42,6 +42,7 @@ const SimpleRates = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [isDeleting, setIsDeleting] = useState(false);
     const [tarifToDelete, setTarifToDelete] = useState(null);
+    const [updatingStatus, setUpdatingStatus] = useState({});
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
@@ -139,35 +140,51 @@ const SimpleRates = () => {
 
     const handleStatusChange = async (tarif) => {
         try {
+            setUpdatingStatus(prev => ({ ...prev, [tarif.id]: true }));
             await dispatch(updateTarifStatus(tarif.id)).unwrap();
-            dispatch(showNotification({ type: 'success', message: 'Statut mis à jour.' }));
+            // dispatch(showNotification({ type: 'success', message: 'Statut mis à jour.' }));
         } catch (error) {
             dispatch(showNotification({ type: 'error', message: 'Erreur lors du changement de statut.' }));
+        } finally {
+            setUpdatingStatus(prev => ({ ...prev, [tarif.id]: false }));
         }
     };
 
-    const simpleTarifs = useMemo(() => {
+    // 1. Filtrer d'abord par type et par recherche (pour les compteurs)
+    const filteredBySearch = useMemo(() => {
         if (!Array.isArray(tarifs)) return [];
-
         const raw = tarifs.filter((t) => t && t.type_expedition === "simple");
 
-        const filtered = raw.filter(tarif => {
+        return raw.filter(tarif => {
             const indice = tarif.indice?.toString() || '';
-            const pays = tarif.pays?.toLowerCase() || '';
+            const zone = zones.find(z => z.id === tarif.zone_destination_id);
+            const zoneName = (zone?.nom || tarif.pays || '').toLowerCase();
             const search = searchTerm.toLowerCase();
+            return indice.includes(search) || zoneName.includes(search);
+        });
+    }, [tarifs, zones, searchTerm]);
 
-            const matchesSearch = indice.includes(search) || pays.includes(search);
+    // 2. Filtrer par statut pour l'affichage
+    const simpleTarifs = useMemo(() => {
+        const filtered = filteredBySearch.filter(tarif => {
             const matchesStatus = filterStatus === 'all' ||
                 (filterStatus === 'active' && tarif.actif) ||
                 (filterStatus === 'inactive' && !tarif.actif);
-            return matchesSearch && matchesStatus;
+            return matchesStatus;
         });
 
         return filtered.sort((a, b) => {
             if (a.indice !== b.indice) return (a.indice || 0) - (b.indice || 0);
             return (a.pays || '').localeCompare(b.pays || '');
         });
-    }, [tarifs, searchTerm, filterStatus]);
+    }, [filteredBySearch, filterStatus]);
+
+    // 3. Compteurs basés sur la recherche uniquement
+    const counts = useMemo(() => ({
+        all: filteredBySearch.length,
+        active: filteredBySearch.filter(t => t.actif).length,
+        inactive: filteredBySearch.filter(t => !t.actif).length
+    }), [filteredBySearch]);
 
     return (
         <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
@@ -212,7 +229,7 @@ const SimpleRates = () => {
                 <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-slate-400" />
                 <input
                     type="text"
-                    placeholder="Rechercher par indice ou pays de départ..."
+                    placeholder="Rechercher par indice ou pays..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400"
@@ -231,7 +248,7 @@ const SimpleRates = () => {
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
-                            Toutes ({simpleTarifs.length})
+                            Toutes ({counts.all})
                         </button>
                         <button
                             onClick={() => setFilterStatus('active')}
@@ -240,7 +257,7 @@ const SimpleRates = () => {
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
-                            Actives ({simpleTarifs.filter(t => t.actif).length})
+                            Actives ({counts.active})
                         </button>
                         <button
                             onClick={() => setFilterStatus('inactive')}
@@ -249,7 +266,7 @@ const SimpleRates = () => {
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
-                            Inactives ({simpleTarifs.filter(t => !t.actif).length})
+                            Inactives ({counts.inactive})
                         </button>
                     </div>
                 </div>
@@ -295,7 +312,7 @@ const SimpleRates = () => {
                                         return (
                                             <tr key={tarif.id} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="px-6 py-3">
-                                                    <div className="inline-flex items-center justify-center px-2.5 py-1 rounded bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200">
+                                                    <div className="inline-flex items-center justify-center px-2.5 py-1 rounded bg-blue-100 text-slate-700 font-bold text-xs border border-slate-200">
                                                         {tarif.indice}
                                                     </div>
                                                 </td>
@@ -324,7 +341,8 @@ const SimpleRates = () => {
                                                 <td className="px-6 py-3 text-center">
                                                     <button
                                                         onClick={() => handleStatusChange(tarif)}
-                                                        className="group relative flex items-center gap-3 transition-all active:scale-95 mx-auto"
+                                                        disabled={updatingStatus[tarif.id]}
+                                                        className="group relative flex items-center gap-3 transition-all active:scale-95 mx-auto disabled:opacity-50"
                                                         title={`Cliquez pour ${tarif.actif ? 'désactiver' : 'activer'}`}
                                                     >
                                                         <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
@@ -369,7 +387,7 @@ const SimpleRates = () => {
                                     <div key={tarif.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="flex items-center gap-2.5 min-w-0">
-                                                <div className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 shrink-0">
+                                                <div className="px-2 py-1 rounded bg-blue-100 text-slate-700 font-bold text-xs border border-slate-200 shrink-0">
                                                     {tarif.indice}
                                                 </div>
                                                 <div className="min-w-0">
@@ -383,7 +401,8 @@ const SimpleRates = () => {
                                             </div>
                                             <button
                                                 onClick={() => handleStatusChange(tarif)}
-                                                className="flex items-center gap-2 active:scale-95 transition-all"
+                                                disabled={updatingStatus[tarif.id]}
+                                                className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
                                             >
                                                 <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                                                     <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-4' : 'translate-x-0'}`} />
@@ -405,7 +424,7 @@ const SimpleRates = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-2 pt-1">
+                                        <div className="flex gap-2">
                                             <button
                                                 onClick={() => handleOpenEditModal(tarif)}
                                                 className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"

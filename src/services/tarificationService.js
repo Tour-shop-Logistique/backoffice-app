@@ -52,7 +52,9 @@ const deleteGroupedTarif = async (tarifId) => {
   return response.data;
 };
 
-const updateGroupedTarifStatus = async (tarifId) => {
+const updateGroupedTarifStatus = async (arg) => {
+  // Extract ID whether it's a primitive or an object
+  const tarifId = typeof arg === 'object' && arg !== null ? (arg.tarifId || arg.id) : arg;
   const response = await api.put(`/tarification/status-groupage/${tarifId}`);
   return response.data;
 };

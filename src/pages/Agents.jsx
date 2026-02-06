@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { PlusCircle, Loader2, X, Trash2, AlertTriangle, User, Edit, Phone, Mail, Shield, RefreshCw, ChevronDown as LucideChevronDown, CheckCircle2, XCircle, Search, Edit2, Edit3, Mail as MailIcon, Phone as PhoneIcon, UserCircle2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { showNotification } from '../redux/slices/uiSlice';
@@ -17,6 +17,7 @@ const Agents = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState({});
 
   const [agentForm, setAgentForm] = useState({
     nom: '',
@@ -145,40 +146,53 @@ const Agents = () => {
   };
 
   const toggleUserStatus = async (agent) => {
-    const previousStatus = agent.actif;
-    const newStatusNumeric = previousStatus ? 0 : 1;
-    const newStatusBoolean = !previousStatus;
-
-    dispatch(setAgentStatus({ id: agent.id, actif: newStatusBoolean }));
-
     try {
+      setUpdatingStatus(prev => ({ ...prev, [agent.id]: true }));
+      const newStatusNumeric = agent.actif ? 0 : 1;
+
       await dispatch(updateAgentStatus({ agentId: agent.id, status: newStatusNumeric })).unwrap();
-      dispatch(showNotification({ type: 'success', message: `Statut mis à jour.` }));
+      // dispatch(showNotification({ type: 'success', message: `Statut mis à jour.` }));
     } catch (error) {
-      dispatch(setAgentStatus({ id: agent.id, actif: previousStatus }));
       dispatch(showNotification({ type: 'error', message: 'Erreur lors du changement de statut' }));
+    } finally {
+      setUpdatingStatus(prev => ({ ...prev, [agent.id]: false }));
     }
   };
 
   const inputStyle = "w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-300 bg-slate-50";
 
-  const filteredAgents = (agents || []).filter(agent => {
-    const nom = agent.nom?.toLowerCase() || '';
-    const prenoms = agent.prenoms?.toLowerCase() || '';
-    const telephone = agent.telephone?.toLowerCase() || '';
-    const email = agent.email?.toLowerCase() || '';
-    const searchable = searchTerm.toLowerCase();
+  // 1. Filtrer d'abord par recherche (pour les compteurs)
+  const filteredBySearch = useMemo(() => {
+    return (agents || []).filter(agent => {
+      const nom = agent.nom?.toLowerCase() || '';
+      const prenoms = agent.prenoms?.toLowerCase() || '';
+      const telephone = agent.telephone?.toLowerCase() || '';
+      const email = agent.email?.toLowerCase() || '';
+      const searchable = searchTerm.toLowerCase();
 
-    const matchesSearch = nom.includes(searchable) ||
-      prenoms.includes(searchable) ||
-      telephone.includes(searchable) ||
-      email.includes(searchable);
+      return nom.includes(searchable) ||
+        prenoms.includes(searchable) ||
+        telephone.includes(searchable) ||
+        email.includes(searchable);
+    });
+  }, [agents, searchTerm]);
 
-    const matchesStatus = filterStatus === 'all' ||
-      (filterStatus === 'active' && agent.actif) ||
-      (filterStatus === 'inactive' && !agent.actif);
-    return matchesSearch && matchesStatus;
-  });
+  // 2. Filtrer par statut pour l'affichage
+  const filteredAgents = useMemo(() => {
+    return filteredBySearch.filter(agent => {
+      const matchesStatus = filterStatus === 'all' ||
+        (filterStatus === 'active' && agent.actif) ||
+        (filterStatus === 'inactive' && !agent.actif);
+      return matchesStatus;
+    });
+  }, [filteredBySearch, filterStatus]);
+
+  // 3. Compteurs basés sur la recherche uniquement
+  const counts = useMemo(() => ({
+    all: filteredBySearch.length,
+    active: filteredBySearch.filter(a => a.actif).length,
+    inactive: filteredBySearch.filter(a => !a.actif).length
+  }), [filteredBySearch]);
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
@@ -242,7 +256,7 @@ const Agents = () => {
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-              Tous ({agents.length})
+              Tous ({counts.all})
             </button>
             <button
               onClick={() => setFilterStatus('active')}
@@ -251,7 +265,7 @@ const Agents = () => {
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-              Actifs ({agents.filter(a => a.actif).length})
+              Actifs ({counts.active})
             </button>
             <button
               onClick={() => setFilterStatus('inactive')}
@@ -260,7 +274,7 @@ const Agents = () => {
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-              Inactifs ({agents.filter(a => !a.actif).length})
+              Inactifs ({counts.inactive})
             </button>
           </div>
         </div>
@@ -301,7 +315,7 @@ const Agents = () => {
                             {agent.nom?.[0]}{agent.prenoms?.[0]}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900">{agent.nom} {agent.prenoms}</p>
+                            <p className="font-semibold text-slate-900">{agent.nom} {agent.prenoms}</p>
                             <p className="text-[11px] text-slate-500 uppercase font-medium">{agent.type || 'Agent'}</p>
                           </div>
                         </div>
@@ -321,16 +335,13 @@ const Agents = () => {
                       <td className="px-6 py-4">
                         <button
                           onClick={() => toggleUserStatus(agent)}
-                          disabled={isSubmitting}
+                          disabled={updatingStatus[agent.id]}
                           className="group relative flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
                           title={`Cliquez pour ${agent.actif ? 'désactiver' : 'activer'}`}
                         >
                           <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${agent.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                             <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${agent.actif ? 'translate-x-5' : 'translate-x-0'}`} />
                           </div>
-                          <span className={`text-[10px] font-medium ${agent.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
-                            {agent.actif ? 'Actif' : 'Inactif'}
-                          </span>
                         </button>
                       </td>
                       <td className="px-6 py-4">
@@ -367,21 +378,18 @@ const Agents = () => {
                         {agent.nom?.[0]}{agent.prenoms?.[0]}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-slate-900 text-sm truncate leading-tight">{agent.nom} {agent.prenoms}</p>
+                        <p className="font-semibold text-slate-900 text-sm truncate leading-tight">{agent.nom} {agent.prenoms}</p>
                         <p className="text-[11px] text-slate-500 truncate lowercase">{agent.email}</p>
                       </div>
                     </div>
                     <button
                       onClick={() => toggleUserStatus(agent)}
-                      disabled={isSubmitting}
-                      className="flex items-center gap-2 active:scale-95 transition-all"
+                      disabled={updatingStatus[agent.id]}
+                      className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
                     >
                       <div className={`relative w-8 h-4 rounded-full transition-colors ${agent.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                         <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${agent.actif ? 'translate-x-4' : 'translate-x-0'}`} />
                       </div>
-                      <span className={`text-[9px] font-medium ${agent.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
-                        {agent.actif ? 'Actif' : 'Inactif'}
-                      </span>
                     </button>
                   </div>
 

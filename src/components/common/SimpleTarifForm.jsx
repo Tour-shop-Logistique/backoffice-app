@@ -13,7 +13,8 @@ import {
   ChevronDown,
   Save,
   X,
-  Loader2
+  Loader2,
+  Check
 } from 'lucide-react';
 
 const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData, zones = [] }) => {
@@ -25,6 +26,18 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData, zones = [
     montant_prestation: '0.00',
     montant_expedition: '0.00'
   });
+  const [isZoneDropdownOpen, setIsZoneDropdownOpen] = useState(false);
+  const zoneDropdownRef = React.useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (zoneDropdownRef.current && !zoneDropdownRef.current.contains(event.target)) {
+        setIsZoneDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -102,20 +115,57 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData, zones = [
 
         <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
           <label className={labelClasses}>Zone de Destination</label>
-          <div className="relative mt-2">
-            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <select
-              value={formData.zone_destination_id}
-              onChange={e => handleInputChange('zone_destination_id', e.target.value)}
-              className={`${inputClasses} bg-white appearance-none cursor-pointer`}
-              required
+          <div className="relative mt-2" ref={zoneDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsZoneDropdownOpen(!isZoneDropdownOpen)}
+              className={`${inputClasses} bg-white flex items-center justify-between text-left`}
             >
-              <option value="">Choisir une zone</option>
-              {zones.map(zone => (
-                <option key={zone.id} value={zone.id}>{zone.nom}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+              <div className="flex items-center gap-2 min-w-0">
+                <MapPin className="text-slate-400 shrink-0" size={18} />
+                <span className="truncate">
+                  {formData.zone_destination_id
+                    ? zones.find(z => String(z.id) === String(formData.zone_destination_id))?.nom
+                    : "Choisir une zone"
+                  }
+                </span>
+              </div>
+              <ChevronDown className={`text-gray-400 transition-transform duration-200 ${isZoneDropdownOpen ? 'rotate-180' : ''}`} size={18} />
+            </button>
+
+            {isZoneDropdownOpen && (
+              <div className="absolute left-0 right-0 top-full mt-2 py-1.5 bg-white border border-slate-200 rounded-lg shadow-xl shadow-slate-200/50 z-[100] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleInputChange('zone_destination_id', '');
+                      setIsZoneDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors ${!formData.zone_destination_id ? 'bg-slate-50 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    <span>Choisir une zone</span>
+                  </button>
+
+                  <div className="h-px bg-slate-100 my-1 mx-2" />
+
+                  {zones.map(zone => (
+                    <button
+                      key={zone.id}
+                      type="button"
+                      onClick={() => {
+                        handleInputChange('zone_destination_id', zone.id);
+                        setIsZoneDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${String(formData.zone_destination_id) === String(zone.id) ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      <span className="truncate">{zone.nom}</span>
+                      {String(formData.zone_destination_id) === String(zone.id) && <Check className="h-4 w-4 text-slate-900" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

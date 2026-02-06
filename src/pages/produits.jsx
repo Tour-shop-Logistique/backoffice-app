@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchProduits,
@@ -51,6 +51,7 @@ export default function Produits() {
   const [isRefreshingProduits, setIsRefreshingProduits] = useState(false);
   const [isRefreshingCategories, setIsRefreshingCategories] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState({});
   const categoryDropdownRef = useRef(null);
 
   useEffect(() => {
@@ -243,15 +244,15 @@ export default function Produits() {
   // 🚀 CHANGER LE STATUT D'UNE CATÉGORIE
   // -------------------------------
   const handleToggleCategoryStatus = async (cat) => {
-    setIsSubmitting(true);
     try {
+      setUpdatingStatus(prev => ({ ...prev, [`cat-${cat.id}`]: true }));
       const newStatus = cat.actif ? 0 : 1;
       await dispatch(updateCategoryStatus({ categoryId: cat.id, status: newStatus })).unwrap();
-      dispatch(showNotification({ type: "success", message: `Catégorie ${cat.actif ? 'désactivée' : 'activée'} !` }));
+      // dispatch(showNotification({ type: "success", message: `Catégorie ${cat.actif ? 'désactivée' : 'activée'} !` }));
     } catch (error) {
       dispatch(showNotification({ type: "error", message: "Erreur lors du changement de statut" }));
     } finally {
-      setIsSubmitting(false);
+      setUpdatingStatus(prev => ({ ...prev, [`cat-${cat.id}`]: false }));
     }
   };
 
@@ -259,27 +260,44 @@ export default function Produits() {
   // 🚀 CHANGER LE STATUT D'UN PRODUIT
   // -------------------------------
   const handleToggleProduitStatus = async (produit) => {
-    setIsSubmitting(true);
     try {
+      setUpdatingStatus(prev => ({ ...prev, [`prod-${produit.id}`]: true }));
       const newStatus = produit.actif ? 0 : 1;
       await dispatch(updateProduitStatus({ produitId: produit.id, status: newStatus })).unwrap();
-      dispatch(showNotification({ type: "success", message: `Produit ${produit.actif ? 'désactivé' : 'activé'} !` }));
+      // dispatch(showNotification({ type: "success", message: `Produit ${produit.actif ? 'désactivé' : 'activé'} !` }));
     } catch (error) {
       dispatch(showNotification({ type: "error", message: "Erreur lors du changement de statut" }));
     } finally {
-      setIsSubmitting(false);
+      setUpdatingStatus(prev => ({ ...prev, [`prod-${produit.id}`]: false }));
     }
   };
 
-  const filteredProduits = listProduits.filter(p => {
-    const matchesSearch = p.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.designation.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' ||
-      (filterStatus === 'active' && p.actif) ||
-      (filterStatus === 'inactive' && !p.actif);
-    const matchesCategory = filterCategory === 'all' || String(p.category_id) === String(filterCategory);
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
+  // 1. Filtrer d'abord par recherche et catégorie (pour les compteurs)
+  const filteredBySearchAndCategory = useMemo(() => {
+    return (listProduits || []).filter(p => {
+      const matchesSearch = p.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.designation.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = filterCategory === 'all' || String(p.category_id) === String(filterCategory);
+      return matchesSearch && matchesCategory;
+    });
+  }, [listProduits, searchTerm, filterCategory]);
+
+  // 2. Filtrer par statut pour l'affichage
+  const filteredProduits = useMemo(() => {
+    return filteredBySearchAndCategory.filter(p => {
+      const matchesStatus = filterStatus === 'all' ||
+        (filterStatus === 'active' && p.actif) ||
+        (filterStatus === 'inactive' && !p.actif);
+      return matchesStatus;
+    });
+  }, [filteredBySearchAndCategory, filterStatus]);
+
+  // 3. Compteurs basés sur la recherche et catégorie uniquement
+  const counts = useMemo(() => ({
+    all: filteredBySearchAndCategory.length,
+    active: filteredBySearchAndCategory.filter(p => p.actif).length,
+    inactive: filteredBySearchAndCategory.filter(p => !p.actif).length
+  }), [filteredBySearchAndCategory]);
 
 
   return (
@@ -407,7 +425,7 @@ export default function Produits() {
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-              Tous ({listProduits.length})
+              Tous ({counts.all})
             </button>
             <button
               onClick={() => setFilterStatus('active')}
@@ -416,7 +434,7 @@ export default function Produits() {
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-              Actifs ({listProduits.filter(p => p.actif).length})
+              Actifs ({counts.active})
             </button>
             <button
               onClick={() => setFilterStatus('inactive')}
@@ -425,7 +443,7 @@ export default function Produits() {
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-              Inactifs ({listProduits.filter(p => !p.actif).length})
+              Inactifs ({counts.inactive})
             </button>
           </div>
         </div>
@@ -481,16 +499,13 @@ export default function Produits() {
                         <td className="px-6 py-3">
                           <button
                             onClick={() => handleToggleProduitStatus(produit)}
-                            disabled={isSubmitting}
+                            disabled={updatingStatus[`prod-${produit.id}`]}
                             className="group relative inline-flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
                             title={`Cliquez pour ${produit.actif ? 'désactiver' : 'activer'}`}
                           >
                             <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${produit.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                               <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${produit.actif ? 'translate-x-5' : 'translate-x-0'}`} />
                             </div>
-                            <span className={`text-[10px] font-medium ${produit.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
-                              {produit.actif ? 'Actif' : 'Inactif'}
-                            </span>
                           </button>
                         </td>
                         <td className="px-6 py-3">
@@ -528,27 +543,23 @@ export default function Produits() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Package className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                          <span className="font-semibold text-slate-900 text-sm truncate">{produit.reference}</span>
+                          <span className="font-semibold text-slate-900 text-sm truncate">{produit.designation}</span>
                         </div>
-                        <p className="text-xs text-slate-600 line-clamp-2">{produit.designation}</p>
+                        <p className="text-xs text-slate-600 line-clamp-2">Ref : {produit.reference}</p>
                       </div>
                       <button
                         onClick={() => handleToggleProduitStatus(produit)}
-                        disabled={isSubmitting}
-                        className="flex items-center gap-2 active:scale-95 transition-all"
+                        disabled={updatingStatus[`prod-${produit.id}`]}
+                        className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
                       >
                         <div className={`relative w-8 h-4 rounded-full transition-colors ${produit.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                           <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${produit.actif ? 'translate-x-4' : 'translate-x-0'}`} />
                         </div>
-                        <span className={`text-[9px] font-medium ${produit.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
-                          {produit.actif ? 'Actif' : 'Inactif'}
-                        </span>
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-1.5 py-1">
-                      <Tag className="h-3 w-3 text-slate-400" />
-                      <span className="text-[11px] text-slate-600">{category?.nom || 'Sans catégorie'}</span>
+                    <div className="flex items-center">
+                      <span className="text-sm text-blue-600 font-semibold">Catégorie : {category?.nom || 'Sans catégorie'}</span>
                     </div>
 
                     <div className="flex gap-2 pt-1">
@@ -806,9 +817,13 @@ export default function Produits() {
                           </button>
                           <button
                             onClick={() => handleToggleCategoryStatus(cat)}
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${cat.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}
+                            disabled={updatingStatus[`cat-${cat.id}`]}
+                            className="group relative flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+                            title={`Cliquez pour ${cat.actif ? 'désactiver' : 'activer'}`}
                           >
-                            {cat.actif ? 'ACTIF' : 'INACTIF'}
+                            <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${cat.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                              <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${cat.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                            </div>
                           </button>
                         </div>
                       </td>

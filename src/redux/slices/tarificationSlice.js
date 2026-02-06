@@ -117,9 +117,10 @@ export const deleteGroupedTarif = createAsyncThunk(
 
 export const updateGroupedTarifStatus = createAsyncThunk(
   'tarification/updateGroupedTarifStatus',
-  async (tarifId, { rejectWithValue }) => {
+  async (arg, { rejectWithValue }) => {
     try {
-      return await tarificationService.updateGroupedTarifStatus(tarifId);
+      const id = typeof arg === 'object' ? arg.tarifId : arg;
+      return await tarificationService.updateGroupedTarifStatus(id);
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -145,7 +146,10 @@ const tarificationSlice = createSlice({
       .addCase(fetchTarifs.fulfilled, (state, action) => {
         state.isLoading = false;
         const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
-        state.tarifs = data;
+        state.tarifs = data.map(t => ({
+          ...t,
+          actif: t.actif === true || t.actif === 1 || t.actif === "1"
+        }));
         state.hasLoaded = true;
       })
       .addCase(fetchTarifs.rejected, (state, action) => {
@@ -166,11 +170,13 @@ const tarificationSlice = createSlice({
 
       .addCase(editSimpleTarif.fulfilled, (state, action) => {
         const updated = action.payload?.data || action.payload;
-        if (updated) {
-          state.tarifs = state.tarifs.map((t) =>
-            t.id === updated.id ? updated : t
-          );
-        }
+        const { tarifId, tarifData } = action.meta.arg;
+
+        state.tarifs = state.tarifs.map((t) =>
+          t.id === tarifId
+            ? { ...t, ...tarifData, ...(updated && updated.id ? updated : {}) }
+            : t
+        );
       })
 
       .addCase(deleteTarif.fulfilled, (state, action) => {
@@ -211,7 +217,10 @@ const tarificationSlice = createSlice({
       .addCase(fetchGroupedTarifs.fulfilled, (state, action) => {
         state.isLoading = false;
         const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
-        state.groupedTarifs = data;
+        state.groupedTarifs = data.map(t => ({
+          ...t,
+          actif: t.actif === true || t.actif === 1 || t.actif === "1"
+        }));
         state.groupedHasLoaded = true;
       })
       .addCase(fetchGroupedTarifs.rejected, (state, action) => {
@@ -232,11 +241,13 @@ const tarificationSlice = createSlice({
 
       .addCase(editGroupedTarif.fulfilled, (state, action) => {
         const updated = action.payload?.data || action.payload;
-        if (updated) {
-          state.groupedTarifs = state.groupedTarifs.map((t) =>
-            t.id === updated.id ? updated : t
-          );
-        }
+        const { tarifId, tarifData } = action.meta.arg;
+
+        state.groupedTarifs = state.groupedTarifs.map((t) =>
+          t.id === tarifId
+            ? { ...t, ...tarifData, ...(updated && updated.id ? updated : {}) }
+            : t
+        );
       })
 
       .addCase(deleteGroupedTarif.fulfilled, (state, action) => {
@@ -246,14 +257,15 @@ const tarificationSlice = createSlice({
       })
 
       .addCase(updateGroupedTarifStatus.pending, (state, action) => {
-        const tarifId = action.meta.arg;
+        // Support both direct ID or object with tarifId
+        const tarifId = typeof action.meta.arg === 'object' ? action.meta.arg.tarifId : action.meta.arg;
         const index = state.groupedTarifs.findIndex(t => t.id === tarifId);
         if (index !== -1) {
           state.groupedTarifs[index].actif = !state.groupedTarifs[index].actif;
         }
       })
       .addCase(updateGroupedTarifStatus.rejected, (state, action) => {
-        const tarifId = action.meta.arg;
+        const tarifId = typeof action.meta.arg === 'object' ? action.meta.arg.tarifId : action.meta.arg;
         const index = state.groupedTarifs.findIndex(t => t.id === tarifId);
         if (index !== -1) {
           state.groupedTarifs[index].actif = !state.groupedTarifs[index].actif;
@@ -261,10 +273,15 @@ const tarificationSlice = createSlice({
       })
       .addCase(updateGroupedTarifStatus.fulfilled, (state, action) => {
         const updated = action.payload?.data || action.payload;
-        if (updated) {
+        const tarifId = typeof action.meta.arg === 'object' ? action.meta.arg.tarifId : action.meta.arg;
+
+        if (updated && updated.id) {
           state.groupedTarifs = state.groupedTarifs.map((t) =>
             t.id === updated.id ? updated : t
           );
+        } else {
+          // If API doesn't return the full object, the pending state already toggled 'actif'
+          // We just leave it as is or refresh if necessary.
         }
       });
   },

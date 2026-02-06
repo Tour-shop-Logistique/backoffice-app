@@ -171,7 +171,10 @@ const produitSlice = createSlice({
             .addCase(fetchCategories.fulfilled, (state, action) => {
                 state.isLoading = false;
                 const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
-                state.categories = data;
+                state.categories = data.map(c => ({
+                    ...c,
+                    actif: c.actif === true || c.actif === 1 || c.actif === "1"
+                }));
                 state.hasLoadedCategories = true;
             })
             .addCase(fetchCategories.rejected, (state, action) => {
@@ -188,7 +191,10 @@ const produitSlice = createSlice({
             .addCase(fetchProduits.fulfilled, (state, action) => {
                 state.isLoading = false;
                 const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
-                state.listProduits = data;
+                state.listProduits = data.map(p => ({
+                    ...p,
+                    actif: p.actif === true || p.actif === 1 || p.actif === "1"
+                }));
                 state.hasLoadedProduits = true;
             })
             .addCase(fetchProduits.rejected, (state, action) => {
@@ -209,12 +215,14 @@ const produitSlice = createSlice({
             })
             // EDIT CATEGORY
             .addCase(editCategory.fulfilled, (state, action) => {
-                if (action.payload?.category) {
-                    const index = state.categories.findIndex(c => c.id === action.payload.category.id);
-                    if (index !== -1) {
-                        state.categories[index] = action.payload.category;
-                    }
-                }
+                const updated = action.payload?.category || action.payload?.data || action.payload;
+                const { categoryId, categoryData } = action.meta.arg;
+
+                state.categories = state.categories.map(c =>
+                    c.id === categoryId
+                        ? { ...c, ...categoryData, ...(updated && updated.id ? updated : {}) }
+                        : c
+                );
             })
             // DELETE CATEGORY
             .addCase(deleteCategory.fulfilled, (state, action) => {
@@ -234,12 +242,14 @@ const produitSlice = createSlice({
             })
             // EDIT PRODUIT
             .addCase(editProduit.fulfilled, (state, action) => {
-                if (action.payload?.product) {
-                    const index = state.listProduits.findIndex(p => p.id === action.payload.product.id);
-                    if (index !== -1) {
-                        state.listProduits[index] = action.payload.product;
-                    }
-                }
+                const updated = action.payload?.product || action.payload?.data || action.payload;
+                const { produitId, produitData } = action.meta.arg;
+
+                state.listProduits = state.listProduits.map(p =>
+                    p.id === produitId
+                        ? { ...p, ...produitData, ...(updated && updated.id ? updated : {}) }
+                        : p
+                );
             })
             // DELETE PRODUIT
             .addCase(deleteProduit.fulfilled, (state, action) => {
@@ -263,12 +273,15 @@ const produitSlice = createSlice({
                 state.error = action.payload;
             })
             .addCase(updateCategoryStatus.fulfilled, (state, action) => {
-                const category = action.payload?.category || action.payload;
-                if (category) {
-                    const index = state.categories.findIndex(c => c.id === category.id);
-                    if (index !== -1) {
-                        state.categories[index] = category;
-                    }
+                const updated = action.payload?.category || action.payload?.data || action.payload;
+                const { categoryId } = action.meta.arg;
+
+                if (updated && updated.id) {
+                    state.categories = state.categories.map(c =>
+                        c.id === categoryId ? updated : c
+                    );
+                } else {
+                    // Logic already toggled in pending
                 }
             })
             // UPDATE PRODUIT STATUS
@@ -288,12 +301,15 @@ const produitSlice = createSlice({
                 state.error = action.payload;
             })
             .addCase(updateProduitStatus.fulfilled, (state, action) => {
-                const product = action.payload?.product || action.payload;
-                if (product) {
-                    const index = state.listProduits.findIndex(p => p.id === product.id);
-                    if (index !== -1) {
-                        state.listProduits[index] = product;
-                    }
+                const updated = action.payload?.product || action.payload?.data || action.payload;
+                const { produitId } = action.meta.arg;
+
+                if (updated && updated.id) {
+                    state.listProduits = state.listProduits.map(p =>
+                        p.id === produitId ? updated : p
+                    );
+                } else {
+                    // Logic already toggled in pending
                 }
             });
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchZones, addZone, editZone, deleteZone, updateZoneStatus } from '../redux/slices/zoneSlice';
 import {
@@ -108,7 +108,7 @@ const ZoneConfiguration = () => {
         zoneId,
         status: newStatus
       })).unwrap();
-      dispatch(showNotification({ type: 'success', message: 'Statut mis à jour.' }));
+      // dispatch(showNotification({ type: 'success', message: 'Statut mis à jour.' }));
     } catch (error) {
       console.error('Erreur lors du changement de statut:', error);
       dispatch(showNotification({ type: 'error', message: 'Erreur lors du changement de statut.' }));
@@ -117,19 +117,34 @@ const ZoneConfiguration = () => {
     }
   };
 
-  // Filtrage des zones
-  const filteredZones = (zones || []).filter(zone => {
-    const nom = zone.nom || '';
-    const pays = Array.isArray(zone.pays) ? zone.pays : [];
+  // 1. Filtrer d'abord par recherche (pour les compteurs)
+  const filteredBySearch = useMemo(() => {
+    return (zones || []).filter(zone => {
+      const nom = zone.nom || '';
+      const pays = Array.isArray(zone.pays) ? zone.pays : [];
+      const search = searchTerm.toLowerCase();
 
-    const matchesSearch = nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pays.some(p => p.toLowerCase().includes(searchTerm.toLowerCase()));
+      return nom.toLowerCase().includes(search) ||
+        pays.some(p => p.toLowerCase().includes(search));
+    });
+  }, [zones, searchTerm]);
 
-    const matchesStatus = filterStatus === 'all' ||
-      (filterStatus === 'active' && zone.actif) ||
-      (filterStatus === 'inactive' && !zone.actif);
-    return matchesSearch && matchesStatus;
-  });
+  // 2. Filtrer par statut pour l'affichage
+  const filteredZones = useMemo(() => {
+    return filteredBySearch.filter(zone => {
+      const matchesStatus = filterStatus === 'all' ||
+        (filterStatus === 'active' && zone.actif) ||
+        (filterStatus === 'inactive' && !zone.actif);
+      return matchesStatus;
+    });
+  }, [filteredBySearch, filterStatus]);
+
+  // 3. Compteurs basés sur la recherche uniquement
+  const counts = useMemo(() => ({
+    all: filteredBySearch.length,
+    active: filteredBySearch.filter(z => z.actif).length,
+    inactive: filteredBySearch.filter(z => !z.actif).length
+  }), [filteredBySearch]);
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
@@ -193,7 +208,7 @@ const ZoneConfiguration = () => {
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-              Toutes ({zones.length})
+              Toutes ({counts.all})
             </button>
             <button
               onClick={() => setFilterStatus('active')}
@@ -202,7 +217,7 @@ const ZoneConfiguration = () => {
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-              Actives ({zones.filter(z => z.actif).length})
+              Actives ({counts.active})
             </button>
             <button
               onClick={() => setFilterStatus('inactive')}
@@ -211,7 +226,7 @@ const ZoneConfiguration = () => {
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-              Inactives ({zones.filter(z => !z.actif).length})
+              Inactives ({counts.inactive})
             </button>
           </div>
         </div>
@@ -273,9 +288,6 @@ const ZoneConfiguration = () => {
                           <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${zone.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                             <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${zone.actif ? 'translate-x-5' : 'translate-x-0'}`} />
                           </div>
-                          <span className={`text-[10px] font-medium ${zone.actif ? 'text-emerald-700' : 'text-slate-400'}`}>
-                            {zone.actif ? 'Actif' : 'Inactif'}
-                          </span>
                         </button>
                       </td>
                       <td className="px-6 py-3">
@@ -328,9 +340,6 @@ const ZoneConfiguration = () => {
                       <div className={`relative w-8 h-4 rounded-full transition-colors ${zone.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
                         <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${zone.actif ? 'translate-x-4' : 'translate-x-0'}`} />
                       </div>
-                      <span className={`text-[9px] font-medium ${zone.actif ? 'text-emerald-600' : 'text-slate-400'}`}>
-                        {zone.actif ? 'Actif' : 'Inactif'}
-                      </span>
                     </button>
                   </div>
 
