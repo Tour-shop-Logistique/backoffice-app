@@ -12,6 +12,7 @@ import {
   BadgeEuro,
   Menu
 } from "lucide-react";
+import { useSelector } from "react-redux";
 
 import logo from "../../assets/logo_transparent.png";
 
@@ -27,7 +28,13 @@ const navigation = [
 ];
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
-  const userRole = "admin";
+  const { user } = useSelector(state => state.auth);
+  const userRole = user?.role === 'is_backoffice_admin' ? "admin" : "agent";
+
+  const getInitials = (name) => {
+    if (!name) return "AD";
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-slate-900 text-slate-300">
@@ -84,11 +91,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-800">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded bg-slate-700 flex items-center justify-center text-slate-200 font-bold text-xs">
-              AD
+              {getInitials(user?.name || user?.nom + " " + user?.prenoms)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">Administrateur</p>
-              <p className="text-[10px] text-slate-500 truncate lowercase">admin@tousshop.com</p>
+              <p className="text-xs font-semibold text-white truncate">{user?.name || user?.nom + " " + user?.prenoms || 'Administrateur'}</p>
+              <p className="text-[10px] text-slate-500 truncate lowercase">{user?.email || 'admin@tourshop.com'}</p>
             </div>
           </div>
         </div>

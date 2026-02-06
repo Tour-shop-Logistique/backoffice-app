@@ -14,6 +14,11 @@ const Topbar = ({ toggleSidebar }) => {
     dispatch(performLogout());
   };
 
+  const getInitials = (name) => {
+    if (!name) return "AD";
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   return (
     <>
       <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 flex items-center justify-between px-4 md:px-6">
@@ -71,12 +76,12 @@ const Topbar = ({ toggleSidebar }) => {
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="flex items-center space-x-3 p-1 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200"
             >
-              <div className="w-8 h-8 rounded bg-slate-900 flex items-center justify-center text-white font-bold text-xs">
-                {user?.name?.[0]?.toUpperCase() || "A"}
+              <div className="w-8 h-8 rounded bg-slate-900 flex items-center justify-center text-white font-bold text-xs uppercase">
+                {getInitials(user?.name || (user?.nom ? (user.nom + " " + (user.prenoms || "")) : ""))}
               </div>
               <div className="hidden md:block text-left leading-none">
                 <p className="text-sm font-semibold text-slate-900">
-                  {user?.name || "Administrateur"}
+                  {user?.name || (user?.nom ? (user.nom + " " + (user.prenoms || "")) : "Administrateur")}
                 </p>
               </div>
               <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
@@ -92,7 +97,7 @@ const Topbar = ({ toggleSidebar }) => {
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-40">
                   <div className="px-4 py-3 border-b border-slate-100">
                     <p className="text-sm font-semibold text-slate-900">
-                      {user?.name || "Utilisateur"}
+                      {user?.name || (user?.nom ? (user.nom + " " + (user.prenoms || "")) : "Utilisateur")}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
                       {user?.email || "email@example.com"}

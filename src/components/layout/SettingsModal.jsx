@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setConfigured } from '../../redux/slices/backofficeSlice';
 import api from '../../services/api';
-import { X, MapPin, Building, Phone, Mail, Globe, ChevronDown as LucideChevronDown } from 'lucide-react';
+import { X, MapPin, Building, Phone, Mail, Globe, ChevronDown as LucideChevronDown, Info } from 'lucide-react';
 
 const countryList = [
   "Côte d'Ivoire",
@@ -36,6 +36,9 @@ const countryList = [
 const SettingsModal = ({ closeModal }) => {
   const dispatch = useDispatch();
   const { config } = useSelector((state) => state.backoffice);
+  const { user } = useSelector((state) => state.auth);
+
+  const isAdmin = user?.role === 'is_backoffice_admin';
   const [formData, setFormData] = useState({
     nom_organisation: '',
     telephone: '',
@@ -122,8 +125,8 @@ const SettingsModal = ({ closeModal }) => {
       {/* Header cleanup: smaller, cleaner */}
       <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Configuration de l'Agence</h2>
-          <p className="text-xs text-slate-500">Mettez à jour les informations légales et opérationnelles.</p>
+          <h2 className="text-lg font-bold text-slate-900">Configuration du backoffice</h2>
+          <p className="text-xs text-slate-500">Mettez à jour les informations de votre stucture.</p>
         </div>
         <button
           onClick={closeModal}
@@ -139,6 +142,16 @@ const SettingsModal = ({ closeModal }) => {
             <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-lg flex items-center gap-3" role="alert">
               <span className="text-sm font-bold">L'opération a échoué :</span>
               <p className="text-xs">{error}</p>
+            </div>
+          )}
+
+          {!isAdmin && (
+            <div className="bg-blue-50 border border-blue-100 text-blue-700 px-4 py-3 rounded-lg flex items-center gap-3 mb-4">
+              <Info size={18} className="shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-sm font-bold uppercase tracking-wide">Mode Lecture Seule</span>
+                <p className="text-xs">Seul un administrateur peut modifier ces informations.</p>
+              </div>
             </div>
           )}
 
@@ -162,8 +175,9 @@ const SettingsModal = ({ closeModal }) => {
                     value={formData.nom_organisation}
                     onChange={handleChange}
                     placeholder="Ex: TousShop International Services"
-                    className={`${inputBase} pl-10 text-base font-bold bg-white border-slate-300 py-3 shadow-sm`}
+                    className={`${inputBase} pl-10 text-base font-bold bg-white border-slate-300 py-3 shadow-sm ${!isAdmin ? 'opacity-70 bg-slate-50' : ''}`}
                     required
+                    disabled={!isAdmin}
                   />
                 </div>
               </div>
@@ -179,8 +193,9 @@ const SettingsModal = ({ closeModal }) => {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="contact@tousshop.com"
-                      className={`${inputBase} pl-10`}
+                      className={`${inputBase} pl-10 ${!isAdmin ? 'opacity-70 text-slate-500' : ''}`}
                       required
+                      disabled={!isAdmin}
                     />
                   </div>
                 </div>
@@ -194,8 +209,9 @@ const SettingsModal = ({ closeModal }) => {
                       value={formData.telephone}
                       onChange={handleChange}
                       placeholder="+224 6XX XX XX XX"
-                      className={`${inputBase} pl-10`}
+                      className={`${inputBase} pl-10 ${!isAdmin ? 'opacity-70 text-slate-500' : ''}`}
                       required
+                      disabled={!isAdmin}
                     />
                   </div>
                 </div>
@@ -221,8 +237,9 @@ const SettingsModal = ({ closeModal }) => {
                       name="pays"
                       value={formData.pays}
                       onChange={handleChange}
-                      className={`${inputBase} pl-10 appearance-none cursor-pointer`}
+                      className={`${inputBase} pl-10 appearance-none cursor-pointer ${!isAdmin ? 'opacity-70 text-slate-500' : ''}`}
                       required
+                      disabled={!isAdmin}
                     >
                       <option value="">Sélectionner</option>
                       {countryList.map((country) => (
@@ -240,8 +257,9 @@ const SettingsModal = ({ closeModal }) => {
                     value={formData.ville}
                     onChange={handleChange}
                     placeholder="Ex: Conakry"
-                    className={inputBase}
+                    className={`${inputBase} ${!isAdmin ? 'opacity-70 text-slate-500' : ''}`}
                     required
+                    disabled={!isAdmin}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -252,7 +270,8 @@ const SettingsModal = ({ closeModal }) => {
                     value={formData.commune}
                     onChange={handleChange}
                     placeholder="Ex: Kaloum"
-                    className={inputBase}
+                    className={`${inputBase} ${!isAdmin ? 'opacity-70 text-slate-500' : ''}`}
+                    disabled={!isAdmin}
                   />
                 </div>
               </div>
@@ -265,8 +284,9 @@ const SettingsModal = ({ closeModal }) => {
                   value={formData.adresse}
                   onChange={handleChange}
                   placeholder="Ex: Rue KA 002, Secteur 4..."
-                  className={inputBase}
+                  className={`${inputBase} ${!isAdmin ? 'opacity-70 text-slate-500' : ''}`}
                   required
+                  disabled={!isAdmin}
                 />
               </div>
 
@@ -285,16 +305,19 @@ const SettingsModal = ({ closeModal }) => {
                       value={formData.localisation}
                       onChange={handleChange}
                       placeholder="Latitude, Longitude"
-                      className={`${inputBase} pl-10 font-mono text-xs`}
+                      className={`${inputBase} pl-10 font-mono text-xs ${!isAdmin ? 'opacity-70 text-slate-500' : ''}`}
+                      disabled={!isAdmin}
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={getLocation}
-                    className={`px-4 py-2 text-xs font-bold rounded-lg transition-all border whitespace-nowrap ${gpsSuccess ? 'bg-green-600 border-green-600 text-white' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-900 hover:text-white hover:border-slate-900'}`}
-                  >
-                    Auto-détection
-                  </button>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={getLocation}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg transition-all border whitespace-nowrap ${gpsSuccess ? 'bg-green-600 border-green-600 text-white' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-900 hover:text-white hover:border-slate-900'}`}
+                    >
+                      Auto-détection
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -308,18 +331,20 @@ const SettingsModal = ({ closeModal }) => {
             onClick={closeModal}
             className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest"
           >
-            Annuler les changements
+            {isAdmin ? 'Annuler les changements' : 'Fermer'}
           </button>
 
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-6 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest shadow-lg shadow-slate-900/10"
-            >
-              {isLoading ? 'Enregistrement...' : 'Valider la configuration'}
-            </button>
-          </div>
+          {isAdmin && (
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-6 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest shadow-lg shadow-slate-900/10"
+              >
+                {isLoading ? 'Enregistrement...' : 'Valider la configuration'}
+              </button>
+            </div>
+          )}
         </div>
       </form>
     </div>
