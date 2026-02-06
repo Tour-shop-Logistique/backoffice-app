@@ -88,17 +88,31 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData, zones = [
     onSubmit(submissionData);
   };
 
-  const inputClasses = "w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-gray-400 text-sm font-medium text-gray-700";
+  const calculateTotal = () => {
+    const base = parseFloat(formData.montant_base) || 0;
+    const pourcentage = parseFloat(formData.pourcentage_prestation) || 0;
+    return base + (base * pourcentage / 100);
+  };
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'XOF',
+      minimumFractionDigits: 0
+    }).format(value || 0);
+  };
+
+  const inputClasses = "w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white transition-all font-medium text-slate-800";
   const labelClasses = "block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 relative pb-4">
       {/* Indice & Zone Destination */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className={`bg-slate-50 p-3 rounded-lg border border-slate-200 ${formData.id ? 'opacity-60' : ''}`}>
           <label className={labelClasses}>Indice de Tarification</label>
           <div className="relative mt-2">
-            <Calculator className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            {/* <Calculator className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} /> */}
             <input
               type="number"
               value={formData.indice}
@@ -171,8 +185,8 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData, zones = [
       </div>
 
       {/* Pricing Details */}
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
           Détails du Prix
         </h3>
 
@@ -180,48 +194,63 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData, zones = [
           <div className="space-y-1.5">
             <label className={labelClasses}>Montant de Base (FCFA)</label>
             <div className="relative mt-2">
-              <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500" size={18} />
               <input
                 type="number"
                 value={formData.montant_base}
                 onChange={e => handleInputChange('montant_base', e.target.value)}
-                placeholder="27000"
+                placeholder="Ex: 3000"
                 min="0"
                 className={inputClasses}
                 required
               />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                FCFA
+              </div>
             </div>
           </div>
 
           <div className="space-y-1.5">
             <label className={labelClasses}>Prestation (%)</label>
             <div className="relative mt-2">
-              <Percent className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400" size={18} />
               <input
                 type="number"
                 value={formData.pourcentage_prestation}
                 onChange={e => handleInputChange('pourcentage_prestation', e.target.value)}
-                placeholder="15"
+                placeholder="Ex: 15"
                 min="0"
                 max="100"
                 className={inputClasses}
                 required
               />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-violet-600">
+                %
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Results row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div className="p-4 bg-gray-100 rounded-lg flex flex-col border border-gray-100">
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Montant Prestation</span>
-            <span className="text-xl font-bold text-gray-700">{parseFloat(formData.montant_prestation).toLocaleString()} <span className="text-xs font-medium">FCFA</span></span>
+        {/* Calculation Preview */}
+        {formData.montant_base && formData.pourcentage_prestation && (
+          <div className="mt-4 p-3 bg-white rounded-md border border-gray-200">
+            <div className="text-xs text-slate-600 space-y-1">
+              <div className="flex justify-between">
+                <span>Base:</span>
+                <span className="font-semibold">{formatCurrency(parseFloat(formData.montant_base) || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Prestation ({formData.pourcentage_prestation}%):</span>
+                <span className="font-semibold text-violet-600">
+                  +{formatCurrency((parseFloat(formData.montant_base) || 0) * (parseFloat(formData.pourcentage_prestation) || 0) / 100)}
+                </span>
+              </div>
+              <div className="border-t border-gray-200 pt-1 mt-1"></div>
+              <div className="flex justify-between font-bold text-sm">
+                <span>Total:</span>
+                <span className="text-emerald-600">{formatCurrency(calculateTotal())}</span>
+              </div>
+            </div>
           </div>
-          <div className="p-4 bg-slate-900 rounded-lg flex flex-col shadow-lg shadow-slate-900/20">
-            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-1">Total Expédition</span>
-            <span className="text-xl font-bold text-white">{parseFloat(formData.montant_expedition).toLocaleString()} <span className="text-xs font-medium">FCFA</span></span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Footer Form Actions */}
@@ -242,8 +271,7 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData, zones = [
             <Loader2 className="animate-spin" size={16} />
           ) : (
             <>
-              <Save size={16} />
-              Enregistrer le Tarif
+              Enregistrer
             </>
           )}
         </button>

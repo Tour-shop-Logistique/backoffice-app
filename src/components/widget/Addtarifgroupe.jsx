@@ -462,11 +462,11 @@ const Addtarifgroupe = ({
           {isSubmitting ? (
             <div className="flex items-center gap-2">
               <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-              <span>{tarifToEdit ? "Mise à jour..." : "Enregistrement..."}</span>
+              <span>{tarifToEdit ? "En cours..." : "En cours..."}</span>
             </div>
           ) : (
             <span className="flex items-center gap-2">
-              {tarifToEdit ? "✏️ Mettre à jour" : "💾 Enregistrer"}
+              {tarifToEdit ? "Mettre à jour" : "Enregistrer"}
             </span>
           )}
         </button>

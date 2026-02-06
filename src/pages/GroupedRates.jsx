@@ -517,9 +517,9 @@ const GroupedRates = () => {
       <Modal
         isOpen={showModal}
         onClose={closeModal}
-        title={tarifToEdit ? 'Modifier Tarif Groupé' : 'Nouveau Tarif Groupé'}
-        subtitle="Configurez les prix pour les expéditions DHD"
-        size="2xl"
+        title={tarifToEdit ? 'Modifier Tarif Groupage' : 'Nouveau Tarif Groupage'}
+        subtitle="Configurez les prix pour les expéditions de type groupage"
+        size="xl"
       >
         <Addtarifgroupe
           onClose={closeModal}

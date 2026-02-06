@@ -451,8 +451,8 @@ const SimpleRates = () => {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title="Configuration Tarif Simple"
-                subtitle="Définissez les prix de base et les pourcentages par zone"
+                title="Nouveau Tarif Simple"
+                subtitle="Définissez l'indice, la zone et les prix"
                 size="xl"
             >
                 <SimpleTarifForm
@@ -466,7 +466,7 @@ const SimpleRates = () => {
             <Modal
                 isOpen={isEditingModalOpen}
                 onClose={() => setIsEditingModalOpen(false)}
-                title="Modification Tarif Simple"
+                title="Modifier Tarif Simple"
                 subtitle={`Mise à jour de la grille pour l'indice #${selectedTarif?.indice}`}
                 size="xl"
             >
