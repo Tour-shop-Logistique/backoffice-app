@@ -19,7 +19,7 @@ import logo from "../../assets/logo_transparent.png";
 const navigation = [
   { name: "Tableau de bord", href: "/app/dashboard", icon: Home },
   { name: 'Agences partenaires', href: '/app/agence-partenaire', icon: Blocks },
-  // { name: "Colis", href: "/app/parcels", icon: Archive },
+  { name: "Gestion Colis", href: "/app/parcels", icon: Archive },
   { name: "Tarification simple", href: "/app/simple-rates", icon: DollarSign },
   { name: "Tarification groupée", href: "/app/grouped-rates", icon: BadgeEuro },
   { name: "Zones d'expéditions", href: "/app/zone-configuration", icon: Settings },

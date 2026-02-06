@@ -120,7 +120,7 @@ const AgenceDetail = () => {
     const getTypeLabel = (type) => {
         if (!type) return 'N/A';
         switch (type.toUpperCase()) {
-            case 'SIMPLE': return 'LD';
+            case 'SIMPLE': return 'Simple';
             case 'GROUPAGE_DHD_AERIEN': return 'DHD Aérien';
             case 'GROUPAGE_DHD_MARITIME': return 'DHD Maritime';
             case 'GROUPAGE_AFRIQUE': return 'Afrique';
@@ -388,18 +388,18 @@ const AgenceDetail = () => {
                                                         <tr className="bg-slate-50/50 border-b border-slate-200">
                                                             {activeTab === 'tarifs_groupage' ? (
                                                                 <>
-                                                                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Type / Catégorie</th>
-                                                                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Itinéraire / Pays</th>
+                                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Type / Catégorie</th>
+                                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Itinéraire / Pays</th>
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Indice</th>
-                                                                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Destination</th>
+                                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Indice</th>
+                                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Destination</th>
                                                                 </>
                                                             )}
-                                                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Montant Base</th>
-                                                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Prestation</th>
-                                                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Total</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Montant Base</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Prestation</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Total</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100">
@@ -588,7 +588,7 @@ const AgenceDetail = () => {
                             ) : (
                                 <>
                                     {/* Desktop View */}
-                                    <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                    <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                                         <table className="w-full text-left border-collapse">
                                             <thead>
                                                 <tr className="bg-slate-50/50 border-b border-slate-200">
