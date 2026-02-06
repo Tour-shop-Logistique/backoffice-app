@@ -10,5 +10,6 @@ export const ROUTES = {
     GROUPED_RATES: 'grouped-rates',
     ZONE_CONFIGURATION: 'zone-configuration',
     AGENCE_PARTENAIRE: 'agence-partenaire',
+    AGENCE_DETAIL: 'agence-partenaire/:id',
     PRODUITS: 'produits',
 };

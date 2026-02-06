@@ -23,6 +23,7 @@ const SimpleRates = lazy(() => import('./pages/SimpleRates'));
 const GroupedRates = lazy(() => import('./pages/GroupedRates'));
 const ZoneConfiguration = lazy(() => import('./pages/ZoneConfiguration'));
 const AgencePartenaire = lazy(() => import('./pages/AgencePartenaire'));
+const AgenceDetail = lazy(() => import('./pages/AgenceDetail'));
 const Produits = lazy(() => import('./pages/produits'));
 
 // Composant de chargement
@@ -64,6 +65,7 @@ function App() {
                     <Route path={ROUTES.GROUPED_RATES} element={<GroupedRates />} />
                     <Route path={ROUTES.ZONE_CONFIGURATION} element={<ZoneConfiguration />} />
                     <Route path={ROUTES.AGENCE_PARTENAIRE} element={<AgencePartenaire />} />
+                    <Route path={ROUTES.AGENCE_DETAIL} element={<AgenceDetail />} />
                     <Route path={ROUTES.PRODUITS} element={<Produits />} />
 
                     {/* Redirection par défaut vers le dashboard */}

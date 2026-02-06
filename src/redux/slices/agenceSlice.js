@@ -16,6 +16,21 @@ export const fetchAgences = createAsyncThunk(
     }
 );
 
+export const fetchAgenceById = createAsyncThunk(
+    'agences/fetchById',
+    async (agenceId, { rejectWithValue }) => {
+        try {
+            const data = await agenceService.getAgenceById(agenceId);
+            if (data.success) {
+                return data.agence;
+            }
+            return rejectWithValue("Impossible de charger l'agence");
+        } catch (error) {
+            return rejectWithValue(error.message || "Erreur lors de la récupération de l'agence");
+        }
+    }
+);
+
 export const toggleAgenceStatus = createAsyncThunk(
     'agences/toggleStatus',
     async ({ agenceId, status }, { rejectWithValue }) => {
@@ -31,18 +46,64 @@ export const toggleAgenceStatus = createAsyncThunk(
     }
 );
 
+export const fetchAgenceTarifsGroupage = createAsyncThunk(
+    'agences/fetchTarifsGroupage',
+    async (agenceId, { rejectWithValue }) => {
+        try {
+            const data = await agenceService.getAgenceTarifsGroupage(agenceId);
+            if (data.success) {
+                return data.tarifs;
+            }
+            return rejectWithValue("Impossible de charger les tarifs groupage");
+        } catch (error) {
+            return rejectWithValue(error.message || "Erreur lors de la récupération des tarifs groupage");
+        }
+    }
+);
+
+export const fetchAgenceTarifsSimple = createAsyncThunk(
+    'agences/fetchTarifsSimple',
+    async (agenceId, { rejectWithValue }) => {
+        try {
+            const data = await agenceService.getAgenceTarifsSimple(agenceId);
+            if (data.success) {
+                return data.tarifs;
+            }
+            return rejectWithValue("Impossible de charger les tarifs simple");
+        } catch (error) {
+            return rejectWithValue(error.message || "Erreur lors de la récupération des tarifs simple");
+        }
+    }
+);
+
 const agenceSlice = createSlice({
     name: 'agences',
     initialState: {
         agences: [],
         isLoading: false,
+        isLoadingTarifs: false,
         error: null,
         hasLoaded: false,
+        currentAgence: null,
+        currentAgencyTarifsGroupage: [],
+        currentAgencyTarifsSimple: [],
     },
     reducers: {
         resetAgences: (state) => {
             state.agences = [];
             state.hasLoaded = false;
+        },
+        clearCurrentAgency: (state) => {
+            state.currentAgence = null;
+            state.currentAgencyTarifsGroupage = [];
+            state.currentAgencyTarifsSimple = [];
+        },
+        clearCurrentAgencyTarifs: (state) => {
+            state.currentAgencyTarifsGroupage = [];
+            state.currentAgencyTarifsSimple = [];
+        },
+        setCurrentAgence: (state, action) => {
+            state.currentAgence = action.payload;
         }
     },
     extraReducers: (builder) => {
@@ -89,9 +150,48 @@ const agenceSlice = createSlice({
                     state.agences[index].actif = !(status === 1 || status === true || status === "1");
                 }
                 state.error = action.payload;
+            })
+            // FETCH TARIFS GROUPAGE
+            .addCase(fetchAgenceTarifsGroupage.pending, (state) => {
+                state.isLoadingTarifs = true;
+                state.error = null;
+            })
+            .addCase(fetchAgenceTarifsGroupage.fulfilled, (state, action) => {
+                state.isLoadingTarifs = false;
+                state.currentAgencyTarifsGroupage = action.payload;
+            })
+            .addCase(fetchAgenceTarifsGroupage.rejected, (state, action) => {
+                state.isLoadingTarifs = false;
+                state.error = action.payload;
+            })
+            // FETCH TARIFS SIMPLE
+            .addCase(fetchAgenceTarifsSimple.pending, (state) => {
+                state.isLoadingTarifs = true;
+                state.error = null;
+            })
+            .addCase(fetchAgenceTarifsSimple.fulfilled, (state, action) => {
+                state.isLoadingTarifs = false;
+                state.currentAgencyTarifsSimple = action.payload;
+            })
+            .addCase(fetchAgenceTarifsSimple.rejected, (state, action) => {
+                state.isLoadingTarifs = false;
+                state.error = action.payload;
+            })
+            // FETCH AGENCE BY ID
+            .addCase(fetchAgenceById.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(fetchAgenceById.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.currentAgence = action.payload;
+            })
+            .addCase(fetchAgenceById.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.payload;
             });
     }
 });
 
-export const { resetAgences } = agenceSlice.actions;
+export const { resetAgences, clearCurrentAgency, clearCurrentAgencyTarifs, setCurrentAgence } = agenceSlice.actions;
 export default agenceSlice.reducer;
