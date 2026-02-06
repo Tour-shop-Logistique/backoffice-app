@@ -281,12 +281,12 @@ const Agents = () => {
 
         {/* Content */}
         {isLoading && agents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24">
+          <div className="flex flex-col items-center justify-center py-20 px-6">
             <Loader2 className="animate-spin text-slate-900 mb-4" size={48} strokeWidth={1.5} />
             <p className="text-slate-500 font-medium text-sm">Chargement des agents...</p>
           </div>
         ) : filteredAgents.length === 0 ? (
-          <div className="py-20 text-center">
+          <div className="py-20 text-center px-6">
             <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <UserCircle2 className="text-slate-400" size={32} />
             </div>

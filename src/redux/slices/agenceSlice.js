@@ -76,6 +76,24 @@ export const fetchAgenceTarifsSimple = createAsyncThunk(
     }
 );
 
+export const fetchAgenceExpeditions = createAsyncThunk(
+    'agences/fetchExpeditions',
+    async ({ agenceId, page = 1 }, { rejectWithValue }) => {
+        try {
+            const data = await agenceService.getAgenceExpeditions(agenceId, page);
+            if (data.success) {
+                return {
+                    expeditions: data.data,
+                    meta: data.meta
+                };
+            }
+            return rejectWithValue("Impossible de charger les expéditions");
+        } catch (error) {
+            return rejectWithValue(error.message || "Erreur lors de la récupération des expéditions");
+        }
+    }
+);
+
 const agenceSlice = createSlice({
     name: 'agences',
     initialState: {
@@ -87,6 +105,9 @@ const agenceSlice = createSlice({
         currentAgence: null,
         currentAgencyTarifsGroupage: [],
         currentAgencyTarifsSimple: [],
+        currentAgencyExpeditions: [],
+        expeditionsMeta: null,
+        isLoadingExpeditions: false,
     },
     reducers: {
         resetAgences: (state) => {
@@ -97,6 +118,8 @@ const agenceSlice = createSlice({
             state.currentAgence = null;
             state.currentAgencyTarifsGroupage = [];
             state.currentAgencyTarifsSimple = [];
+            state.currentAgencyExpeditions = [];
+            state.expeditionsMeta = null;
         },
         clearCurrentAgencyTarifs: (state) => {
             state.currentAgencyTarifsGroupage = [];
@@ -188,6 +211,20 @@ const agenceSlice = createSlice({
             })
             .addCase(fetchAgenceById.rejected, (state, action) => {
                 state.isLoading = false;
+                state.error = action.payload;
+            })
+            // FETCH EXPEDITIONS
+            .addCase(fetchAgenceExpeditions.pending, (state) => {
+                state.isLoadingExpeditions = true;
+                state.error = null;
+            })
+            .addCase(fetchAgenceExpeditions.fulfilled, (state, action) => {
+                state.isLoadingExpeditions = false;
+                state.currentAgencyExpeditions = action.payload.expeditions;
+                state.expeditionsMeta = action.payload.meta;
+            })
+            .addCase(fetchAgenceExpeditions.rejected, (state, action) => {
+                state.isLoadingExpeditions = false;
                 state.error = action.payload;
             });
     }

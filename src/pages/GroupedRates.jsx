@@ -309,12 +309,12 @@ const GroupedRates = () => {
 
         {/* Body Content */}
         {isLoading && (groupedTarifs || []).length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20">
+          <div className="flex flex-col items-center justify-center py-20 px-6">
             <Loader2 className="h-10 w-10 text-slate-900 animate-spin mb-3" />
             <p className="text-slate-500 text-sm font-medium">Chargement des tarifs...</p>
           </div>
         ) : filteredTarifs.length === 0 ? (
-          <div className="py-20 text-center">
+          <div className="py-20 text-center px-6">
             <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
               <Tag className="text-slate-400" size={32} />
             </div>

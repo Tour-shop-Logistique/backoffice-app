@@ -24,6 +24,11 @@ const agenceService = {
     getAgenceTarifsSimple: async (agenceId) => {
         const response = await api.get(`/agence/list-tarifs-simple?agence_id=${agenceId}`);
         return response.data;
+    },
+
+    getAgenceExpeditions: async (agenceId, page = 1) => {
+        const response = await api.get(`/expedition/agence/list/?agence_id=${agenceId}&page=${page}`);
+        return response.data;
     }
 };
 
