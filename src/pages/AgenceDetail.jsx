@@ -571,12 +571,12 @@ const AgenceDetail = () => {
                     {activeTab === "expeditions" && (
                         <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-4">
                             {isLoadingExpeditions ? (
-                                <div className="bg-white rounded-2xl border border-slate-200 py-32 flex flex-col items-center justify-center">
+                                <div className="bg-white rounded-xl border border-slate-200 py-32 flex flex-col items-center justify-center">
                                     <Loader2 size={40} className="animate-spin text-slate-300 mb-4" />
                                     <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Récupération des expéditions...</p>
                                 </div>
                             ) : currentAgencyExpeditions.length === 0 ? (
-                                <div className="bg-white rounded-2xl border border-slate-200 py-24 text-center">
+                                <div className="bg-white rounded-xl border border-slate-200 py-24 text-center">
                                     <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-sm text-slate-300">
                                         <Truck size={32} />
                                     </div>
@@ -681,7 +681,7 @@ const AgenceDetail = () => {
                                             <div
                                                 key={expo.id}
                                                 onClick={() => setSelectedExpedition(expo)}
-                                                className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden active:scale-[0.98] transition-all"
+                                                className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden active:scale-[0.98] transition-all"
                                             >
                                                 <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                                                     <div className="flex flex-col">

@@ -348,7 +348,7 @@ const GroupedRates = () => {
                       <tr key={tarif.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-3">
                           <div className="flex flex-col">
-                            <span className={`text-sm font-semibold px-2 py-2 rounded uppercase ${tarif.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' :
+                            <span className={`text-sm font-semibold px-2 py-1 w-fit rounded uppercase ${tarif.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' :
                               tarif.type_expedition?.includes('maritime') ? 'bg-indigo-100 text-indigo-700' :
                                 tarif.type_expedition?.includes('afrique') ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
                               }`}>

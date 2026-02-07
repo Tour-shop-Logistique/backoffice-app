@@ -252,6 +252,7 @@ const ZoneConfiguration = () => {
               <table className="w-full">
                 <thead className="bg-slate-50/50 border-b border-slate-200">
                   <tr>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Zone</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Pays</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
@@ -261,6 +262,11 @@ const ZoneConfiguration = () => {
                 <tbody className="divide-y divide-slate-200">
                   {filteredZones.map((zone) => (
                     <tr key={zone.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-900">{zone.id}</span>
+                        </div>
+                      </td>
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-slate-400" />
