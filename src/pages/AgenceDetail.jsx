@@ -73,6 +73,13 @@ const AgenceDetail = () => {
     const [activeTab, setActiveTab] = useState("details");
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedExpedition, setSelectedExpedition] = useState(null);
+    const [isLogoLoading, setIsLogoLoading] = useState(true);
+
+    useEffect(() => {
+        if (currentAgence?.logo) {
+            setIsLogoLoading(true);
+        }
+    }, [currentAgence?.logo]);
 
     // 1. Charger la liste globale si non présente
     useEffect(() => {
@@ -277,13 +284,20 @@ const AgenceDetail = () => {
                                     <div className="p-4">
                                         <div className="flex flex-row justify-start items-center">
                                             {currentAgence.logo ? (
-                                                <div className="h-20 w-20 mx-auto rounded-lg border border-slate-100 p-2 bg-white shadow-sm flex items-center justify-center mb-4">
+                                                <div className="h-20 w-20 rounded-lg border border-slate-100 bg-white shadow-sm flex items-center justify-center relative overflow-hidden">
+                                                    {isLogoLoading && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-10">
+                                                            <Loader2 size={20} className="animate-spin text-slate-300" />
+                                                        </div>
+                                                    )}
                                                     <img
                                                         src={currentAgence.logo?.startsWith('http')
                                                             ? currentAgence.logo
                                                             : `${import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')}/storage/${currentAgence.logo}`}
                                                         alt="Logo"
-                                                        className="max-h-full max-w-full object-contain"
+                                                        onLoad={() => setIsLogoLoading(false)}
+                                                        onError={() => setIsLogoLoading(false)}
+                                                        className={`max-h-full max-w-full object-contain transition-opacity duration-300 ${isLogoLoading ? 'opacity-0' : 'opacity-100'}`}
                                                     />
                                                 </div>
                                             ) : (

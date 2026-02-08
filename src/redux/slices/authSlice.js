@@ -37,14 +37,18 @@ export const register = createAsyncThunk('auth/register', async (userData, { rej
 import { resetBackoffice } from './backofficeSlice';
 
 // Thunk pour la déconnexion
-export const performLogout = createAsyncThunk('auth/performLogout', async (_, { dispatch }) => {
-  try {
-    await authService.logout();
-  } finally {
-    dispatch(authSlice.actions.logout());
-    dispatch(resetBackoffice());
-    window.location.href = '/';
-  }
+// Thunk pour la déconnexion immédiate
+export const performLogout = createAsyncThunk('auth/performLogout', async () => {
+  // 1. Nettoyage immédiat des données locales
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+
+  // 2. Appel API non-bloquant (Fire-and-forget)
+  authService.logout().catch(console.error);
+
+  // 3. Redirection forcée vers l'accueil (Welcome Page)
+  // Cela réinitialise tout l'état de l'application proprement
+  window.location.href = '/';
 });
 
 const authSlice = createSlice({

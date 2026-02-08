@@ -20,7 +20,6 @@ const navigation = [
   { name: "Tableau de bord", href: "/dashboard", icon: Home },
   { name: 'Agences partenaires', href: '/agence-partenaire', icon: Blocks },
   // { name: "Gestion Colis", href: "/parcels", icon: Archive },
-  { name: "Gestion Colis", href: "/parcels", icon: Archive },
   { name: "Tarification simple", href: "/simple-rates", icon: DollarSign },
   { name: "Tarification groupée", href: "/grouped-rates", icon: BadgeEuro },
   { name: "Zones d'expéditions", href: "/zone-configuration", icon: Settings },
