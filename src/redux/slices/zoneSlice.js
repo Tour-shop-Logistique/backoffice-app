@@ -14,6 +14,7 @@ export const fetchZones = createAsyncThunk('zones/fetchZones', async (_, { rejec
     const zones = await zoneService.getZones();
     return zones;
   } catch (error) {
+    console.error(error);
     return rejectWithValue(error.response.data);
   }
 });
@@ -24,6 +25,7 @@ export const addZone = createAsyncThunk('zones/addZone', async (zoneData, { reje
     const newZone = await zoneService.addZone(zoneData);
     return newZone;
   } catch (error) {
+    console.error(error);
     return rejectWithValue(error.response.data);
   }
 });
@@ -33,6 +35,7 @@ export const editZone = createAsyncThunk('zones/editZone', async ({ zoneId, zone
     const updatedZone = await zoneService.editZone(zoneId, zoneData);
     return updatedZone;
   } catch (error) {
+    console.error(error);
     return rejectWithValue(error.response.data);
   }
 });
@@ -42,6 +45,7 @@ export const deleteZone = createAsyncThunk('zones/deleteZone', async (zoneId, { 
     await zoneService.deleteZone(zoneId);
     return zoneId;
   } catch (error) {
+    console.error(error);
     return rejectWithValue(error.response.data);
   }
 });
@@ -51,6 +55,7 @@ export const updateZoneStatus = createAsyncThunk('zones/updateZoneStatus', async
     const updatedZone = await zoneService.updateZoneStatus(zoneId, status);
     return { zoneId, ...updatedZone };
   } catch (error) {
+    console.error(error);
     return rejectWithValue(error.response?.data || error.message);
   }
 });

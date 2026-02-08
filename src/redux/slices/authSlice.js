@@ -31,6 +31,7 @@ export const register = createAsyncThunk('auth/register', async (userData, { rej
     const data = await authService.register(userData);
     return data;
   } catch (error) {
+    console.error(error);
     return rejectWithValue(error.response.data);
   }
 });

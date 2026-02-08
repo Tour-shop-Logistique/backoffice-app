@@ -6,9 +6,9 @@ export const fetchBackofficeConfig = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await api.get('/backoffice/show');
-      console.log(" response ‼️‼️‼️", response.data);
       return response.data.backoffice;
     } catch (error) {
+      console.error(error);
       if (error.response && error.response.status === 404) {
         return rejectWithValue('not_configured');
       }

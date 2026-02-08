@@ -4,14 +4,12 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-
   return {
     plugins: [react()],
     server: {
       port: 5173,
       host: true,
       open: true,
-      allowedHosts: true,
       proxy: {
         '/api': {
           target: env.VITE_API_URL,
@@ -25,7 +23,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: 'dist',
-      sourcemap: false,
+      sourcemap: false, // Désactive les source maps en production
       minify: 'terser',
       rollupOptions: {
         output: {

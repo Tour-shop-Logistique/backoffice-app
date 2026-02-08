@@ -18,6 +18,7 @@ export const fetchTarifs = createAsyncThunk(
     try {
       return await tarificationService.getTarifs();
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -29,6 +30,7 @@ export const addSimpleTarif = createAsyncThunk(
     try {
       return await tarificationService.addSimpleTarif(tarifData);
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -40,6 +42,7 @@ export const editSimpleTarif = createAsyncThunk(
     try {
       return await tarificationService.editSimpleTarif(tarifId, tarifData);
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -52,6 +55,7 @@ export const deleteTarif = createAsyncThunk(
       await tarificationService.deleteTarif(tarifId);
       return tarifId;
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -63,6 +67,7 @@ export const updateTarifStatus = createAsyncThunk(
     try {
       return await tarificationService.updateTarifStatus(tarifId);
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -76,6 +81,7 @@ export const fetchGroupedTarifs = createAsyncThunk(
     try {
       return await tarificationService.getGroupedTarifs();
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -87,6 +93,7 @@ export const addGroupedTarif = createAsyncThunk(
     try {
       return await tarificationService.addGroupedTarif(tarifData);
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -98,6 +105,7 @@ export const editGroupedTarif = createAsyncThunk(
     try {
       return await tarificationService.editGroupedTarif(tarifId, tarifData);
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -110,6 +118,7 @@ export const deleteGroupedTarif = createAsyncThunk(
       await tarificationService.deleteGroupedTarif(tarifId);
       return tarifId;
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -122,6 +131,7 @@ export const updateGroupedTarifStatus = createAsyncThunk(
       const id = typeof arg === 'object' ? arg.tarifId : arg;
       return await tarificationService.updateGroupedTarifStatus(id);
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response.data);
     }
   }

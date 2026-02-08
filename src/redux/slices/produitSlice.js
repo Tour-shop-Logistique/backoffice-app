@@ -20,9 +20,9 @@ export const fetchProduits = createAsyncThunk(
     async (options = {}, { rejectWithValue }) => {
         try {
             const listProduits = await produitService.getProduits();
-            console.log(listProduits, "Produits");
             return listProduits;
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || "Erreur serveur");
         }
     }
@@ -36,6 +36,7 @@ export const addProduit = createAsyncThunk(
             const newProduit = await produitService.addProduit(produitData);
             return newProduit;
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }
@@ -48,6 +49,7 @@ export const editProduit = createAsyncThunk(
             const updatedProduit = await produitService.editProduit(produitId, produitData);
             return updatedProduit;
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }
@@ -60,6 +62,7 @@ export const deleteProduit = createAsyncThunk(
             const res = await produitService.deleteProduit(produitId);
             return { id: produitId, ...res };
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }
@@ -72,6 +75,7 @@ export const updateProduitStatus = createAsyncThunk(
             const updatedProduit = await produitService.updateProduitStatus(produitId, status);
             return updatedProduit;
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }
@@ -102,6 +106,7 @@ export const addCategory = createAsyncThunk(
             const newCat = await produitService.addCategory(data);
             return newCat;
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }
@@ -115,6 +120,7 @@ export const editCategory = createAsyncThunk(
             const updated = await produitService.editCategory(categoryId, categoryData);
             return updated;
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }
@@ -128,6 +134,7 @@ export const deleteCategory = createAsyncThunk(
             const res = await produitService.deleteCategory(categoryId);
             return { id: categoryId, ...res };
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }
@@ -141,6 +148,7 @@ export const updateCategoryStatus = createAsyncThunk(
             const updated = await produitService.updateCategoryStatus(categoryId, status);
             return updated;
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }

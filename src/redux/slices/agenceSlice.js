@@ -11,6 +11,7 @@ export const fetchAgences = createAsyncThunk(
             }
             return rejectWithValue("Impossible de charger les agences");
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.message || "Erreur lors de la récupération des agences");
         }
     }
@@ -26,6 +27,7 @@ export const fetchAgenceById = createAsyncThunk(
             }
             return rejectWithValue("Impossible de charger l'agence");
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.message || "Erreur lors de la récupération de l'agence");
         }
     }
@@ -41,6 +43,7 @@ export const toggleAgenceStatus = createAsyncThunk(
             }
             return rejectWithValue("Erreur lors de la mise à jour du statut");
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.message || "Erreur lors de la mise à jour du statut");
         }
     }
@@ -56,6 +59,7 @@ export const fetchAgenceTarifsGroupage = createAsyncThunk(
             }
             return rejectWithValue("Impossible de charger les tarifs groupage");
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.message || "Erreur lors de la récupération des tarifs groupage");
         }
     }
@@ -71,6 +75,7 @@ export const fetchAgenceTarifsSimple = createAsyncThunk(
             }
             return rejectWithValue("Impossible de charger les tarifs simple");
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.message || "Erreur lors de la récupération des tarifs simple");
         }
     }
@@ -89,6 +94,7 @@ export const fetchAgenceExpeditions = createAsyncThunk(
             }
             return rejectWithValue("Impossible de charger les expéditions");
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.message || "Erreur lors de la récupération des expéditions");
         }
     }

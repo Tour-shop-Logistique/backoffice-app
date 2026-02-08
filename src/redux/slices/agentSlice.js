@@ -15,6 +15,7 @@ export const fetchAgents = createAsyncThunk(
             const response = await agentService.getAgents();
             return response || [];
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || "Erreur lors de la récupération des agents");
         }
     }
@@ -27,6 +28,7 @@ export const addAgent = createAsyncThunk(
             const response = await agentService.addAgent(agentData);
             return response.data || response;
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }
@@ -39,6 +41,7 @@ export const editAgent = createAsyncThunk(
             const response = await agentService.editAgent(agentId, agentData);
             return response.data || response;
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }
@@ -51,6 +54,7 @@ export const deleteAgent = createAsyncThunk(
             const res = await agentService.deleteAgent(agentId);
             return { id: agentId, ...res };
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }
@@ -63,6 +67,7 @@ export const updateAgentStatus = createAsyncThunk(
             const response = await agentService.updateAgentStatus(agentId, status);
             return response.data || response;
         } catch (error) {
+            console.error(error);
             return rejectWithValue(error.response?.data || error.message);
         }
     }
