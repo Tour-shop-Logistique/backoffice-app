@@ -19,7 +19,7 @@ const LoginForm = ({ onSuccess, switchToRegister }) => {
     useEffect(() => {
         if (isAuthenticated) {
             if (onSuccess) onSuccess(); // Fermer la modale
-            navigate(ROUTES.APP + '/' + ROUTES.DASHBOARD);
+            navigate(ROUTES.DASHBOARD);
         }
     }, [isAuthenticated, navigate, onSuccess]);
 

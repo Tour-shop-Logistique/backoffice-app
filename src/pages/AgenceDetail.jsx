@@ -52,7 +52,7 @@ const AgenceDetail = () => {
 
     const {
         agences,
-        currentAgence,
+        currentAgence: storedAgence,
         isLoading,
         isLoadingTarifs,
         currentAgencyTarifsGroupage,
@@ -63,6 +63,12 @@ const AgenceDetail = () => {
         hasLoaded,
         error
     } = useSelector((state) => state.agences);
+
+    // Optimisation : Récupération immédiate (Cache)
+    const currentAgence = React.useMemo(() => {
+        const found = agences?.find(a => String(a.id) === String(id));
+        return found || storedAgence;
+    }, [agences, id, storedAgence]);
 
     const [activeTab, setActiveTab] = useState("details");
     const [currentPage, setCurrentPage] = useState(1);
@@ -158,7 +164,7 @@ const AgenceDetail = () => {
             navigate(-1);
         } else {
             // Fallback sécurisé vers la liste des agences
-            navigate(`${ROUTES.APP}/agence-partenaire`);
+            navigate('/agence-partenaire');
         }
     };
 
@@ -272,7 +278,13 @@ const AgenceDetail = () => {
                                         <div className="flex flex-row justify-start items-center">
                                             {currentAgence.logo ? (
                                                 <div className="h-20 w-20 mx-auto rounded-lg border border-slate-100 p-2 bg-white shadow-sm flex items-center justify-center mb-4">
-                                                    <img src={currentAgence.logo} alt="Logo" className="max-h-full max-w-full object-contain" />
+                                                    <img
+                                                        src={currentAgence.logo?.startsWith('http')
+                                                            ? currentAgence.logo
+                                                            : `${import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')}/storage/${currentAgence.logo}`}
+                                                        alt="Logo"
+                                                        className="max-h-full max-w-full object-contain"
+                                                    />
                                                 </div>
                                             ) : (
                                                 <div className="h-20 w-20 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-300">

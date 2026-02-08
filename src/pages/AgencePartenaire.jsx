@@ -91,7 +91,7 @@ const AgencePartenaire = () => {
       e.preventDefault();
       e.stopPropagation();
     }
-    navigate(`${ROUTES.APP}/agence-partenaire/${agenceId}`);
+    navigate(`/agence-partenaire/${agenceId}`);
   };
 
   return (

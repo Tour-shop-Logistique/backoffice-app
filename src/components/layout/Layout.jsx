@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import LoadingSpinner from '../common/LoadingSpinner';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBackofficeConfig } from '../../redux/slices/backofficeSlice';
 import { fetchTarifs, fetchGroupedTarifs } from '../../redux/slices/tarificationSlice';
@@ -52,7 +53,9 @@ const Layout = ({ children }) => {
               <button onClick={() => dispatch(fetchBackofficeConfig())} className="text-sm font-bold underline">Réessayer</button>
             </div>
           )}
-          {children}
+          <Suspense fallback={<LoadingSpinner />}>
+            {children}
+          </Suspense>
         </main>
       </div>
       {!isConfigured && showConfigModal && (

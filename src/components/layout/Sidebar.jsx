@@ -17,14 +17,15 @@ import { useSelector } from "react-redux";
 import logo from "../../assets/logo_transparent.png";
 
 const navigation = [
-  { name: "Tableau de bord", href: "/app/dashboard", icon: Home },
-  { name: 'Agences partenaires', href: '/app/agence-partenaire', icon: Blocks },
-  // { name: "Gestion Colis", href: "/app/parcels", icon: Archive },
-  { name: "Tarification simple", href: "/app/simple-rates", icon: DollarSign },
-  { name: "Tarification groupée", href: "/app/grouped-rates", icon: BadgeEuro },
-  { name: "Zones d'expéditions", href: "/app/zone-configuration", icon: Settings },
-  { name: 'Produits & Catégories', href: '/app/produits', icon: Box },
-  { name: "Agents Backoffice", href: "/app/agents", icon: Users, adminOnly: true },
+  { name: "Tableau de bord", href: "/dashboard", icon: Home },
+  { name: 'Agences partenaires', href: '/agence-partenaire', icon: Blocks },
+  // { name: "Gestion Colis", href: "/parcels", icon: Archive },
+  { name: "Gestion Colis", href: "/parcels", icon: Archive },
+  { name: "Tarification simple", href: "/simple-rates", icon: DollarSign },
+  { name: "Tarification groupée", href: "/grouped-rates", icon: BadgeEuro },
+  { name: "Zones d'expéditions", href: "/zone-configuration", icon: Settings },
+  { name: 'Produits & Catégories', href: '/produits', icon: Box },
+  { name: "Agents Backoffice", href: "/agents", icon: Users, adminOnly: true },
 ];
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
@@ -64,7 +65,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
               <NavLink
                 key={item.name}
                 to={item.href}
-                end={item.href === "/app/dashboard"}
+                end={item.href === "/dashboard"}
                 onClick={toggleSidebar}
                 className={({ isActive }) =>
                   `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive
