@@ -27,7 +27,7 @@ const agenceService = {
     },
 
     getAgenceExpeditions: async (agenceId, page = 1) => {
-        const response = await api.get(`/expedition/agence/list/?agence_id=${agenceId}&page=${page}`);
+        const response = await api.get(`/expedition/agence/list?agence_id=${agenceId}&page=${page}`);
         return response.data;
     }
 };

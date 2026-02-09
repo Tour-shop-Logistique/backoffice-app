@@ -17,10 +17,20 @@ const api = axios.create({
 // Intercepteur pour ajouter le token d'authentification à chaque requête
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  console.log("token", token);
+
+  console.log('🔍 Request Debug:', {
+    url: config.url,
+    baseURL: config.baseURL,
+    fullURL: `${config.baseURL}${config.url}`,
+    hasToken: !!token,
+    token: token ? `${token.substring(0, 20)}...` : 'NO TOKEN',
+    headers: config.headers
+  });
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    console.warn('⚠️ NO TOKEN FOUND IN LOCALSTORAGE!');
   }
 
   return config;
