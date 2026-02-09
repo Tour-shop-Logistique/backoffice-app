@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { register } from '../../redux/slices/authSlice';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 const RegisterForm = ({ onSuccess, switchToLogin }) => {
     const dispatch = useDispatch();
@@ -15,6 +15,8 @@ const RegisterForm = ({ onSuccess, switchToLogin }) => {
         password: '',
         password_confirmation: '',
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -110,27 +112,53 @@ const RegisterForm = ({ onSuccess, switchToLogin }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2 border-t border-slate-100">
                     <div className="space-y-0.5">
                         <label className={labelBase}>Mot de passe</label>
-                        <input
-                            name="password"
-                            type="password"
-                            required
-                            value={formData.password}
-                            onChange={handleChange}
-                            className={inputBase}
-                            placeholder="••••••••"
-                        />
+                        <div className="relative">
+                            <input
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                required
+                                value={formData.password}
+                                onChange={handleChange}
+                                className={`${inputBase} pr-10`}
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="w-4 h-4" />
+                                ) : (
+                                    <Eye className="w-4 h-4" />
+                                )}
+                            </button>
+                        </div>
                     </div>
                     <div className="space-y-0.5">
                         <label className={labelBase}>Confirmation</label>
-                        <input
-                            name="password_confirmation"
-                            type="password"
-                            required
-                            value={formData.password_confirmation}
-                            onChange={handleChange}
-                            className={inputBase}
-                            placeholder="••••••••"
-                        />
+                        <div className="relative">
+                            <input
+                                name="password_confirmation"
+                                type={showConfirmPassword ? "text" : "password"}
+                                required
+                                value={formData.password_confirmation}
+                                onChange={handleChange}
+                                className={`${inputBase} pr-10`}
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                {showConfirmPassword ? (
+                                    <EyeOff className="w-4 h-4" />
+                                ) : (
+                                    <Eye className="w-4 h-4" />
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
