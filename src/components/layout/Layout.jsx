@@ -14,17 +14,18 @@ const Layout = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(true);
   const dispatch = useDispatch();
-  const { isConfigured, loading } = useSelector((state) => state.backoffice);
+  const { isConfigured, loading, config } = useSelector((state) => state.backoffice);
   const { hasLoaded: tarifsLoaded } = useSelector((state) => state.tarification);
   const { hasLoaded: zonesLoaded } = useSelector((state) => state.zones);
   const { hasLoaded: agencesLoaded } = useSelector((state) => state.agences);
   const { hasLoadedProduits: produitsLoaded } = useSelector((state) => state.produits);
 
   useEffect(() => {
-    if (loading === 'idle') {
+    // Ne charger que si pas de config en cache et pas déjà en cours de chargement
+    if (loading === 'idle' && !config) {
       dispatch(fetchBackofficeConfig());
     }
-  }, [dispatch, loading]);
+  }, [dispatch, loading, config]);
 
   // Chargement des données globales au démarrage
   useEffect(() => {

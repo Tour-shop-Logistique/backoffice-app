@@ -32,6 +32,7 @@ const ZoneConfiguration = () => {
   const [notification, setNotification] = useState(null);
   const [zoneToDelete, setZoneToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!hasLoaded) {
@@ -52,6 +53,7 @@ const ZoneConfiguration = () => {
   };
 
   const handleAddZone = async (zoneData) => {
+    setIsSubmitting(true);
     try {
       const result = await dispatch(addZone(zoneData)).unwrap();
       if (result) {
@@ -61,10 +63,13 @@ const ZoneConfiguration = () => {
       }
     } catch (error) {
       dispatch(showNotification({ type: 'error', message: "Erreur lors de l'ajout de la zone." }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleEditZone = async (zoneData) => {
+    setIsSubmitting(true);
     try {
       const result = await dispatch(editZone({ zoneId: selectedZone.id, zoneData })).unwrap();
       if (result) {
@@ -75,6 +80,8 @@ const ZoneConfiguration = () => {
       }
     } catch (error) {
       dispatch(showNotification({ type: 'error', message: 'Erreur lors de la modification de la zone.' }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -374,14 +381,21 @@ const ZoneConfiguration = () => {
       {/* MODAL AJOUT ZONE */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setIsSubmitting(false);
+        }}
         title="Nouvelle Zone"
         subtitle="Créez une nouvelle zone géographique de livraison"
         size="xl"
       >
         <ZoneForm
           onSubmit={handleAddZone}
-          onCancel={() => setIsModalOpen(false)}
+          onCancel={() => {
+            setIsModalOpen(false);
+            setIsSubmitting(false);
+          }}
+          isLoading={isSubmitting}
         />
       </Modal>
 
@@ -391,6 +405,7 @@ const ZoneConfiguration = () => {
         onClose={() => {
           setIsEditModalOpen(false);
           setSelectedZone(null);
+          setIsSubmitting(false);
         }}
         title="Modifier la Zone"
         subtitle="Mettez à jour les informations de la zone"
@@ -403,7 +418,9 @@ const ZoneConfiguration = () => {
             onCancel={() => {
               setIsEditModalOpen(false);
               setSelectedZone(null);
+              setIsSubmitting(false);
             }}
+            isLoading={isSubmitting}
           />
         )}
       </Modal>

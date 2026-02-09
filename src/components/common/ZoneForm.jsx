@@ -48,30 +48,33 @@ const ZoneForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
       alert('Veuillez ajouter au moins un pays.');
       return;
     }
-    onSubmit(formData);
+
+    // Ne pas envoyer l'ID lors de la création (le serveur le génère)
+    const dataToSubmit = initialData
+      ? formData  // En édition, on envoie tout (y compris l'ID)
+      : { nom: formData.nom, pays: formData.pays };  // En création, on exclut l'ID
+
+    onSubmit(dataToSubmit);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="space-y-1.5">
-        <label htmlFor="id" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
-          ID de la Zone <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="id"
-          name="id"
-          type="text"
-          value={formData.id}
-          onChange={handleChange}
-          readOnly={!!initialData}
-          placeholder="Ex: ZONE_A"
-          className={`w-full border rounded-lg p-2.5 text-sm font-medium outline-none transition-all ${!!initialData
-            ? 'bg-slate-50 text-slate-400 cursor-not-allowed border-slate-200'
-            : 'bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500'
-            }`}
-          required
-        />
-      </div>
+      {/* Afficher l'ID uniquement en mode édition */}
+      {initialData && (
+        <div className="space-y-1.5">
+          <label htmlFor="id" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+            ID de la Zone
+          </label>
+          <input
+            id="id"
+            name="id"
+            type="text"
+            value={formData.id}
+            readOnly
+            className="w-full border rounded-lg p-2.5 text-sm font-medium outline-none transition-all bg-slate-50 text-slate-400 cursor-not-allowed border-slate-200"
+          />
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <label htmlFor="nom" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">

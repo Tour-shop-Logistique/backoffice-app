@@ -51,13 +51,16 @@ export const performLogout = createAsyncThunk('auth/performLogout', async (_, { 
   localStorage.removeItem('user');
   localStorage.removeItem('token');
 
-  // 3. Appel API non-bloquant
+  // 3. Vider le cache du backoffice
+  dispatch(resetBackoffice());
+
+  // 4. Appel API non-bloquant
   authService.logout().catch(console.error);
 
-  // 4. Petit délai pour laisser le message apparaître (UX)
+  // 5. Petit délai pour laisser le message apparaître (UX)
   await new Promise(resolve => setTimeout(resolve, 800));
 
-  // 5. Redirection forcée vers l'accueil
+  // 6. Redirection forcée vers l'accueil
   window.location.href = '/';
 });
 
