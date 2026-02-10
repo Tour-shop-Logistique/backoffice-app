@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { performLogout } from "../../redux/slices/authSlice";
-import SettingsModal from "./SettingsModal";
 import { LogOut, Menu, Settings, Bell, Search, ChevronDown } from "lucide-react";
+import { ROUTES } from "../../routes";
 
 const Topbar = ({ toggleSidebar }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const handleLogout = () => {
@@ -17,6 +18,11 @@ const Topbar = ({ toggleSidebar }) => {
   const getInitials = (name) => {
     if (!name) return "AD";
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const handleSettingsClick = () => {
+    setIsProfileOpen(false);
+    navigate(ROUTES.BACKOFFICE_SETUP);
   };
 
   return (
@@ -39,16 +45,6 @@ const Topbar = ({ toggleSidebar }) => {
 
         {/* Section droite */}
         <div className="flex items-center space-x-2 md:space-x-4">
-          {/* Barre de recherche */}
-          {/* <div className="hidden lg:flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 w-64 focus-within:ring-2 focus-within:ring-slate-900/5 focus-within:border-slate-900 transition-all">
-            <Search className="h-4 w-4 text-slate-400 mr-2" />
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              className="bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none w-full"
-            />
-          </div> */}
-
           {/* Notifications */}
           <button
             className="relative p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
@@ -60,7 +56,7 @@ const Topbar = ({ toggleSidebar }) => {
 
           {/* Paramètres */}
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleSettingsClick}
             className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="Paramètres"
           >
@@ -106,10 +102,7 @@ const Topbar = ({ toggleSidebar }) => {
 
                   <div className="py-1">
                     <button
-                      onClick={() => {
-                        setIsProfileOpen(false);
-                        setIsModalOpen(true);
-                      }}
+                      onClick={handleSettingsClick}
                       className="w-full flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                     >
                       <Settings className="h-4 w-4 mr-3 text-slate-400" />
@@ -130,13 +123,6 @@ const Topbar = ({ toggleSidebar }) => {
           </div>
         </div>
       </header>
-
-      {/* Modal paramètres */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 flex justify-center items-center z-50">
-          <SettingsModal closeModal={() => setIsModalOpen(false)} />
-        </div>
-      )}
     </>
   );
 };

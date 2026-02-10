@@ -140,11 +140,11 @@ const SearchableDropdown = ({
                     onFocus={() => !disabled && setIsOpen(true)}
                     placeholder={placeholder}
                     disabled={disabled}
-                    className={`w-full pl-10 pr-10 py-2.5 border rounded-lg bg-white ${theme.ring} ${theme.border} transition-all cursor-text text-slate-700 ${error
-                            ? 'border-red-400 bg-red-50'
-                            : disabled
-                                ? 'border-gray-200 bg-gray-50 cursor-not-allowed text-gray-500'
-                                : `border-gray-300 ${theme.hover}`
+                    className={`w-full pl-10 pr-10 py-2.5 border rounded-lg bg-white text-sm font-medium ${theme.ring} ${theme.border} transition-all cursor-text text-slate-700 ${error
+                        ? 'border-red-400 bg-red-50'
+                        : disabled
+                            ? 'border-gray-200 bg-gray-50 cursor-not-allowed text-gray-500'
+                            : `border-gray-300 ${theme.hover}`
                         }`}
                 />
 
@@ -182,8 +182,8 @@ const SearchableDropdown = ({
                                 key={index}
                                 onClick={() => handleSelect(option)}
                                 className={`px-4 py-2.5 cursor-pointer transition-colors ${option.value === value
-                                        ? `${theme.bgSelected} ${theme.textSelected} font-medium`
-                                        : `${theme.bgHover} text-slate-700`
+                                    ? `${theme.bgSelected} ${theme.textSelected} font-medium`
+                                    : `${theme.bgHover} text-slate-700`
                                     }`}
                             >
                                 {option.label}

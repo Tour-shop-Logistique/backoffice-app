@@ -1,7 +1,5 @@
 export const ROUTES = {
     HOME: '/',
-    LOGIN: '/login',
-    REGISTER: '/register',
     // Routes Backoffice
     DASHBOARD: '/dashboard',
     AGENTS: '/agents',
@@ -12,4 +10,5 @@ export const ROUTES = {
     AGENCE_PARTENAIRE: '/agence-partenaire',
     AGENCE_DETAIL: '/agence-partenaire/:id',
     PRODUITS: '/produits',
+    BACKOFFICE_SETUP: '/backoffice-setup',
 };

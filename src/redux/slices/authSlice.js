@@ -83,8 +83,12 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isAuthenticated = true;
-        state.user = { ...action.payload.user, role: 'is_backoffice_admin' }; // Assign the correct admin role
+        state.user = action.payload.user;
         state.token = action.payload.token;
+
+        // Persistance locale avec le vrai rôle
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
+        localStorage.setItem('token', action.payload.token);
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
@@ -95,8 +99,15 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(register.fulfilled, (state) => {
+      .addCase(register.fulfilled, (state, action) => {
         state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.token = action.payload.access_token || action.payload.token;
+
+        // Persistance locale
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
+        localStorage.setItem('token', action.payload.access_token || action.payload.token);
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;

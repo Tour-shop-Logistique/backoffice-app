@@ -10,26 +10,35 @@ import {
   Box,
   Blocks,
   BadgeEuro,
-  Menu
+  Menu,
+  Building2
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
 import logo from "../../assets/logo_transparent.png";
 
-const navigation = [
-  { name: "Tableau de bord", href: "/dashboard", icon: Home },
-  { name: 'Agences partenaires', href: '/agence-partenaire', icon: Blocks },
-  // { name: "Gestion Colis", href: "/parcels", icon: Archive },
-  { name: "Tarification simple", href: "/simple-rates", icon: DollarSign },
-  { name: "Tarification groupée", href: "/grouped-rates", icon: BadgeEuro },
-  { name: "Zones d'expéditions", href: "/zone-configuration", icon: Settings },
-  { name: 'Produits & Catégories', href: '/produits', icon: Box },
-  { name: "Agents Backoffice", href: "/agents", icon: Users, adminOnly: true },
-];
-
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const { user } = useSelector(state => state.auth);
+  const { isConfigured } = useSelector(state => state.backoffice);
   const userRole = user?.role === 'is_backoffice_admin' ? "admin" : "agent";
+
+  // Navigation standard
+  const navigation = [
+    { name: "Tableau de bord", href: "/dashboard", icon: Home },
+    { name: 'Agences partenaires', href: '/agence-partenaire', icon: Blocks },
+    { name: "Tarification simple", href: "/simple-rates", icon: DollarSign },
+    { name: "Tarification groupée", href: "/grouped-rates", icon: BadgeEuro },
+    { name: "Zones d'expéditions", href: "/zone-configuration", icon: Settings },
+    { name: 'Produits & Catégories', href: '/produits', icon: Box },
+    { name: "Agents Backoffice", href: "/agents", icon: Users, adminOnly: true },
+  ].filter(item => !item.adminOnly || user?.role === 'is_backoffice_admin');
+
+  // Navigation restreinte (si backoffice non configuré)
+  const setupNavigation = [
+    { name: "Configuration Backoffice", href: "/backoffice-setup", icon: Building2 },
+  ];
+
+  const currentNavigation = isConfigured ? navigation : setupNavigation;
 
   const getInitials = (name) => {
     if (!name) return "AD";
@@ -58,7 +67,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navigation.map(
+        {currentNavigation.map(
           (item) =>
             (!item.adminOnly || userRole === "admin") && (
               <NavLink

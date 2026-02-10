@@ -103,11 +103,12 @@ const backofficeSlice = createSlice({
       })
       .addCase(fetchBackofficeConfig.rejected, (state, action) => {
         state.loading = 'failed';
+        state.isConfigured = false;
+        state.config = null;
         if (action.payload === 'not_configured') {
-          state.isConfigured = false;
           state.error = null;
         } else {
-          state.error = action.error.message;
+          state.error = action.payload || action.error.message;
         }
       });
   },

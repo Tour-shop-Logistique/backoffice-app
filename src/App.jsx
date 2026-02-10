@@ -11,8 +11,6 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 
 // Composants statiques pour navigation instantanée
 import Layout from './components/layout/Layout';
-import Login from './pages/Login';
-import Register from './pages/Register';
 import WelcomePage from './pages/WelcomePage';
 
 import Dashboard from './pages/Dashboard';
@@ -24,6 +22,7 @@ import ZoneConfiguration from './pages/ZoneConfiguration';
 import AgencePartenaire from './pages/AgencePartenaire';
 import AgenceDetail from './pages/AgenceDetail';
 import Produits from './pages/produits';
+import BackofficeSetup from './pages/BackofficeSetup';
 
 // Composant de chargement
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -43,10 +42,7 @@ function App() {
         <Routes>
           {/* Routes Publiques */}
           <Route path={ROUTES.HOME} element={<WelcomePage />} />
-          <Route path={ROUTES.LOGIN} element={<Login />} />
-          <Route path={ROUTES.REGISTER} element={<Register />} />
 
-          {/* Routes Protégées (Backoffice) */}
           {/* Routes Protégées (Backoffice) */}
           <Route
             element={
@@ -60,7 +56,11 @@ function App() {
             }
           >
             <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
-            <Route path={ROUTES.AGENTS} element={<Agents />} />
+            <Route path={ROUTES.AGENTS} element={
+              <ProtectedRoute adminOnly={true}>
+                <Agents />
+              </ProtectedRoute>
+            } />
             <Route path={ROUTES.PARCELS} element={<Parcels />} />
             <Route path={ROUTES.SIMPLE_RATES} element={<SimpleRates />} />
             <Route path={ROUTES.GROUPED_RATES} element={<GroupedRates />} />
@@ -68,6 +68,7 @@ function App() {
             <Route path={ROUTES.AGENCE_PARTENAIRE} element={<AgencePartenaire />} />
             <Route path={ROUTES.AGENCE_DETAIL} element={<AgenceDetail />} />
             <Route path={ROUTES.PRODUITS} element={<Produits />} />
+            <Route path={ROUTES.BACKOFFICE_SETUP} element={<BackofficeSetup />} />
           </Route>
 
           {/* Redirection par défaut (catch-all) */}
