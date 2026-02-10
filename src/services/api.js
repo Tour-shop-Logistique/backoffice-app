@@ -11,6 +11,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'ngrok-skip-browser-warning': 'true', // Pour bypasser la page d'avertissement ngrok
   },
 });
 
@@ -40,9 +41,23 @@ api.interceptors.request.use((config) => {
 
 // Intercepteur de réponse pour logger les erreurs
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`✅ Response SUCCESS [${response.config.url}]:`, response.status);
+    return response;
+  },
   (error) => {
-    console.error('API Error:', error.response?.status, error.response?.data);
+    if (error.response) {
+      // Le serveur a répondu avec un code d'erreur
+      console.error('❌ API Error Status:', error.response.status);
+      console.error('❌ API Error Data:', error.response.data);
+    } else if (error.request) {
+      // La requête a été faite mais pas de réponse reçue
+      console.error('⚠️ No Response from server (Network Error or CORS):', error.message);
+      console.log('Detailed Request:', error.request);
+    } else {
+      // Erreur lors de la configuration de la requête
+      console.error('🚫 Request Setup Error:', error.message);
+    }
     return Promise.reject(error);
   }
 );
