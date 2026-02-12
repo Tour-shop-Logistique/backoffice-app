@@ -11,7 +11,8 @@ import {
   Blocks,
   BadgeEuro,
   Menu,
-  Building2
+  Building2,
+  Package
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
@@ -25,6 +26,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   // Navigation standard
   const navigation = [
     { name: "Tableau de bord", href: "/dashboard", icon: Home },
+    { name: "Gestion des colis", href: "/parcels", icon: Package },
     { name: 'Agences partenaires', href: '/agence-partenaire', icon: Blocks },
     { name: "Tarification simple", href: "/simple-rates", icon: DollarSign },
     { name: "Tarification groupée", href: "/grouped-rates", icon: BadgeEuro },

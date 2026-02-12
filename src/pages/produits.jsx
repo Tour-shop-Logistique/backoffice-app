@@ -310,7 +310,7 @@ export default function Produits() {
             <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
               Produits et Catégories
             </h1>
-            <p className="text-xs md:text-sm text-slate-500 mt-0.5">
+            <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
               Gérez vos produits et catégories en toute simplicité
             </p>
           </div>

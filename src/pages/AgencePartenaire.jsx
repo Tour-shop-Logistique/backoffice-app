@@ -100,7 +100,7 @@ const AgencePartenaire = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Agences Partenaires</h1>
-            <p className="text-xs md:text-sm text-slate-500 mt-0.5">Consultez et gérez le réseau d'agences physiques</p>
+            <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">Consultez et gérez le réseau d'agences physiques</p>
           </div>
           <button
             onClick={handleRefresh}

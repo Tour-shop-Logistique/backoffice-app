@@ -163,7 +163,7 @@ const ZoneConfiguration = () => {
             <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
               Gestion des Zones
             </h1>
-            <p className="text-xs md:text-sm text-slate-500 mt-0.5">
+            <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
               Gérez les zones géographiques de livraison
             </p>
           </div>

@@ -98,7 +98,7 @@ const WelcomePage = () => {
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
             </button>
 
-            <button
+            {/* <button
               onClick={openRegister}
               className="w-full bg-slate-900/40 border border-white/10 h-14 rounded-lg flex items-center px-6 justify-between transition-all hover:bg-slate-800 active:scale-[0.98]"
             >
@@ -107,7 +107,7 @@ const WelcomePage = () => {
                 <span className="text-sm font-bold uppercase tracking-wide">Créer un Compte</span>
               </div>
               <ArrowRight className="w-4 h-4 text-white/20" />
-            </button>
+            </button> */}
           </div>
 
           <div className="pt-6 border-t border-white/10 flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-widest">

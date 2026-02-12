@@ -111,7 +111,7 @@ const LoginForm = ({ onSuccess, switchToRegister }) => {
                 </button>
             </form>
 
-            <div className="pt-4 border-t border-slate-100 text-center">
+            {/* <div className="pt-4 border-t border-slate-100 text-center">
                 <p className="text-xs font-medium text-slate-500">
                     Première connexion ?{' '}
                     <button
@@ -121,7 +121,7 @@ const LoginForm = ({ onSuccess, switchToRegister }) => {
                         Enregistrer une nouvelle agence
                     </button>
                 </p>
-            </div>
+            </div> */}
         </div>
     );
 };

@@ -178,7 +178,7 @@ const GroupedRates = () => {
             <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
               Tarifs Groupages
             </h1>
-            <p className="text-xs md:text-sm text-slate-500 mt-0.5">
+            <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
               Gérez les tarifs par type de groupage
             </p>
           </div>
