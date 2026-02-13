@@ -11,4 +11,5 @@ export const ROUTES = {
     AGENCE_DETAIL: '/agence-partenaire/:id',
     PRODUITS: '/produits',
     BACKOFFICE_SETUP: '/backoffice-setup',
+    PARCEL_CONTROL: '/parcels/control/:code',
 };

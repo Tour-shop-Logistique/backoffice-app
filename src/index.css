@@ -156,3 +156,9 @@
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* Scroll Reset Utility */
+main {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: auto !important;
+}

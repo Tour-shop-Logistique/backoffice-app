@@ -8,6 +8,7 @@ import NotificationPortal from './components/widget/notification';
 import { ROUTES } from './routes';
 
 import ProtectedRoute from './components/common/ProtectedRoute';
+import ScrollToTop from './components/common/ScrollToTop';
 
 // Composants statiques pour navigation instantanée
 import Layout from './components/layout/Layout';
@@ -23,6 +24,7 @@ import AgencePartenaire from './pages/AgencePartenaire';
 import AgenceDetail from './pages/AgenceDetail';
 import Produits from './pages/produits';
 import BackofficeSetup from './pages/BackofficeSetup';
+import ParcelControl from './pages/ParcelControl';
 
 // Composant de chargement
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -33,6 +35,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop />
       <NotificationPortal
         notification={notification}
         onClose={() => dispatch(hideNotification())}
@@ -69,6 +72,7 @@ function App() {
             <Route path={ROUTES.AGENCE_DETAIL} element={<AgenceDetail />} />
             <Route path={ROUTES.PRODUITS} element={<Produits />} />
             <Route path={ROUTES.BACKOFFICE_SETUP} element={<BackofficeSetup />} />
+            <Route path={ROUTES.PARCEL_CONTROL} element={<ParcelControl />} />
           </Route>
 
           {/* Redirection par défaut (catch-all) */}

@@ -799,7 +799,7 @@ const AgenceDetail = () => {
                                                                     <button
                                                                         key={pg}
                                                                         onClick={() => setCurrentPage(pg)}
-                                                                        className={`relative inline-flex items-center px-4 py-2 text-xs font-black rounded-lg transition-all active:scale-90 ${currentPage === pg
+                                                                        className={`relative inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg transition-all active:scale-90 ${currentPage === pg
                                                                             ? 'bg-slate-900 text-white shadow-lg shadow-slate-200'
                                                                             : 'text-slate-600 hover:bg-slate-50'
                                                                             }`}
