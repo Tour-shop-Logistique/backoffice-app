@@ -64,6 +64,23 @@ export default function Produits() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleRefreshGlobal = async () => {
+    setIsRefreshingProduits(true);
+    setIsRefreshingCategories(true);
+    try {
+      await Promise.all([
+        dispatch(fetchProduits({ silent: true })).unwrap(),
+        dispatch(fetchCategories({ silent: true })).unwrap()
+      ]);
+      dispatch(showNotification({ type: 'success', message: 'Données mises à jour avec succès.' }));
+    } catch (error) {
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors de la mise à jour des données.' }));
+    } finally {
+      setIsRefreshingProduits(false);
+      setIsRefreshingCategories(false);
+    }
+  };
+
   const handleRefreshProduits = async () => {
     setIsRefreshingProduits(true);
     try {
@@ -317,12 +334,12 @@ export default function Produits() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={handleRefreshProduits}
-              disabled={isRefreshingProduits}
+              onClick={handleRefreshGlobal}
+              disabled={isRefreshingProduits || isRefreshingCategories}
               className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
               title="Rafraîchir"
             >
-              <RefreshCw className={`h-4 w-4 ${isRefreshingProduits ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isRefreshingProduits || isRefreshingCategories ? 'animate-spin' : ''}`} />
               <span className="hidden md:inline md:ml-2">Rafraîchir</span>
             </button>
 
@@ -478,7 +495,6 @@ export default function Produits() {
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {filteredProduits.map((produit) => {
-                    const category = categories.find(cat => cat.id === produit.category_id);
                     return (
                       <tr key={produit.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-3">
@@ -493,7 +509,7 @@ export default function Produits() {
                         <td className="px-6 py-3">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium">
                             <Tag className="h-3 w-3" />
-                            {category?.nom || 'Sans catégorie'}
+                            {produit.category?.nom || 'Sans catégorie'}
                           </span>
                         </td>
                         <td className="px-6 py-3">
@@ -536,7 +552,6 @@ export default function Produits() {
             {/* Mobile Cards - Native App Style */}
             <div className="md:hidden divide-y divide-slate-200">
               {filteredProduits.map((produit) => {
-                const category = categories.find(cat => cat.id === produit.category_id);
                 return (
                   <div key={produit.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
                     <div className="flex items-start justify-between gap-2">
@@ -559,7 +574,7 @@ export default function Produits() {
                     </div>
 
                     <div className="flex items-center">
-                      <span className="text-sm text-blue-600 font-semibold">Catégorie : {category?.nom || 'Sans catégorie'}</span>
+                      <span className="text-sm text-blue-600 font-semibold">Catégorie : {produit.category?.nom || 'Sans catégorie'}</span>
                     </div>
 
                     <div className="flex gap-2 pt-1">

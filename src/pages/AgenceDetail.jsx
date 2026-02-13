@@ -50,6 +50,41 @@ const AgenceDetail = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
+    // Helper functions moved up to avoid ReferenceError
+    const getTypeLabel = (type) => {
+        if (!type) return 'N/A';
+        switch (type.toUpperCase()) {
+            case 'SIMPLE': return 'Simple';
+            case 'GROUPAGE_DHD_AERIEN': return 'DHD Aérien';
+            case 'GROUPAGE_DHD_MARITIME': return 'DHD Maritime';
+            case 'GROUPAGE_AFRIQUE': return 'Afrique';
+            case 'GROUPAGE_CA': return 'Colis Accompagné';
+            default: return type.replace('groupage_', '').replace('_', ' ');
+        }
+    };
+
+    const getStatusStyles = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'accepted': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+            case 'pending':
+            case 'en_attente': return 'bg-amber-50 text-amber-700 border-amber-100';
+            case 'rejected':
+            case 'cancelled': return 'bg-rose-50 text-rose-700 border-rose-100';
+            default: return 'bg-slate-50 text-slate-700 border-slate-100';
+        }
+    };
+
+    const getStatusLabel = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'accepted': return 'Acceptée';
+            case 'pending':
+            case 'en_attente': return 'En attente';
+            case 'rejected': return 'Rejetée';
+            case 'cancelled': return 'Annulée';
+            default: return status || 'N/A';
+        }
+    };
+
     const {
         agences,
         currentAgence: storedAgence,
@@ -74,6 +109,50 @@ const AgenceDetail = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedExpedition, setSelectedExpedition] = useState(null);
     const [isLogoLoading, setIsLogoLoading] = useState(true);
+
+    // États pour la recherche locale
+    const [simpleSearch, setSimpleSearch] = useState("");
+    const [groupageSearch, setGroupageSearch] = useState("");
+    const [expeditionSearch, setExpeditionSearch] = useState("");
+
+    // Filtrage local des tarifs simples
+    const filteredSimpleTariffs = React.useMemo(() => {
+        if (!currentAgencyTarifsSimple) return [];
+        const term = simpleSearch.toLowerCase().trim();
+        if (!term) return currentAgencyTarifsSimple;
+        return currentAgencyTarifsSimple.filter(t =>
+            t.indice?.toLowerCase().includes(term) ||
+            t.zone?.nom?.toLowerCase().includes(term) ||
+            t.pays?.toLowerCase().includes(term)
+        );
+    }, [currentAgencyTarifsSimple, simpleSearch]);
+
+    // Filtrage local des tarifs groupages
+    const filteredGroupageTariffs = React.useMemo(() => {
+        if (!currentAgencyTarifsGroupage) return [];
+        const term = groupageSearch.toLowerCase().trim();
+        if (!term) return currentAgencyTarifsGroupage;
+        return currentAgencyTarifsGroupage.filter(t =>
+            getTypeLabel(t.type_expedition).toLowerCase().includes(term) ||
+            t.ligne?.toLowerCase().includes(term) ||
+            t.pays?.toLowerCase().includes(term) ||
+            t.category?.nom?.toLowerCase().includes(term)
+        );
+    }, [currentAgencyTarifsGroupage, groupageSearch]);
+
+    // Filtrage local des expéditions
+    const filteredExpeditions = React.useMemo(() => {
+        if (!currentAgencyExpeditions) return [];
+        const term = expeditionSearch.toLowerCase().trim();
+        if (!term) return currentAgencyExpeditions;
+        return currentAgencyExpeditions.filter(e =>
+            e.reference?.toLowerCase().includes(term) ||
+            e.expediteur?.nom_prenom?.toLowerCase().includes(term) ||
+            e.destinataire?.nom_prenom?.toLowerCase().includes(term) ||
+            e.pays_depart?.toLowerCase().includes(term) ||
+            e.pays_destination?.toLowerCase().includes(term)
+        );
+    }, [currentAgencyExpeditions, expeditionSearch]);
 
     useEffect(() => {
         if (currentAgence?.logo) {
@@ -130,39 +209,7 @@ const AgenceDetail = () => {
         };
     }, [dispatch]);
 
-    const getTypeLabel = (type) => {
-        if (!type) return 'N/A';
-        switch (type.toUpperCase()) {
-            case 'SIMPLE': return 'Simple';
-            case 'GROUPAGE_DHD_AERIEN': return 'DHD Aérien';
-            case 'GROUPAGE_DHD_MARITIME': return 'DHD Maritime';
-            case 'GROUPAGE_AFRIQUE': return 'Afrique';
-            case 'GROUPAGE_CA': return 'Colis Accompagné';
-            default: return type.replace('groupage_', '').replace('_', ' ');
-        }
-    };
 
-    const getStatusStyles = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'accepted': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
-            case 'pending':
-            case 'en_attente': return 'bg-amber-50 text-amber-700 border-amber-100';
-            case 'rejected':
-            case 'cancelled': return 'bg-rose-50 text-rose-700 border-rose-100';
-            default: return 'bg-slate-50 text-slate-700 border-slate-100';
-        }
-    };
-
-    const getStatusLabel = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'accepted': return 'Acceptée';
-            case 'pending':
-            case 'en_attente': return 'En attente';
-            case 'rejected': return 'Rejetée';
-            case 'cancelled': return 'Annulée';
-            default: return status || 'N/A';
-        }
-    };
 
     const handleBack = (e) => {
         if (e) e.preventDefault();
@@ -398,7 +445,21 @@ const AgenceDetail = () => {
                                 </div>
                             ) : (
                                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                                    {((activeTab === "tarifs_groupage" ? currentAgencyTarifsGroupage : currentAgencyTarifsSimple) || []).length === 0 ? (
+                                    {/* Barre de recherche locale pour les tarifs */}
+                                    <div className="p-4 border-b border-slate-100 bg-slate-50/10">
+                                        <div className="relative group max-w-md">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+                                            <input
+                                                type="text"
+                                                placeholder={activeTab === 'tarifs_simple' ? "Rechercher par indice ou zone..." : "Rechercher par type, ligne ou pays..."}
+                                                value={activeTab === 'tarifs_simple' ? simpleSearch : groupageSearch}
+                                                onChange={(e) => activeTab === 'tarifs_simple' ? setSimpleSearch(e.target.value) : setGroupageSearch(e.target.value)}
+                                                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all placeholder:text-slate-400"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {(activeTab === "tarifs_groupage" ? filteredGroupageTariffs : filteredSimpleTariffs).length === 0 ? (
                                         <div className="py-24 text-center bg-slate-50/50">
                                             <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-sm text-slate-300">
                                                 <Tag size={32} />
@@ -429,7 +490,7 @@ const AgenceDetail = () => {
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100">
-                                                        {((activeTab === "tarifs_groupage" ? currentAgencyTarifsGroupage : currentAgencyTarifsSimple) || []).map((tarif) => (
+                                                        {(activeTab === "tarifs_groupage" ? filteredGroupageTariffs : filteredSimpleTariffs).map((tarif) => (
                                                             <tr key={tarif.id} className="hover:bg-slate-50/30 transition-colors">
                                                                 <td className="px-6 py-4">
                                                                     {activeTab === 'tarifs_groupage' ? (
@@ -495,7 +556,7 @@ const AgenceDetail = () => {
 
                                             {/* Mobile Cards */}
                                             <div className="md:hidden divide-y divide-slate-100">
-                                                {((activeTab === "tarifs_groupage" ? currentAgencyTarifsGroupage : currentAgencyTarifsSimple) || []).map((tarif) => {
+                                                {(activeTab === "tarifs_groupage" ? filteredGroupageTariffs : filteredSimpleTariffs).map((tarif) => {
                                                     const mb = parseFloat(tarif.montant_base) || 0;
                                                     const pp = parseFloat(tarif.pourcentage_prestation) || 0;
                                                     const mp = mb * (pp / 100);
@@ -613,217 +674,245 @@ const AgenceDetail = () => {
                                 </div>
                             ) : (
                                 <>
-                                    {/* Desktop View */}
-                                    <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                                        <table className="w-full text-left border-collapse">
-                                            <thead>
-                                                <tr className="bg-slate-50/50 border-b border-slate-200">
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence / Date</th>
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest">Type</th>
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest">Trajet</th>
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest">Acteurs</th>
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Montant</th>
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest text-center">Statuts</th>
-                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-200 text-sm">
-                                                {currentAgencyExpeditions.map((expo) => (
-                                                    <tr key={expo.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                        <td className="px-6 py-4">
+                                    {/* Barre de recherche locale pour les expéditions */}
+                                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                        <div className="relative group max-w-md">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+                                            <input
+                                                type="text"
+                                                placeholder="Rechercher par référence, expéditeur ou destinataire..."
+                                                value={expeditionSearch}
+                                                onChange={(e) => setExpeditionSearch(e.target.value)}
+                                                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all placeholder:text-slate-400"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {filteredExpeditions.length === 0 ? (
+                                        <div className="bg-white rounded-xl border border-slate-200 py-24 text-center">
+                                            <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-sm text-slate-300">
+                                                <Search size={32} />
+                                            </div>
+                                            <h3 className="text-slate-900 font-bold text-lg">Aucun résultat</h3>
+                                            <p className="text-slate-500 text-sm max-w-sm mx-auto mt-2 italic">
+                                                Aucune expédition ne correspond à votre recherche locale.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {/* Desktop View */}
+                                            <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                                <table className="w-full text-left border-collapse">
+                                                    <thead>
+                                                        <tr className="bg-slate-50/50 border-b border-slate-200">
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence / Date</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest">Type</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest">Trajet</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest">Acteurs</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Montant</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest text-center">Statuts</th>
+                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-200 text-sm">
+                                                        {filteredExpeditions.map((expo) => (
+                                                            <tr key={expo.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                                <td className="px-6 py-4">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-semibold text-slate-900 flex items-center gap-1.5">
+                                                                            {expo.reference}
+                                                                        </span>
+                                                                        <span className="text-xs text-slate-400 font-medium flex items-center gap-1 mt-1">
+                                                                            <Calendar size={14} />
+                                                                            {new Date(expo.created_at).toLocaleDateString()} à {new Date(expo.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <span className={`text-xs font-semibold px-3 py-1 rounded border uppercase ${expo.type_expedition === 'simple' ? 'bg-pink-100 text-pink-700' : expo.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' :
+                                                                        expo.type_expedition?.includes('maritime') ? 'bg-indigo-100 text-indigo-700' :
+                                                                            expo.type_expedition?.includes('afrique') ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                                        {getTypeLabel(expo.type_expedition)}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="flex flex-col">
+                                                                            <span className="text-xs font-semibold text-slate-900 uppercase">{expo.pays_depart}</span>
+                                                                            <div className="h-px bg-slate-300 w-full my-1.5" />
+                                                                            <span className="text-xs font-semibold text-slate-900 uppercase">{expo.pays_destination}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <div className="flex flex-col gap-2">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-red-600 shrink-0">E</div>
+                                                                            <span className="text-xs font-semibold text-slate-700 truncate max-w-[120px]">{expo.expediteur?.nom_prenom}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-green-600 shrink-0">D</div>
+                                                                            <span className="text-xs font-semibold text-slate-700 truncate max-w-[120px]">{expo.destinataire?.nom_prenom}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-right">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-semibold text-slate-900">
+                                                                            {Number(expo.montant_expedition).toLocaleString()} <span className="text-[10px] font-medium text-slate-400">CFA</span>
+                                                                        </span>
+                                                                        <span className="text-xs text-slate-400 font-medium">
+                                                                            {expo.colis?.length} colis
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <div className="flex flex-col items-center gap-1.5">
+                                                                        <span className={`text-xs font-semibold px-4 py-1 rounded-lg border  w-fit bg-slate-50 text-slate-500 border-slate-200`}>
+                                                                            {getStatusLabel(expo.statut_expedition)}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-right">
+                                                                    <button
+                                                                        onClick={() => setSelectedExpedition(expo)}
+                                                                        className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all active:scale-90"
+                                                                        title="Voir les détails"
+                                                                    >
+                                                                        <Eye size={18} />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            {/* Mobile View */}
+                                            <div className="md:hidden space-y-4">
+                                                {filteredExpeditions.map((expo) => (
+                                                    <div
+                                                        key={expo.id}
+                                                        onClick={() => setSelectedExpedition(expo)}
+                                                        className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden active:scale-[0.98] transition-all"
+                                                    >
+                                                        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                                                             <div className="flex flex-col">
-                                                                <span className="font-semibold text-slate-900 flex items-center gap-1.5">
-                                                                    {expo.reference}
-                                                                </span>
-                                                                <span className="text-xs text-slate-400 font-medium flex items-center gap-1 mt-1">
-                                                                    <Calendar size={14} />
-                                                                    {new Date(expo.created_at).toLocaleDateString()} à {new Date(expo.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                </span>
+                                                                <span className="text-xs font-bold text-slate-900">{expo.reference}</span>
+                                                                <span className="text-[10px] text-slate-400 font-medium">{new Date(expo.created_at).toLocaleDateString()}</span>
                                                             </div>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className={`text-xs font-semibold px-3 py-1 rounded border uppercase ${expo.type_expedition === 'simple' ? 'bg-pink-100 text-pink-700' : expo.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' :
-                                                                expo.type_expedition?.includes('maritime') ? 'bg-indigo-100 text-indigo-700' :
-                                                                    expo.type_expedition?.includes('afrique') ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                                                                {getTypeLabel(expo.type_expedition)}
+                                                            <span className={`text-[9px] font-bold px-2 py-1 rounded-full border uppercase tracking-wider ${getStatusStyles(expo.statut_expedition)}`}>
+                                                                {getStatusLabel(expo.statut_expedition)}
                                                             </span>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex items-center gap-2">
+                                                        </div>
+                                                        <div className="p-4 space-y-4">
+                                                            <div className="flex items-center justify-between">
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-xs font-semibold text-slate-900 uppercase">{expo.pays_depart}</span>
-                                                                    <div className="h-px bg-slate-300 w-full my-1.5" />
-                                                                    <span className="text-xs font-semibold text-slate-900 uppercase">{expo.pays_destination}</span>
+                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-left">Expéditeur</span>
+                                                                    <span className="text-xs font-bold text-slate-900">{expo.expediteur?.nom_prenom}</span>
+                                                                    <span className="text-[10px] text-slate-500">{expo.expediteur?.ville}, {expo.pays_depart}</span>
+                                                                </div>
+                                                                <ChevronRight size={16} className="text-slate-300" />
+                                                                <div className="flex flex-col text-right">
+                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Destinataire</span>
+                                                                    <span className="text-xs font-bold text-slate-900">{expo.destinataire?.nom_prenom}</span>
+                                                                    <span className="text-[10px] text-slate-500">{expo.destinataire?.ville}, {expo.pays_destination}</span>
                                                                 </div>
                                                             </div>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex flex-col gap-2">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-red-600 shrink-0">E</div>
-                                                                    <span className="text-xs font-semibold text-slate-700 truncate max-w-[120px]">{expo.expediteur?.nom_prenom}</span>
+
+                                                            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
+                                                                <div>
+                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Montant Total</p>
+                                                                    <p className="text-sm font-bold text-slate-900">{Number(expo.montant_expedition).toLocaleString()} CFA</p>
                                                                 </div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-green-600 shrink-0">D</div>
-                                                                    <span className="text-xs font-semibold text-slate-700 truncate max-w-[120px]">{expo.destinataire?.nom_prenom}</span>
+                                                                <div className="text-right">
+                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Paiement</p>
+                                                                    <span className={`text-[10px] font-bold ${expo.statut_paiement === 'paye' ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                                                        {expo.statut_paiement === 'paye' ? 'Payé' : 'À régler'}
+                                                                    </span>
                                                                 </div>
                                                             </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-right">
-                                                            <div className="flex flex-col">
-                                                                <span className="font-semibold text-slate-900">
-                                                                    {Number(expo.montant_expedition).toLocaleString()} <span className="text-[10px] font-medium text-slate-400">CFA</span>
-                                                                </span>
-                                                                <span className="text-xs text-slate-400 font-medium">
-                                                                    {expo.colis?.length} colis
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex flex-col items-center gap-1.5">
-                                                                <span className={`text-xs font-semibold px-4 py-1 rounded-lg border  w-fit bg-slate-50 text-slate-500 border-slate-200`}>
-                                                                    {getStatusLabel(expo.statut_expedition)}
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-right">
-                                                            <button
-                                                                onClick={() => setSelectedExpedition(expo)}
-                                                                className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all active:scale-90"
-                                                                title="Voir les détails"
-                                                            >
-                                                                <Eye size={18} />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
+                                                        </div>
+                                                    </div>
                                                 ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    {/* Mobile View */}
-                                    <div className="md:hidden space-y-4">
-                                        {currentAgencyExpeditions.map((expo) => (
-                                            <div
-                                                key={expo.id}
-                                                onClick={() => setSelectedExpedition(expo)}
-                                                className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden active:scale-[0.98] transition-all"
-                                            >
-                                                <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-slate-900">{expo.reference}</span>
-                                                        <span className="text-[10px] text-slate-400 font-medium">{new Date(expo.created_at).toLocaleDateString()}</span>
-                                                    </div>
-                                                    <span className={`text-[9px] font-bold px-2 py-1 rounded-full border uppercase tracking-wider ${getStatusStyles(expo.statut_expedition)}`}>
-                                                        {getStatusLabel(expo.statut_expedition)}
-                                                    </span>
-                                                </div>
-                                                <div className="p-4 space-y-4">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-left">Expéditeur</span>
-                                                            <span className="text-xs font-bold text-slate-900">{expo.expediteur?.nom_prenom}</span>
-                                                            <span className="text-[10px] text-slate-500">{expo.expediteur?.ville}, {expo.pays_depart}</span>
-                                                        </div>
-                                                        <ChevronRight size={16} className="text-slate-300" />
-                                                        <div className="flex flex-col text-right">
-                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Destinataire</span>
-                                                            <span className="text-xs font-bold text-slate-900">{expo.destinataire?.nom_prenom}</span>
-                                                            <span className="text-[10px] text-slate-500">{expo.destinataire?.ville}, {expo.pays_destination}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
-                                                        <div>
-                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Montant Total</p>
-                                                            <p className="text-sm font-bold text-slate-900">{Number(expo.montant_expedition).toLocaleString()} CFA</p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Paiement</p>
-                                                            <span className={`text-[10px] font-bold ${expo.statut_paiement === 'paye' ? 'text-emerald-500' : 'text-amber-500'}`}>
-                                                                {expo.statut_paiement === 'paye' ? 'Payé' : 'À régler'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
                                             </div>
-                                        ))}
-                                    </div>
 
-                                    {/* Pagination */}
-                                    {expeditionsMeta && expeditionsMeta.last_page > 1 && (
-                                        <div className="flex items-center justify-between bg-white px-4 py-3 rounded-2xl border border-slate-200 mt-6 shadow-sm">
-                                            <div className="flex flex-1 justify-between sm:hidden">
-                                                <button
-                                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                                    disabled={currentPage === 1}
-                                                    className="relative inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed group transition-all"
-                                                >
-                                                    <ChevronLeft size={16} className="mr-1 group-active:-translate-x-1 transition-transform" /> Précédent
-                                                </button>
-                                                <button
-                                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, expeditionsMeta.last_page))}
-                                                    disabled={currentPage === expeditionsMeta.last_page}
-                                                    className="relative ml-3 inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed group transition-all"
-                                                >
-                                                    Suivant <ChevronRight size={16} className="ml-1 group-active:translate-x-1 transition-transform" />
-                                                </button>
-                                            </div>
-                                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                                                <div>
-                                                    <p className="text-xs text-slate-500 font-medium">
-                                                        Page <span className="font-bold text-slate-900">{currentPage}</span> sur <span className="font-bold text-slate-900">{expeditionsMeta.last_page}</span>
-                                                        <span className="mx-2 text-slate-300">|</span>
-                                                        Total : <span className="font-bold text-slate-900">{expeditionsMeta.total}</span> expéditions
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <nav className="isolate inline-flex -space-x-px rounded-xl shadow-sm gap-1" aria-label="Pagination">
+                                            {/* Pagination */}
+                                            {expeditionsMeta && expeditionsMeta.last_page > 1 && (
+                                                <div className="flex items-center justify-between bg-white px-4 py-3 rounded-2xl border border-slate-200 mt-6 shadow-sm">
+                                                    <div className="flex flex-1 justify-between sm:hidden">
                                                         <button
                                                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                                             disabled={currentPage === 1}
-                                                            className="relative inline-flex items-center rounded-lg px-2 py-2 text-slate-400 hover:bg-slate-50 disabled:opacity-30 transition-all active:scale-90"
+                                                            className="relative inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed group transition-all"
                                                         >
-                                                            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                                                            <ChevronLeft size={16} className="mr-1 group-active:-translate-x-1 transition-transform" /> Précédent
                                                         </button>
-
-                                                        {[...Array(expeditionsMeta.last_page)].map((_, i) => {
-                                                            const pg = i + 1;
-                                                            // Show only first, last, and pages around current
-                                                            if (
-                                                                pg === 1 ||
-                                                                pg === expeditionsMeta.last_page ||
-                                                                (pg >= currentPage - 1 && pg <= currentPage + 1)
-                                                            ) {
-                                                                return (
-                                                                    <button
-                                                                        key={pg}
-                                                                        onClick={() => setCurrentPage(pg)}
-                                                                        className={`relative inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg transition-all active:scale-90 ${currentPage === pg
-                                                                            ? 'bg-slate-900 text-white shadow-lg shadow-slate-200'
-                                                                            : 'text-slate-600 hover:bg-slate-50'
-                                                                            }`}
-                                                                    >
-                                                                        {pg}
-                                                                    </button>
-                                                                );
-                                                            } else if (pg === currentPage - 2 || pg === currentPage + 2) {
-                                                                return <span key={pg} className="px-2 py-2 text-slate-300 text-xs font-bold">...</span>;
-                                                            }
-                                                            return null;
-                                                        })}
-
                                                         <button
                                                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, expeditionsMeta.last_page))}
                                                             disabled={currentPage === expeditionsMeta.last_page}
-                                                            className="relative inline-flex items-center rounded-lg px-2 py-2 text-slate-400 hover:bg-slate-50 disabled:opacity-30 transition-all active:scale-90"
+                                                            className="relative ml-3 inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed group transition-all"
                                                         >
-                                                            <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                                                            Suivant <ChevronRight size={16} className="ml-1 group-active:translate-x-1 transition-transform" />
                                                         </button>
-                                                    </nav>
+                                                    </div>
+                                                    <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                                        <div>
+                                                            <p className="text-xs text-slate-500 font-medium">
+                                                                Page <span className="font-bold text-slate-900">{currentPage}</span> sur <span className="font-bold text-slate-900">{expeditionsMeta.last_page}</span>
+                                                                <span className="mx-2 text-slate-300">|</span>
+                                                                Total : <span className="font-bold text-slate-900">{expeditionsMeta.total}</span> expéditions
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <nav className="isolate inline-flex -space-x-px rounded-xl shadow-sm gap-1" aria-label="Pagination">
+                                                                <button
+                                                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                                                    disabled={currentPage === 1}
+                                                                    className="relative inline-flex items-center rounded-lg px-2 py-2 text-slate-400 hover:bg-slate-50 disabled:opacity-30 transition-all active:scale-90"
+                                                                >
+                                                                    <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                                                                </button>
+
+                                                                {[...Array(expeditionsMeta.last_page)].map((_, i) => {
+                                                                    const pg = i + 1;
+                                                                    // Show only first, last, and pages around current
+                                                                    if (
+                                                                        pg === 1 ||
+                                                                        pg === expeditionsMeta.last_page ||
+                                                                        (pg >= currentPage - 1 && pg <= currentPage + 1)
+                                                                    ) {
+                                                                        return (
+                                                                            <button
+                                                                                key={pg}
+                                                                                onClick={() => setCurrentPage(pg)}
+                                                                                className={`relative inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg transition-all active:scale-90 ${currentPage === pg
+                                                                                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-200'
+                                                                                    : 'text-slate-600 hover:bg-slate-50'
+                                                                                    }`}
+                                                                            >
+                                                                                {pg}
+                                                                            </button>
+                                                                        );
+                                                                    } else if (pg === currentPage - 2 || pg === currentPage + 2) {
+                                                                        return <span key={pg} className="px-2 py-2 text-slate-300 text-xs font-bold">...</span>;
+                                                                    }
+                                                                    return null;
+                                                                })}
+
+                                                                <button
+                                                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, expeditionsMeta.last_page))}
+                                                                    disabled={currentPage === expeditionsMeta.last_page}
+                                                                    className="relative inline-flex items-center rounded-lg px-2 py-2 text-slate-400 hover:bg-slate-50 disabled:opacity-30 transition-all active:scale-90"
+                                                                >
+                                                                    <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                                                                </button>
+                                                            </nav>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </div>
+                                            )}
+                                        </>
                                     )}
                                 </>
                             )}
