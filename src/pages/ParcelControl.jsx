@@ -27,7 +27,7 @@ const ParcelControl = () => {
     const { code } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { items, currentParcel, isLoadingDetail, error } = useSelector(state => state.parcels);
+    const { todoList, historyList, currentParcel, isLoadingDetail, error } = useSelector(state => state.parcels);
 
     useEffect(() => {
         if (!code) return;
@@ -35,8 +35,10 @@ const ParcelControl = () => {
         // 1. Si on a déjà le bon colis dans currentParcel, on ne bouge pas
         if (currentParcel && currentParcel.code_colis === code) return;
 
-        // 2. On regarde si le colis est présent dans la liste globale (items)
-        const parcelFromList = items.find(p => p.code_colis === code);
+        // 2. On regarde si le colis est présent dans l'une des listes chachées
+        const parcelFromTodo = todoList.items?.find(p => p.code_colis === code);
+        const parcelFromHistory = historyList.items?.find(p => p.code_colis === code);
+        const parcelFromList = parcelFromTodo || parcelFromHistory;
 
         if (parcelFromList) {
             // On utilise les données déjà présentes (pas d'API call)
@@ -50,7 +52,7 @@ const ParcelControl = () => {
             // On ne clear pas forcément ici pour permettre la navigation fluide, 
             // mais l'initialState de currentParcel est null au départ.
         };
-    }, [dispatch, code, items]); // Re-run si items change ou si le code change
+    }, [dispatch, code, todoList, historyList, currentParcel]); // Re-run si listes changent ou si le code change
 
     const getStatusInfo = (status) => {
         switch (status) {
@@ -81,7 +83,7 @@ const ParcelControl = () => {
                 <h2 className="text-xl font-bold text-slate-900">Colis introuvable</h2>
                 <p className="text-slate-500 mt-2 max-w-sm">Désolé, nous n'avons trouvé aucun colis correspondant au code <span className="font-bold text-slate-900">{code}</span>.</p>
                 <button
-                    onClick={() => navigate('/parcels')}
+                    onClick={() => navigate(-1)}
                     className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95"
                 >
                     <ArrowLeft size={16} /> Retour à la liste
@@ -101,7 +103,7 @@ const ParcelControl = () => {
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => navigate('/parcels')}
+                        onClick={() => navigate(-1)}
                         className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
                         title="Retour"
                     >

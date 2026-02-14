@@ -17,6 +17,7 @@ import WelcomePage from './pages/WelcomePage';
 import Dashboard from './pages/Dashboard';
 import Agents from './pages/Agents';
 import Parcels from './pages/Parcels';
+import ParcelHistory from './pages/ParcelHistory';
 import SimpleRates from './pages/SimpleRates';
 import GroupedRates from './pages/GroupedRates';
 import ZoneConfiguration from './pages/ZoneConfiguration';
@@ -65,6 +66,7 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path={ROUTES.PARCELS} element={<Parcels />} />
+            <Route path={ROUTES.PARCEL_HISTORY} element={<ParcelHistory />} />
             <Route path={ROUTES.SIMPLE_RATES} element={<SimpleRates />} />
             <Route path={ROUTES.GROUPED_RATES} element={<GroupedRates />} />
             <Route path={ROUTES.ZONE_CONFIGURATION} element={<ZoneConfiguration />} />

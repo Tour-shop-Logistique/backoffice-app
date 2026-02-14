@@ -342,9 +342,8 @@ const AgenceDetail = () => {
                                                             ? currentAgence.logo
                                                             : `${import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')}/storage/${currentAgence.logo}`}
                                                         alt="Logo"
-                                                        onLoad={() => setIsLogoLoading(false)}
-                                                        onError={() => setIsLogoLoading(false)}
-                                                        className={`max-h-full max-w-full object-contain transition-opacity duration-300 ${isLogoLoading ? 'opacity-0' : 'opacity-100'}`}
+                                                        className="max-h-full max-w-full object-contain"
+                                                        loading="lazy"
                                                     />
                                                 </div>
                                             ) : (
@@ -710,7 +709,6 @@ const AgenceDetail = () => {
                                                             <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest">Trajet</th>
                                                             <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest">Acteurs</th>
                                                             <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Montant</th>
-                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest text-center">Statuts</th>
                                                             <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Action</th>
                                                         </tr>
                                                     </thead>
@@ -763,13 +761,6 @@ const AgenceDetail = () => {
                                                                         </span>
                                                                         <span className="text-xs text-slate-400 font-medium">
                                                                             {expo.colis?.length} colis
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex flex-col items-center gap-1.5">
-                                                                        <span className={`text-xs font-semibold px-4 py-1 rounded-lg border  w-fit bg-slate-50 text-slate-500 border-slate-200`}>
-                                                                            {getStatusLabel(expo.statut_expedition)}
                                                                         </span>
                                                                     </div>
                                                                 </td>
@@ -926,7 +917,7 @@ const AgenceDetail = () => {
                 onClose={() => setSelectedExpedition(null)}
                 title={`Expédition ${selectedExpedition?.reference}`}
                 subtitle="Détails complets de l'expédition et des colis"
-                size="3xl"
+                size="2xl"
             >
                 {selectedExpedition && (
                     <div className="space-y-8 pb-4">

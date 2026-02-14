@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchParcels, clearParcels } from '../redux/slices/parcelSlice';
+import { fetchParcels } from '../redux/slices/parcelSlice';
 import { ROUTES } from '../routes';
 import Modal from '../components/common/Modal';
 import QRScanner from '../components/common/QRScanner';
@@ -41,26 +41,28 @@ import {
 const Parcels = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items, isLoading, error, hasLoaded } = useSelector(state => state.parcels);
+  // Use todoList state
+  const { items, isLoading, error, hasLoaded } = useSelector(state => state.parcels.todoList);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
   useEffect(() => {
+    // Only fetch if not already loaded (persist data)
     if (!hasLoaded) {
-      dispatch(fetchParcels());
+      dispatch(fetchParcels({ listType: 'todo', isControlled: false }));
     }
   }, [dispatch, hasLoaded]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await dispatch(fetchParcels());
+    await dispatch(fetchParcels({ listType: 'todo', isControlled: false }));
     setIsRefreshing(false);
   };
 
   const handleViewParcel = (parcel) => {
     if (!parcel?.code_colis) return;
-    navigate(ROUTES.PARCEL_CONTROL.replace(':code', parcel.code_colis));
+    navigate(ROUTES.PARCEL_CONTROL.replace(':code', parcel.code_colis), { state: { from: 'todo' } });
   };
 
   const handleScanSuccess = (decodedText) => {
@@ -161,7 +163,7 @@ const Parcels = () => {
 
       {/* MAIN CONTENT AREA */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-black transition-all">
-        {/* Simplified Header instead of tabs */}
+        {/* Table Header Summary */}
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/10 flex items-center justify-between">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
             {filteredParcels.length} colis en attente
@@ -315,4 +317,3 @@ const Parcels = () => {
 };
 
 export default Parcels;
-

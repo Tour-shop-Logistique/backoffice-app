@@ -1,5 +1,4 @@
-import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   Home,
   Users,
@@ -21,12 +20,15 @@ import logo from "../../assets/logo_transparent.png";
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const { user } = useSelector(state => state.auth);
   const { isConfigured } = useSelector(state => state.backoffice);
+  const location = useLocation(); // Hook inside component
+
   const userRole = user?.role === 'is_backoffice_admin' ? "admin" : "agent";
 
   // Navigation standard
   const navigation = [
     { name: "Tableau de bord", href: "/dashboard", icon: Home },
     { name: "Colis à contrôler", href: "/parcels", icon: Package },
+    { name: "Historique contrôles", href: "/parcels-history", icon: Archive },
     { name: 'Agences partenaires', href: '/agence-partenaire', icon: Blocks },
     { name: "Tarification simple", href: "/simple-rates", icon: DollarSign },
     { name: "Tarification groupée", href: "/grouped-rates", icon: BadgeEuro },
@@ -45,6 +47,23 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const getInitials = (name) => {
     if (!name) return "AD";
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const isLinkActive = (href) => {
+    const path = location.pathname;
+    // Exact match
+    if (href === path) return true;
+    // Detail page handling
+    if (path.startsWith('/parcels/control/')) {
+      const fromHistory = location.state?.from === 'history';
+      if (href === '/parcels-history' && fromHistory) return true;
+      if (href === '/parcels' && !fromHistory) return true;
+      return false;
+    }
+    // Default active logic (prevent partial matches across distinct roots e.g. /parcels vs /parcels-history unless explicit)
+    if (href === '/parcels' && path.startsWith('/parcels-history')) return false;
+
+    return path.startsWith(href) && href !== '/';
   };
 
   const sidebarContent = (
@@ -75,23 +94,26 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
               <NavLink
                 key={item.name}
                 to={item.href}
-                end={item.href === "/dashboard"}
                 onClick={toggleSidebar}
-                className={({ isActive }) =>
-                  `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive
-                    ? "bg-slate-800 text-white border border-slate-700"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
-                  }`
-                }
+                className={() => {
+                  const active = isLinkActive(item.href);
+                  return `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${active
+                      ? "bg-slate-800 text-white border border-slate-700"
+                      : "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                    }`;
+                }}
               >
-                {({ isActive }) => (
-                  <>
-                    <item.icon
-                      className={`h-4 w-4 mr-3 ${isActive ? "text-slate-100" : "text-slate-500"}`}
-                    />
-                    <span className="flex-1">{item.name}</span>
-                  </>
-                )}
+                {() => {
+                  const active = isLinkActive(item.href);
+                  return (
+                    <>
+                      <item.icon
+                        className={`h-4 w-4 mr-3 ${active ? "text-slate-100" : "text-slate-500"}`}
+                      />
+                      <span className="flex-1">{item.name}</span>
+                    </>
+                  )
+                }}
               </NavLink>
             )
         )}

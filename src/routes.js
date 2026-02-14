@@ -12,4 +12,5 @@ export const ROUTES = {
     PRODUITS: '/produits',
     BACKOFFICE_SETUP: '/backoffice-setup',
     PARCEL_CONTROL: '/parcels/control/:code',
+    PARCEL_HISTORY: '/parcels-history',
 };
