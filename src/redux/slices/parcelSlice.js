@@ -29,6 +29,21 @@ export const fetchParcelByCode = createAsyncThunk(
     }
 );
 
+export const updateExpedition = createAsyncThunk(
+    'parcels/updateExpedition',
+    async ({ id, frais_expedition, lien_tracking }, { rejectWithValue }) => {
+        try {
+            await api.post(`/backoffice/edit-expedition/${id}`, {
+                frais_annexes: frais_expedition,
+                code_suivi_expedition: lien_tracking
+            });
+            return { id, frais_annexes: frais_expedition, code_suivi_expedition: lien_tracking };
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
 const initialState = {
     // List for "To Control" (is_controlled=false)
     todoList: {
@@ -51,7 +66,8 @@ const initialState = {
     // Detail view state
     currentParcel: null,
     isLoadingDetail: false,
-    detailError: null
+    detailError: null,
+    isUpdatingExpedition: false
 };
 
 const parcelSlice = createSlice({
@@ -127,6 +143,42 @@ const parcelSlice = createSlice({
             .addCase(fetchParcelByCode.rejected, (state, action) => {
                 state.isLoadingDetail = false;
                 state.detailError = action.payload;
+            })
+
+            // Update Expedition
+            .addCase(updateExpedition.pending, (state) => {
+                state.isUpdatingExpedition = true;
+            })
+            .addCase(updateExpedition.fulfilled, (state, action) => {
+                state.isUpdatingExpedition = false;
+                const { id, frais_annexes, code_suivi_expedition } = action.payload;
+
+                // Helper to update expedition in list
+                const updateInList = (list) => {
+                    list.items.forEach(parcel => {
+                        if (parcel.expedition?.id === id) {
+                            parcel.expedition = {
+                                ...parcel.expedition,
+                                frais_annexes,
+                                code_suivi_expedition
+                            };
+                        }
+                    });
+                };
+
+                updateInList(state.todoList);
+                updateInList(state.historyList);
+
+                if (state.currentParcel?.expedition?.id === id) {
+                    state.currentParcel.expedition = {
+                        ...state.currentParcel.expedition,
+                        frais_annexes,
+                        code_suivi_expedition
+                    };
+                }
+            })
+            .addCase(updateExpedition.rejected, (state) => {
+                state.isUpdatingExpedition = false;
             });
     }
 });
