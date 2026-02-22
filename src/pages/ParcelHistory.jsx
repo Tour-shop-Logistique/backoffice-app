@@ -45,18 +45,9 @@ const ParcelHistory = () => {
     const [dateFin, setDateFin] = useState('');
 
     useEffect(() => {
-        // Fetch parcels with filters
-        // Only fetch if NOT loaded and NO filters are active in state (initial load)
-        // If filters ARE active, we wait for user to click search. 
-        // But if we just navigated here and state was reset, hasLoaded is true from previous visit?
-        // No, hasLoaded is from Redux.
-        // We want:
-        // 1. If not loaded, fetch default (no dates).
-        // 2. If loaded, do nothing until user searches.
         if (!hasLoaded) {
             dispatch(fetchParcels({
-                listType: 'history',
-                isControlled: true
+                listType: 'history'
             }));
         }
     }, [dispatch, hasLoaded]);
@@ -65,7 +56,6 @@ const ParcelHistory = () => {
         setIsRefreshing(true);
         await dispatch(fetchParcels({
             listType: 'history',
-            isControlled: true,
             date_debut: dateDebut || null,
             date_fin: dateFin || null
         }));
@@ -108,10 +98,12 @@ const ParcelHistory = () => {
 
     const getStatusInfo = (status) => {
         switch (status) {
-            case 'accepted':
+            case 'en_transit_entrepot':
                 return { label: 'À contrôler', styles: 'bg-amber-50 text-amber-600 border-amber-100', icon: ClipboardCheck };
+            case 'depart_expedition_succes':
+                return { label: 'Contrôlé / Validé', styles: 'bg-emerald-50 text-emerald-600 border-emerald-100', icon: ShieldCheck };
             default:
-                return { label: 'Contrôlé', styles: 'bg-emerald-50 text-emerald-600 border-emerald-100', icon: ClipboardCheck };
+                return { label: status || 'En attente', styles: 'bg-slate-50 text-slate-600 border-slate-100', icon: Package };
         }
     };
 
@@ -149,9 +141,9 @@ const ParcelHistory = () => {
             groups[key].parcels.push(parcel);
         });
         return Object.values(groups).sort((a, b) => {
-            // Sort by most recent parcel update
-            const dateA = new Date(a.parcels[0]?.updated_at || a.parcels[0]?.created_at || 0);
-            const dateB = new Date(b.parcels[0]?.updated_at || b.parcels[0]?.created_at || 0);
+            // Sort by most recent expedition departure or creation
+            const dateA = new Date(a.expedition?.date_expedition_depart || a.expedition?.created_at || 0);
+            const dateB = new Date(b.expedition?.date_expedition_depart || b.expedition?.created_at || 0);
             return dateB - dateA;
         });
     }, [filteredParcels]);
@@ -269,8 +261,8 @@ const ParcelHistory = () => {
                             <table className="w-full">
                                 <thead className="bg-slate-50/50 border-b border-slate-200">
                                     <tr>
-                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Date</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Colis / Désignation</th>
+                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Date</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Provenance</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Destination</th>
                                         <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Action</th>
@@ -279,80 +271,133 @@ const ParcelHistory = () => {
                                 {groupedParcels.map(group => (
                                     <tbody key={group.id} className="divide-y divide-slate-200 border-b-4 border-slate-50">
                                         <tr className="bg-slate-50/80">
-                                            <td colSpan="5" className="px-6 py-3">
-                                                <div className="flex items-center gap-4">
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200 text-xs font-bold text-slate-700 shadow-sm">
-                                                        <Truck size={14} className="text-blue-500" />
-                                                        {group.expedition?.reference || 'Sans référence'}
-                                                    </span>
-                                                    <div className="h-4 w-px bg-slate-300"></div>
-                                                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                                                        <Building2 size={14} className="text-slate-400" />
-                                                        <span className="uppercase">{group.expedition?.expediteur?.nom_prenom || 'Expéditeur inconnu'}</span>
+                                            <td colSpan="5" className="px-6 py-2">
+                                                <div className="flex items-center w-full gap-8">
+                                                    {/* Left: Reference Container */}
+                                                    <div className="flex items-center gap-2 px-2.5 py-1 bg-white border border-slate-200/60 rounded-lg shadow-sm">
+                                                        <Truck size={13} className="text-blue-500/80" />
+                                                        <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-tight">
+                                                            {group.expedition?.reference || 'Sans ref'}
+                                                        </span>
                                                     </div>
-                                                    <ArrowRight size={14} className="text-slate-300" />
-                                                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                                                        <span className="uppercase">{group.expedition?.destinataire?.nom_prenom || 'Destinataire inconnu'}</span>
+
+                                                    {/* Middle: Breakdown Flow */}
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Base</span>
+                                                            <span className="text-[11px] font-semibold text-slate-600 tabular-nums">
+                                                                {Number(group.expedition?.montant_base || 0).toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Prestation</span>
+                                                            <span className="text-[11px] font-semibold text-blue-600 tabular-nums">
+                                                                +{Number(group.expedition?.montant_prestation || 0).toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Emballage</span>
+                                                            <span className="text-[11px] font-semibold text-slate-600 tabular-nums">
+                                                                +{Number(group.expedition?.frais_emballage || 0).toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                        {Number(group.expedition?.frais_annexes || 0) > 0 && (
+                                                            <div className="flex items-baseline gap-1.5">
+                                                                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Annexes</span>
+                                                                <span className="text-[11px] font-semibold text-amber-600 tabular-nums">
+                                                                    +{Number(group.expedition?.frais_annexes || 0).toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <div className="ml-auto text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                                        {group.parcels.length} Colis
+
+                                                    {/* Right: Total & Status & Actions */}
+                                                    <div className="ml-auto flex items-center gap-6">
+                                                        {/* Financial Total Section */}
+                                                        <div className="flex items-center gap-4 pr-6 border-r border-slate-200">
+                                                            <div className="flex flex-col items-end leading-none">
+                                                                <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.15em] mb-1">Total Expédition</span>
+                                                                <div className="flex items-baseline gap-1">
+                                                                    <span className="text-[14px] font-semibold text-slate-900">
+                                                                        {Number(group.expedition?.montant_expedition || 0).toLocaleString()}
+                                                                    </span>
+                                                                    <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className={`px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wider border shadow-sm transition-all
+                                                                ${group.expedition?.statut_paiement === 'paye'
+                                                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                                    : 'bg-amber-50 text-amber-600 border-amber-100'
+                                                                }`}>
+                                                                {group.expedition?.statut_paiement === 'paye' ? 'Payé' : 'Impayé'}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Group stats & Actions */}
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="flex flex-col items-end">
+                                                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+                                                                    {group.parcels.length} Colis
+                                                                </span>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleEditExpedition(group.expedition)}
+                                                                className="p-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 transition-all shadow-sm group"
+                                                                title="Modifier l'expédition"
+                                                            >
+                                                                <Edit2 size={13} className="group-hover:scale-110 transition-transform" />
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    <button
-                                                        onClick={() => handleEditExpedition(group.expedition)}
-                                                        className="ml-3 p-1.5 hover:bg-slate-100 rounded-md text-slate-400 hover:text-blue-600 transition-colors"
-                                                        title="Modifier l'expédition"
-                                                    >
-                                                        <Edit2 size={14} />
-                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
-                                        {group.parcels.map((parcel) => {
-                                            const TypeIcon = getTypeIcon(parcel.code_colis);
-                                            return (
-                                                <tr key={parcel.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                    <td className="px-6 py-3">
-                                                        <span className="text-xs font-bold text-slate-500">
-                                                            {new Date(parcel.updated_at || parcel.created_at).toLocaleDateString('fr-FR')}
-                                                        </span>
-                                                        <span className="block text-[10px] text-slate-400">
-                                                            {new Date(parcel.updated_at || parcel.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-3 pl-10">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="h-10 w-10 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-all duration-300">
-                                                                <TypeIcon size={18} />
+                                        {
+                                            group.parcels.map((parcel) => {
+                                                const TypeIcon = getTypeIcon(parcel.code_colis);
+                                                return (
+                                                    <tr key={parcel.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                        <td className="px-6 py-3 pl-10">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="h-10 w-10 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-all duration-300">
+                                                                    <TypeIcon size={18} />
+                                                                </div>
+                                                                <div>
+                                                                    <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
+                                                                    <span className="text-xs font-bold text-slate-400 uppercase">{parcel.designation || 'Sans désignation'}</span>
+                                                                </div>
                                                             </div>
-                                                            <div>
-                                                                <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
-                                                                <span className="text-xs font-bold text-slate-400 uppercase">{parcel.designation || 'Sans désignation'}</span>
+                                                        </td>
+                                                        <td className="px-6 py-3">
+                                                            <span className="text-sm font-bold text-slate-500">
+                                                                {new Date(parcel.expedition?.date_expedition_depart || parcel.expedition?.created_at || parcel.expedition?.updated_at).toLocaleDateString('fr-FR')}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-3">
+                                                            <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold ">
+                                                                <Building2 size={16} className="text-slate-400" />
+                                                                {parcel.expedition?.agence?.nom_agence}
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-3">
-                                                        <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold ">
-                                                            <Building2 size={16} className="text-slate-400" />
-                                                            {parcel.expedition?.agence?.nom_agence}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-3">
-                                                        <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold uppercase">
-                                                            <MapPin size={16} className="text-slate-400" />
-                                                            {parcel.expedition?.pays_destination}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-3 text-right">
-                                                        <button
-                                                            onClick={() => handleViewParcel(parcel)}
-                                                            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg text-xs font-bold uppercase tracking-widest transition-all shadow-sm active:scale-95"
-                                                        >
-                                                            Voir détails
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
+                                                        </td>
+                                                        <td className="px-6 py-3">
+                                                            <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold uppercase">
+                                                                <MapPin size={16} className="text-slate-400" />
+                                                                {parcel.expedition?.pays_destination}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-3 text-right">
+                                                            <button
+                                                                onClick={() => handleViewParcel(parcel)}
+                                                                className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg text-xs font-bold uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                                                            >
+                                                                Voir détails
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        }
                                     </tbody>
                                 ))}
                             </table>
@@ -367,8 +412,11 @@ const ParcelHistory = () => {
                                             <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
                                                 <Truck size={12} /> {group.expedition?.reference || 'N/A'}
                                             </span>
-                                            <span className="text-[10px] text-slate-500 uppercase font-medium mt-0.5">
-                                                {group.expedition?.expediteur?.nom_prenom} <ArrowRight size={10} className="inline" /> {group.expedition?.destinataire?.nom_prenom}
+                                            <span className="text-[10px] text-slate-500 uppercase font-bold mt-0.5 flex items-center gap-2">
+                                                {Number(group.expedition?.montant_expedition || 0).toLocaleString()} CFA
+                                                <span className={`px-1 rounded ${group.expedition?.statut_paiement === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                    {group.expedition?.statut_paiement === 'paye' ? 'PAYÉ' : 'NON PAYÉ'}
+                                                </span>
                                             </span>
                                         </div>
                                         <div className="flex items-center">
@@ -398,7 +446,7 @@ const ParcelHistory = () => {
                                                                 <div className="flex items-center gap-1 mt-1">
                                                                     <Calendar size={10} className="text-slate-400" />
                                                                     <span className="text-xs font-bold text-slate-500">
-                                                                        {new Date(parcel.updated_at || parcel.created_at).toLocaleDateString('fr-FR')}
+                                                                        {new Date(parcel.expedition?.date_expedition_depart || parcel.expedition?.created_at || parcel.expedition?.updated_at).toLocaleDateString('fr-FR')}
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -474,7 +522,7 @@ const ParcelHistory = () => {
                     </div>
                 </div>
             </Modal>
-        </div>
+        </div >
     );
 };
 

@@ -3,14 +3,44 @@ import api from '../../services/api';
 
 export const fetchParcels = createAsyncThunk(
     'parcels/fetchParcels',
-    async ({ listType = 'todo', isControlled = false, date_debut = null, date_fin = null } = {}, { rejectWithValue }) => {
+    async ({ listType = 'todo', date_debut = null, date_fin = null } = {}, { rejectWithValue }) => {
         try {
-            let url = `/backoffice/list-colis?is_controlled=${isControlled}`;
+            let url = `/backoffice/list-expedition`;
+
+            if (listType === 'history') {
+                url += `?status=depart_expedition_succes`;
+            } else {
+                url += `?status=en_transit_entrepot`;
+            }
+
             if (date_debut) url += `&date_debut=${date_debut}`;
             if (date_fin) url += `&date_fin=${date_fin}`;
 
             const response = await api.get(url);
-            return { listType, data: response.data };
+
+            let finalData = response.data;
+
+            // Flatten results to parcels so grouping logic in UI continues to work
+            if (response.data.data) {
+                const flattenedParcels = [];
+                response.data.data.forEach(expedition => {
+                    const { colis, ...expeditionInfo } = expedition;
+                    if (colis && Array.isArray(colis)) {
+                        colis.forEach(c => {
+                            flattenedParcels.push({
+                                ...c,
+                                expedition: expeditionInfo
+                            });
+                        });
+                    }
+                });
+                finalData = {
+                    ...response.data,
+                    data: flattenedParcels
+                };
+            }
+
+            return { listType, data: finalData };
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
         }

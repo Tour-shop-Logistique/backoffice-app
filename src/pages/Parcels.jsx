@@ -58,13 +58,13 @@ const Parcels = () => {
   useEffect(() => {
     // Only fetch if not already loaded (persist data)
     if (!hasLoaded) {
-      dispatch(fetchParcels({ listType: 'todo', isControlled: false }));
+      dispatch(fetchParcels({ listType: 'todo' }));
     }
   }, [dispatch, hasLoaded]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await dispatch(fetchParcels({ listType: 'todo', isControlled: false }));
+    await dispatch(fetchParcels({ listType: 'todo' }));
     setIsRefreshing(false);
   };
 
@@ -112,10 +112,10 @@ const Parcels = () => {
 
   const getStatusInfo = (status) => {
     switch (status) {
-      case 'accepted':
+      case 'en_transit_entrepot':
         return { label: 'À contrôler', styles: 'bg-amber-50 text-amber-600 border-amber-100', icon: ClipboardCheck };
-      case 'ready_boarding':
-        return { label: 'Prêt embarquement', styles: 'bg-blue-50 text-blue-600 border-blue-100', icon: MoveUpRight };
+      case 'depart_expedition_succes':
+        return { label: 'Validé / Expédié', styles: 'bg-emerald-50 text-emerald-600 border-emerald-100', icon: ShieldCheck };
       default:
         return { label: status || 'En attente', styles: 'bg-slate-50 text-slate-600 border-slate-100', icon: Package };
     }
@@ -155,9 +155,9 @@ const Parcels = () => {
       groups[key].parcels.push(parcel);
     });
     return Object.values(groups).sort((a, b) => {
-      // Sort by most recent parcel update
-      const dateA = new Date(a.parcels[0]?.updated_at || a.parcels[0]?.created_at || 0);
-      const dateB = new Date(b.parcels[0]?.updated_at || b.parcels[0]?.created_at || 0);
+      // Sort by most recent expedition departure or creation
+      const dateA = new Date(a.expedition?.date_expedition_depart || a.expedition?.created_at || 0);
+      const dateB = new Date(b.expedition?.date_expedition_depart || b.expedition?.created_at || 0);
       return dateB - dateA;
     });
   }, [filteredParcels]);
@@ -250,88 +250,138 @@ const Parcels = () => {
                 {groupedParcels.map(group => (
                   <tbody key={group.id} className="divide-y divide-slate-200 border-b-4 border-slate-50">
                     <tr className="bg-slate-50/80">
-                      <td colSpan="5" className="px-6 py-3">
-                        <div className="flex items-center gap-4">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200 text-xs font-bold text-slate-700 shadow-sm">
-                            <Truck size={14} className="text-blue-500" />
-                            {group.expedition?.reference || 'Sans référence'}
-                          </span>
-                          <div className="h-4 w-px bg-slate-300"></div>
-                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                            <User size={14} className="text-slate-400" />
-                            <span className="uppercase">{group.expedition?.expediteur?.nom_prenom || 'Expéditeur inconnu'}</span>
+                      <td colSpan="5" className="px-6 py-2">
+                        <div className="flex items-center w-full gap-8">
+                          {/* Left: Reference Container */}
+                          <div className="flex items-center gap-2 px-2.5 py-1 bg-white border border-slate-200/60 rounded-lg shadow-sm">
+                            <Truck size={13} className="text-blue-500/80" />
+                            <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-tight">
+                              {group.expedition?.reference || 'Sans ref'}
+                            </span>
                           </div>
-                          <ChevronRight size={14} className="text-slate-300" />
-                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                            <User size={14} className="text-slate-400" />
-                            <span className="uppercase">{group.expedition?.destinataire?.nom_prenom || 'Destinataire inconnu'}</span>
-                          </div>
-                          <div className="ml-auto flex items-center gap-3">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-2">
-                              {group.parcels.length} Colis
+
+                          {/* Middle: Breakdown Flow */}
+                          <div className="flex items-center gap-6">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Base</span>
+                              <span className="text-[11px] font-semibold text-slate-600 tabular-nums">
+                                {Number(group.expedition?.montant_base || 0).toLocaleString()}
+                              </span>
                             </div>
-                            <button
-                              onClick={() => handleEditExpedition(group.expedition)}
-                              className="p-1.5 hover:bg-slate-100 rounded-md text-slate-400 hover:text-blue-600 transition-colors"
-                              title="Modifier l'expédition"
-                            >
-                              <Edit2 size={14} />
-                            </button>
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Prestation</span>
+                              <span className="text-[11px] font-semibold text-blue-600 tabular-nums">
+                                +{Number(group.expedition?.montant_prestation || 0).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Emballage</span>
+                              <span className="text-[11px] font-semibold text-slate-600 tabular-nums">
+                                +{Number(group.expedition?.frais_emballage || 0).toLocaleString()}
+                              </span>
+                            </div>
+                            {Number(group.expedition?.frais_annexes || 0) > 0 && (
+                              <div className="flex items-baseline gap-1.5">
+                                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Annexes</span>
+                                <span className="text-[11px] font-semibold text-amber-600 tabular-nums">
+                                  +{Number(group.expedition?.frais_annexes || 0).toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right: Total & Status & Actions */}
+                          <div className="ml-auto flex items-center gap-6">
+                            {/* Financial Total Section */}
+                            <div className="flex items-center gap-4 pr-6 border-r border-slate-200">
+                              <div className="flex flex-col items-end leading-none">
+                                <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.15em] mb-1">Total Expédition</span>
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-[14px] font-semibold text-slate-900">
+                                    {Number(group.expedition?.montant_expedition || 0).toLocaleString()}
+                                  </span>
+                                  <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
+                                </div>
+                              </div>
+
+                              <div className={`px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wider border shadow-sm transition-all
+                                ${group.expedition?.statut_paiement === 'paye'
+                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                  : 'bg-amber-50 text-amber-600 border-amber-100'
+                                }`}>
+                                {group.expedition?.statut_paiement === 'paye' ? 'Payé' : 'Impayé'}
+                              </div>
+                            </div>
+
+                            {/* Group stats & Actions */}
+                            <div className="flex items-center gap-4">
+                              <div className="flex flex-col items-end">
+                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+                                  {group.parcels.length} Colis
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => handleEditExpedition(group.expedition)}
+                                className="p-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 transition-all shadow-sm group"
+                                title="Modifier l'expédition"
+                              >
+                                <Edit2 size={13} className="group-hover:scale-110 transition-transform" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </td>
                     </tr>
-                    {group.parcels.map((parcel) => {
-                      const status = getStatusInfo(parcel.expedition?.statut_expedition);
-                      const TypeIcon = getTypeIcon(parcel.code_colis);
-                      return (
-                        <tr key={parcel.id} className="hover:bg-slate-50 transition-colors group">
-                          <td className="px-6 py-3 pl-10">
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center border border-slate-200 group-hover:bg-white group-hover:scale-110 transition-all duration-300">
-                                <TypeIcon size={18} />
+                    {
+                      group.parcels.map((parcel) => {
+                        const status = getStatusInfo(parcel.expedition?.statut_expedition);
+                        const TypeIcon = getTypeIcon(parcel.code_colis);
+                        return (
+                          <tr key={parcel.id} className="hover:bg-slate-50 transition-colors group">
+                            <td className="px-6 py-3 pl-10">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center border border-slate-200 group-hover:bg-white group-hover:scale-110 transition-all duration-300">
+                                  <TypeIcon size={18} />
+                                </div>
+                                <div>
+                                  <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
+                                  <span className="text-xs font-bold text-slate-400 uppercase">{parcel.designation || 'Sans désignation'}</span>
+                                </div>
                               </div>
-                              <div>
-                                <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
-                                <span className="text-xs font-bold text-slate-400 uppercase">{parcel.designation || 'Sans désignation'}</span>
+                            </td>
+                            <td className="px-6 py-3">
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold ">
+                                  <Building2 size={18} className="text-slate-400" />
+                                  {parcel.expedition?.agence?.nom_agence}
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-3">
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold ">
-                                <Building2 size={18} className="text-slate-400" />
-                                {parcel.expedition?.agence?.nom_agence}
+                            </td>
+                            <td className="px-6 py-3">
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold uppercase">
+                                  <MapPin size={14} className="text-slate-400" />
+                                  {parcel.expedition?.pays_destination}
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-3">
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold uppercase">
-                                <MapPin size={14} className="text-slate-400" />
-                                {parcel.expedition?.pays_destination}
+                            </td>
+                            <td className="px-6 py-3">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-semibold text-slate-800">{parcel.poids} kg</span>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-3">
-                            <div className="flex flex-col">
-                              <span className="text-sm font-semibold text-slate-800">{parcel.poids} kg</span>
-                              <span className="text-xs font-bold text-slate-400 mt-1">
-                                {parcel.longueur && `${Math.round(parcel.longueur)} x ${Math.round(parcel.largeur)} x ${Math.round(parcel.hauteur)} cm`}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-3 text-right">
-                            <button
-                              onClick={() => handleViewParcel(parcel)}
-                              className="px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all bg-slate-900 text-white hover:bg-slate-800 shadow-md shadow-slate-900/10 active:scale-95"
-                            >
-                              Contrôler
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            </td>
+                            <td className="px-6 py-3 text-right">
+                              <button
+                                onClick={() => handleViewParcel(parcel)}
+                                className="px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all bg-slate-900 text-white hover:bg-slate-800 shadow-md shadow-slate-900/10 active:scale-95"
+                              >
+                                Contrôler
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    }
                   </tbody>
                 ))}
               </table>
@@ -346,8 +396,11 @@ const Parcels = () => {
                       <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
                         <Truck size={12} /> {group.expedition?.reference || 'N/A'}
                       </span>
-                      <span className="text-[10px] text-slate-500 uppercase font-medium mt-0.5">
-                        {group.expedition?.expediteur?.nom_prenom} <ChevronRight size={10} className="inline" /> {group.expedition?.destinataire?.nom_prenom}
+                      <span className="text-[10px] text-slate-500 uppercase font-bold mt-0.5 flex items-center gap-2">
+                        {Number(group.expedition?.montant_expedition || 0).toLocaleString()} CFA
+                        <span className={`px-1 rounded ${group.expedition?.statut_paiement === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {group.expedition?.statut_paiement === 'paye' ? 'PAYÉ' : 'NON PAYÉ'}
+                        </span>
                       </span>
                     </div>
                     <span className="text-[10px] font-bold bg-white px-2 py-1 rounded border border-slate-200 text-slate-500">

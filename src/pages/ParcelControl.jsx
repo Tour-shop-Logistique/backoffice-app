@@ -20,7 +20,11 @@ import {
     Phone,
     Calendar,
     User,
-    AlertCircle
+    AlertCircle,
+    CreditCard,
+    Gauge,
+    Zap,
+    BadgeCheck
 } from 'lucide-react';
 
 const ParcelControl = () => {
@@ -56,12 +60,25 @@ const ParcelControl = () => {
 
     const getStatusInfo = (status) => {
         switch (status) {
-            case 'accepted':
-                return { label: 'À contrôler', styles: 'bg-amber-100 text-amber-700 border-amber-200' };
-            case 'ready_boarding':
-                return { label: 'Prêt embarquement', styles: 'bg-blue-100 text-blue-700 border-blue-200' };
+            case 'en_transit_entrepot':
+                return { label: 'À contrôler', styles: 'bg-amber-100 text-amber-700 border-amber-200', icon: ShieldCheck };
+            case 'depart_expedition_succes':
+                return { label: 'Validé / Expédié', styles: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: BadgeCheck };
+            case 'recu_agence_depart':
+                return { label: 'Reçu Agence', styles: 'bg-blue-100 text-blue-700 border-blue-200', icon: Building2 };
             default:
-                return { label: status || 'Inconnu', styles: 'bg-slate-100 text-slate-700 border-slate-200' };
+                return { label: status?.replace(/_/g, ' ') || 'Inconnu', styles: 'bg-slate-100 text-slate-700 border-slate-200', icon: Info };
+        }
+    };
+
+    const getPaymentStatus = (status) => {
+        switch (status) {
+            case 'paye':
+                return { label: 'Payé', styles: 'bg-emerald-500 text-white' };
+            case 'en_attente':
+                return { label: 'En attente', styles: 'bg-amber-500 text-white' };
+            default:
+                return { label: status || 'Non défini', styles: 'bg-slate-400 text-white' };
         }
     };
 
@@ -128,23 +145,27 @@ const ParcelControl = () => {
                     </div>
                     <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Désignation</p>
-                        <p className="text-sm font-medium text-slate-è00">{currentParcel.designation || 'Non spécifié'}</p>
+                        <p className="text-sm font-bold text-slate-900 leading-tight uppercase tracking-tight">{currentParcel.designation || 'Non spécifié'}</p>
                     </div>
                 </div>
                 <div className="h-8 border-l border-slate-200 hidden sm:block"></div>
                 <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Catégorie</p>
-                    <p className="text-sm font-medium text-slate-700">{currentParcel.category?.nom || 'Logistique'}</p>
-                </div>
-                <div className="h-8 border-l border-slate-200 hidden sm:block"></div>
-                <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Reference</p>
-                    <p className="text-sm font-medium text-slate-700">{currentParcel.code_colis}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Code Colis</p>
+                    <p className="text-sm font-mono font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                        {currentParcel.code_colis}
+                    </p>
                 </div>
                 <div className="ml-auto flex items-center gap-2">
-                    <button className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition-colors">
-                        Valider
-                    </button>
+                    {currentParcel.expedition?.statut_expedition === 'depart_expedition_succes' ? (
+                        <div className="px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                            <ShieldCheck size={14} />
+                            Colis Validé
+                        </div>
+                    ) : (
+                        <button className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition-colors">
+                            Valider le contrôle
+                        </button>
+                    )}
                     <button className="p-2 border border-slate-200 text-rose-500 rounded-lg hover:bg-rose-50 hover:border-rose-100 transition-colors">
                         <AlertCircle size={18} />
                     </button>
@@ -211,24 +232,48 @@ const ParcelControl = () => {
                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
                         <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-200/60">
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                                <Scale size={14} /> Caractéristiques Techniques
+                                <Scale size={14} /> Informations Logistiques
                             </h3>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
                                 <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Poids</p>
                                 <p className="text-lg font-semibold text-slate-800">{currentParcel.poids} <span className="text-[10px] font-medium text-slate-400 uppercase">kg</span></p>
                             </div>
                             <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                                <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Volume</p>
-                                <p className="text-lg font-semibold text-slate-800">{Math.round(currentParcel.volume || 0)} <span className="text-[10px] font-medium text-slate-400 uppercase">cm³</span></p>
-                            </div>
-                            <div className="col-span-2 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                                <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Dimensions (LxPxH)</p>
-                                <p className="text-base font-semibold text-slate-800">
-                                    {Math.round(currentParcel.longueur)}<span className="text-slate-300 mx-1">×</span>{Math.round(currentParcel.largeur)}<span className="text-slate-300 mx-1">×</span>{Math.round(currentParcel.hauteur)} <span className="text-[10px] font-medium text-slate-400 uppercase">cm</span>
+                                <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Type d'expédition</p>
+                                <p className="text-sm font-bold text-slate-800 uppercase tracking-tight">
+                                    {currentParcel.expedition?.type_expedition?.replace(/_/g, ' ') || 'Standard'}
                                 </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Route visualization */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <Gauge size={14} className="text-indigo-500" /> Suivi du Trajet
+                        </h3>
+                        <div className="flex items-center justify-between relative px-2 py-4">
+                            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-100 -translate-y-1/2 z-0 mx-8"></div>
+                            <div className="relative z-10 flex flex-col items-center">
+                                <div className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center border-4 border-white shadow-md">
+                                    <MapPin size={16} />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-900 mt-2 uppercase tracking-tighter">{currentParcel.expedition?.pays_depart}</span>
+                            </div>
+                            <div className="relative z-10 flex flex-col items-center">
+                                <div className={`w-9 h-9 rounded-full ${status.label.includes('Validé') ? 'bg-emerald-500 text-white' : 'bg-white text-slate-300 border-2 border-slate-100'} flex items-center justify-center shadow-md`}>
+                                    {isAir ? <Plane size={16} /> : <Ship size={16} />}
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-400 mt-2 uppercase italic tracking-tighter">En Transit</span>
+                            </div>
+                            <div className="relative z-10 flex flex-col items-center">
+                                <div className="w-9 h-9 rounded-full bg-slate-50 text-slate-200 border-2 border-slate-100 flex items-center justify-center shadow-inner">
+                                    <MapPin size={16} />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-tighter">{currentParcel.expedition?.pays_destination}</span>
                             </div>
                         </div>
                     </div>
@@ -236,19 +281,20 @@ const ParcelControl = () => {
                     {/* Compact Items List */}
                     <div className="bg-white border border-slate-200 rounded-xl p-4">
                         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <Blocks size={14} /> Contenu du colis
+                            <Blocks size={14} /> Articles dans ce colis
                         </h3>
                         {currentParcel.articles && currentParcel.articles.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
                                 {currentParcel.articles.map((article, idx) => (
-                                    <div key={idx} className="bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-100">
+                                    <div key={idx} className="bg-slate-50 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold border border-slate-100 flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>
                                         {article}
                                     </div>
                                 ))}
                             </div>
                         ) : (
                             <div className="py-6 text-center border-2 border-dashed border-slate-100 rounded-lg">
-                                <p className="text-xs text-slate-400 font-medium italic">Aucun détail disponible</p>
+                                <p className="text-xs text-slate-400 font-medium italic">Aucun article listé</p>
                             </div>
                         )}
                     </div>
@@ -256,6 +302,33 @@ const ParcelControl = () => {
 
                 {/* Tracking & Financials (Right Side) */}
                 <div className="space-y-4">
+                    {/* Status Card */}
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Suivi Logistique</span>
+                            <div className={`px-2 py-1 rounded text-[9px] font-bold uppercase ${getPaymentStatus(currentParcel.expedition?.statut_paiement).styles}`}>
+                                {getPaymentStatus(currentParcel.expedition?.statut_paiement).label}
+                            </div>
+                        </div>
+                        <div className="p-4 space-y-4">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Statut Expédition</p>
+                                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-bold ${status.styles}`}>
+                                    <status.icon size={16} />
+                                    {status.label}
+                                </div>
+                            </div>
+
+                            {currentParcel.expedition?.code_validation_reception && (
+                                <div className="pt-2">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Code Validation Réception</p>
+                                    <div className="text-lg font-mono font-bold text-slate-900 tracking-widest bg-slate-50 p-2 rounded border border-dashed border-slate-200 text-center uppercase">
+                                        {currentParcel.expedition.code_validation_reception}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-4 shadow-sm">
                         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                             <Truck size={14} /> Provenance
@@ -282,42 +355,7 @@ const ParcelControl = () => {
                         </div>
                     </div>
 
-                    <div className="bg-slate-900 rounded-xl p-5 text-white shadow-md relative overflow-hidden">
-                        <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            Tarification
-                        </h3>
-                        <div className="space-y-3 relative z-10">
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-white/50">Base</span>
-                                <span className="font-bold">{Number(currentParcel.montant_colis_base).toLocaleString()} CFA</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-white/50">Prestation</span>
-                                <span className="font-bold text-blue-400">+{Number(currentParcel.montant_colis_prestation).toLocaleString()} CFA</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xs pb-3 border-b border-white/5">
-                                <span className="text-white/50">Emballage</span>
-                                <span className="font-bold">+{Number(currentParcel.prix_emballage).toLocaleString()} CFA</span>
-                            </div>
 
-                            <div className="pt-2">
-                                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.2em] mb-1">Net à Payer</p>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-2xl font-bold tracking-tighter">
-                                        {Number(currentParcel.montant_colis_total).toLocaleString()}
-                                    </span>
-                                    <span className="text-[10px] font-bold text-white/40">CFA</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Integrated Actions Bottom */}
-                    <div className="pt-2">
-                        <button className="w-full py-3 bg-slate-100 text-slate-500 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-200 transition-all border border-slate-200">
-                            Signaler un défaut
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>

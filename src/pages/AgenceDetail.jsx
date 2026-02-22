@@ -191,18 +191,18 @@ const AgenceDetail = () => {
     }, [dispatch, id]);
 
     // 4. Charger les expéditions quand on change d'onglet ou de page (seulement si nécessaire)
-    useEffect(() => {
-        if (id && activeTab === "expeditions") {
-            const hasData = currentAgencyExpeditions.length > 0;
-            const isSamePage = expeditionsMeta?.current_page === currentPage;
-
-            if (!hasData || !isSamePage) {
-                dispatch(fetchAgenceExpeditions({ agenceId: id, page: currentPage }));
-            }
-        }
-    }, [dispatch, id, activeTab, currentPage, currentAgencyExpeditions.length, expeditionsMeta?.current_page]);
+    // useEffect(() => {
+    //     if (id && activeTab === "expeditions") {
+    //         const hasData = currentAgencyExpeditions.length > 0;
+    //         const isSamePage = expeditionsMeta?.current_page === currentPage;
+    //         if (!hasData || !isSamePage) {
+    //             dispatch(fetchAgenceExpeditions({ agenceId: id, page: currentPage }));
+    //         }
+    //     }
+    // }, [dispatch, id, activeTab, currentPage, currentAgencyExpeditions.length, expeditionsMeta?.current_page]);
 
     // Cleanup au démontage
+
     useEffect(() => {
         return () => {
             dispatch(clearCurrentAgency());
@@ -284,7 +284,7 @@ const AgenceDetail = () => {
                             { id: 'details', label: 'Détails & Infos', icon: Info },
                             { id: 'tarifs_simple', label: 'Tarifs Simple', icon: Package },
                             { id: 'tarifs_groupage', label: 'Tarifs Groupage', icon: Layers },
-                            { id: 'expeditions', label: 'Expéditions', icon: Truck }
+                            // { id: 'expeditions', label: 'Expéditions', icon: Truck }
                         ].map((tab) => (
                             <button
                                 key={tab.id}
@@ -301,18 +301,18 @@ const AgenceDetail = () => {
                     </div>
 
                     {/* Manual Refresh Button for Tariffs & Expeditions */}
-                    {(activeTab === 'tarifs_groupage' || activeTab === 'tarifs_simple' || activeTab === 'expeditions') && (
+                    {(activeTab === 'tarifs_groupage' || activeTab === 'tarifs_simple') && (
                         <button
                             onClick={() => {
                                 if (activeTab === 'tarifs_groupage') dispatch(fetchAgenceTarifsGroupage(id));
                                 else if (activeTab === 'tarifs_simple') dispatch(fetchAgenceTarifsSimple(id));
-                                else dispatch(fetchAgenceExpeditions({ agenceId: id, page: currentPage }));
+                                // else dispatch(fetchAgenceExpeditions({ agenceId: id, page: currentPage }));
                             }}
-                            disabled={isLoadingTarifs || isLoadingExpeditions}
+                            disabled={isLoadingTarifs}
                             className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group"
                             title="Rafraîchir les données"
                         >
-                            <RefreshCw size={14} className={`${(isLoadingTarifs || isLoadingExpeditions) ? 'animate-spin text-slate-900' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+                            <RefreshCw size={14} className={`${(isLoadingTarifs) ? 'animate-spin text-slate-900' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
                             <span className="text-[10px] font-bold uppercase tracking-wider hidden md:inline">Rafraîchir</span>
                         </button>
                     )}
@@ -911,8 +911,9 @@ const AgenceDetail = () => {
                     )}
                 </div>
             </div>
+
             {/* Modal Détails Expédition */}
-            <Modal
+            {/* <Modal
                 isOpen={!!selectedExpedition}
                 onClose={() => setSelectedExpedition(null)}
                 title={`Expédition ${selectedExpedition?.reference}`}
@@ -921,7 +922,6 @@ const AgenceDetail = () => {
             >
                 {selectedExpedition && (
                     <div className="space-y-8 pb-4">
-                        {/* Status Bar */}
                         <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                             <div className="flex items-center gap-4">
                                 <div className="space-y-1">
@@ -939,9 +939,8 @@ const AgenceDetail = () => {
                             </div>
                         </div>
 
-                        {/* Addresses Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Expéditeur */}
+
                             <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-3 text-slate-50 group-hover:text-slate-100 transition-colors">
                                     <User size={48} strokeWidth={4} />
@@ -974,7 +973,6 @@ const AgenceDetail = () => {
                                 </div>
                             </div>
 
-                            {/* Destinataire */}
                             <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-3 text-blue-50 group-hover:text-blue-100 transition-colors">
                                     <User size={48} strokeWidth={4} />
@@ -1008,7 +1006,6 @@ const AgenceDetail = () => {
                             </div>
                         </div>
 
-                        {/* Financial Summary */}
                         <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl shadow-slate-200">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="p-2 bg-white/10 rounded-lg">
@@ -1036,7 +1033,6 @@ const AgenceDetail = () => {
                             </div>
                         </div>
 
-                        {/* Parcels List */}
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -1077,7 +1073,6 @@ const AgenceDetail = () => {
                             </div>
                         </div>
 
-                        {/* Extra Info */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
                                 <div className="flex items-center gap-2 mb-2">
@@ -1116,7 +1111,7 @@ const AgenceDetail = () => {
                         </div>
                     </div>
                 )}
-            </Modal>
+            </Modal> */}
         </div>
     );
 };
