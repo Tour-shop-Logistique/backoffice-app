@@ -74,6 +74,18 @@ export const updateExpedition = createAsyncThunk(
     }
 );
 
+export const controlParcels = createAsyncThunk(
+    'parcels/controlParcels',
+    async (codes, { rejectWithValue }) => {
+        try {
+            const response = await api.put(`/backoffice/control-colis`, { codes });
+            return { codes, response: response.data };
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
 const initialState = {
     // List for "To Control" (is_controlled=false)
     todoList: {
@@ -97,7 +109,8 @@ const initialState = {
     currentParcel: null,
     isLoadingDetail: false,
     detailError: null,
-    isUpdatingExpedition: false
+    isUpdatingExpedition: false,
+    isBulkControlling: false
 };
 
 const parcelSlice = createSlice({
@@ -209,6 +222,21 @@ const parcelSlice = createSlice({
             })
             .addCase(updateExpedition.rejected, (state) => {
                 state.isUpdatingExpedition = false;
+            })
+            // Control Parcels (Bulk)
+            .addCase(controlParcels.pending, (state) => {
+                state.isBulkControlling = true;
+            })
+            .addCase(controlParcels.fulfilled, (state, action) => {
+                state.isBulkControlling = false;
+                const { codes } = action.payload;
+                // Remove controlled items from todoList
+                state.todoList.items = state.todoList.items.filter(
+                    item => !codes.includes(item.code_colis)
+                );
+            })
+            .addCase(controlParcels.rejected, (state) => {
+                state.isBulkControlling = false;
             });
     }
 });

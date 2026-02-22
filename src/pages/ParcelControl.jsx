@@ -302,33 +302,6 @@ const ParcelControl = () => {
 
                 {/* Tracking & Financials (Right Side) */}
                 <div className="space-y-4">
-                    {/* Status Card */}
-                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Suivi Logistique</span>
-                            <div className={`px-2 py-1 rounded text-[9px] font-bold uppercase ${getPaymentStatus(currentParcel.expedition?.statut_paiement).styles}`}>
-                                {getPaymentStatus(currentParcel.expedition?.statut_paiement).label}
-                            </div>
-                        </div>
-                        <div className="p-4 space-y-4">
-                            <div className="space-y-1">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Statut Expédition</p>
-                                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-bold ${status.styles}`}>
-                                    <status.icon size={16} />
-                                    {status.label}
-                                </div>
-                            </div>
-
-                            {currentParcel.expedition?.code_validation_reception && (
-                                <div className="pt-2">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Code Validation Réception</p>
-                                    <div className="text-lg font-mono font-bold text-slate-900 tracking-widest bg-slate-50 p-2 rounded border border-dashed border-slate-200 text-center uppercase">
-                                        {currentParcel.expedition.code_validation_reception}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
                     <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-4 shadow-sm">
                         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                             <Truck size={14} /> Provenance

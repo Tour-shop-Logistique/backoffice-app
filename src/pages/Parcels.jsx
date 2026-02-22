@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchParcels, updateExpedition } from '../redux/slices/parcelSlice';
+import { fetchParcels, updateExpedition, controlParcels } from '../redux/slices/parcelSlice';
+import { showNotification } from "../redux/slices/uiSlice";
 import { ROUTES } from '../routes';
 import Modal from '../components/common/Modal';
 import QRScanner from '../components/common/QRScanner';
@@ -54,6 +55,66 @@ const Parcels = () => {
   const [fraisExpedition, setFraisExpedition] = useState('');
   const [lienTracking, setLienTracking] = useState('');
   const isUpdatingExpedition = useSelector(state => state.parcels.isUpdatingExpedition);
+  const isBulkControlling = useSelector(state => state.parcels.isBulkControlling);
+
+  // Selection state
+  const [selectedCodes, setSelectedCodes] = useState([]);
+  const [validatingCode, setValidatingCode] = useState(null);
+
+  const toggleSelect = (code) => {
+    setSelectedCodes(prev =>
+      prev.includes(code)
+        ? prev.filter(c => c !== code)
+        : [...prev, code]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    // Only select parcels that are NOT already controlled
+    const selectableParcels = filteredParcels.filter(p => !p.is_controlled);
+
+    if (selectedCodes.length === selectableParcels.length && selectableParcels.length > 0) {
+      setSelectedCodes([]);
+    } else {
+      setSelectedCodes(selectableParcels.map(p => p.code_colis));
+    }
+  };
+
+  const handleBulkControl = async () => {
+    if (selectedCodes.length === 0) return;
+
+    try {
+      const resultAction = await dispatch(controlParcels(selectedCodes)).unwrap();
+      dispatch(showNotification({
+        type: 'success',
+        message: `${selectedCodes.length} colis contrôlés avec succès.`
+      }));
+      setSelectedCodes([]);
+    } catch (error) {
+      dispatch(showNotification({
+        type: 'error',
+        message: error.message || "Erreur lors du contrôle des colis."
+      }));
+    }
+  };
+
+  const handleSingleValidate = async (code) => {
+    setValidatingCode(code);
+    try {
+      await dispatch(controlParcels([code])).unwrap();
+      dispatch(showNotification({
+        type: 'success',
+        message: `Le colis ${code} a été validé.`
+      }));
+    } catch (error) {
+      dispatch(showNotification({
+        type: 'error',
+        message: error.message || "Erreur lors de la validation du colis."
+      }));
+    } finally {
+      setValidatingCode(null);
+    }
+  };
 
   useEffect(() => {
     // Only fetch if not already loaded (persist data)
@@ -213,10 +274,37 @@ const Parcels = () => {
       {/* MAIN CONTENT AREA */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-black transition-all">
         {/* Table Header Summary */}
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/10 flex items-center justify-between">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            {groupedParcels.length} expéditions ({filteredParcels.length} colis)
-          </span>
+        <div className="px-4 py-3 md:px-6 md:py-4 border-b border-slate-100 bg-slate-50/10">
+          <div className="flex flex-col md:flex-row md:items-center gap-3 md:items-center justify-between">
+            <div className="flex items-center justify-between md:justify-start gap-4">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                {groupedParcels.length} expéditions ({filteredParcels.length} colis)
+              </span>
+
+            </div>
+
+            {selectedCodes.length > 0 && (
+              <div className="flex items-center hidden md:flex gap-2 md:gap-3 md:pl-4 md:border-l md:border-slate-200 animate-in fade-in slide-in-from-top-2 md:slide-in-from-left-2 transition-all">
+                <span className="hidden md:inline text-[10px] font-bold text-indigo-600 uppercase tracking-widest whitespace-nowrap">
+                  {selectedCodes.length} sélectionné(s)
+                </span>
+                <button
+                  onClick={handleBulkControl}
+                  disabled={isBulkControlling}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg md:rounded-md text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm shadow-indigo-200 active:scale-95 disabled:opacity-50"
+                >
+                  {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
+                  Valider la sélection
+                </button>
+                <button
+                  onClick={() => setSelectedCodes([])}
+                  className="px-2 py-2 md:py-1 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center"
+                >
+                  Annuler
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Table/List Content */}
@@ -240,6 +328,16 @@ const Parcels = () => {
               <table className="w-full">
                 <thead className="bg-slate-50/50 border-b border-slate-200">
                   <tr>
+                    <th className="px-6 py-3 text-left w-10">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedCodes.length === filteredParcels.length && filteredParcels.length > 0}
+                          onChange={toggleSelectAll}
+                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                        />
+                      </div>
+                    </th>
                     <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Colis / Désignation</th>
                     <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Provenance</th>
                     <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Destination</th>
@@ -250,7 +348,7 @@ const Parcels = () => {
                 {groupedParcels.map(group => (
                   <tbody key={group.id} className="divide-y divide-slate-200 border-b-4 border-slate-50">
                     <tr className="bg-slate-50/80">
-                      <td colSpan="5" className="px-6 py-2">
+                      <td colSpan="6" className="px-6 py-2">
                         <div className="flex items-center w-full gap-8">
                           {/* Left: Reference Container */}
                           <div className="flex items-center gap-2 px-2.5 py-1 bg-white border border-slate-200/60 rounded-lg shadow-sm">
@@ -337,8 +435,19 @@ const Parcels = () => {
                         const status = getStatusInfo(parcel.expedition?.statut_expedition);
                         const TypeIcon = getTypeIcon(parcel.code_colis);
                         return (
-                          <tr key={parcel.id} className="hover:bg-slate-50 transition-colors group">
-                            <td className="px-6 py-3 pl-10">
+                          <tr key={parcel.id} className={`hover:bg-slate-50 transition-colors group ${selectedCodes.includes(parcel.code_colis) ? 'bg-indigo-50/30' : ''} ${parcel.is_controlled ? 'opacity-80' : ''}`}>
+                            <td className="px-6 py-3">
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedCodes.includes(parcel.code_colis)}
+                                  onChange={() => toggleSelect(parcel.code_colis)}
+                                  disabled={parcel.is_controlled}
+                                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                />
+                              </div>
+                            </td>
+                            <td className="px-6 py-3">
                               <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center border border-slate-200 group-hover:bg-white group-hover:scale-110 transition-all duration-300">
                                   <TypeIcon size={18} />
@@ -371,12 +480,29 @@ const Parcels = () => {
                               </div>
                             </td>
                             <td className="px-6 py-3 text-right">
-                              <button
-                                onClick={() => handleViewParcel(parcel)}
-                                className="px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all bg-slate-900 text-white hover:bg-slate-800 shadow-md shadow-slate-900/10 active:scale-95"
-                              >
-                                Contrôler
-                              </button>
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => handleViewParcel(parcel)}
+                                  className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-95"
+                                >
+                                  Détails
+                                </button>
+                                {parcel.is_controlled ? (
+                                  <div className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center gap-2">
+                                    <ShieldCheck size={12} />
+                                    Contrôlé
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => handleSingleValidate(parcel.code_colis)}
+                                    disabled={isBulkControlling || validatingCode === parcel.code_colis}
+                                    className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-slate-900 text-white hover:bg-slate-800 shadow-md shadow-slate-900/10 active:scale-95 flex items-center gap-2 disabled:opacity-50"
+                                  >
+                                    {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
+                                    Valider
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -391,52 +517,92 @@ const Parcels = () => {
             <div className="md:hidden space-y-4 p-2">
               {groupedParcels.map(group => (
                 <div key={group.id} className="bg-slate-50/50 rounded-xl border border-slate-200 overflow-hidden">
-                  <div className="px-4 py-3 bg-slate-100/50 border-b border-slate-200 flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                        <Truck size={12} /> {group.expedition?.reference || 'N/A'}
+                  <div className="px-3 py-3 bg-slate-100/50 border-b border-slate-200 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1 truncate">
+                        <Truck size={12} className="shrink-0" /> {group.expedition?.reference || 'N/A'}
                       </span>
-                      <span className="text-[10px] text-slate-500 uppercase font-bold mt-0.5 flex items-center gap-2">
-                        {Number(group.expedition?.montant_expedition || 0).toLocaleString()} CFA
-                        <span className={`px-1 rounded ${group.expedition?.statut_paiement === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[9px] text-slate-500 font-bold">
+                          {Number(group.expedition?.montant_expedition || 0).toLocaleString()} CFA
+                        </span>
+                        <span className={`px-1 rounded text-[8px] font-bold ${group.expedition?.statut_paiement === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                           {group.expedition?.statut_paiement === 'paye' ? 'PAYÉ' : 'NON PAYÉ'}
                         </span>
-                      </span>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-bold bg-white px-2 py-1 rounded border border-slate-200 text-slate-500">
-                      {group.parcels.length}
-                    </span>
-                    <button
-                      onClick={() => handleEditExpedition(group.expedition)}
-                      className="ml-2 p-1.5 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-blue-600 active:bg-slate-50"
-                    >
-                      <Edit2 size={14} />
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[9px] font-bold bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-500">
+                        {group.parcels.length}
+                      </span>
+                      <button
+                        onClick={() => handleEditExpedition(group.expedition)}
+                        className="p-1.5 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-blue-600 active:bg-slate-50"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="divide-y divide-slate-200">
                     {group.parcels.map((parcel) => {
-                      const TypeIcon = getTypeIcon(parcel.code_colis);
+                      const isSelected = selectedCodes.includes(parcel.code_colis);
                       return (
-                        <div key={parcel.id} className="p-4 bg-white space-y-4 active:bg-slate-50 transition-colors">
-                          <div className="flex items-start justify-between">
-                            <div className="flex gap-3">
-                              <div className="h-10 w-10 bg-slate-50 rounded-lg flex items-center justify-center text-slate-500 border border-slate-100 shadow-sm">
-                                <TypeIcon size={20} />
+                        <div
+                          key={parcel.id}
+                          className={`p-4 space-y-4 transition-colors ${isSelected ? 'bg-indigo-50/50' : 'bg-white'} active:bg-slate-50 ${parcel.is_controlled ? 'opacity-70' : ''}`}
+                          onClick={() => !parcel.is_controlled && toggleSelect(parcel.code_colis)}
+                        >
+                          <div className="flex items-start">
+                            <div className="flex gap-3 w-full min-w-0">
+                              <div className="flex items-center shrink-0">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    toggleSelect(parcel.code_colis);
+                                  }}
+                                  disabled={parcel.is_controlled}
+                                  className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer disabled:opacity-30"
+                                />
                               </div>
-                              <div>
-                                <p className="font-bold text-slate-800 text-sm">{parcel.code_colis}</p>
-                                <p className="text-xs font-bold text-slate-400 uppercase mt-1">{parcel.expedition?.pays_destination}</p>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-bold text-slate-800 text-sm truncate">{parcel.code_colis}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 truncate">{parcel.expedition?.pays_destination}</p>
                               </div>
                             </div>
                           </div>
 
-                          <button
-                            onClick={() => handleViewParcel(parcel)}
-                            className="w-full px-4 py-3 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase shadow-lg shadow-slate-900/10 active:scale-95 transition-transform"
-                          >
-                            Contrôler
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewParcel(parcel);
+                              }}
+                              className="flex-1 px-4 py-2 bg-gray-200 text-slate-900 rounded-lg text-xs font-bold uppercase active:scale-95 transition-transform"
+                            >
+                              Détails
+                            </button>
+                            {parcel.is_controlled ? (
+                              <div className="flex-1 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold uppercase flex items-center justify-center gap-2">
+                                <ShieldCheck size={14} />
+                                Contrôlé
+                              </div>
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSingleValidate(parcel.code_colis);
+                                }}
+                                disabled={isBulkControlling || validatingCode === parcel.code_colis}
+                                className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase shadow-lg shadow-slate-900/10 active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-50"
+                              >
+                                {validatingCode === parcel.code_colis ? <Loader2 size={14} className="animate-spin" /> : <PackageCheck size={14} />}
+                                Valider
+                              </button>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -515,6 +681,34 @@ const Parcels = () => {
           </div>
         </div>
       </Modal>
+
+      {/* MOBILE FLOATING ACTION BAR */}
+      {selectedCodes.length > 0 && (
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 animate-in slide-in-from-bottom-10 duration-300">
+          <div className="bg-slate-900 text-white rounded-lg shadow-2xl shadow-slate-900/40 p-2 flex items-center justify-between border border-white/10 backdrop-blur-lg">
+            <div className="flex flex-col min-w-0 pr-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sélection</span>
+              <span className="text-xs font-bold truncate">{selectedCodes.length} colis</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedCodes([])}
+                className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleBulkControl}
+                disabled={isBulkControlling}
+                className="bg-white text-slate-900 px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
+                Valider
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div >
   );
