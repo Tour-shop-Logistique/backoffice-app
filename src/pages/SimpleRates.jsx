@@ -7,7 +7,7 @@ import {
     deleteTarif,
     updateTarifStatus,
 } from "../redux/slices/tarificationSlice";
-import { fetchZones } from "../redux/slices/zoneSlice";
+
 import Modal from "../components/common/Modal";
 import DeleteModal from "../components/common/DeleteModal";
 import SimpleTarifForm from "../components/common/SimpleTarifForm";
@@ -32,7 +32,7 @@ const SimpleRates = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const { tarifs, isLoading, error, hasLoaded: hasLoadedTarifs } = useSelector((state) => state.tarification);
-    const { zones, hasLoaded: hasLoadedZones } = useSelector((state) => state.zones);
+    const { zones } = useSelector((state) => state.zones); // utilisé uniquement dans les formulaires
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTarif, setSelectedTarif] = useState(null);
@@ -47,11 +47,8 @@ const SimpleRates = () => {
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            await Promise.all([
-                dispatch(fetchTarifs({ silent: true })).unwrap(),
-                dispatch(fetchZones({ silent: true })).unwrap()
-            ]);
-            dispatch(showNotification({ type: 'success', message: 'Tarifs et zones mis à jour.' }));
+            await dispatch(fetchTarifs({ silent: true })).unwrap();
+            dispatch(showNotification({ type: 'success', message: 'Tarifs mis à jour.' }));
         } catch (error) {
             dispatch(showNotification({ type: 'error', message: 'Erreur lors du rafraîchissement.' }));
         } finally {
@@ -157,12 +154,11 @@ const SimpleRates = () => {
 
         return raw.filter(tarif => {
             const indice = tarif.indice?.toString() || '';
-            const zone = zones.find(z => z.id === tarif.zone_destination_id);
-            const zoneName = (zone?.nom || tarif.pays || '').toLowerCase();
+            const zoneName = (tarif.zone?.nom || tarif.pays || '').toLowerCase();
             const search = searchTerm.toLowerCase();
             return indice.includes(search) || zoneName.includes(search);
         });
-    }, [tarifs, zones, searchTerm]);
+    }, [tarifs, searchTerm]);
 
     // 2. Filtrer par statut pour l'affichage
     const simpleTarifs = useMemo(() => {
@@ -303,7 +299,7 @@ const SimpleRates = () => {
                                 </thead>
                                 <tbody className="divide-y divide-slate-200">
                                     {simpleTarifs.map((tarif) => {
-                                        const zoneName = zones.find(z => z.id === tarif.zone_destination_id)?.nom || tarif.pays || 'Zone ?';
+                                        const zoneName = tarif.zone?.nom || tarif.pays || 'Zone ?';
                                         const mb = parseFloat(tarif.montant_base) || 0;
                                         const pp = parseFloat(tarif.pourcentage_prestation) || 0;
                                         const mp = mb * (pp / 100);
@@ -392,7 +388,7 @@ const SimpleRates = () => {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="font-semibold text-slate-900 text-sm truncate">
-                                                        {zones.find(z => z.id === tarif.zone_destination_id)?.nom || tarif.pays || '?'}
+                                                        {tarif.zone?.nom || tarif.pays || '?'}
                                                     </p>
                                                     <p className="text-xs text-slate-500 font-bold uppercase">
                                                         {total.toLocaleString()} FCFA
@@ -485,7 +481,7 @@ const SimpleRates = () => {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleDeleteTarif}
-                itemName={`${tarifToDelete?.indice} KG (${zones.find(z => z.id === tarifToDelete?.zone_destination_id)?.nom || tarifToDelete?.pays || '?'})`}
+                itemName={`${tarifToDelete?.indice} KG (${tarifToDelete?.zone?.nom || tarifToDelete?.pays || '?'})`}
                 isLoading={isDeleting}
             />
         </div>

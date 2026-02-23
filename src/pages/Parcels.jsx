@@ -234,7 +234,7 @@ const Parcels = () => {
               Colis à Contrôler
             </h1>
             <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
-              Liste des colis en attente de vérification logistique
+              Liste des colis en attente de vérification
             </p>
           </div>
 
@@ -341,7 +341,7 @@ const Parcels = () => {
                     <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Colis / Désignation</th>
                     <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Provenance</th>
                     <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Destination</th>
-                    <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Poids / Dimensions</th>
+                    <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Poids</th>
                     <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Action</th>
                   </tr>
                 </thead>

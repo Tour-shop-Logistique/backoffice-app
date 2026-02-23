@@ -26,6 +26,7 @@ import AgenceDetail from './pages/AgenceDetail';
 import Produits from './pages/produits';
 import BackofficeSetup from './pages/BackofficeSetup';
 import ParcelControl from './pages/ParcelControl';
+import IncomingParcels from './pages/IncomingParcels';
 
 // Composant de chargement
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -75,6 +76,7 @@ function App() {
             <Route path={ROUTES.PRODUITS} element={<Produits />} />
             <Route path={ROUTES.BACKOFFICE_SETUP} element={<BackofficeSetup />} />
             <Route path={ROUTES.PARCEL_CONTROL} element={<ParcelControl />} />
+            <Route path={ROUTES.INCOMING_PARCELS} element={<IncomingParcels />} />
           </Route>
 
           {/* Redirection par défaut (catch-all) */}

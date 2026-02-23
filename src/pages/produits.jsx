@@ -461,17 +461,17 @@ export default function Produits() {
   );
 
   return (
-    <div className="flex flex-col lg:flex-row gap-0 h-[calc(100vh-64px)] w-full overflow-hidden">
+    <div className="flex flex-col lg:flex-row gap-0 min-h-full lg:h-[calc(100vh-64px)] w-full overflow-x-hidden">
       {/* LEFT SIDE: PRODUCTS LIST */}
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-4 md:space-y-6 scrollbar-thin scrollbar-thumb-slate-200">
+      <div className="flex-1 flex flex-col min-h-0 md:m-8">
+        <div className="flex-1 lg:overflow-y-auto space-y-4 pb-6 md:space-y-6 md:pb-12">
 
           {/* HEADER - Mobile Optimized */}
           <header className="space-y-3 md:space-y-0">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-                  Produits et Catégories
+                  Gestion des Produits
                 </h1>
                 <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
                   Gérez vos produits et catégories en toute simplicité
@@ -580,7 +580,7 @@ export default function Produits() {
           <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             {/* Tabs */}
             <div className="border-b border-slate-200 bg-slate-50/50">
-              <div className="flex overflow-x-auto">
+              <div className="flex overflow-x-auto no-scrollbar">
                 <button
                   onClick={() => setFilterStatus('all')}
                   className={`px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap transition-all ${filterStatus === 'all'
@@ -749,7 +749,7 @@ export default function Produits() {
       </div>
 
       {/* RIGHT SIDE: CATEGORIES SIDEBAR (Desktop View) */}
-      <aside className="hidden lg:block w-[350px] bg-white border-l border-slate-200 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 shadow-xl z-20">
+      <aside className="hidden lg:block w-[350px] bg-white border-l border-slate-200 h-full overflow-y-auto shadow-xl z-20">
         <div className="px-4 py-8 space-y-6">
           <div>
             <div className="flex items-center gap-3 mb-2">

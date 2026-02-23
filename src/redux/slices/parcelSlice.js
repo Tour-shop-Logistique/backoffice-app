@@ -47,6 +47,37 @@ export const fetchParcels = createAsyncThunk(
     }
 );
 
+export const fetchIncomingParcels = createAsyncThunk(
+    'parcels/fetchIncomingParcels',
+    async ({ date_debut = null, date_fin = null } = {}, { rejectWithValue }) => {
+        try {
+            let url = `/backoffice/list-expedition?mode=arrivee&status=depart_expedition_succes`;
+            if (date_debut) url += `&date_debut=${date_debut}`;
+            if (date_fin) url += `&date_fin=${date_fin}`;
+
+            const response = await api.get(url);
+            let finalData = response.data;
+
+            if (response.data.data) {
+                const flattenedParcels = [];
+                response.data.data.forEach(expedition => {
+                    const { colis, ...expeditionInfo } = expedition;
+                    if (colis && Array.isArray(colis)) {
+                        colis.forEach(c => {
+                            flattenedParcels.push({ ...c, expedition: expeditionInfo });
+                        });
+                    }
+                });
+                finalData = { ...response.data, data: flattenedParcels };
+            }
+
+            return finalData;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
 export const fetchParcelByCode = createAsyncThunk(
     'parcels/fetchParcelByCode',
     async (code, { rejectWithValue }) => {
@@ -101,7 +132,16 @@ const initialState = {
         items: [],
         meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 },
         isLoading: false,
-        hasLoaded: false, // Not strictly used for auto-refresh logic usually, but consistent
+        hasLoaded: false,
+        error: null,
+        lastUpdated: null
+    },
+    // List for incoming parcels (mode=arrivee)
+    incomingList: {
+        items: [],
+        meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 },
+        isLoading: false,
+        hasLoaded: false,
         error: null,
         lastUpdated: null
     },
@@ -237,6 +277,23 @@ const parcelSlice = createSlice({
             })
             .addCase(controlParcels.rejected, (state) => {
                 state.isBulkControlling = false;
+            })
+
+            // Fetch Incoming Parcels (mode=arrivee)
+            .addCase(fetchIncomingParcels.pending, (state) => {
+                state.incomingList.isLoading = true;
+                state.incomingList.error = null;
+            })
+            .addCase(fetchIncomingParcels.fulfilled, (state, action) => {
+                state.incomingList.isLoading = false;
+                state.incomingList.hasLoaded = true;
+                state.incomingList.items = action.payload.data || [];
+                state.incomingList.meta = action.payload.meta || state.incomingList.meta;
+                state.incomingList.lastUpdated = new Date().toISOString();
+            })
+            .addCase(fetchIncomingParcels.rejected, (state, action) => {
+                state.incomingList.isLoading = false;
+                state.incomingList.error = action.payload;
             });
     }
 });

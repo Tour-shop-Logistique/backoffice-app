@@ -13,4 +13,5 @@ export const ROUTES = {
     BACKOFFICE_SETUP: '/backoffice-setup',
     PARCEL_CONTROL: '/parcels/control/:code',
     PARCEL_HISTORY: '/parcels-history',
+    INCOMING_PARCELS: '/incoming-parcels',
 };

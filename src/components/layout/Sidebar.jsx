@@ -11,7 +11,8 @@ import {
   BadgeEuro,
   Menu,
   Building2,
-  Package
+  Package,
+  ArrowDownToLine
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
@@ -28,6 +29,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const navigation = [
     { name: "Tableau de bord", href: "/dashboard", icon: Home },
     { name: "Colis à contrôler", href: "/parcels", icon: Package },
+    { name: "Colis à réceptionner", href: "/incoming-parcels", icon: ArrowDownToLine },
     { name: "Historique contrôles", href: "/parcels-history", icon: Archive },
     { name: 'Agences partenaires', href: '/agence-partenaire', icon: Blocks },
     { name: "Tarification simple", href: "/simple-rates", icon: DollarSign },
@@ -55,9 +57,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     if (href === path) return true;
     // Detail page handling
     if (path.startsWith('/parcels/control/')) {
-      const fromHistory = location.state?.from === 'history';
-      if (href === '/parcels-history' && fromHistory) return true;
-      if (href === '/parcels' && !fromHistory) return true;
+      const from = location.state?.from;
+      if (href === '/parcels-history' && from === 'history') return true;
+      if (href === '/incoming-parcels' && from === 'incoming') return true;
+      if (href === '/parcels' && (!from || from === 'todo')) return true;
       return false;
     }
     // Default active logic (prevent partial matches across distinct roots e.g. /parcels vs /parcels-history unless explicit)
@@ -98,8 +101,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                 className={() => {
                   const active = isLinkActive(item.href);
                   return `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${active
-                      ? "bg-slate-800 text-white border border-slate-700"
-                      : "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                    ? "bg-slate-800 text-white border border-slate-700"
+                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
                     }`;
                 }}
               >
