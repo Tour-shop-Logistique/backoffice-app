@@ -231,7 +231,7 @@ const Parcels = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-              Colis à Contrôler
+              Colis à contrôler
             </h1>
             <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
               Liste des colis en attente de vérification
@@ -396,7 +396,10 @@ const Parcels = () => {
                                 <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.15em] mb-1">Total Expédition</span>
                                 <div className="flex items-baseline gap-1">
                                   <span className="text-[14px] font-semibold text-slate-900">
-                                    {Number(group.expedition?.montant_expedition || 0).toLocaleString()}
+                                    {Number(
+                                      Number(group.expedition?.montant_expedition || 0) +
+                                      Number(group.expedition?.frais_emballage || 0)
+                                    ).toLocaleString()}
                                   </span>
                                   <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
                                 </div>
@@ -417,13 +420,20 @@ const Parcels = () => {
                                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
                                   {group.parcels.length} Colis
                                 </span>
+                                <span className={`text-[8px] font-bold uppercase tracking-widest mt-1 ${group.parcels.every(p => p.is_controlled) ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                  {group.parcels.filter(p => p.is_controlled).length} / {group.parcels.length} Contrôlés
+                                </span>
                               </div>
                               <button
                                 onClick={() => handleEditExpedition(group.expedition)}
-                                className="p-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 transition-all shadow-sm group"
-                                title="Modifier l'expédition"
+                                disabled={!group.parcels.every(p => p.is_controlled)}
+                                className={`p-1.5 border rounded-lg transition-all shadow-sm group
+                                  ${group.parcels.every(p => p.is_controlled)
+                                    ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-400 hover:text-blue-600'
+                                    : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'}`}
+                                title={group.parcels.every(p => p.is_controlled) ? "Modifier l'expédition" : "Contrôlez tous les colis pour modifier"}
                               >
-                                <Edit2 size={13} className="group-hover:scale-110 transition-transform" />
+                                <Edit2 size={13} className={group.parcels.every(p => p.is_controlled) ? "group-hover:scale-110 transition-transform" : ""} />
                               </button>
                             </div>
                           </div>
@@ -533,11 +543,16 @@ const Parcels = () => {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <span className="text-[9px] font-bold bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-500">
-                        {group.parcels.length}
+                        {group.parcels.filter(p => p.is_controlled).length} / {group.parcels.length}
                       </span>
                       <button
                         onClick={() => handleEditExpedition(group.expedition)}
-                        className="p-1.5 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-blue-600 active:bg-slate-50"
+                        disabled={!group.parcels.every(p => p.is_controlled)}
+                        className={`p-1.5 border rounded-md transition-all
+                          ${group.parcels.every(p => p.is_controlled)
+                            ? 'bg-white border-slate-200 text-slate-400 hover:text-blue-600 active:bg-slate-50'
+                            : 'bg-slate-50 border-slate-100 text-slate-300 opacity-50'}`}
+                        title={group.parcels.every(p => p.is_controlled) ? "Modifier l'expédition" : "Contrôlez tous les colis pour modifier"}
                       >
                         <Edit2 size={12} />
                       </button>
@@ -637,21 +652,57 @@ const Parcels = () => {
         size="sm"
       >
         <div className="space-y-4">
+          {/* Price Recap Section */}
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2">
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+              <Euro size={12} /> Récapitulatif des frais
+            </h4>
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs font-medium text-slate-500">
+                <span>Base + Prestation + Emballage :</span>
+                <span className="tabular-nums">
+                  {Number(
+                    Number(selectedExpedition?.montant_base || 0) +
+                    Number(selectedExpedition?.montant_prestation || 0) +
+                    Number(selectedExpedition?.frais_emballage || 0)
+                  ).toLocaleString()} CFA
+                </span>
+              </div>
+              <div className="flex justify-between text-xs font-semibold text-amber-600">
+                <span>Frais annexes :</span>
+                <span className="tabular-nums">
+                  +{Number(fraisExpedition || 0).toLocaleString()} CFA
+                </span>
+              </div>
+              <div className="pt-2 border-t border-slate-200 flex justify-between">
+                <span className="text-xs font-bold text-slate-900 uppercase">Total Expédition :</span>
+                <span className="text-sm font-bold text-blue-600 tabular-nums">
+                  {Number(
+                    Number(selectedExpedition?.montant_base || 0) +
+                    Number(selectedExpedition?.montant_prestation || 0) +
+                    Number(selectedExpedition?.frais_emballage || 0) +
+                    (Number(fraisExpedition) || 0)
+                  ).toLocaleString()} CFA
+                </span>
+              </div>
+            </div>
+          </div>
+
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1">Frais Annexes</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Frais Annexes de l'Expédition</label>
             <div className="relative">
-              <Euro className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <Info className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
               <input
                 type="number"
                 value={fraisExpedition}
                 onChange={(e) => setFraisExpedition(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-900 text-sm font-medium"
-                placeholder="0.00"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-blue-500 text-sm font-bold text-slate-900 transition-all font-sans"
+                placeholder="Indiquez les frais annexes..."
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1">Lien de Tracking</label>
+            <label className="block text-sm font-bold text-slate-700 mb-1">Tracking</label>
             <div className="relative">
               <Info className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input
@@ -659,7 +710,7 @@ const Parcels = () => {
                 value={lienTracking}
                 onChange={(e) => setLienTracking(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-900 text-sm font-medium"
-                placeholder="https://..."
+
               />
             </div>
           </div>

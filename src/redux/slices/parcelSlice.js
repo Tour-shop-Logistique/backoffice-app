@@ -117,6 +117,18 @@ export const controlParcels = createAsyncThunk(
     }
 );
 
+export const receiveParcels = createAsyncThunk(
+    'parcels/receiveParcels',
+    async ({ codes, agence_id }, { rejectWithValue }) => {
+        try {
+            const response = await api.put(`/backoffice/receive-colis`, { codes, agence_id });
+            return { codes, response: response.data };
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
 const initialState = {
     // List for "To Control" (is_controlled=false)
     todoList: {
@@ -240,10 +252,16 @@ const parcelSlice = createSlice({
                 const updateInList = (list) => {
                     list.items.forEach(parcel => {
                         if (parcel.expedition?.id === id) {
+                            const base = Number(parcel.expedition.montant_base || 0);
+                            const prest = Number(parcel.expedition.montant_prestation || 0);
+                            const emballage = Number(parcel.expedition.frais_emballage || 0);
+                            const annexes = Number(frais_annexes || 0);
+
                             parcel.expedition = {
                                 ...parcel.expedition,
-                                frais_annexes,
-                                code_suivi_expedition
+                                frais_annexes: annexes,
+                                code_suivi_expedition,
+                                montant_expedition: base + prest + emballage + annexes
                             };
                         }
                     });
@@ -251,12 +269,19 @@ const parcelSlice = createSlice({
 
                 updateInList(state.todoList);
                 updateInList(state.historyList);
+                updateInList(state.incomingList);
 
                 if (state.currentParcel?.expedition?.id === id) {
+                    const base = Number(state.currentParcel.expedition.montant_base || 0);
+                    const prest = Number(state.currentParcel.expedition.montant_prestation || 0);
+                    const emballage = Number(state.currentParcel.expedition.frais_emballage || 0);
+                    const annexes = Number(frais_annexes || 0);
+
                     state.currentParcel.expedition = {
                         ...state.currentParcel.expedition,
-                        frais_annexes,
-                        code_suivi_expedition
+                        frais_annexes: annexes,
+                        code_suivi_expedition,
+                        montant_expedition: base + prest + emballage + annexes
                     };
                 }
             })
@@ -270,12 +295,34 @@ const parcelSlice = createSlice({
             .addCase(controlParcels.fulfilled, (state, action) => {
                 state.isBulkControlling = false;
                 const { codes } = action.payload;
-                // Remove controlled items from todoList
-                state.todoList.items = state.todoList.items.filter(
+
+                // Mark items as controlled instead of removing them
+                // This allows seeing the completion of a whole expedition group
+                state.todoList.items = state.todoList.items.map(item => {
+                    if (codes.includes(item.code_colis)) {
+                        return { ...item, is_controlled: true };
+                    }
+                    return item;
+                });
+            })
+            .addCase(controlParcels.rejected, (state) => {
+                state.isBulkControlling = false;
+            })
+
+            // Receive Parcels (Bulk)
+            .addCase(receiveParcels.pending, (state) => {
+                state.isBulkControlling = true;
+            })
+            .addCase(receiveParcels.fulfilled, (state, action) => {
+                state.isBulkControlling = false;
+                const { codes } = action.payload;
+
+                // Remove received items from incomingList
+                state.incomingList.items = state.incomingList.items.filter(
                     item => !codes.includes(item.code_colis)
                 );
             })
-            .addCase(controlParcels.rejected, (state) => {
+            .addCase(receiveParcels.rejected, (state) => {
                 state.isBulkControlling = false;
             })
 

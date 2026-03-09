@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchParcelByCode, clearCurrentParcel, setCurrentParcel, controlParcels } from '../redux/slices/parcelSlice';
+import { fetchParcelByCode, clearCurrentParcel, setCurrentParcel, controlParcels, receiveParcels } from '../redux/slices/parcelSlice';
+import { fetchAgences } from '../redux/slices/agenceSlice';
 import { showNotification } from '../redux/slices/uiSlice';
+import Modal from '../components/common/Modal';
 import {
     ArrowLeft,
     Loader2,
@@ -25,21 +27,37 @@ import {
     CreditCard,
     Gauge,
     Zap,
-    BadgeCheck
+    BadgeCheck,
+    CheckCircle,
+    Clock,
+    PackageCheck
 } from 'lucide-react';
 
 const ParcelControl = () => {
     const { code } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useDispatch();
     const { todoList, historyList, incomingList, currentParcel, isLoadingDetail, detailError, isBulkControlling } = useSelector(state => state.parcels);
+    const { agences } = useSelector(state => state.agences);
     const [isValidating, setIsValidating] = useState(false);
+    const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
+    const [selectedAgencyId, setSelectedAgencyId] = useState('');
+
+    const isFromIncoming = location.state?.from === 'incoming';
 
     const handleValidate = async () => {
         if (!currentParcel?.code_colis) return;
+
+        if (isFromIncoming) {
+            setIsAgencyModalOpen(true);
+            return;
+        }
+
         setIsValidating(true);
         try {
             await dispatch(controlParcels([currentParcel.code_colis])).unwrap();
+
             dispatch(showNotification({
                 type: 'success',
                 message: `Le colis ${currentParcel.code_colis} a été validé avec succès.`
@@ -48,6 +66,33 @@ const ParcelControl = () => {
             dispatch(showNotification({
                 type: 'error',
                 message: err.message || 'Erreur lors de la validation du colis.'
+            }));
+        } finally {
+            setIsValidating(false);
+        }
+    };
+
+    const confirmReceive = async () => {
+        if (!selectedAgencyId || !currentParcel?.code_colis) return;
+
+        setIsValidating(true);
+        try {
+            await dispatch(receiveParcels({
+                codes: [currentParcel.code_colis],
+                agence_id: selectedAgencyId
+            })).unwrap();
+
+            dispatch(showNotification({
+                type: 'success',
+                message: `Le colis ${currentParcel.code_colis} a été réceptionné avec succès.`
+            }));
+
+            setIsAgencyModalOpen(false);
+            setSelectedAgencyId('');
+        } catch (err) {
+            dispatch(showNotification({
+                type: 'error',
+                message: err.message || 'Erreur lors de la réception du colis.'
             }));
         } finally {
             setIsValidating(false);
@@ -73,6 +118,9 @@ const ParcelControl = () => {
             // 3. Sinon (scan nouveau, refresh, ou lien direct), on appelle l'API
             dispatch(fetchParcelByCode(code));
         }
+
+        // Toujours charger les agences pour la sélection si besoin
+        dispatch(fetchAgences());
 
         return () => {
             // On ne clear pas forcément ici pour permettre la navigation fluide, 
@@ -173,7 +221,26 @@ const ParcelControl = () => {
                     </p>
                 </div>
                 <div className="md:ml-auto flex items-center gap-2">
-                    {currentParcel.is_controlled ? (
+                    {currentParcel.is_received_by_backoffice ? (
+                        <div className="flex flex-col items-end gap-1">
+                            <div className="px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                                <CheckCircle size={14} />
+                                Colis Réceptionné
+                            </div>
+                            {currentParcel.received_at_backoffice && (
+                                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                                    <Clock size={10} />
+                                    {new Date(currentParcel.received_at_backoffice).toLocaleString('fr-FR', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    ) : currentParcel.is_controlled && !isFromIncoming ? (
                         <div className="px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2">
                             <ShieldCheck size={14} />
                             Colis Validé
@@ -185,8 +252,8 @@ const ParcelControl = () => {
                             className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {isValidating
-                                ? <><Loader2 size={14} className="animate-spin" /> Validation...</>
-                                : <>Valider le contrôle</>
+                                ? <><Loader2 size={14} className="animate-spin" /> {isFromIncoming ? 'Réception...' : 'Validation...'}</>
+                                : <>{isFromIncoming ? 'Confirmer la réception' : 'Valider le contrôle'}</>
                             }
                         </button>
                     )}
@@ -347,6 +414,56 @@ const ParcelControl = () => {
                 </div>
 
             </div>
+
+            {/* AGENCY SELECTION MODAL */}
+            <Modal
+                isOpen={isAgencyModalOpen}
+                onClose={() => {
+                    setIsAgencyModalOpen(false);
+                }}
+                title="Agence de Réception"
+                subtitle="Sélectionnez l'agence de destination pour ce colis"
+                size="xs"
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                            Agence de destination
+                        </label>
+                        <select
+                            value={selectedAgencyId}
+                            onChange={(e) => setSelectedAgencyId(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all font-sans"
+                        >
+                            <option value="">Choisir une agence...</option>
+                            {agences.map(agency => (
+                                <option key={agency.id} value={agency.id}>
+                                    {agency.nom_agence} ({agency.ville}, {agency.adresse})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            onClick={() => setIsAgencyModalOpen(false)}
+                            className="flex-1 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors font-sans"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            onClick={confirmReceive}
+                            disabled={!selectedAgencyId || isValidating}
+                            className="flex-[2] px-4 py-2.5 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2 font-sans"
+                        >
+                            {isValidating
+                                ? <><Loader2 size={14} className="animate-spin" /> Traitement...</>
+                                : <><PackageCheck size={14} /> Confirmer</>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };
