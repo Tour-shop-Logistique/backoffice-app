@@ -18,10 +18,10 @@ const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isConfigured, loading, config } = useSelector((state) => state.backoffice);
-  const { hasLoaded: tarifsLoaded } = useSelector((state) => state.tarification);
-  const { hasLoaded: zonesLoaded } = useSelector((state) => state.zones);
-  const { hasLoaded: agencesLoaded } = useSelector((state) => state.agences);
-  const { hasLoadedProduits: produitsLoaded } = useSelector((state) => state.produits);
+  const { hasLoaded: tarifsLoaded, isLoading: loadingTarifs } = useSelector((state) => state.tarification);
+  const { hasLoaded: zonesLoaded, isLoading: isLoadingZones } = useSelector((state) => state.zones);
+  const { hasLoaded: agencesLoaded, isLoading: isLoadingAgences } = useSelector((state) => state.agences);
+  const { hasLoadedProduits: produitsLoaded, isLoading: isLoadingProduits } = useSelector((state) => state.produits);
 
   useEffect(() => {
     // Ne charger que si pas de config en cache et pas déjà en cours de chargement
@@ -42,15 +42,15 @@ const Layout = ({ children }) => {
   // Chargement des données globales au démarrage
   useEffect(() => {
     if (isConfigured) {
-      if (!tarifsLoaded) {
+      if (!tarifsLoaded && !loadingTarifs) {
         dispatch(fetchTarifs());
         dispatch(fetchGroupedTarifs());
       }
-      if (!zonesLoaded) dispatch(fetchZones());
-      if (!agencesLoaded) dispatch(fetchAgences());
-      if (!produitsLoaded) dispatch(fetchProduits());
+      if (!zonesLoaded && !isLoadingZones) dispatch(fetchZones());
+      if (!agencesLoaded && !isLoadingAgences) dispatch(fetchAgences());
+      if (!produitsLoaded && !isLoadingProduits) dispatch(fetchProduits());
     }
-  }, [dispatch, isConfigured, tarifsLoaded, zonesLoaded, agencesLoaded, produitsLoaded]);
+  }, [dispatch, isConfigured, tarifsLoaded, loadingTarifs, zonesLoaded, isLoadingZones, agencesLoaded, isLoadingAgences, produitsLoaded, isLoadingProduits]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen);

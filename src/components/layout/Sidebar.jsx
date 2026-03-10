@@ -5,6 +5,7 @@ import {
   Archive,
   DollarSign,
   Settings,
+  MapPin,
   X,
   Box,
   Blocks,
@@ -12,6 +13,7 @@ import {
   Menu,
   Building2,
   Package,
+  ClipboardCheck,
   ArrowDownToLine
 } from "lucide-react";
 import { useSelector } from "react-redux";
@@ -28,13 +30,13 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   // Navigation standard
   const navigation = [
     { name: "Tableau de bord", href: "/dashboard", icon: Home },
-    { name: "Colis à contrôler", href: "/parcels", icon: Package },
-    { name: "Colis à réceptionner", href: "/incoming-parcels", icon: ArrowDownToLine },
-    { name: "Historique contrôles", href: "/parcels-history", icon: Archive },
+    { name: "Colis à contrôler", href: "/parcels", icon: ClipboardCheck },
+    { name: "Arrivages prévus", href: "/incoming-parcels", icon: ArrowDownToLine },
+    // { name: "Historique contrôles", href: "/parcels-history", icon: Archive },
     { name: 'Agences partenaires', href: '/agence-partenaire', icon: Blocks },
     { name: "Tarification simple", href: "/simple-rates", icon: DollarSign },
     { name: "Tarification groupée", href: "/grouped-rates", icon: BadgeEuro },
-    { name: "Zones d'expéditions", href: "/zone-configuration", icon: Settings },
+    { name: "Zones d'expéditions", href: "/zone-configuration", icon: MapPin },
     { name: 'Produits & Catégories', href: '/produits', icon: Box },
     { name: "Agents Backoffice", href: "/agents", icon: Users, adminOnly: true },
   ].filter(item => !item.adminOnly || user?.role === 'is_backoffice_admin');

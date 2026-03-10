@@ -40,7 +40,7 @@ const IncomingParcels = () => {
     const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
     // Agency selection state
-    const { agences, isLoading: isLoadingAgences } = useSelector(state => state.agences);
+    const { agences, isLoading: isLoadingAgences, hasLoaded: agencesLoaded } = useSelector(state => state.agences);
     const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
     const [selectedAgencyId, setSelectedAgencyId] = useState('');
     const [pendingAction, setPendingAction] = useState(null); // { type: 'single'|'bulk', codes: [] }
@@ -134,8 +134,10 @@ const IncomingParcels = () => {
         if (!hasLoaded) {
             dispatch(fetchIncomingParcels());
         }
-        dispatch(fetchAgences());
-    }, [dispatch, hasLoaded]);
+        if (!agencesLoaded && !isLoadingAgences) {
+            dispatch(fetchAgences());
+        }
+    }, [dispatch, hasLoaded, agencesLoaded, isLoadingAgences]);
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
@@ -203,7 +205,7 @@ const IncomingParcels = () => {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-                            Colis à réceptionner
+                            Arrivages prévus
                         </h1>
                         <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
                             Expéditions en transit entrant dans votre pays

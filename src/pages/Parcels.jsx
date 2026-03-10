@@ -118,10 +118,10 @@ const Parcels = () => {
 
   useEffect(() => {
     // Only fetch if not already loaded (persist data)
-    if (!hasLoaded) {
+    if (!hasLoaded && !isLoading) {
       dispatch(fetchParcels({ listType: 'todo' }));
     }
-  }, [dispatch, hasLoaded]);
+  }, [dispatch, hasLoaded, isLoading]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -144,13 +144,26 @@ const Parcels = () => {
   const handleSaveExpedition = async () => {
     if (!selectedExpedition) return;
 
-    await dispatch(updateExpedition({
-      id: selectedExpedition.id,
-      frais_expedition: fraisExpedition,
-      lien_tracking: lienTracking
-    }));
+    try {
+      await dispatch(updateExpedition({
+        id: selectedExpedition.id,
+        frais_expedition: fraisExpedition,
+        lien_tracking: lienTracking
+      })).unwrap();
 
-    setIsExpeditionModalOpen(false);
+      dispatch(showNotification({
+        type: 'success',
+        message: `Expédition ${selectedExpedition.reference} mise en transit avec succès.`
+      }));
+
+      setIsExpeditionModalOpen(false);
+      setSelectedCodes([]); // Nettoyer si on avait des sélections
+    } catch (error) {
+      dispatch(showNotification({
+        type: 'error',
+        message: error.message || "Erreur lors de la mise en transit."
+      }));
+    }
   };
 
   const handleScanSuccess = (decodedText) => {
@@ -689,7 +702,7 @@ const Parcels = () => {
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Frais Annexes de l'Expédition</label>
+            <label className="block text-sm font-bold text-slate-800 mb-2">Frais Annexes de l'Expédition</label>
             <div className="relative">
               <Info className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
               <input
@@ -697,12 +710,12 @@ const Parcels = () => {
                 value={fraisExpedition}
                 onChange={(e) => setFraisExpedition(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-blue-500 text-sm font-bold text-slate-900 transition-all font-sans"
-                placeholder="Indiquez les frais annexes..."
+
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1">Tracking</label>
+            <label className="block text-sm font-bold text-slate-800 mb-1">Tracking</label>
             <div className="relative">
               <Info className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input
@@ -726,8 +739,10 @@ const Parcels = () => {
               disabled={isUpdatingExpedition}
               className="px-6 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 disabled:opacity-50 flex items-center gap-2"
             >
-              {isUpdatingExpedition && <Loader2 className="animate-spin" size={14} />}
-              Enregistrer
+              {isUpdatingExpedition
+                ? <><Loader2 className="animate-spin" size={14} /> Traitement...</>
+                : "Valider & Transiter"
+              }
             </button>
           </div>
         </div>

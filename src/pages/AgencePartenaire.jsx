@@ -28,10 +28,10 @@ const AgencePartenaire = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    if (!hasLoaded) {
+    if (!hasLoaded && !isLoading) {
       dispatch(fetchAgences());
     }
-  }, [dispatch, hasLoaded]);
+  }, [dispatch, hasLoaded, isLoading]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

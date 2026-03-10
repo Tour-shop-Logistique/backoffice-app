@@ -39,7 +39,7 @@ const ParcelControl = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const { todoList, historyList, incomingList, currentParcel, isLoadingDetail, detailError, isBulkControlling } = useSelector(state => state.parcels);
-    const { agences } = useSelector(state => state.agences);
+    const { agences, hasLoaded: agencesLoaded, isLoading: isLoadingAgences } = useSelector(state => state.agences);
     const [isValidating, setIsValidating] = useState(false);
     const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
     const [selectedAgencyId, setSelectedAgencyId] = useState('');
@@ -119,14 +119,16 @@ const ParcelControl = () => {
             dispatch(fetchParcelByCode(code));
         }
 
-        // Toujours charger les agences pour la sélection si besoin
-        dispatch(fetchAgences());
+        // Toujours charger les agences pour la sélection si besoin (avec garde)
+        if (!agencesLoaded && !isLoadingAgences) {
+            dispatch(fetchAgences());
+        }
 
         return () => {
             // On ne clear pas forcément ici pour permettre la navigation fluide, 
             // mais l'initialState de currentParcel est null au départ.
         };
-    }, [dispatch, code, todoList, historyList, incomingList, currentParcel]);
+    }, [dispatch, code, agencesLoaded, isLoadingAgences]);
 
     const getStatusInfo = (status) => {
         switch (status) {

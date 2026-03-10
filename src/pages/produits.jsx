@@ -107,13 +107,13 @@ export default function Produits() {
   };
 
   useEffect(() => {
-    if (!hasLoadedProduits) {
+    if (!hasLoadedProduits && !isLoading) {
       dispatch(fetchProduits());
     }
-    if (!hasLoadedCategories) {
+    if (!hasLoadedCategories && !isLoading) {
       dispatch(fetchCategories());
     }
-  }, [dispatch, hasLoadedProduits, hasLoadedCategories]);
+  }, [dispatch, hasLoadedProduits, hasLoadedCategories, isLoading]);
 
   // -------------------------------
   // 🚀 AJOUTER UN PRODUIT

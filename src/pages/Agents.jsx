@@ -32,10 +32,10 @@ const Agents = () => {
   });
 
   useEffect(() => {
-    if (!hasLoaded) {
+    if (!hasLoaded && !isLoading) {
       dispatch(fetchAgents());
     }
-  }, [dispatch, hasLoaded]);
+  }, [dispatch, hasLoaded, isLoading]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

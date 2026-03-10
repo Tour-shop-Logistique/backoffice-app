@@ -45,12 +45,12 @@ const ParcelHistory = () => {
     const [dateFin, setDateFin] = useState('');
 
     useEffect(() => {
-        if (!hasLoaded) {
+        if (!hasLoaded && !isLoading) {
             dispatch(fetchParcels({
                 listType: 'history'
             }));
         }
-    }, [dispatch, hasLoaded]);
+    }, [dispatch, hasLoaded, isLoading]);
 
     const fetchData = async () => {
         setIsRefreshing(true);

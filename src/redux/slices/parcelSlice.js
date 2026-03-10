@@ -94,11 +94,11 @@ export const updateExpedition = createAsyncThunk(
     'parcels/updateExpedition',
     async ({ id, frais_expedition, lien_tracking }, { rejectWithValue }) => {
         try {
-            await api.post(`/backoffice/edit-expedition/${id}`, {
-                frais_annexes: frais_expedition,
+            await api.put(`/backoffice/transit-expedition/${id}`, {
+                frais_annexes: frais_expedition || 0,
                 code_suivi_expedition: lien_tracking
             });
-            return { id, frais_annexes: frais_expedition, code_suivi_expedition: lien_tracking };
+            return { id, frais_annexes: frais_expedition || 0, code_suivi_expedition: lien_tracking };
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
         }
@@ -123,6 +123,19 @@ export const receiveParcels = createAsyncThunk(
         try {
             const response = await api.put(`/backoffice/receive-colis`, { codes, agence_id });
             return { codes, response: response.data };
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
+export const fetchDashboardStats = createAsyncThunk(
+    'parcels/fetchDashboardStats',
+    async (params = {}, { rejectWithValue }) => {
+        try {
+            const days = params.delayed_control_days || 3;
+            const response = await api.get(`/backoffice/dashboard?delayed_control_days=${days}`);
+            return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
         }
@@ -162,7 +175,14 @@ const initialState = {
     isLoadingDetail: false,
     detailError: null,
     isUpdatingExpedition: false,
-    isBulkControlling: false
+    isBulkControlling: false,
+    // Dashboard state
+    dashboard: {
+        data: null,
+        loading: false,
+        error: null,
+        lastUpdated: null
+    }
 };
 
 const parcelSlice = createSlice({
@@ -267,7 +287,9 @@ const parcelSlice = createSlice({
                     });
                 };
 
-                updateInList(state.todoList);
+                // Remove from todoList as it is now transited
+                state.todoList.items = state.todoList.items.filter(p => p.expedition?.id !== id);
+
                 updateInList(state.historyList);
                 updateInList(state.incomingList);
 
@@ -341,6 +363,21 @@ const parcelSlice = createSlice({
             .addCase(fetchIncomingParcels.rejected, (state, action) => {
                 state.incomingList.isLoading = false;
                 state.incomingList.error = action.payload;
+            })
+
+            // Dashboard
+            .addCase(fetchDashboardStats.pending, (state) => {
+                state.dashboard.loading = true;
+                state.dashboard.error = null;
+            })
+            .addCase(fetchDashboardStats.fulfilled, (state, action) => {
+                state.dashboard.loading = false;
+                state.dashboard.data = action.payload;
+                state.dashboard.lastUpdated = new Date().toISOString();
+            })
+            .addCase(fetchDashboardStats.rejected, (state, action) => {
+                state.dashboard.loading = false;
+                state.dashboard.error = action.payload;
             });
     }
 });

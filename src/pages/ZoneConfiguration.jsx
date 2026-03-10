@@ -35,10 +35,10 @@ const ZoneConfiguration = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!hasLoaded) {
+    if (!hasLoaded && !isLoading) {
       dispatch(fetchZones());
     }
-  }, [dispatch, hasLoaded]);
+  }, [dispatch, hasLoaded, isLoading]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
