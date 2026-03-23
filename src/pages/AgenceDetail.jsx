@@ -5,14 +5,15 @@ import {
     fetchAgences,
     fetchAgenceTarifsGroupage,
     fetchAgenceTarifsSimple,
-    fetchAgenceExpeditions,
     clearCurrentAgency,
-    setCurrentAgence
+    setCurrentAgence,
+    fetchAgenceAccounting
 } from "../redux/slices/agenceSlice";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import {
     MapPin,
     Phone,
-    Globe,
+    Briefcase,
     Building2,
     ArrowLeft,
     RefreshCw,
@@ -41,9 +42,18 @@ import {
     Box,
     FileText,
     BadgeCheck,
-    CreditCard as PaymentIcon
+    CreditCard as PaymentIcon,
+    PieChart,
+    Wallet,
+    ArrowUpRight,
+    ArrowDownLeft,
+    TrendingUp,
+    BarChart3
 } from "lucide-react";
 import Modal from "../components/common/Modal";
+import StatCard from "../components/agence/StatCard";
+import AgencyTariffTable from "../components/agence/AgencyTariffTable";
+import ExpeditionDetailModal from "../components/expedition/ExpeditionDetailModal";
 
 const AgenceDetail = () => {
     const { id } = useParams();
@@ -63,28 +73,6 @@ const AgenceDetail = () => {
         }
     };
 
-    const getStatusStyles = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'accepted': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
-            case 'pending':
-            case 'en_attente': return 'bg-amber-50 text-amber-700 border-amber-100';
-            case 'rejected':
-            case 'cancelled': return 'bg-rose-50 text-rose-700 border-rose-100';
-            default: return 'bg-slate-50 text-slate-700 border-slate-100';
-        }
-    };
-
-    const getStatusLabel = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'accepted': return 'Acceptée';
-            case 'pending':
-            case 'en_attente': return 'En attente';
-            case 'rejected': return 'Rejetée';
-            case 'cancelled': return 'Annulée';
-            default: return status || 'N/A';
-        }
-    };
-
     const {
         agences,
         currentAgence: storedAgence,
@@ -95,6 +83,7 @@ const AgenceDetail = () => {
         currentAgencyExpeditions,
         expeditionsMeta,
         isLoadingExpeditions,
+        currentAgencyAccounting,
         hasLoaded,
         error
     } = useSelector((state) => state.agences);
@@ -109,6 +98,11 @@ const AgenceDetail = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedExpedition, setSelectedExpedition] = useState(null);
     const [isLogoLoading, setIsLogoLoading] = useState(true);
+
+    const [dateRange, setDateRange] = useState({
+        startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+        endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
+    });
 
     // États pour la recherche locale
     const [simpleSearch, setSimpleSearch] = useState("");
@@ -190,16 +184,30 @@ const AgenceDetail = () => {
         }
     }, [dispatch, id]);
 
-    // 4. Charger les expéditions quand on change d'onglet ou de page (seulement si nécessaire)
-    // useEffect(() => {
-    //     if (id && activeTab === "expeditions") {
-    //         const hasData = currentAgencyExpeditions.length > 0;
-    //         const isSamePage = expeditionsMeta?.current_page === currentPage;
-    //         if (!hasData || !isSamePage) {
-    //             dispatch(fetchAgenceExpeditions({ agenceId: id, page: currentPage }));
-    //         }
-    //     }
-    // }, [dispatch, id, activeTab, currentPage, currentAgencyExpeditions.length, expeditionsMeta?.current_page]);
+    // 5. Charger la comptabilité quand on active l'onglet
+    useEffect(() => {
+        if (id && activeTab === "comptabilite") {
+            // On ne recharge que si les dates ont changé ou si pas de données
+            const shouldFetch = !currentAgencyAccounting.lastUpdated ||
+                currentAgencyAccounting.error;
+
+            if (shouldFetch) {
+                dispatch(fetchAgenceAccounting({
+                    agenceId: id,
+                    dateDebut: dateRange.startDate + " 00:00:00",
+                    dateFin: dateRange.endDate + " 23:59:59"
+                }));
+            }
+        }
+    }, [dispatch, id, activeTab]);
+
+    const handleLoadAccounting = () => {
+        dispatch(fetchAgenceAccounting({
+            agenceId: id,
+            dateDebut: dateRange.startDate + " 00:00:00",
+            dateFin: dateRange.endDate + " 23:59:59"
+        }));
+    };
 
     // Cleanup au démontage
 
@@ -284,6 +292,7 @@ const AgenceDetail = () => {
                             { id: 'details', label: 'Détails & Infos', icon: Info },
                             { id: 'tarifs_simple', label: 'Tarifs Simple', icon: Package },
                             { id: 'tarifs_groupage', label: 'Tarifs Groupage', icon: Layers },
+                            { id: 'comptabilite', label: 'Comptabilité', icon: PieChart },
                             // { id: 'expeditions', label: 'Expéditions', icon: Truck }
                         ].map((tab) => (
                             <button
@@ -466,188 +475,11 @@ const AgenceDetail = () => {
                                             <p className="text-slate-400 text-sm font-semibold italic">Aucune donnée tarifaire spécifique ne correspond à cette agence.</p>
                                         </div>
                                     ) : (
-                                        <>
-                                            {/* Desktop Table */}
-                                            <div className="hidden md:block overflow-x-auto">
-                                                <table className="w-full text-left border-collapse">
-                                                    <thead>
-                                                        <tr className="bg-slate-50/50 border-b border-slate-200">
-                                                            {activeTab === 'tarifs_groupage' ? (
-                                                                <>
-                                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Type / Catégorie</th>
-                                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Itinéraire / Pays</th>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Indice</th>
-                                                                    <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Destination</th>
-                                                                </>
-                                                            )}
-                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Montant Base</th>
-                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Prestation</th>
-                                                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Total</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-slate-100">
-                                                        {(activeTab === "tarifs_groupage" ? filteredGroupageTariffs : filteredSimpleTariffs).map((tarif) => (
-                                                            <tr key={tarif.id} className="hover:bg-slate-50/30 transition-colors">
-                                                                <td className="px-6 py-4">
-                                                                    {activeTab === 'tarifs_groupage' ? (
-                                                                        <div className="flex flex-col">
-                                                                            <span className={`text-xs font-bold px-2 py-1 rounded uppercase w-fit ${tarif.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' :
-                                                                                tarif.type_expedition?.includes('maritime') ? 'bg-indigo-100 text-indigo-700' :
-                                                                                    tarif.type_expedition?.includes('afrique') ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
-                                                                                }`}>
-                                                                                {getTypeLabel(tarif.type_expedition)}
-                                                                            </span>
-                                                                            {tarif.category && <span className="text-slate-900 font-semibold text-sm mt-1">
-                                                                                →  {tarif.category?.nom}
-                                                                            </span>}
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="inline-flex items-center justify-center px-3 py-1 rounded bg-blue-50 text-blue-700 font-bold text-xs border border-blue-100">
-                                                                            {tarif.indice || 'N/A'}
-                                                                        </div>
-                                                                    )}
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex items-center gap-2">
-                                                                        {activeTab === 'tarifs_groupage' && tarif.ligne ? (
-                                                                            <Package size={14} className="text-slate-400" />
-                                                                        ) : (
-                                                                            <MapPinIcon size={14} className="text-slate-400" />
-                                                                        )}
-                                                                        <span className="font-semibold text-slate-700 uppercase text-xs">
-                                                                            {activeTab === 'tarifs_groupage'
-                                                                                ? (tarif.ligne ? tarif.ligne.replace('-', ' → ') : (tarif.pays || 'N/A'))
-                                                                                : (tarif.zone?.nom || tarif.pays || 'Non définie')
-                                                                            }
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <span className="font-semibold text-slate-600 text-sm">
-                                                                        {Number(tarif.montant_base).toLocaleString()} <span className="text-[10px] text-slate-400 uppercase">CFA</span>
-                                                                    </span>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold text-xs">
-                                                                            {tarif.pourcentage_prestation}%
-                                                                        </span>
-                                                                        <span className="text-slate-400 text-xs font-semibold">
-                                                                            ({Number(tarif.montant_prestation).toLocaleString()} <span className="text-[10px]">CFA</span>)
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-green-600 font-bold text-base tracking-tight">
-                                                                            {Number(tarif.montant_expedition).toLocaleString()} <span className="text-[10px] text-slate-400 uppercase font-semibold">CFA</span>
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-
-                                            {/* Mobile Cards */}
-                                            <div className="md:hidden divide-y divide-slate-100">
-                                                {(activeTab === "tarifs_groupage" ? filteredGroupageTariffs : filteredSimpleTariffs).map((tarif) => {
-                                                    const mb = parseFloat(tarif.montant_base) || 0;
-                                                    const pp = parseFloat(tarif.pourcentage_prestation) || 0;
-                                                    const mp = mb * (pp / 100);
-                                                    const total = mb + mp;
-
-                                                    if (activeTab === 'tarifs_simple') {
-                                                        return (
-                                                            <div key={tarif.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
-                                                                <div className="flex items-start justify-between gap-2">
-                                                                    <div className="flex items-center gap-2.5 min-w-0">
-                                                                        <div className="px-2 py-1 rounded bg-blue-100 text-slate-700 font-bold text-xs border border-slate-200 shrink-0">
-                                                                            {tarif.indice}
-                                                                        </div>
-                                                                        <div className="min-w-0">
-                                                                            <p className="font-semibold text-slate-900 text-xs truncate uppercase  pb-1">
-                                                                                {tarif.zone?.nom || tarif.pays || '?'}
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="grid grid-cols-2 gap-2">
-                                                                    <div className="bg-slate-50 rounded-lg p-2.5 flex flex-col items-center justify-center border border-slate-100">
-                                                                        <span className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Montant Base</span>
-                                                                        <span className="text-xs font-semibold text-slate-700">{mb.toLocaleString()} CFA</span>
-                                                                    </div>
-                                                                    <div className="bg-slate-50 rounded-lg p-2.5 flex flex-col items-center justify-center border border-slate-100">
-                                                                        <span className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Prestation ({pp}%)</span>
-                                                                        <div className="flex flex-row items-center gap-2">
-                                                                            <span className="text-xs font-semibold text-orange-600">{mp.toLocaleString()} CFA</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold">
-                                                                    TOTAL : <span className="text-green-600">
-                                                                        {total.toLocaleString()} CFA
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    }
-
-                                                    // Design Groupage
-                                                    return (
-                                                        <div key={tarif.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
-                                                            <div className="flex items-start justify-between gap-2">
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="flex items-center gap-2 mb-2">
-                                                                        <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase ${tarif.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' :
-                                                                            tarif.type_expedition?.includes('maritime') ? 'bg-indigo-100 text-indigo-700' :
-                                                                                tarif.type_expedition?.includes('afrique') ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
-                                                                            }`}>
-                                                                            {getTypeLabel(tarif.type_expedition)}
-                                                                        </span>
-                                                                        {tarif.category && (
-                                                                            <span className="text-xs font-semibold text-blue-600">
-                                                                                {tarif.category?.nom}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="flex items-center">
-                                                                        <p className="text-xs text-slate-500 font-bold uppercase truncate">
-                                                                            {tarif.ligne ? tarif.ligne.replace('-', ' → ') : (tarif.pays || 'Ligne ?')}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="grid grid-cols-2 gap-2">
-                                                                <div className="bg-slate-50 rounded-lg p-2.5 flex flex-col items-center justify-center border border-slate-100">
-                                                                    <span className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Montant Base</span>
-                                                                    <span className="text-xs font-semibold text-slate-700">{mb.toLocaleString()} CFA</span>
-                                                                </div>
-                                                                <div className="bg-slate-50 rounded-lg p-2.5 flex flex-col items-center justify-center border border-slate-100">
-                                                                    <span className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Prestation ({pp}%)</span>
-                                                                    <span className="text-xs font-semibold text-orange-600">
-                                                                        {mp.toLocaleString()} CFA
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold">
-                                                                TOTAL : <span className="text-green-600">
-                                                                    {total.toLocaleString()} CFA
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </>
+                                        <AgencyTariffTable
+                                            tariffs={activeTab === "tarifs_groupage" ? filteredGroupageTariffs : filteredSimpleTariffs}
+                                            type={activeTab}
+                                            getTypeLabel={getTypeLabel}
+                                        />
                                     )}
                                 </div>
                             )}
@@ -792,8 +624,8 @@ const AgenceDetail = () => {
                                                                 <span className="text-xs font-bold text-slate-900">{expo.reference}</span>
                                                                 <span className="text-[10px] text-slate-400 font-medium">{new Date(expo.created_at).toLocaleDateString()}</span>
                                                             </div>
-                                                            <span className={`text-[9px] font-bold px-2 py-1 rounded-full border uppercase tracking-wider ${getStatusStyles(expo.statut_expedition)}`}>
-                                                                {getStatusLabel(expo.statut_expedition)}
+                                                            <span className={`text-[9px] font-bold px-2 py-1 rounded-full border uppercase tracking-wider ${expo.statut_expedition === 'accepted' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+                                                                {expo.statut_expedition === 'accepted' ? 'Acceptée' : 'En attente'}
                                                             </span>
                                                         </div>
                                                         <div className="p-4 space-y-4">
@@ -909,209 +741,171 @@ const AgenceDetail = () => {
                             )}
                         </div>
                     )}
+
+                    {activeTab === "comptabilite" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
+                            {/* Bar de filtres */}
+                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
+                                        <Calendar size={16} className="text-slate-400" />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="date"
+                                            value={dateRange.startDate}
+                                            onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
+                                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400 transition-all"
+                                        />
+                                        <span className="text-slate-300 font-bold">→</span>
+                                        <input
+                                            type="date"
+                                            value={dateRange.endDate}
+                                            onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
+                                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400 transition-all"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleLoadAccounting}
+                                        disabled={currentAgencyAccounting.isLoading}
+                                        className="ml-2 px-6 py-2 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm active:scale-95"
+                                    >
+                                        {currentAgencyAccounting.isLoading ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
+                                        Actualiser
+                                    </button>
+                                </div>
+
+                                {currentAgencyAccounting.lastUpdated && (
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                        Dernière mise à jour : {new Date(currentAgencyAccounting.lastUpdated).toLocaleTimeString()}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Cartes de synthèse */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <StatCard
+                                    label="À Encaisser Client"
+                                    value={currentAgencyAccounting.summary?.total_client_due}
+                                    icon={Wallet}
+                                    colorClass="text-emerald-600"
+                                />
+                                <StatCard
+                                    label="Part Agence"
+                                    value={currentAgencyAccounting.summary?.total_agence}
+                                    icon={TrendingUp}
+                                    colorClass="text-slate-900"
+                                />
+                                <StatCard
+                                    label="Part Backoffice"
+                                    value={currentAgencyAccounting.summary?.total_backoffice}
+                                    icon={Briefcase}
+                                    variant="dark"
+                                />
+
+                                <StatCard
+                                    label="Vol. Expéditions"
+                                    value={currentAgencyAccounting.summary?.count}
+                                    icon={BarChart3}
+                                    unit=""
+                                />
+                            </div>
+
+                            {/* Tableau de détail */}
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse min-w-[900px]">
+                                        <thead>
+                                            <tr className="bg-slate-50 border-b border-slate-100">
+                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Référence / Date</th>
+                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-900 uppercase tracking-wider bg-slate-100/30">Part BO</th>
+                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Part Agence</th>
+                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Part Livreur</th>
+                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">À Percevoir</th>
+                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {currentAgencyAccounting.isLoading ? (
+                                                <tr>
+                                                    <td colSpan={5} className="px-6 py-20 text-center">
+                                                        <Loader2 size={32} className="animate-spin text-slate-200 mx-auto mb-4" />
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Calcul du bilan comptable...</p>
+                                                    </td>
+                                                </tr>
+                                            ) : currentAgencyAccounting.items.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} className="px-6 py-24 text-center bg-slate-50/20">
+                                                        <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-sm text-slate-200">
+                                                            <PieChart size={28} />
+                                                        </div>
+                                                        <h4 className="text-slate-900 font-bold text-sm">Aucun mouvement</h4>
+                                                        <p className="text-slate-400 text-xs mt-1 italic">Aucune donnée comptable n'a été trouvée pour cette période.</p>
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                currentAgencyAccounting.items.map((item) => (
+                                                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="font-bold text-slate-900 text-xs tracking-tight">{item.reference}</span>
+                                                                <span className="text-[10px] text-slate-400 font-medium mt-1">
+                                                                    {new Date(item.created_at).toLocaleDateString()}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 bg-slate-50/50 group-hover:bg-slate-100/50 transition-colors">
+                                                            <span className="text-xs font-bold text-slate-900">
+                                                                {item.accounting_details?.backoffice?.toLocaleString() || 0} <span className="text-[10px] text-slate-400 font-medium tracking-tight">CFA</span>
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs font-bold text-blue-600">
+                                                                    {item.accounting_details?.agence?.toLocaleString() || 0} <span className="text-[9px] text-slate-400 font-medium">CFA</span>
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="text-xs font-bold text-slate-700">
+                                                                {item.accounting_details?.livreur?.toLocaleString() || 0} <span className="text-[9px] text-slate-400 font-medium">CFA</span>
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs font-bold text-emerald-600">
+                                                                    {item.accounting_details?.total_client_due?.toLocaleString() || 0} <span className="text-[9px] text-slate-400 font-medium">CFA</span>
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <button
+                                                                onClick={() => setSelectedExpedition(item)}
+                                                                className="p-2 text-slate-400 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all shadow-sm active:scale-90"
+                                                                title="Voir les détails"
+                                                            >
+                                                                <Eye size={16} />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Modal Détails Expédition */}
-            {/* <Modal
+            {/* Modal de Détails Expedition */}
+            <ExpeditionDetailModal
                 isOpen={!!selectedExpedition}
                 onClose={() => setSelectedExpedition(null)}
-                title={`Expédition ${selectedExpedition?.reference}`}
-                subtitle="Détails complets de l'expédition et des colis"
-                size="2xl"
-            >
-                {selectedExpedition && (
-                    <div className="space-y-8 pb-4">
-                        <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-4">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">Statut Expédition</p>
-                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase border ${getStatusStyles(selectedExpedition.statut_expedition)}`}>
-                                        {selectedExpedition.statut_expedition === 'accepted' ? <CheckCircle2 size={12} /> : <Clock size={12} />}
-                                        {getStatusLabel(selectedExpedition.statut_expedition)}
-                                    </span>
-                                </div>
-                                <div className="w-px h-10 bg-slate-200 mx-2 hidden sm:block" />
-                            </div>
-                            <div className="flex flex-col text-right">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Type d'expédition</p>
-                                <span className="text-sm font-bold text-slate-900 uppercase">{getTypeLabel(selectedExpedition.type_expedition)}</span>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-3 text-slate-50 group-hover:text-slate-100 transition-colors">
-                                    <User size={48} strokeWidth={4} />
-                                </div>
-                                <div className="flex items-center gap-3 mb-4 relative z-10">
-                                    <div className="h-10 w-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg">
-                                        <ArrowLeft className="rotate-180" size={20} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expéditeur</h4>
-                                        <p className="text-sm font-bold text-slate-900">{selectedExpedition.expediteur?.nom_prenom}</p>
-                                    </div>
-                                </div>
-                                <div className="space-y-3 relative z-10">
-                                    <div className="flex items-center gap-2.5 text-slate-600">
-                                        <Smartphone size={14} className="text-slate-400" />
-                                        <span className="text-xs font-semibold">{selectedExpedition.expediteur?.telephone}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2.5 text-slate-600">
-                                        <Mail size={14} className="text-slate-400" />
-                                        <span className="text-xs font-semibold">{selectedExpedition.expediteur?.email || 'N/A'}</span>
-                                    </div>
-                                    <div className="flex items-start gap-2.5 text-slate-600">
-                                        <MapPin size={14} className="text-slate-400 mt-0.5" />
-                                        <span className="text-xs font-semibold leading-relaxed">
-                                            {selectedExpedition.expediteur?.adresse}, {selectedExpedition.expediteur?.ville}<br />
-                                            <span className="text-slate-400 uppercase text-[10px] font-bold">{selectedExpedition.pays_depart}</span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-3 text-blue-50 group-hover:text-blue-100 transition-colors">
-                                    <User size={48} strokeWidth={4} />
-                                </div>
-                                <div className="flex items-center gap-3 mb-4 relative z-10">
-                                    <div className="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-                                        <ChevronRight size={20} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right sm:text-left">Destinataire</h4>
-                                        <p className="text-sm font-bold text-slate-900">{selectedExpedition.destinataire?.nom_prenom}</p>
-                                    </div>
-                                </div>
-                                <div className="space-y-3 relative z-10">
-                                    <div className="flex items-center gap-2.5 text-slate-600">
-                                        <Smartphone size={14} className="text-slate-400" />
-                                        <span className="text-xs font-semibold">{selectedExpedition.destinataire?.telephone}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2.5 text-slate-600">
-                                        <Mail size={14} className="text-slate-400" />
-                                        <span className="text-xs font-semibold">{selectedExpedition.destinataire?.email || 'N/A'}</span>
-                                    </div>
-                                    <div className="flex items-start gap-2.5 text-slate-600">
-                                        <MapPin size={14} className="text-slate-400 mt-0.5" />
-                                        <span className="text-xs font-semibold leading-relaxed">
-                                            {selectedExpedition.destinataire?.adresse}, {selectedExpedition.destinataire?.ville}<br />
-                                            <span className="text-slate-400 uppercase text-[10px] font-bold">{selectedExpedition.pays_destination}</span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl shadow-slate-200">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-white/10 rounded-lg">
-                                    <PaymentIcon size={20} className="text-white" />
-                                </div>
-                                <h4 className="text-sm font-bold uppercase tracking-widest">Récapitulatif Financier</h4>
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-                                <div className="space-y-1">
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Montant de Base</p>
-                                    <p className="text-lg font-bold">{Number(selectedExpedition.montant_base).toLocaleString()} <span className="text-xs font-normal text-slate-400">CFA</span></p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Prestation ({selectedExpedition.pourcentage_prestation}%)</p>
-                                    <p className="text-lg font-bold text-orange-400">{Number(selectedExpedition.montant_prestation).toLocaleString()} <span className="text-xs font-normal text-slate-400">CFA</span></p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Frais Annexes</p>
-                                    <p className="text-lg font-bold">{(Number(selectedExpedition.frais_emballage) + Number(selectedExpedition.frais_douane)).toLocaleString()} <span className="text-xs font-normal text-slate-400">CFA</span></p>
-                                </div>
-                                <div className="space-y-1 bg-white/5 p-3 rounded-xl border border-white/10">
-                                    <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Total Payé</p>
-                                    <p className="text-xl font-bold text-emerald-400">{Number(selectedExpedition.montant_expedition).toLocaleString()} <span className="text-xs font-normal text-white/50">CFA</span></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Box size={18} className="text-slate-400" />
-                                    <h4 className="text-sm font-bold uppercase tracking-widest text-slate-900">Articles & Colis ({selectedExpedition.colis?.length})</h4>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 gap-4">
-                                {selectedExpedition.colis?.map((colis, idx) => (
-                                    <div key={colis.id} className="group bg-slate-50 hover:bg-white rounded-2xl p-4 border border-slate-100 hover:border-slate-200 hover:shadow-md transition-all">
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                            <div className="flex items-start gap-4">
-                                                <div className="h-12 w-12 rounded-xl bg-white border border-slate-200 flex flex-col items-center justify-center text-slate-400 shadow-sm">
-                                                    <span className="text-[10px] font-bold leading-none">{idx + 1}</span>
-                                                    <Package size={20} mt-1 />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-bold text-slate-900 uppercase">{colis.designation}</span>
-                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded uppercase">{colis.code_colis}</span>
-                                                    </div>
-                                                    <p className="text-xs text-slate-500 font-medium italic">
-                                                        Articles : {colis.articles?.join(', ') || 'Non spécifié'}
-                                                    </p>
-                                                    <div className="flex items-center gap-3 pt-1">
-                                                        <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100">Poids: {colis.poids} KG</span>
-                                                        <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100">Volume: {colis.volume} cm³</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between sm:flex-col sm:items-end gap-1 px-4 sm:px-0 py-2 sm:py-0 bg-white sm:bg-transparent rounded-xl">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prix Colis</span>
-                                                <span className="text-sm font-bold text-slate-900">{Number(colis.montant_colis_total).toLocaleString()} CFA</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <FileText size={14} className="text-slate-400" />
-                                    <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Informations Logistiques</h5>
-                                </div>
-                                <div className="grid grid-cols-2 gap-y-3">
-                                    <div>
-                                        <p className="text-[10px] text-slate-400 uppercase">Code de Validation</p>
-                                        <p className="text-xs font-bold text-blue-600">{selectedExpedition.code_validation_reception || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] text-slate-400 uppercase">Enlèvement Domicile</p>
-                                        <p className="text-xs font-bold text-slate-700">{selectedExpedition.is_enlevement_domicile ? 'OUI' : 'NON'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] text-slate-400 uppercase">Livraison Domicile</p>
-                                        <p className="text-xs font-bold text-slate-700">{selectedExpedition.is_livraison_domicile ? 'OUI' : 'NON'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] text-slate-400 uppercase">Paiement Crédit</p>
-                                        <p className="text-xs font-bold text-slate-700">{selectedExpedition.is_paiement_credit ? 'OUI' : 'NON'}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-100 space-y-2 text-amber-900">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Info size={14} className="text-amber-400" />
-                                    <h5 className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Instructions Spécifiques</h5>
-                                </div>
-                                <p className="text-xs font-medium italic leading-relaxed">
-                                    {selectedExpedition.instructions_livraison || selectedExpedition.instructions_enlevement || "Aucune instruction particulière n'a été fournie pour cette expédition."}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </Modal> */}
+                selectedExpedition={selectedExpedition}
+                getTypeLabel={getTypeLabel}
+            />
         </div>
     );
 };

@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { format } from 'date-fns';
 import api from '../../services/api';
+
 
 export const fetchParcels = createAsyncThunk(
     'parcels/fetchParcels',
@@ -142,6 +144,20 @@ export const fetchDashboardStats = createAsyncThunk(
     }
 );
 
+export const fetchAccountingData = createAsyncThunk(
+    'parcels/fetchAccountingData',
+    async ({ date_debut = null, date_fin = null } = {}, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/backoffice/accounting`, {
+                params: { date_debut, date_fin }
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
 const initialState = {
     // List for "To Control" (is_controlled=false)
     todoList: {
@@ -182,6 +198,20 @@ const initialState = {
         loading: false,
         error: null,
         lastUpdated: null
+    },
+    // Accounting state
+    accounting: {
+        items: [],
+        summary: null,
+        filters: {
+            date_debut: format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd'),
+            date_fin: format(new Date(), 'yyyy-MM-dd'),
+            mode: null // null (all), 'depart', 'reception'
+        },
+        hasLoaded: false,
+        isLoading: false,
+        error: null,
+        lastUpdated: null
     }
 };
 
@@ -204,6 +234,16 @@ const parcelSlice = createSlice({
         setCurrentParcel: (state, action) => {
             state.currentParcel = action.payload;
             state.isLoadingDetail = false;
+        },
+        setAccountingFilters: (state, action) => {
+            state.accounting.filters = {
+                ...state.accounting.filters,
+                ...action.payload
+            };
+            // Whenever filters change, we might want to reset hasLoaded to force a refresh
+            // But usually the user calls handleLoadData manually after changing dates.
+            // Let's set hasLoaded to false so the next useEffect trigger (if any) knows it's dirty.
+            state.accounting.hasLoaded = false;
         }
     },
     extraReducers: (builder) => {
@@ -378,9 +418,26 @@ const parcelSlice = createSlice({
             .addCase(fetchDashboardStats.rejected, (state, action) => {
                 state.dashboard.loading = false;
                 state.dashboard.error = action.payload;
+            })
+
+            // Accounting
+            .addCase(fetchAccountingData.pending, (state) => {
+                state.accounting.isLoading = true;
+                state.accounting.error = null;
+            })
+            .addCase(fetchAccountingData.fulfilled, (state, action) => {
+                state.accounting.isLoading = false;
+                state.accounting.items = action.payload.data || [];
+                state.accounting.summary = action.payload.summary || null;
+                state.accounting.hasLoaded = true;
+                state.accounting.lastUpdated = new Date().toISOString();
+            })
+            .addCase(fetchAccountingData.rejected, (state, action) => {
+                state.accounting.isLoading = false;
+                state.accounting.error = action.payload;
             });
     }
 });
 
-export const { cleartodoList, clearHistoryList, clearCurrentParcel, setCurrentParcel } = parcelSlice.actions;
+export const { cleartodoList, clearHistoryList, clearCurrentParcel, setCurrentParcel, setAccountingFilters } = parcelSlice.actions;
 export default parcelSlice.reducer;

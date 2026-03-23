@@ -14,7 +14,8 @@ import {
   Building2,
   Package,
   ClipboardCheck,
-  ArrowDownToLine
+  ArrowDownToLine,
+  CreditCard
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
@@ -34,6 +35,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     { name: "Arrivages prévus", href: "/incoming-parcels", icon: ArrowDownToLine },
     // { name: "Historique contrôles", href: "/parcels-history", icon: Archive },
     { name: 'Agences partenaires', href: '/agence-partenaire', icon: Blocks },
+    { name: "Comptabilité", href: "/comptabilite", icon: CreditCard },
     { name: "Tarification simple", href: "/simple-rates", icon: DollarSign },
     { name: "Tarification groupée", href: "/grouped-rates", icon: BadgeEuro },
     { name: "Zones d'expéditions", href: "/zone-configuration", icon: MapPin },

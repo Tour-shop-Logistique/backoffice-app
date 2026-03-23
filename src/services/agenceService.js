@@ -29,6 +29,12 @@ const agenceService = {
     getAgenceExpeditions: async (agenceId, page = 1) => {
         const response = await api.get(`/expedition/agence/list?agence_id=${agenceId}&page=${page}`);
         return response.data;
+    },
+    getAgenceAccounting: async (agenceId, dateDebut, dateFin) => {
+        const response = await api.get(`/agence/accounting`, {
+            params: { agence_id: agenceId, date_debut: dateDebut, date_fin: dateFin }
+        });
+        return response.data;
     }
 };
 

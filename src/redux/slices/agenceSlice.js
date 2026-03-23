@@ -81,6 +81,22 @@ export const fetchAgenceTarifsSimple = createAsyncThunk(
     }
 );
 
+export const fetchAgenceAccounting = createAsyncThunk(
+    'agences/fetchAccounting',
+    async ({ agenceId, dateDebut, dateFin }, { rejectWithValue }) => {
+        try {
+            const data = await agenceService.getAgenceAccounting(agenceId, dateDebut, dateFin);
+            if (data.success) {
+                return data;
+            }
+            return rejectWithValue("Impossible de charger la comptabilité");
+        } catch (error) {
+            console.error(error);
+            return rejectWithValue(error.message || "Erreur lors de la récupération de la comptabilité");
+        }
+    }
+);
+
 export const fetchAgenceExpeditions = createAsyncThunk(
     'agences/fetchExpeditions',
     async ({ agenceId, page = 1 }, { rejectWithValue }) => {
@@ -114,6 +130,13 @@ const agenceSlice = createSlice({
         currentAgencyExpeditions: [],
         expeditionsMeta: null,
         isLoadingExpeditions: false,
+        currentAgencyAccounting: {
+            items: [],
+            summary: null,
+            isLoading: false,
+            error: null,
+            lastUpdated: null
+        }
     },
     reducers: {
         resetAgences: (state) => {
@@ -126,6 +149,13 @@ const agenceSlice = createSlice({
             state.currentAgencyTarifsSimple = [];
             state.currentAgencyExpeditions = [];
             state.expeditionsMeta = null;
+            state.currentAgencyAccounting = {
+                items: [],
+                summary: null,
+                isLoading: false,
+                error: null,
+                lastUpdated: null
+            };
         },
         clearCurrentAgencyTarifs: (state) => {
             state.currentAgencyTarifsGroupage = [];
@@ -232,6 +262,21 @@ const agenceSlice = createSlice({
             .addCase(fetchAgenceExpeditions.rejected, (state, action) => {
                 state.isLoadingExpeditions = false;
                 state.error = action.payload;
+            })
+            // FETCH ACCOUNTING
+            .addCase(fetchAgenceAccounting.pending, (state) => {
+                state.currentAgencyAccounting.isLoading = true;
+                state.currentAgencyAccounting.error = null;
+            })
+            .addCase(fetchAgenceAccounting.fulfilled, (state, action) => {
+                state.currentAgencyAccounting.isLoading = false;
+                state.currentAgencyAccounting.items = action.payload.data || [];
+                state.currentAgencyAccounting.summary = action.payload.summary || null;
+                state.currentAgencyAccounting.lastUpdated = new Date().toISOString();
+            })
+            .addCase(fetchAgenceAccounting.rejected, (state, action) => {
+                state.currentAgencyAccounting.isLoading = false;
+                state.currentAgencyAccounting.error = action.payload;
             });
     }
 });
