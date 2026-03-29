@@ -28,12 +28,17 @@ import {
   Box,
   AlertCircle,
   Truck,
-  Wallet
+  Wallet,
+  FileDown,
+  Building2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import Modal from '../components/common/Modal';
 import ExpeditionDetailModal from '../components/expedition/ExpeditionDetailModal';
+import StatCard from '../components/agence/StatCard';
 
 const Comptabilite = () => {
   const dispatch = useDispatch();
@@ -91,10 +96,12 @@ const Comptabilite = () => {
       const result = {
         today: 0,
         todayBackoffice: 0,
-        total: summary.total_client_due || 0,
-        backoffice: summary.total_backoffice || 0,
-        agences: summary.total_agence || 0,
-        livreurs: summary.total_livreur || 0,
+        total: summary.potential?.total_client_due || 0,
+        backoffice: summary.potential?.total_backoffice || 0,
+        agences: summary.potential?.total_agence || 0,
+        livreurs: summary.potential?.total_livreur || 0,
+        realTotal: summary.real?.total_cash_received || 0,
+        realCount: summary.real?.count_transactions || 0,
         tourshop: 0
       };
 
@@ -118,6 +125,8 @@ const Comptabilite = () => {
       backoffice: 0,
       agences: 0,
       livreurs: 0,
+      realTotal: 0, // Ne peut pas être recalculé localement de façon fiable sans toutes les transactions
+      realCount: 0,
       tourshop: 0
     };
 
@@ -156,6 +165,122 @@ const Comptabilite = () => {
     return groups;
   }, [items]);
 
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    const modeLabel = filterMode === 'depart' ? 'DEPARTS' : filterMode === 'reception' ? 'ARRIVEES' : 'TOUTES AGENCES';
+    const period = `du ${format(new Date(dateDebut), 'dd/MM/yyyy')} au ${format(new Date(dateFin), 'dd/MM/yyyy')}`;
+
+    // Helper pour formater les nombres sans caractères spéciaux (éviter les symboles bizarres dans le PDF)
+    const fmt = (v) => String(v || 0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+    // DESIGN PREMIUM : Bandeau de tête
+    doc.setFillColor(15, 23, 42); // slate-900 
+    doc.rect(0, 0, 210, 45, 'F'); 
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("RAPPORT COMPTABILITE", 14, 25);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.text(modeLabel.toUpperCase(), 14, 32);
+    
+    // Bloc de métadonnées en haut à droite
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`PERIODE : ${period.toUpperCase()}`, 140, 18);
+    doc.text(`PAYS : ${paysBackoffice?.toUpperCase() || 'N/A'}`, 140, 24);
+    doc.text(`EDITE LE : ${format(new Date(), 'dd/MM/yyyy')}`, 140, 30);
+
+    // CARTES DE SYNTHESE (Summary Cards)
+    const cardsY = 55;
+    const cardW = 43;
+    const cardH = 20;
+    const spacing = 3.5;
+
+    const drawCard = (x, title, value, isDark = false) => {
+        if (isDark) doc.setFillColor(30, 41, 59);
+        else doc.setFillColor(248, 250, 252);
+        
+        doc.roundedRect(x, cardsY, cardW, cardH, 1, 1, 'F');
+        doc.setFontSize(6);
+        doc.setFont("helvetica", "bold");
+        if (isDark) doc.setTextColor(148, 163, 184);
+        else doc.setTextColor(100, 116, 139);
+        
+        doc.text(title, x + 4, cardsY + 6);
+        
+        doc.setFontSize(10);
+        if (isDark) doc.setTextColor(255, 255, 255);
+        else doc.setTextColor(15, 23, 42);
+        
+        doc.text(`${fmt(value)} CFA`, x + 4, cardsY + 14);
+    };
+
+    drawCard(14, "CA ATTENDU (DÛ)", totals.total);
+    drawCard(14 + (cardW + spacing), "PART BACKOFFICE", totals.backoffice, true);
+    drawCard(14 + (cardW + spacing) * 2, "PART AGENCES", totals.agences);
+    drawCard(14 + (cardW + spacing) * 3, "PART LIVREURS", totals.livreurs);
+
+    // Table (Parfaite symétrie avec le tableau de l'application)
+    const tableColumn = [
+        "Expédition", 
+        "Date / Agence", 
+        "À Percevoir", 
+        "Part Backoffice", 
+        "Part Agence", 
+        "Part Livreurs", 
+        "État Règlements"
+    ];
+    
+    const tableRows = filteredItems.map(item => {
+        const acc = item.accounting_details || { backoffice: 0, agence: 0, total_client_due: 0, livreur: 0 };
+        const statusExp = item.statut_paiement_expedition === 'paye' ? 'Exp: RÉGLÉ' : 'Exp: NON RÉGLÉ';
+        const statusFrais = item.statut_paiement_frais === 'paye' ? 'Frais: RÉGLÉ' : 'Frais: NON RÉGLÉ';
+        
+        return [
+            `${item.reference}\n${item.statut_expedition}`,
+            `${format(new Date(item.date_expedition_depart || item.created_at), 'dd/MM/yyyy')}\n${item.agence?.nom_agence || 'N/A'}`,
+            `${fmt(acc.total_client_due)}`,
+            `${fmt(acc.backoffice)}`,
+            `${fmt(acc.agence)}`,
+            `${fmt(acc.livreur)}`,
+            `${statusExp}\n${statusFrais}`
+        ];
+    });
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 80,
+      theme: 'grid',
+      headStyles: { 
+          fillColor: [15, 23, 42], 
+          fontSize: 7, 
+          fontStyle: 'bold', 
+          halign: 'center' 
+      },
+      bodyStyles: { 
+          fontSize: 6.5, 
+          valign: 'middle' 
+      },
+      columnStyles: {
+          2: { halign: 'right' },
+          3: { halign: 'right', fontStyle: 'bold' },
+          4: { halign: 'right' },
+          5: { halign: 'right' },
+          6: { halign: 'center', fontSize: 6 }
+      },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
+      margin: { top: 80, left: 14, right: 14 },
+      styles: { cellPadding: 2 }
+    });
+
+    doc.save(`Rapport_Comptabilite_${modeLabel}_${dateDebut}.pdf`);
+  };
+
   return (
     <div className="space-y-6 pb-12 font-sans overflow-x-hidden">
       {/* Header */}
@@ -190,41 +315,63 @@ const Comptabilite = () => {
             <button
               onClick={handleLoadData}
               disabled={isLoading || isRefreshing}
-              className="p-2 bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50"
+              className="p-2 bg-white text-slate-600 border-l border-slate-200 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
             >
               {isLoading || isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
             </button>
           </div>
+
+          <button
+            onClick={handleDownloadPDF}
+            disabled={filteredItems.length === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10 disabled:opacity-50"
+          >
+            <FileDown size={14} />
+            PDF
+          </button>
         </div>
       </header>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatCard 
+          label="Potentiel (Attendu)"
+          value={totals.total}
+          icon={Wallet}
+          colorClass="text-slate-500"
+          subtitle="CA Théorique facturé"
+        />
 
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Volume Total à Percevoir</p>
-          <h3 className="text-2xl font-bold text-slate-900">{(totals.total || 0).toLocaleString()} <span className="text-xs font-bold text-slate-400">CFA</span></h3>
+        <StatCard 
+          label="CA Réel Encaissé"
+          value={totals.realTotal}
+          icon={TrendingUp}
+          colorClass="text-emerald-600"
+          subtitle={`${totals.realCount} paiements validés`}
+        />
 
-        </div>
+        <StatCard 
+          label="Part Backoffice"
+          value={totals.backoffice}
+          icon={Briefcase}
+          variant="dark"
+          subtitle="Marges hub central"
+        />
 
-        <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 shadow-lg relative overflow-hidden group">
+        <StatCard 
+          label="Part Agences"
+          value={totals.agences}
+          icon={Building2}
+          colorClass="text-blue-600"
+          subtitle="Commissions agences"
+        />
 
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Revenu Backoffice (Net)</p>
-          <h3 className="text-2xl font-bold text-white">{(totals.backoffice || 0).toLocaleString()} <span className="text-xs font-bold text-slate-500">CFA</span></h3>
-
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Part Agences</p>
-          <h3 className="text-2xl font-bold text-slate-900">{(totals.agences || 0).toLocaleString()} <span className="text-xs font-bold text-slate-400">CFA</span></h3>
-
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Part Livreurs</p>
-          <h3 className="text-2xl font-bold text-slate-900">{(totals.livreurs).toLocaleString()} <span className="text-xs font-bold text-slate-400">CFA</span></h3>
-
-        </div>
+        <StatCard 
+          label="Part Livreurs"
+          value={totals.livreurs}
+          icon={Truck}
+          colorClass="text-slate-400"
+          subtitle="Commissions logistique"
+        />
       </div>
 
       {/* Filters & Search */}
@@ -269,15 +416,15 @@ const Comptabilite = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-200">
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Expédition</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">Date / Agence</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">À Percevoir</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-900 uppercase tracking-widest text-right bg-slate-100/30">Revenu BO</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Part Agence</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Part Comms</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Statut</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Actions</th>
+              <tr className="bg-slate-50/50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                <th className="px-6 py-4">Expédition</th>
+                <th className="px-6 py-4 whitespace-nowrap">Date / Agence</th>
+                <th className="px-6 py-4 text-right">À Percevoir</th>
+                <th className="px-6 py-4 text-right bg-slate-100/30 text-slate-900">Part Backoffice</th>
+                <th className="px-6 py-4 text-right">Part Agence</th>
+                <th className="px-6 py-4 text-right">Part Livreurs</th>
+                <th className="px-6 py-4 text-center">État Règlements</th>
+                <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -312,18 +459,21 @@ const Comptabilite = () => {
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
                           <span className="font-bold text-slate-900 text-sm group-hover:text-slate-950 transition-colors">{exp.reference}</span>
-                          <span className="text-[10px] font-bold text-slate-400 font-mono tracking-tighter">{exp.code_suivi_expedition || 'PENDING'}</span>
+                          <span className="text-xs font-bold text-slate-400  tracking-tighter">{exp.statut_expedition || 'PENDING'}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
                           <span className="text-xs font-bold text-slate-700">
-                            {(exp.date_expedition_depart || exp.created_at)
-                              ? format(new Date(exp.date_expedition_depart || exp.created_at), 'dd MMM yyyy', { locale: fr })
+                            {exp.created_at
+                              ? format(new Date(exp.created_at), 'dd MMM yyyy', { locale: fr })
                               : 'Date inconnue'
                             }
                           </span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase truncate max-w-[150px]">{exp.agence?.nom_agence || 'N/A'}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase truncate max-w-[200px] flex items-center gap-1.5 mt-0.5">
+                            <Building2 size={10} className="text-slate-300" />
+                            {exp.agence?.nom_agence || 'N/A'}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -338,13 +488,17 @@ const Comptabilite = () => {
                       <td className="px-6 py-4 text-right">
                         <div className="flex flex-col items-end">
                           <span className="font-bold text-slate-600 text-sm">{livreurPart.toLocaleString()}</span>
-                          <span className="text-[9px] font-bold text-slate-400 uppercase">Part Livreurs</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${exp.statut_paiement === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                          {exp.statut_paiement === 'paye' ? 'Réglé' : 'En attente'}
-                        </span>
+                        <div className="flex flex-col gap-1.5 items-center">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider ${exp.statut_paiement_expedition === 'paye' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                            Expédition: {exp.statut_paiement_expedition === 'paye' ? 'RÉGLÉ' : 'NON RÉGLÉ'}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider ${exp.statut_paiement_frais === 'paye' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
+                            Frais Annexes: {exp.statut_paiement_frais === 'paye' ? 'RÉGLÉ' : 'NON RÉGLÉ'}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <button

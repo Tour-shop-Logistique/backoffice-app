@@ -48,8 +48,11 @@ import {
     ArrowUpRight,
     ArrowDownLeft,
     TrendingUp,
-    BarChart3
+    BarChart3,
+    FileDown
 } from "lucide-react";
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import Modal from "../components/common/Modal";
 import StatCard from "../components/agence/StatCard";
 import AgencyTariffTable from "../components/agence/AgencyTariffTable";
@@ -207,6 +210,119 @@ const AgenceDetail = () => {
             dateDebut: dateRange.startDate + " 00:00:00",
             dateFin: dateRange.endDate + " 23:59:59"
         }));
+    };
+
+    const handleDownloadPDF = () => {
+        if (!currentAgencyAccounting.summary) return;
+        const doc = new jsPDF();
+        const summary = currentAgencyAccounting.summary;
+        const period = `du ${format(new Date(dateRange.startDate), 'dd/MM/yyyy')} au ${format(new Date(dateRange.endDate), 'dd/MM/yyyy')}`;
+        const fmt = (v) => String(v || 0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+        // DESIGN PREMIUM : Bandeau de tête
+        doc.setFillColor(15, 23, 42); // slate-900 
+        doc.rect(0, 0, 210, 45, 'F'); 
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(20);
+        doc.setFont("helvetica", "bold");
+        doc.text("RAPPORT COMPTABLE AGENCE", 14, 25);
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text(currentAgence?.nom_agence?.toUpperCase() || 'AGENCE LOCALE', 14, 32);
+        
+        // Bloc de métadonnées en haut à droite
+        doc.setFontSize(8);
+        doc.setTextColor(255, 255, 255);
+        doc.text(`PERIODE : ${period.toUpperCase()}`, 140, 18);
+        doc.text(`PAYS : ${currentAgence?.pays?.toUpperCase() || 'N/A'}`, 140, 24);
+        doc.text(`EDITE LE : ${format(new Date(), 'dd/MM/yyyy')}`, 140, 30);
+
+        // CARTES DE SYNTHESE (Summary Cards)
+        const cardsY = 55;
+        const cardW = 43;
+        const cardH = 20;
+        const spacing = 3.5;
+
+        const drawCard = (x, title, value, isDark = false) => {
+            if (isDark) doc.setFillColor(30, 41, 59);
+            else doc.setFillColor(248, 250, 252);
+            
+            doc.roundedRect(x, cardsY, cardW, cardH, 1, 1, 'F');
+            doc.setFontSize(6);
+            doc.setFont("helvetica", "bold");
+            if (isDark) doc.setTextColor(148, 163, 184);
+            else doc.setTextColor(100, 116, 139);
+            doc.text(title, x + 4, cardsY + 6);
+            
+            doc.setFontSize(10);
+            if (isDark) doc.setTextColor(255, 255, 255);
+            else doc.setTextColor(15, 23, 42);
+            doc.text(`${fmt(value)} CFA`, x + 4, cardsY + 14);
+        };
+
+        drawCard(14, "POTENTIEL (DÛ)", summary.potential?.total_client_due || 0);
+        drawCard(14 + (cardW + spacing), "PART BACKOFFICE", summary.potential?.total_backoffice || 0, true);
+        drawCard(14 + (cardW + spacing) * 2, "PART AGENCE", summary.potential?.total_agence || 0);
+        drawCard(14 + (cardW + spacing) * 3, "VOL. EXPEDITIONS", summary.count || 0);
+
+        // Table (Parfaite symétrie avec le tableau de l'application)
+        const tableColumn = [
+            "Expédition", 
+            "Date / Agence", 
+            "À Percevoir", 
+            "Part Backoffice", 
+            "Part Agence", 
+            "Part Livreurs", 
+            "État Règlements"
+        ];
+        
+        const tableRows = currentAgencyAccounting.items.map(item => {
+            const acc = item.accounting_details || { backoffice: 0, agence: 0, total_client_due: 0, livreur: 0 };
+            const statusExp = item.statut_paiement_expedition === 'paye' ? 'Exp: RÉGLÉ' : 'Exp: NON RÉGLÉ';
+            const statusFrais = item.statut_paiement_frais === 'paye' ? 'Frais: RÉGLÉ' : 'Frais: NON RÉGLÉ';
+            
+            return [
+                `${item.reference}\n${item.statut_expedition || 'PENDING'}`,
+                `${format(new Date(item.created_at), 'dd/MM/yyyy')}\n${item.agence?.nom_agence || 'Agence Locale'}`,
+                `${fmt(acc.total_client_due)}`,
+                `${fmt(acc.backoffice)}`,
+                `${fmt(acc.agence)}`,
+                `${fmt(acc.livreur)}`,
+                `${statusExp}\n${statusFrais}`
+            ];
+        });
+
+        autoTable(doc, {
+          head: [tableColumn],
+          body: tableRows,
+          startY: 85,
+          theme: 'grid',
+          headStyles: { 
+              fillColor: [15, 23, 42], 
+              fontSize: 7, 
+              fontStyle: 'bold', 
+              halign: 'center' 
+          },
+          bodyStyles: { 
+              fontSize: 6.5, 
+              valign: 'middle' 
+          },
+          columnStyles: {
+              2: { halign: 'right' },
+              3: { halign: 'right', fontStyle: 'bold' },
+              4: { halign: 'right' },
+              5: { halign: 'right' },
+              6: { halign: 'center', fontSize: 6 }
+          },
+          alternateRowStyles: { fillColor: [249, 250, 251] },
+          margin: { top: 85, left: 14, right: 14 },
+          styles: { cellPadding: 2 }
+        });
+
+        doc.save(`Rapport_Comptable_${currentAgence.nom_agence}_${dateRange.startDate}.pdf`);
     };
 
     // Cleanup au démontage
@@ -768,74 +884,96 @@ const AgenceDetail = () => {
                                     <button
                                         onClick={handleLoadAccounting}
                                         disabled={currentAgencyAccounting.isLoading}
-                                        className="ml-2 px-6 py-2 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm active:scale-95"
+                                        className="px-6 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm active:scale-95"
                                     >
                                         {currentAgencyAccounting.isLoading ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
                                         Actualiser
                                     </button>
+
+                                    <button
+                                        onClick={handleDownloadPDF}
+                                        disabled={currentAgencyAccounting.isLoading || currentAgencyAccounting.items.length === 0}
+                                        className="px-6 py-2 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm active:scale-95"
+                                    >
+                                        <FileDown size={14} />
+                                        PDF
+                                    </button>
                                 </div>
 
                                 {currentAgencyAccounting.lastUpdated && (
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase">
                                         Dernière mise à jour : {new Date(currentAgencyAccounting.lastUpdated).toLocaleTimeString()}
                                     </p>
                                 )}
                             </div>
 
                             {/* Cartes de synthèse */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                                 <StatCard
-                                    label="À Encaisser Client"
-                                    value={currentAgencyAccounting.summary?.total_client_due}
+                                    label="Potentiel (Total Dû)"
+                                    value={currentAgencyAccounting.summary?.potential?.total_client_due}
                                     icon={Wallet}
-                                    colorClass="text-emerald-600"
+                                    colorClass="text-slate-500"
+                                    subtitle="Chiffre d'affaires attendu"
                                 />
                                 <StatCard
-                                    label="Part Agence"
-                                    value={currentAgencyAccounting.summary?.total_agence}
+                                    label="Réel Encaissé"
+                                    value={currentAgencyAccounting.summary?.real?.total_cash_received}
                                     icon={TrendingUp}
-                                    colorClass="text-slate-900"
+                                    colorClass="text-emerald-600"
+                                    unit="CFA"
+                                    subtitle={`${currentAgencyAccounting.summary?.real?.count_transactions || 0} paiements enregistrés`}
                                 />
                                 <StatCard
-                                    label="Part Backoffice"
-                                    value={currentAgencyAccounting.summary?.total_backoffice}
+                                    label="Part Agence (Net)"
+                                    value={currentAgencyAccounting.summary?.potential?.total_agence}
+                                    icon={BadgeCheck}
+                                    colorClass="text-blue-600"
+                                    subtitle="Bénéfice net agence"
+                                />
+                                <StatCard
+                                    label="À Reverser au BO"
+                                    value={currentAgencyAccounting.summary?.potential?.total_backoffice}
                                     icon={Briefcase}
                                     variant="dark"
+                                    subtitle="Reliquat Hub Central"
                                 />
-
                                 <StatCard
                                     label="Vol. Expéditions"
                                     value={currentAgencyAccounting.summary?.count}
-                                    icon={BarChart3}
-                                    unit=""
+                                    icon={ListOrdered}
+                                    unit="COLIS"
+                                    subtitle="Volume d'activité"
                                 />
                             </div>
 
                             {/* Tableau de détail */}
                             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse min-w-[900px]">
+                                    <table className="w-full text-left border-collapse min-w-[1000px]">
                                         <thead>
-                                            <tr className="bg-slate-50 border-b border-slate-100">
-                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Référence / Date</th>
-                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-900 uppercase tracking-wider bg-slate-100/30">Part BO</th>
-                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Part Agence</th>
-                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Part Livreur</th>
-                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">À Percevoir</th>
-                                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                                            <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                                <th className="px-6 py-4">Expédition</th>
+                                                <th className="px-6 py-4 whitespace-nowrap">Date / Agence</th>
+                                                <th className="px-6 py-4 text-right">À Percevoir</th>
+                                                <th className="px-6 py-4 text-right bg-slate-100/30 text-slate-900">Part Backoffice</th>
+                                                <th className="px-6 py-4 text-right">Part Agence</th>
+                                                <th className="px-6 py-4 text-right">Part Livreurs</th>
+                                                <th className="px-6 py-4 text-center">État Règlements</th>
+                                                <th className="px-6 py-4 text-right">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {currentAgencyAccounting.isLoading ? (
                                                 <tr>
-                                                    <td colSpan={5} className="px-6 py-20 text-center">
+                                                    <td colSpan={8} className="px-6 py-20 text-center">
                                                         <Loader2 size={32} className="animate-spin text-slate-200 mx-auto mb-4" />
                                                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Calcul du bilan comptable...</p>
                                                     </td>
                                                 </tr>
                                             ) : currentAgencyAccounting.items.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={5} className="px-6 py-24 text-center bg-slate-50/20">
+                                                    <td colSpan={8} className="px-6 py-24 text-center bg-slate-50/20">
                                                         <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-sm text-slate-200">
                                                             <PieChart size={28} />
                                                         </div>
@@ -844,51 +982,60 @@ const AgenceDetail = () => {
                                                     </td>
                                                 </tr>
                                             ) : (
-                                                currentAgencyAccounting.items.map((item) => (
-                                                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex flex-col">
-                                                                <span className="font-bold text-slate-900 text-xs tracking-tight">{item.reference}</span>
-                                                                <span className="text-[10px] text-slate-400 font-medium mt-1">
-                                                                    {new Date(item.created_at).toLocaleDateString()}
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 bg-slate-50/50 group-hover:bg-slate-100/50 transition-colors">
-                                                            <span className="text-xs font-bold text-slate-900">
-                                                                {item.accounting_details?.backoffice?.toLocaleString() || 0} <span className="text-[10px] text-slate-400 font-medium tracking-tight">CFA</span>
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-xs font-bold text-blue-600">
-                                                                    {item.accounting_details?.agence?.toLocaleString() || 0} <span className="text-[9px] text-slate-400 font-medium">CFA</span>
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className="text-xs font-bold text-slate-700">
-                                                                {item.accounting_details?.livreur?.toLocaleString() || 0} <span className="text-[9px] text-slate-400 font-medium">CFA</span>
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-xs font-bold text-emerald-600">
-                                                                    {item.accounting_details?.total_client_due?.toLocaleString() || 0} <span className="text-[9px] text-slate-400 font-medium">CFA</span>
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-right">
-                                                            <button
-                                                                onClick={() => setSelectedExpedition(item)}
-                                                                className="p-2 text-slate-400 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all shadow-sm active:scale-90"
-                                                                title="Voir les détails"
-                                                            >
-                                                                <Eye size={16} />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))
+                                                currentAgencyAccounting.items.map((item) => {
+                                                    const acct = item.accounting_details || {};
+                                                    return (
+                                                        <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-bold text-slate-900 text-xs tracking-tight">{item.reference}</span>
+                                                                    <span className="text-[10px] font-bold text-slate-400 tracking-tighter uppercase">{item.statut_expedition || 'PENDING'}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xs font-bold text-slate-700">
+                                                                        {item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}
+                                                                    </span>
+                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase truncate max-w-[150px] flex items-center gap-1 mt-0.5">
+                                                                        <Building2 size={10} className="text-slate-300" />
+                                                                        {item.agence?.nom_agence || 'Agence Locale'}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <span className="font-bold text-slate-900 text-xs">{(acct.total_client_due || 0).toLocaleString()}</span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right bg-slate-50/50 group-hover:bg-slate-100/50 transition-colors">
+                                                                <span className="font-bold text-slate-900 text-xs">{(acct.backoffice || 0).toLocaleString()}</span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <span className="font-bold text-blue-600 text-xs">{(acct.agence || 0).toLocaleString()}</span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <span className="font-bold text-slate-500 text-xs">{(acct.livreur || 0).toLocaleString()}</span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center">
+                                                                <div className="flex flex-col gap-1 items-center">
+                                                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold tracking-wider ${item.statut_paiement_expedition === 'paye' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                                                                        Expédition: {item.statut_paiement_expedition === 'paye' ? 'RÉGLÉ' : 'NON RÉGLÉ'}
+                                                                    </span>
+                                                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold tracking-wider ${item.statut_paiement_frais === 'paye' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
+                                                                        Frais Annexes: {item.statut_paiement_frais === 'paye' ? 'RÉGLÉ' : 'NON RÉGLÉ'}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <button 
+                                                                    onClick={() => setSelectedExpedition(item)}
+                                                                    className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
+                                                                >
+                                                                    <Eye size={16} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
                                             )}
                                         </tbody>
                                     </table>

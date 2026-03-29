@@ -26,7 +26,7 @@ import {
   MoreVertical,
   MapPin,
   Scale,
-  Maximize2,
+  AlertCircle,
   Euro,
   Tag,
   Hash,
@@ -34,7 +34,7 @@ import {
   Blocks,
   User,
   Building2,
-  Edit2
+  Edit2,
 } from "lucide-react";
 
 /**
@@ -60,6 +60,11 @@ const Parcels = () => {
   // Selection state
   const [selectedCodes, setSelectedCodes] = useState([]);
   const [validatingCode, setValidatingCode] = useState(null);
+
+  // Block State
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [blockingCode, setBlockingCode] = useState(null);
+  const [blockReason, setBlockReason] = useState('');
 
   const toggleSelect = (code) => {
     setSelectedCodes(prev =>
@@ -114,6 +119,31 @@ const Parcels = () => {
     } finally {
       setValidatingCode(null);
     }
+  };
+
+  const handleOpenBlockModal = (code) => {
+    setBlockingCode(code);
+    setBlockReason('');
+    setIsBlockModalOpen(true);
+  };
+
+  const handleConfirmBlock = () => {
+    if (!blockReason.trim()) {
+      dispatch(showNotification({
+        type: 'error',
+        message: "Veuillez renseigner un motif pour bloquer ce colis."
+      }));
+      return;
+    }
+
+    // Provisoirement, on affiche juste une notif car pas d'API
+    dispatch(showNotification({
+      type: 'warning',
+      message: `Le colis ${blockingCode} a été écarté pour le motif suivant : ${blockReason}. (Note: L'API de blocage n'est pas encore connectée)`
+    }));
+
+    setIsBlockModalOpen(false);
+    setBlockingCode(null);
   };
 
   useEffect(() => {
@@ -504,27 +534,36 @@ const Parcels = () => {
                             </td>
                             <td className="px-6 py-3 text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <button
-                                  onClick={() => handleViewParcel(parcel)}
-                                  className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-95"
-                                >
-                                  Détails
-                                </button>
-                                {parcel.is_controlled ? (
-                                  <div className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center gap-2">
-                                    <ShieldCheck size={12} />
-                                    Contrôlé
-                                  </div>
-                                ) : (
                                   <button
-                                    onClick={() => handleSingleValidate(parcel.code_colis)}
-                                    disabled={isBulkControlling || validatingCode === parcel.code_colis}
-                                    className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-slate-900 text-white hover:bg-slate-800 shadow-md shadow-slate-900/10 active:scale-95 flex items-center gap-2 disabled:opacity-50"
+                                    onClick={() => handleViewParcel(parcel)}
+                                    className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200"
+                                    title="Détails"
                                   >
-                                    {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
-                                    Valider
+                                    <Eye size={16} />
                                   </button>
-                                )}
+                                  {parcel.is_controlled ? (
+                                    <div className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center gap-2">
+                                      <ShieldCheck size={12} />
+                                      Contrôlé
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={() => handleOpenBlockModal(parcel.code_colis)}
+                                        className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border border-rose-200 text-rose-600 hover:bg-rose-50 active:scale-95 flex items-center gap-2"
+                                      >
+                                        Écarter
+                                      </button>
+                                      <button
+                                        onClick={() => handleSingleValidate(parcel.code_colis)}
+                                        disabled={isBulkControlling || validatingCode === parcel.code_colis}
+                                        className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-slate-900 text-white hover:bg-slate-800 shadow-md shadow-slate-900/10 active:scale-95 flex items-center gap-2 disabled:opacity-50"
+                                      >
+                                        {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
+                                        Valider
+                                      </button>
+                                    </div>
+                                  )}
                               </div>
                             </td>
                           </tr>
@@ -604,32 +643,43 @@ const Parcels = () => {
 
                           <div className="flex gap-2">
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewParcel(parcel);
-                              }}
-                              className="flex-1 px-4 py-2 bg-gray-200 text-slate-900 rounded-lg text-xs font-bold uppercase active:scale-95 transition-transform"
-                            >
-                              Détails
-                            </button>
-                            {parcel.is_controlled ? (
-                              <div className="flex-1 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold uppercase flex items-center justify-center gap-2">
-                                <ShieldCheck size={14} />
-                                Contrôlé
-                              </div>
-                            ) : (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSingleValidate(parcel.code_colis);
-                                }}
-                                disabled={isBulkControlling || validatingCode === parcel.code_colis}
-                                className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase shadow-lg shadow-slate-900/10 active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-50"
-                              >
-                                {validatingCode === parcel.code_colis ? <Loader2 size={14} className="animate-spin" /> : <PackageCheck size={14} />}
-                                Valider
-                              </button>
-                            )}
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 handleViewParcel(parcel);
+                               }}
+                               className="p-2 bg-slate-100 text-slate-600 rounded-lg active:scale-95 transition-transform border border-slate-200"
+                             >
+                               <Eye size={18} />
+                             </button>
+                             {parcel.is_controlled ? (
+                               <div className="flex-1 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold uppercase flex items-center justify-center gap-2">
+                                 <ShieldCheck size={14} />
+                                 Contrôlé
+                               </div>
+                             ) : (
+                               <div className="flex-1 flex gap-2">
+                                 <button
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     handleOpenBlockModal(parcel.code_colis);
+                                   }}
+                                   className="flex-1 px-4 py-2 border border-rose-200 text-rose-600 rounded-lg text-xs font-bold uppercase active:scale-95 transition-transform"
+                                 >
+                                   Écarter
+                                 </button>
+                                 <button
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     handleSingleValidate(parcel.code_colis);
+                                   }}
+                                   disabled={isBulkControlling || validatingCode === parcel.code_colis}
+                                   className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase shadow-lg shadow-slate-900/10 active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-50"
+                                 >
+                                   {validatingCode === parcel.code_colis ? <Loader2 size={14} className="animate-spin" /> : <PackageCheck size={14} />}
+                                   Valider
+                                 </button>
+                               </div>
+                             )}
                           </div>
                         </div>
                       );
@@ -743,6 +793,49 @@ const Parcels = () => {
                 ? <><Loader2 className="animate-spin" size={14} /> Traitement...</>
                 : "Valider & Transiter"
               }
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* BLOCK MODAL */}
+      <Modal
+        isOpen={isBlockModalOpen}
+        onClose={() => setIsBlockModalOpen(false)}
+        title="Écarter / Bloquer le colis"
+        subtitle={`Colis ${blockingCode}`}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
+            <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
+            <p className="text-xs font-medium text-amber-800 leading-relaxed">
+              En écartant ce colis, vous signalez une anomalie qui empêche sa validation immédiate. Veuillez préciser la raison ci-dessous.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
+            <textarea
+              value={blockReason}
+              onChange={(e) => setBlockReason(e.target.value)}
+              placeholder="Ex: Poids non conforme, article interdit, emballage endommagé..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all min-h-[120px] resize-none"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => setIsBlockModalOpen(false)}
+              className="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleConfirmBlock}
+              className="flex-[2] px-4 py-2.5 bg-rose-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition-all active:scale-95"
+            >
+              Écarter le colis
             </button>
           </div>
         </div>
