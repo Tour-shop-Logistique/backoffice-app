@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchIncomingParcels, receiveParcels } from '../redux/slices/parcelSlice';
+import { fetchIncomingParcels, receiveParcels, blockParcels } from '../redux/slices/parcelSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
 import { showNotification } from '../redux/slices/uiSlice';
 import { ROUTES } from '../routes';
@@ -49,6 +49,10 @@ const IncomingParcels = () => {
     const [selectedCodes, setSelectedCodes] = useState([]);
     const [validatingCode, setValidatingCode] = useState(null);
 
+    // Block State
+    const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+    const [blockReason, setBlockReason] = useState('');
+
     const toggleSelect = (code) => {
         setSelectedCodes(prev =>
             prev.includes(code)
@@ -74,6 +78,37 @@ const IncomingParcels = () => {
     const handleSingleReceive = (code) => {
         setPendingAction({ type: 'single', codes: [code] });
         setIsAgencyModalOpen(true);
+    };
+
+    const handleBulkBlock = () => {
+        if (selectedCodes.length === 0) return;
+        setBlockReason('');
+        setIsBlockModalOpen(true);
+    };
+
+    const confirmBlockParcels = async () => {
+        if (!blockReason.trim() || selectedCodes.length === 0) return;
+
+        try {
+            await dispatch(blockParcels({
+                codes: selectedCodes,
+                motif_blocage: blockReason
+            })).unwrap();
+
+            dispatch(showNotification({
+                type: 'success',
+                message: `${selectedCodes.length} colis ont été écartés avec succès.`
+            }));
+
+            setSelectedCodes([]);
+            setIsBlockModalOpen(false);
+            setBlockReason('');
+        } catch (error) {
+            dispatch(showNotification({
+                type: 'error',
+                message: error.message || "Erreur lors du blocage des colis."
+            }));
+        }
     };
 
     const confirmReceive = async () => {
@@ -274,6 +309,14 @@ const IncomingParcels = () => {
                                     Réceptionner la sélection
                                 </button>
                                 <button
+                                    onClick={handleBulkBlock}
+                                    disabled={isBulkControlling}
+                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg md:rounded-md text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm shadow-rose-200 active:scale-95 disabled:opacity-50"
+                                >
+                                    {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
+                                    Bloquer la sélection
+                                </button>
+                                <button
                                     onClick={() => setSelectedCodes([])}
                                     className="px-2 py-2 md:py-1 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center"
                                 >
@@ -426,7 +469,12 @@ const IncomingParcels = () => {
                                                                 <TypeIcon size={18} />
                                                             </div>
                                                             <div>
-                                                                <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
+                                                                    {parcel.is_blocked && (
+                                                                        <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[8px] border border-rose-100 uppercase font-black">Bloqué</span>
+                                                                    )}
+                                                                </div>
                                                                 <span className="text-xs font-bold text-slate-400 uppercase">{parcel.designation || 'Sans désignation'}</span>
                                                             </div>
                                                         </div>
@@ -457,10 +505,10 @@ const IncomingParcels = () => {
                                                             <button
                                                                 onClick={() => handleSingleReceive(parcel.code_colis)}
                                                                 disabled={isBulkControlling || validatingCode === parcel.code_colis}
-                                                                className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-slate-900 text-white hover:bg-slate-800 shadow-md shadow-slate-900/10 active:scale-95 flex items-center gap-2 disabled:opacity-50"
+                                                                className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center gap-2 disabled:opacity-50 ${parcel.is_blocked ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-500/10' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/10'}`}
                                                             >
-                                                                {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
-                                                                Réceptionner
+                                                                {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : (parcel.is_blocked ? <ShieldCheck size={12} /> : <PackageCheck size={12} />)}
+                                                                {parcel.is_blocked ? 'Débloquer & Réceptionner' : 'Réceptionner'}
                                                             </button>
                                                         </div>
                                                     </td>
@@ -520,7 +568,12 @@ const IncomingParcels = () => {
                                                                     />
                                                                 </div>
                                                                 <div className="min-w-0 flex-1">
-                                                                    <p className="font-bold text-slate-800 text-sm truncate">{parcel.code_colis}</p>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className="font-bold text-slate-800 text-sm truncate">{parcel.code_colis}</p>
+                                                                        {parcel.is_blocked && (
+                                                                            <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[8px] border border-rose-100 uppercase font-black shrink-0">Bloqué</span>
+                                                                        )}
+                                                                    </div>
                                                                     <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 truncate">
                                                                         {parcel.designation || 'Sans désignation'}
                                                                     </p>
@@ -577,6 +630,14 @@ const IncomingParcels = () => {
                                 className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
                             >
                                 Annuler
+                            </button>
+                            <button
+                                onClick={handleBulkBlock}
+                                disabled={isBulkControlling}
+                                className="bg-rose-600 text-white px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                            >
+                                {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
+                                Bloquer
                             </button>
                             <button
                                 onClick={handleBulkReceive}
@@ -662,6 +723,51 @@ const IncomingParcels = () => {
                                 ? <><Loader2 size={14} className="animate-spin" /> Traitement...</>
                                 : <><PackageCheck size={14} /> Confirmer la réception</>
                             }
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* BLOCK MODAL */}
+            <Modal
+                isOpen={isBlockModalOpen}
+                onClose={() => setIsBlockModalOpen(false)}
+                title="Écarter / Bloquer les colis"
+                subtitle={`${selectedCodes.length} colis sélectionnés`}
+                size="sm"
+            >
+                <div className="space-y-4">
+                    <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3">
+                        <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={18} />
+                        <p className="text-xs font-medium text-rose-800 leading-relaxed">
+                            Vous allez bloquer <strong>{selectedCodes.length} colis</strong>. Veuillez préciser le motif qui sera appliqué à l'ensemble de la sélection.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
+                        <textarea
+                            value={blockReason}
+                            onChange={(e) => setBlockReason(e.target.value)}
+                            placeholder="Précisez la raison de l'écartement..."
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all min-h-[120px] resize-none"
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            onClick={() => setIsBlockModalOpen(false)}
+                            className="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            onClick={confirmBlockParcels}
+                            disabled={isBulkControlling || !blockReason.trim()}
+                            className="flex-[2] px-4 py-2.5 bg-rose-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />}
+                            Confirmer le blocage
                         </button>
                     </div>
                 </div>

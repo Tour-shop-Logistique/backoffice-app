@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchParcelByCode, clearCurrentParcel, setCurrentParcel, controlParcels, receiveParcels } from '../redux/slices/parcelSlice';
+import { fetchParcelByCode, clearCurrentParcel, setCurrentParcel, controlParcels, receiveParcels, blockParcels } from '../redux/slices/parcelSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
 import { showNotification } from '../redux/slices/uiSlice';
 import Modal from '../components/common/Modal';
@@ -29,6 +29,7 @@ import {
     Zap,
     BadgeCheck,
     CheckCircle,
+    Info,
     Clock,
     PackageCheck
 } from 'lucide-react';
@@ -221,40 +222,93 @@ const ParcelControl = () => {
 
     return (
         <div className="max-w-7xl mx-auto space-y-4 pb-12 px-2 animate-in fade-in duration-300">
-            {/* Minimal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-                <div className="flex items-center gap-2">
+            {/* HEADER PREMIUM AVEC STATUT DE BLOCAGE */}
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
+                <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
-                        title="Retour"
+                        className="p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
                     >
-                        <ArrowLeft size={20} />
+                        <ArrowLeft size={20} className="text-slate-600" />
                     </button>
                     <div>
-                        <h1 className="text-lg font-bold text-slate-900 leading-none">Détails du Colis</h1>
+                        <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                             Contrôle Logistique
+                             {currentParcel.is_blocked && (
+                                 <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[10px] border border-rose-100 uppercase tracking-widest font-bold">Bloqué</span>
+                             )}
+                             {currentParcel.is_controlled && !currentParcel.is_blocked && (
+                                 <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] border border-emerald-100 uppercase tracking-widest font-bold">Contrôlé OK</span>
+                             )}
+                        </h1>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Colis {currentParcel.code_colis}</p>
                     </div>
                 </div>
-            </div>
 
-            {/* Compact Top Bar */}
-            <div className="bg-white border border-slate-200 rounded-lg p-4 flex flex-wrap items-center gap-6 shadow-sm">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setIsBlockModalOpen(true)}
+                        disabled={currentParcel.is_blocked || isValidating}
+                        className={`px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-sm border ${currentParcel.is_blocked ? 'bg-slate-50 text-slate-400 border-slate-200' : 'bg-white text-rose-600 border-rose-100 hover:bg-rose-50'}`}
+                    >
+                        <AlertCircle size={14} />
+                        {currentParcel.is_blocked ? "Colis Écarté" : "Écarter"}
+                    </button>
+
+                    <button
+                        onClick={handleValidate}
+                        disabled={isValidating || (currentParcel.is_controlled && !isFromIncoming && !currentParcel.is_blocked)}
+                        className={`px-8 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-lg ${
+                            currentParcel.is_blocked ? 'bg-amber-500 text-white shadow-amber-500/20 hover:bg-amber-600' :
+                            currentParcel.is_controlled 
+                                ? 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600' 
+                                : 'bg-slate-900 text-white shadow-slate-900/20 hover:bg-slate-800'
+                        }`}
+                    >
+                        {isValidating ? <Loader2 size={14} className="animate-spin" /> : 
+                         currentParcel.is_blocked ? <ShieldCheck size={14} /> : <PackageCheck size={14} />}
+                        {currentParcel.is_blocked ? 'Débloquer & Valider' : 
+                         (isFromIncoming ? 'Réceptionner' : (currentParcel.is_controlled ? 'Déjà Contrôlé' : 'Valider & Libérer'))}
+                    </button>
+                </div>
+            </header>
+
+
+            <div className={`border rounded-lg p-4 flex flex-wrap items-center gap-6 shadow-sm transition-all duration-300 ${currentParcel.is_blocked ? 'bg-rose-50/40 border-rose-200' : 'bg-white border-slate-200'}`}>
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-100 text-slate-600">
-                        {isAir ? <Plane size={24} /> : <Ship size={24} />}
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center border transition-colors ${currentParcel.is_blocked ? 'bg-rose-100/50 border-rose-200 text-rose-600' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
+                        {currentParcel.is_blocked ? <AlertCircle size={24} className="animate-pulse" /> : (isAir ? <Plane size={24} /> : <Ship size={24} />)}
                     </div>
                     <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-2">Désignation</p>
-                        <p className="text-sm font-bold text-slate-900 leading-tight uppercase py-0.5 tracking-tight">{currentParcel.designation || 'Non spécifié'}</p>
+                        <p className={`text-sm font-bold leading-tight uppercase py-0.5 tracking-tight ${currentParcel.is_blocked ? 'text-rose-900' : 'text-slate-900'}`}>{currentParcel.designation || 'Non spécifié'}</p>
                     </div>
                 </div>
-                <div className="h-8 border-l border-slate-200 hidden sm:block"></div>
+
+                <div className={`h-8 border-l hidden sm:block ${currentParcel.is_blocked ? 'border-rose-200' : 'border-slate-200'}`}></div>
+
                 <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-2">Code Colis</p>
-                    <p className="text-sm font-mono font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                    <p className={`text-sm font-mono font-bold px-2 py-0.5 rounded border ${currentParcel.is_blocked ? 'bg-white border-rose-200 text-rose-700' : 'bg-slate-50 border-slate-100 text-slate-900'}`}>
                         {currentParcel.code_colis}
                     </p>
                 </div>
+
+                {currentParcel.is_blocked && (
+                    <>
+                        <div className="h-8 border-l border-rose-200 hidden lg:block"></div>
+                        <div className="flex-1 min-w-[200px]">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                <p className="text-[10px] font-bold text-rose-500 uppercase leading-none">Anomalie / Motif</p>
+                            </div>
+                            <p className="text-xs font-bold text-rose-800 italic leading-tight">
+                                {currentParcel.motif_blocage || 'Motif non précisé'}
+                            </p>
+                        </div>
+                    </>
+                )}
+
                 <div className="md:ml-auto flex items-center gap-2">
                     {currentParcel.is_received_by_backoffice ? (
                         <div className="flex flex-col items-end gap-1">
@@ -275,32 +329,12 @@ const ParcelControl = () => {
                                 </div>
                             )}
                         </div>
-                    ) : currentParcel.is_controlled && !isFromIncoming ? (
+                    ) : (currentParcel.is_controlled && !currentParcel.is_blocked && !isFromIncoming) ? (
                         <div className="px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2">
                             <ShieldCheck size={14} />
                             Colis Validé
                         </div>
-                    ) : (
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setIsBlockModalOpen(true)}
-                                className="px-4 py-2 border border-rose-200 text-rose-600 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-rose-50 transition-colors flex items-center gap-2"
-                            >
-                                <AlertCircle size={14} />
-                                Écarter
-                            </button>
-                            <button
-                                onClick={handleValidate}
-                                disabled={isValidating || isBulkControlling}
-                                className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-md shadow-slate-900/10"
-                            >
-                                {isValidating
-                                    ? <><Loader2 size={14} className="animate-spin" /> {isFromIncoming ? 'Réception...' : 'Validation...'}</>
-                                    : <>{isFromIncoming ? 'Confirmer la réception' : 'Valider le contrôle'}</>
-                                }
-                            </button>
-                        </div>
-                    )}
+                    ) : null}
                 </div>
             </div>
 
@@ -428,6 +462,7 @@ const ParcelControl = () => {
                         </div>
                     </div>
                 </div>
+
                 {/* LIGNE 3 : Suivi du Trajet (pleine largeur) */}
                 <div className="lg:col-span-3 bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
                     <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -596,8 +631,10 @@ const ParcelControl = () => {
                         </button>
                         <button
                             onClick={handleConfirmBlock}
-                            className="flex-[2] px-4 py-2.5 bg-rose-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition-all active:scale-95"
+                            disabled={isValidating || !blockReason.trim()}
+                            className="flex-[2] px-4 py-2.5 bg-rose-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                         >
+                            {isValidating ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
                             Écarter le colis
                         </button>
                     </div>

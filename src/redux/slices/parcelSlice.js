@@ -94,13 +94,30 @@ export const fetchParcelByCode = createAsyncThunk(
 
 export const updateExpedition = createAsyncThunk(
     'parcels/updateExpedition',
-    async ({ id, frais_expedition, lien_tracking }, { rejectWithValue }) => {
+    async ({ id, frais_expedition, lien_tracking, poids_reel }, { rejectWithValue }) => {
         try {
             await api.put(`/backoffice/transit-expedition/${id}`, {
                 frais_annexes: frais_expedition || 0,
-                code_suivi_expedition: lien_tracking
+                lien_tracking,
+                poids_reel: poids_reel || 0,
             });
-            return { id, frais_annexes: frais_expedition || 0, code_suivi_expedition: lien_tracking };
+            return { id, weight: poids_reel };
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
+// Bloquer un ou plusieurs colis
+export const blockParcels = createAsyncThunk(
+    'parcels/blockParcels',
+    async ({ codes, motif_blocage }, { rejectWithValue }) => {
+        try {
+            const response = await api.put('/backoffice/block-colis', { 
+                codes, 
+                motif_blocage 
+            });
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
         }
@@ -112,7 +129,7 @@ export const controlParcels = createAsyncThunk(
     async (codes, { rejectWithValue }) => {
         try {
             const response = await api.put(`/backoffice/control-colis`, { codes });
-            return { codes, response: response.data };
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
         }
@@ -124,7 +141,7 @@ export const receiveParcels = createAsyncThunk(
     async ({ codes, agence_id }, { rejectWithValue }) => {
         try {
             const response = await api.put(`/backoffice/receive-colis`, { codes, agence_id });
-            return { codes, response: response.data };
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
         }
@@ -356,15 +373,26 @@ const parcelSlice = createSlice({
             })
             .addCase(controlParcels.fulfilled, (state, action) => {
                 state.isBulkControlling = false;
-                const { codes } = action.payload;
-
-                // Mark items as controlled instead of removing them
-                // This allows seeing the completion of a whole expedition group
-                state.todoList.items = state.todoList.items.map(item => {
-                    if (codes.includes(item.code_colis)) {
-                        return { ...item, is_controlled: true };
+                const updatedParcels = action.payload?.data || [];
+                
+                // Mise à jour réactive des listes locales
+                updatedParcels.forEach(updatedParcel => {
+                    // Update in todoList (Liste globale)
+                    const todoIdx = state.todoList.items.findIndex(p => p.id === updatedParcel.id);
+                    if (todoIdx !== -1) {
+                        state.todoList.items[todoIdx] = { 
+                            ...state.todoList.items[todoIdx], 
+                            ...updatedParcel 
+                        };
                     }
-                    return item;
+
+                    // Update currentParcel if active
+                    if (state.currentParcel && state.currentParcel.id === updatedParcel.id) {
+                        state.currentParcel = { 
+                            ...state.currentParcel, 
+                            ...updatedParcel 
+                        };
+                    }
                 });
             })
             .addCase(controlParcels.rejected, (state) => {
@@ -377,11 +405,12 @@ const parcelSlice = createSlice({
             })
             .addCase(receiveParcels.fulfilled, (state, action) => {
                 state.isBulkControlling = false;
-                const { codes } = action.payload;
+                const updatedParcels = action.payload?.data || [];
+                const codesToRemove = updatedParcels.map(p => p.code_colis);
 
                 // Remove received items from incomingList
                 state.incomingList.items = state.incomingList.items.filter(
-                    item => !codes.includes(item.code_colis)
+                    item => !codesToRemove.includes(item.code_colis)
                 );
             })
             .addCase(receiveParcels.rejected, (state) => {
@@ -435,6 +464,47 @@ const parcelSlice = createSlice({
             .addCase(fetchAccountingData.rejected, (state, action) => {
                 state.accounting.isLoading = false;
                 state.accounting.error = action.payload;
+            })
+            // Block Parcels
+            .addCase(blockParcels.pending, (state) => {
+                state.isBulkControlling = true;
+            })
+            .addCase(blockParcels.fulfilled, (state, action) => {
+                state.isBulkControlling = false;
+                const updatedParcels = action.payload?.data || [];
+                
+                // Mise à jour réactive des listes locales
+                updatedParcels.forEach(updatedParcel => {
+                    // Update in todoList (Liste globale)
+                    const todoIdx = state.todoList.items.findIndex(p => p.id === updatedParcel.id);
+                    if (todoIdx !== -1) {
+                        state.todoList.items[todoIdx] = { 
+                            ...state.todoList.items[todoIdx], 
+                            ...updatedParcel 
+                        };
+                    }
+
+                    // Update in incomingList (Arrivages Hub)
+                    const incIdx = state.incomingList.items.findIndex(p => p.id === updatedParcel.id);
+                    if (incIdx !== -1) {
+                        state.incomingList.items[incIdx] = { 
+                            ...state.incomingList.items[incIdx], 
+                            ...updatedParcel 
+                        };
+                    }
+
+                    // Update currentParcel if active
+                    if (state.currentParcel && state.currentParcel.id === updatedParcel.id) {
+                        state.currentParcel = { 
+                            ...state.currentParcel, 
+                            ...updatedParcel 
+                        };
+                    }
+                });
+            })
+            .addCase(blockParcels.rejected, (state, action) => {
+                state.isBulkControlling = false;
+                state.incomingList.error = action.payload;
             });
     }
 });

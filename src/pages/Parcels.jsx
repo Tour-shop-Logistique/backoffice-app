@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchParcels, updateExpedition, controlParcels } from '../redux/slices/parcelSlice';
+import { fetchParcels, updateExpedition, controlParcels, blockParcels } from '../redux/slices/parcelSlice';
 import { showNotification } from "../redux/slices/uiSlice";
 import { ROUTES } from '../routes';
 import Modal from '../components/common/Modal';
@@ -127,23 +127,44 @@ const Parcels = () => {
     setIsBlockModalOpen(true);
   };
 
-  const handleConfirmBlock = () => {
+  const handleBulkBlock = () => {
+    if (selectedCodes.length === 0) return;
+    setBlockingCode(null); // Indicates batch mode
+    setBlockReason('');
+    setIsBlockModalOpen(true);
+  };
+
+  const handleConfirmBlock = async () => {
     if (!blockReason.trim()) {
-      dispatch(showNotification({
-        type: 'error',
-        message: "Veuillez renseigner un motif pour bloquer ce colis."
-      }));
+      dispatch(showNotification({ type: 'error', message: "Veuillez renseigner un motif." }));
       return;
     }
 
-    // Provisoirement, on affiche juste une notif car pas d'API
-    dispatch(showNotification({
-      type: 'warning',
-      message: `Le colis ${blockingCode} a été écarté pour le motif suivant : ${blockReason}. (Note: L'API de blocage n'est pas encore connectée)`
-    }));
+    const codes = blockingCode ? [blockingCode] : selectedCodes;
+    
+    try {
+      await dispatch(blockParcels({
+        codes,
+        motif_blocage: blockReason
+      })).unwrap();
 
-    setIsBlockModalOpen(false);
-    setBlockingCode(null);
+      dispatch(showNotification({
+        type: 'success',
+        message: codes.length > 1 
+          ? `${codes.length} colis ont été écartés avec succès.`
+          : `Le colis ${codes[0]} a été écarté.`
+      }));
+
+      setIsBlockModalOpen(false);
+      setBlockingCode(null);
+      setBlockReason('');
+      if (!blockingCode) setSelectedCodes([]); // Clear selection if batch
+    } catch (error) {
+      dispatch(showNotification({
+        type: 'error',
+        message: error.message || "Erreur lors du blocage."
+      }));
+    }
   };
 
   useEffect(() => {
@@ -340,8 +361,16 @@ const Parcels = () => {
                   Valider la sélection
                 </button>
                 <button
+                  onClick={handleBulkBlock}
+                  disabled={isBulkControlling}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm shadow-rose-200 active:scale-95 disabled:opacity-50"
+                >
+                  {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
+                  Bloquer la sélection
+                </button>
+                <button
                   onClick={() => setSelectedCodes([])}
-                  className="px-2 py-2 md:py-1 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center"
+                  className="px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center"
                 >
                   Annuler
                 </button>
@@ -506,7 +535,12 @@ const Parcels = () => {
                                   <TypeIcon size={18} />
                                 </div>
                                 <div>
-                                  <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
+                                    {parcel.is_blocked && (
+                                      <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[8px] border border-rose-100 uppercase font-black">Bloqué</span>
+                                    )}
+                                  </div>
                                   <span className="text-xs font-bold text-slate-400 uppercase">{parcel.designation || 'Sans désignation'}</span>
                                 </div>
                               </div>
@@ -541,7 +575,22 @@ const Parcels = () => {
                                   >
                                     <Eye size={16} />
                                   </button>
-                                  {parcel.is_controlled ? (
+                                  {parcel.is_blocked ? (
+                                    <div className="flex items-center gap-2">
+                                      <div className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-rose-200 bg-rose-50 text-rose-600 flex items-center gap-2">
+                                        <AlertCircle size={12} />
+                                        Bloqué
+                                      </div>
+                                      <button
+                                        onClick={() => handleSingleValidate(parcel.code_colis)}
+                                        disabled={isBulkControlling || validatingCode === parcel.code_colis}
+                                        className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-500/10 active:scale-95 flex items-center gap-2"
+                                      >
+                                        {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />}
+                                        Débloquer
+                                      </button>
+                                    </div>
+                                  ) : parcel.is_controlled ? (
                                     <div className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center gap-2">
                                       <ShieldCheck size={12} />
                                       Contrôlé
@@ -635,7 +684,12 @@ const Parcels = () => {
                                 />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="font-bold text-slate-800 text-sm truncate">{parcel.code_colis}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-bold text-slate-800 text-sm truncate">{parcel.code_colis}</p>
+                                  {parcel.is_blocked && (
+                                    <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[8px] border border-rose-100 uppercase font-black shrink-0">Bloqué</span>
+                                  )}
+                                </div>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 truncate">{parcel.expedition?.pays_destination}</p>
                               </div>
                             </div>
@@ -801,43 +855,51 @@ const Parcels = () => {
       {/* BLOCK MODAL */}
       <Modal
         isOpen={isBlockModalOpen}
-        onClose={() => setIsBlockModalOpen(false)}
-        title="Écarter / Bloquer le colis"
-        subtitle={`Colis ${blockingCode}`}
+        onClose={() => {
+          setIsBlockModalOpen(false);
+          setBlockingCode(null);
+        }}
         size="sm"
+        title={blockingCode ? "Écarter un colis" : "Bloquer la sélection"}
+        subtitle={blockingCode ? `Colis : ${blockingCode}` : `${selectedCodes.length} colis sélectionnés`}
       >
         <div className="space-y-4">
-          <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
-            <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
-            <p className="text-xs font-medium text-amber-800 leading-relaxed">
-              En écartant ce colis, vous signalez une anomalie qui empêche sa validation immédiate. Veuillez préciser la raison ci-dessous.
-            </p>
-          </div>
+            <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3">
+                <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={18} />
+                <p className="text-xs font-medium text-rose-800 leading-relaxed">
+                    L'écartement signale une anomalie bloquante. Le motif saisi sera appliqué à {blockingCode ? "ce colis" : "tous les colis sélectionnés"}.
+                </p>
+            </div>
 
-          <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
-            <textarea
-              value={blockReason}
-              onChange={(e) => setBlockReason(e.target.value)}
-              placeholder="Ex: Poids non conforme, article interdit, emballage endommagé..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all min-h-[120px] resize-none"
-            />
-          </div>
+            <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
+                <textarea
+                    value={blockReason}
+                    onChange={(e) => setBlockReason(e.target.value)}
+                    placeholder="Précisez la raison de l'écartement..."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all min-h-[120px] resize-none"
+                />
+            </div>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setIsBlockModalOpen(false)}
-              className="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={handleConfirmBlock}
-              className="flex-[2] px-4 py-2.5 bg-rose-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition-all active:scale-95"
-            >
-              Écarter le colis
-            </button>
-          </div>
+            <div className="flex gap-3 pt-2">
+                <button
+                    onClick={() => {
+                      setIsBlockModalOpen(false);
+                      setBlockingCode(null);
+                    }}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors"
+                >
+                    Annuler
+                </button>
+                <button
+                    onClick={handleConfirmBlock}
+                    disabled={isBulkControlling || !blockReason.trim()}
+                    className="flex-[2] px-4 py-2.5 bg-rose-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                    {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />}
+                    Confirmer le blocage
+                </button>
+            </div>
         </div>
       </Modal>
 
