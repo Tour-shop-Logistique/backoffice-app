@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchParcels, updateExpedition } from '../redux/slices/parcelSlice';
+import { fetchParcels, updateExpeditionInfo } from '../redux/slices/parcelSlice';
 import { ROUTES } from '../routes';
 import Modal from '../components/common/Modal';
 import {
@@ -87,10 +87,10 @@ const ParcelHistory = () => {
     const handleSaveExpedition = async () => {
         if (!selectedExpedition) return;
 
-        await dispatch(updateExpedition({
+        await dispatch(updateExpeditionInfo({
             id: selectedExpedition.id,
-            frais_expedition: fraisExpedition,
-            lien_tracking: lienTracking
+            frais_annexes: fraisExpedition,
+            code_suivi_expedition: lienTracking
         }));
 
         setIsExpeditionModalOpen(false);

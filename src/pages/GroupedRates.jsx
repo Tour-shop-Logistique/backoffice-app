@@ -171,104 +171,107 @@ const GroupedRates = () => {
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
 
-      {/* HEADER - Mobile Optimized */}
-      <header className="space-y-3 md:space-y-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-              Tarifs Groupages
-            </h1>
-            <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
-              Gérez les tarifs par type de groupage
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
-              title="Rafraîchir"
-            >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden md:inline md:ml-2">Rafraîchir</span>
-            </button>
-
-            <button
-              onClick={() => openModal()}
-              className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg hover:shadow-lg transition-colors"
-              title="Ajouter"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span className="hidden md:inline md:ml-2">Ajouter</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* SEARCH & FILTERS - Mobile Optimized */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="md:col-span-3 relative">
-          <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Rechercher par pays ou catégorie..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400"
-          />
-        </div>
-        <div className="relative" ref={typeDropdownRef}>
-          <button
-            onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-            className="flex items-center justify-between w-full px-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-all text-sm font-medium text-slate-700"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Filter className={`h-4 w-4 transition-colors ${isTypeDropdownOpen ? 'text-slate-900' : 'text-slate-400'}`} />
-              <span className="truncate pl-1 pr-2">
-                {activeType === 'all' ? 'Tous les types d\'expedition' : getTypeLabel(activeType)}
-              </span>
+      {/* STICKY HEADER & SEARCH/FILTERS */}
+      <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 md:pt-6 lg:pt-8 pb-3">
+        {/* HEADER SECTION */}
+        <header className="space-y-3 md:space-y-0 text-black">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+                Tarifs Groupages
+              </h1>
+              <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
+                Gérez les tarifs par type de groupage
+              </p>
             </div>
-            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isTypeDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
 
-          {isTypeDropdownOpen && (
-            <div className="absolute w-full top-full left-0 right-0 mt-2 py-1.5 bg-white border border-slate-200 rounded-lg shadow-xl shadow-slate-200/50 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="max-h-64 overflow-y-auto">
-                <button
-                  onClick={() => {
-                    setActiveType('all');
-                    setIsTypeDropdownOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${activeType === 'all' ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
-                >
-                  <span>Tous les types d'expedition</span>
-                  {activeType === 'all' && <Check className="h-4 w-4 text-slate-900" />}
-                </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
+                title="Rafraîchir"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden md:inline md:ml-2">Rafraîchir</span>
+              </button>
 
-                <div className="h-px bg-slate-100 my-1 mx-2" />
+              <button
+                onClick={() => openModal()}
+                className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
+                title="Ajouter"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span className="hidden md:inline md:ml-2">Ajouter</span>
+              </button>
+            </div>
+          </div>
+        </header>
 
-                {[
-                  { id: 'GROUPAGE_DHD_AERIEN', label: 'Groupage DHD Aérien' },
-                  { id: 'GROUPAGE_DHD_MARITIME', label: 'Groupage DHD Maritime' },
-                  { id: 'GROUPAGE_AFRIQUE', label: 'Groupage Afrique' },
-                  { id: 'GROUPAGE_CA', label: 'Groupage Colis Accompagnés' }
-                ].map((mode) => (
+        {/* SEARCH & FILTERS SECTION */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="md:col-span-3 relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+            <input
+              type="text"
+              placeholder="Rechercher par pays ou catégorie..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
+            />
+          </div>
+          <div className="relative" ref={typeDropdownRef}>
+            <button
+              onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+              className="flex items-center justify-between w-full px-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-all text-sm font-medium text-slate-700"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Filter className={`h-4 w-4 transition-colors ${isTypeDropdownOpen ? 'text-slate-900' : 'text-slate-400'}`} />
+                <span className="truncate pl-1 pr-2">
+                  {activeType === 'all' ? 'Tous les types d\'expedition' : getTypeLabel(activeType)}
+                </span>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isTypeDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isTypeDropdownOpen && (
+              <div className="absolute w-full top-full left-0 right-0 mt-2 py-1.5 bg-white border border-slate-200 rounded-lg shadow-xl shadow-slate-200/50 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="max-h-64 overflow-y-auto">
                   <button
-                    key={mode.id}
                     onClick={() => {
-                      setActiveType(mode.id);
+                      setActiveType('all');
                       setIsTypeDropdownOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${activeType === mode.id ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${activeType === 'all' ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
                   >
-                    <span className="truncate">{mode.label}</span>
-                    {activeType === mode.id && <Check className="h-4 w-4 text-slate-900" />}
+                    <span>Tous les types d'expedition</span>
+                    {activeType === 'all' && <Check className="h-4 w-4 text-slate-900" />}
                   </button>
-                ))}
+
+                  <div className="h-px bg-slate-100 my-1 mx-2" />
+
+                  {[
+                    { id: 'GROUPAGE_DHD_AERIEN', label: 'Groupage DHD Aérien' },
+                    { id: 'GROUPAGE_DHD_MARITIME', label: 'Groupage DHD Maritime' },
+                    { id: 'GROUPAGE_AFRIQUE', label: 'Groupage Afrique' },
+                    { id: 'GROUPAGE_CA', label: 'Groupage Colis Accompagnés' }
+                  ].map((mode) => (
+                    <button
+                      key={mode.id}
+                      onClick={() => {
+                        setActiveType(mode.id);
+                        setIsTypeDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${activeType === mode.id ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      <span className="truncate">{mode.label}</span>
+                      {activeType === mode.id && <Check className="h-4 w-4 text-slate-900" />}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 

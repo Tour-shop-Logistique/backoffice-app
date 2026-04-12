@@ -92,16 +92,27 @@ export const fetchParcelByCode = createAsyncThunk(
     }
 );
 
-export const updateExpedition = createAsyncThunk(
-    'parcels/updateExpedition',
-    async ({ id, frais_expedition, lien_tracking, poids_reel }, { rejectWithValue }) => {
+export const updateExpeditionInfo = createAsyncThunk(
+    'parcels/updateExpeditionInfo',
+    async ({ id, frais_annexes, code_suivi_expedition }, { rejectWithValue }) => {
         try {
-            await api.put(`/backoffice/transit-expedition/${id}`, {
-                frais_annexes: frais_expedition || 0,
-                lien_tracking,
-                poids_reel: poids_reel || 0,
+            const response = await api.put(`/backoffice/update-expedition-info/${id}`, {
+                frais_annexes: frais_annexes || 0,
+                code_suivi_expedition
             });
-            return { id, weight: poids_reel };
+            return { id, frais_annexes, code_suivi_expedition, data: response.data };
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
+export const confirmExpeditionDepart = createAsyncThunk(
+    'parcels/confirmExpeditionDepart',
+    async (id, { rejectWithValue }) => {
+        try {
+            const response = await api.put(`/backoffice/confirm-expedition-depart/${id}`);
+            return { id, data: response.data };
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
         }
@@ -319,54 +330,65 @@ const parcelSlice = createSlice({
                 state.detailError = action.payload;
             })
 
-            // Update Expedition
-            .addCase(updateExpedition.pending, (state) => {
+            // Update Expedition Info
+            .addCase(updateExpeditionInfo.pending, (state) => {
                 state.isUpdatingExpedition = true;
             })
-            .addCase(updateExpedition.fulfilled, (state, action) => {
+            .addCase(updateExpeditionInfo.fulfilled, (state, action) => {
                 state.isUpdatingExpedition = false;
                 const { id, frais_annexes, code_suivi_expedition } = action.payload;
 
-                // Helper to update expedition in list
                 const updateInList = (list) => {
                     list.items.forEach(parcel => {
                         if (parcel.expedition?.id === id) {
-                            const base = Number(parcel.expedition.montant_base || 0);
-                            const prest = Number(parcel.expedition.montant_prestation || 0);
-                            const emballage = Number(parcel.expedition.frais_emballage || 0);
-                            const annexes = Number(frais_annexes || 0);
-
                             parcel.expedition = {
                                 ...parcel.expedition,
-                                frais_annexes: annexes,
-                                code_suivi_expedition,
-                                montant_expedition: base + prest + emballage + annexes
+                                frais_annexes: Number(frais_annexes || 0),
+                                code_suivi_expedition
                             };
                         }
                     });
                 };
 
-                // Remove from todoList as it is now transited
-                state.todoList.items = state.todoList.items.filter(p => p.expedition?.id !== id);
-
+                updateInList(state.todoList);
                 updateInList(state.historyList);
                 updateInList(state.incomingList);
 
                 if (state.currentParcel?.expedition?.id === id) {
-                    const base = Number(state.currentParcel.expedition.montant_base || 0);
-                    const prest = Number(state.currentParcel.expedition.montant_prestation || 0);
-                    const emballage = Number(state.currentParcel.expedition.frais_emballage || 0);
-                    const annexes = Number(frais_annexes || 0);
-
                     state.currentParcel.expedition = {
                         ...state.currentParcel.expedition,
-                        frais_annexes: annexes,
-                        code_suivi_expedition,
-                        montant_expedition: base + prest + emballage + annexes
+                        frais_annexes: Number(frais_annexes || 0),
+                        code_suivi_expedition
                     };
                 }
             })
-            .addCase(updateExpedition.rejected, (state) => {
+            .addCase(updateExpeditionInfo.rejected, (state) => {
+                state.isUpdatingExpedition = false;
+            })
+
+            // Confirm Expedition Depart
+            .addCase(confirmExpeditionDepart.pending, (state) => {
+                state.isUpdatingExpedition = true;
+            })
+            .addCase(confirmExpeditionDepart.fulfilled, (state, action) => {
+                state.isUpdatingExpedition = false;
+                const { id } = action.payload;
+
+                // Remove from todoList as it is now successfully departed
+                state.todoList.items = state.todoList.items.filter(p => p.expedition?.id !== id);
+                
+                // Set status to departed in others if needed
+                const setStatusDeparted = (list) => {
+                    list.items.forEach(parcel => {
+                        if (parcel.expedition?.id === id) {
+                            parcel.expedition.statut_expedition = 'depart_expedition_succes';
+                        }
+                    });
+                };
+                setStatusDeparted(state.historyList);
+                setStatusDeparted(state.incomingList);
+            })
+            .addCase(confirmExpeditionDepart.rejected, (state) => {
                 state.isUpdatingExpedition = false;
             })
             // Control Parcels (Bulk)

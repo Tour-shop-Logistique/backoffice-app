@@ -338,7 +338,6 @@ const Comptabilite = () => {
           value={totals.total}
           icon={Wallet}
           colorClass="text-slate-500"
-          subtitle="CA Théorique facturé"
         />
 
         {/* <StatCard 
@@ -354,7 +353,6 @@ const Comptabilite = () => {
           value={totals.backoffice}
           icon={Briefcase}
           variant="dark"
-          subtitle="Marges hub central"
         />
 
         <StatCard 
@@ -362,7 +360,6 @@ const Comptabilite = () => {
           value={totals.agences}
           icon={Building2}
           colorClass="text-blue-600"
-          subtitle="Commissions agences"
         />
 
         <StatCard 
@@ -370,7 +367,6 @@ const Comptabilite = () => {
           value={totals.livreurs}
           icon={Truck}
           colorClass="text-slate-400"
-          subtitle="Commissions logistique"
         />
       </div>
 
@@ -407,8 +403,6 @@ const Comptabilite = () => {
             Arrivées
           </button>
         </div>
-
-
       </div>
 
       {/* Main Table */}

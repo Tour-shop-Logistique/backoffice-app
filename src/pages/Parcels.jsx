@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchParcels, updateExpedition, controlParcels, blockParcels } from '../redux/slices/parcelSlice';
+import { fetchParcels, updateExpeditionInfo, confirmExpeditionDepart, controlParcels, blockParcels } from '../redux/slices/parcelSlice';
 import { showNotification } from "../redux/slices/uiSlice";
 import { ROUTES } from '../routes';
 import Modal from '../components/common/Modal';
@@ -9,30 +9,20 @@ import QRScanner from '../components/common/QRScanner';
 import {
   Package,
   Search,
-  Plus,
   RefreshCw,
   Loader2,
-  ChevronRight,
-  ChevronLeft,
-  Calendar,
   Truck,
   Ship,
   Plane,
   ClipboardCheck,
   PackageCheck,
   ShieldCheck,
-  MoveUpRight,
   Eye,
-  MoreVertical,
   MapPin,
-  Scale,
   AlertCircle,
-  Euro,
+  Wallet,
   Tag,
-  Hash,
   Info,
-  Blocks,
-  User,
   Building2,
   Edit2,
 } from "lucide-react";
@@ -49,8 +39,9 @@ const Parcels = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
-  // Expedition Edit State
+  // Expedition State
   const [isExpeditionModalOpen, setIsExpeditionModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedExpedition, setSelectedExpedition] = useState(null);
   const [fraisExpedition, setFraisExpedition] = useState('');
   const [lienTracking, setLienTracking] = useState('');
@@ -142,7 +133,7 @@ const Parcels = () => {
     }
 
     const codes = blockingCode ? [blockingCode] : selectedCodes;
-    
+
     try {
       await dispatch(blockParcels({
         codes,
@@ -151,7 +142,7 @@ const Parcels = () => {
 
       dispatch(showNotification({
         type: 'success',
-        message: codes.length > 1 
+        message: codes.length > 1
           ? `${codes.length} colis ont été écartés avec succès.`
           : `Le colis ${codes[0]} a été écarté.`
       }));
@@ -197,23 +188,42 @@ const Parcels = () => {
     if (!selectedExpedition) return;
 
     try {
-      await dispatch(updateExpedition({
+      await dispatch(updateExpeditionInfo({
         id: selectedExpedition.id,
-        frais_expedition: fraisExpedition,
-        lien_tracking: lienTracking
+        frais_annexes: fraisExpedition,
+        code_suivi_expedition: lienTracking
       })).unwrap();
 
       dispatch(showNotification({
         type: 'success',
-        message: `Expédition ${selectedExpedition.reference} mise en transit avec succès.`
+        message: `Informations de l'expédition ${selectedExpedition.reference} mises à jour.`
       }));
-
       setIsExpeditionModalOpen(false);
-      setSelectedCodes([]); // Nettoyer si on avait des sélections
     } catch (error) {
       dispatch(showNotification({
         type: 'error',
-        message: error.message || "Erreur lors de la mise en transit."
+        message: error.message || "Erreur lors de la mise à jour."
+      }));
+    }
+  };
+
+  const handleConfirmDepartAction = async () => {
+    if (!selectedExpedition) return;
+
+    try {
+      await dispatch(confirmExpeditionDepart(selectedExpedition.id)).unwrap();
+
+      dispatch(showNotification({
+        type: 'success',
+        message: `Départ de l'expédition ${selectedExpedition.reference} confirmé avec succès.`
+      }));
+
+      setIsConfirmModalOpen(false);
+      setSelectedCodes([]);
+    } catch (error) {
+      dispatch(showNotification({
+        type: 'error',
+        message: error.message || "Erreur lors de la confirmation du départ."
       }));
     }
   };
@@ -291,49 +301,52 @@ const Parcels = () => {
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
 
-      {/* HEADER SECTION */}
-      <header className="space-y-3 md:space-y-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-              Colis à contrôler
-            </h1>
-            <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
-              Liste des colis en attente de vérification
-            </p>
-          </div>
+      {/* STICKY HEADER & SEARCH */}
+      <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 md:pt-6 lg:pt-8 pb-3">
+        {/* HEADER SECTION */}
+        <header className="space-y-3 md:space-y-0 text-black">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+                Colis à contrôler
+              </h1>
+              <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
+                Liste des colis en attente de vérification
+              </p>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing || isLoading}
-              className="inline-flex items-center justify-center p-3 text-sm font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
-            >
-              <RefreshCw className={`h-4 w-4 ${(isRefreshing || isLoading) ? 'animate-spin' : ''}`} />
-              <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-[10px]">Actualiser</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing || isLoading}
+                className="inline-flex items-center justify-center p-3 text-sm font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
+              >
+                <RefreshCw className={`h-4 w-4 ${(isRefreshing || isLoading) ? 'animate-spin' : ''}`} />
+                <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-[10px]">Actualiser</span>
+              </button>
 
-            <button
-              onClick={() => setIsQRScannerOpen(true)}
-              className="flex items-center p-3 text-white text-sm font-bold bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-all border border-slate-900"
-            >
-              <PackageCheck className="h-4 w-4" />
-              <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-[10px]">Scan QR Code</span>
-            </button>
+              <button
+                onClick={() => setIsQRScannerOpen(true)}
+                className="flex items-center p-3 text-white text-sm font-bold bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-all border border-slate-900"
+              >
+                <PackageCheck className="h-4 w-4" />
+                <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-[10px]">Scan QR Code</span>
+              </button>
+            </div>
           </div>
+        </header>
+
+        {/* SEARCH BAR */}
+        <div className="relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+          <input
+            type="text"
+            placeholder="Rechercher un colis à contrôler..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black"
+          />
         </div>
-      </header>
-
-      {/* SEARCH BAR */}
-      <div className="relative group">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
-        <input
-          type="text"
-          placeholder="Rechercher un colis à contrôler..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3  bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400"
-        />
       </div>
 
       {/* MAIN CONTENT AREA */}
@@ -431,59 +444,51 @@ const Parcels = () => {
                             </span>
                           </div>
 
-                          {/* Middle: Breakdown Flow */}
-                          <div className="flex items-center gap-6">
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Base</span>
-                              <span className="text-[11px] font-semibold text-slate-600 tabular-nums">
-                                {Number(group.expedition?.montant_base || 0).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Prestation</span>
-                              <span className="text-[11px] font-semibold text-blue-600 tabular-nums">
-                                +{Number(group.expedition?.montant_prestation || 0).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Emballage</span>
-                              <span className="text-[11px] font-semibold text-slate-600 tabular-nums">
-                                +{Number(group.expedition?.frais_emballage || 0).toLocaleString()}
-                              </span>
-                            </div>
-                            {Number(group.expedition?.frais_annexes || 0) > 0 && (
-                              <div className="flex items-baseline gap-1.5">
-                                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Annexes</span>
-                                <span className="text-[11px] font-semibold text-amber-600 tabular-nums">
-                                  +{Number(group.expedition?.frais_annexes || 0).toLocaleString()}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-
                           {/* Right: Total & Status & Actions */}
                           <div className="ml-auto flex items-center gap-6">
                             {/* Financial Total Section */}
                             <div className="flex items-center gap-4 pr-6 border-r border-slate-200">
-                              <div className="flex flex-col items-end leading-none">
-                                <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.15em] mb-1">Total Expédition</span>
-                                <div className="flex items-baseline gap-1">
-                                  <span className="text-[14px] font-semibold text-slate-900">
-                                    {Number(
-                                      Number(group.expedition?.montant_expedition || 0) +
-                                      Number(group.expedition?.frais_emballage || 0)
-                                    ).toLocaleString()}
+                              <div className="flex flex-col items-end leading-none gap-0.5">
+                                <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Frais Expédition</span>
+                                <div className="flex items-center gap-1.5 flex-row-reverse">
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-[14px] font-bold text-slate-900 tracking-tight">
+                                      {Number(
+                                        Number(group.expedition?.montant_expedition || 0) +
+                                        Number(group.expedition?.frais_emballage || 0)
+                                      ).toLocaleString()}
+                                    </span>
+                                    <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
+                                  </div>
+                                  <span className={`text-[7px] font-bold uppercase px-1 py-0.5 rounded-[4px] border
+                                    ${group.expedition?.statut_paiement === 'paye'
+                                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                      : 'bg-amber-50 text-amber-600 border-amber-100'
+                                    }`}>
+                                    {group.expedition?.statut_paiement === 'paye' ? 'Réglé' : 'Crédit (Arrivée)'}
                                   </span>
-                                  <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
                                 </div>
                               </div>
 
-                              <div className={`px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wider border shadow-sm transition-all
-                                ${group.expedition?.statut_paiement === 'paye'
-                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                  : 'bg-amber-50 text-amber-600 border-amber-100'
-                                }`}>
-                                {group.expedition?.statut_paiement === 'paye' ? 'Payé' : 'Impayé'}
+                              <div className="h-8 border-l border-slate-200 ml-2" />
+
+                              <div className="flex flex-col items-end leading-none gap-0.5">
+                                <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Frais Annexes</span>
+                                <div className="flex items-center gap-1.5 flex-row-reverse">
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-[14px] font-bold text-slate-900 tracking-tight">
+                                      {Number(group.expedition?.frais_annexes || 0).toLocaleString()}
+                                    </span>
+                                    <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
+                                  </div>
+                                  <span className={`text-[7px] font-bold uppercase px-1 py-0.5 rounded-[4px] border
+                                    ${group.expedition?.statut_paiement_frais_annexes === 'paye'
+                                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                      : 'bg-amber-50 text-amber-600 border-amber-100'
+                                    }`}>
+                                    {group.expedition?.statut_paiement_frais_annexes === 'paye' ? 'Réglé' : 'À Régler'}
+                                  </span>
+                                </div>
                               </div>
                             </div>
 
@@ -493,21 +498,49 @@ const Parcels = () => {
                                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
                                   {group.parcels.length} Colis
                                 </span>
-                                <span className={`text-[8px] font-bold uppercase tracking-widest mt-1 ${group.parcels.every(p => p.is_controlled) ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                  {group.parcels.filter(p => p.is_controlled).length} / {group.parcels.length} Contrôlés
+                                <span className={`text-[8px] font-bold uppercase tracking-widest mt-1 ${group.parcels.every(p => p.is_controlled && !p.is_blocked) ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                  {group.parcels.filter(p => p.is_controlled && !p.is_blocked).length} / {group.parcels.length} Contrôlés
                                 </span>
                               </div>
-                              <button
-                                onClick={() => handleEditExpedition(group.expedition)}
-                                disabled={!group.parcels.every(p => p.is_controlled)}
-                                className={`p-1.5 border rounded-lg transition-all shadow-sm group
-                                  ${group.parcels.every(p => p.is_controlled)
-                                    ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-400 hover:text-blue-600'
-                                    : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'}`}
-                                title={group.parcels.every(p => p.is_controlled) ? "Modifier l'expédition" : "Contrôlez tous les colis pour modifier"}
-                              >
-                                <Edit2 size={13} className={group.parcels.every(p => p.is_controlled) ? "group-hover:scale-110 transition-transform" : ""} />
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    setSelectedExpedition({
+                                      ...group.expedition,
+                                      colis_count: group.parcels.length
+                                    });
+                                    setFraisExpedition(group.expedition.frais_annexes || '');
+                                    setLienTracking(group.expedition.code_suivi_expedition || '');
+                                    setIsExpeditionModalOpen(true);
+                                  }}
+                                  disabled={!group.parcels.every(p => p.is_controlled && !p.is_blocked)}
+                                  className={`p-1.5 border rounded-lg transition-all shadow-sm group
+                                    ${group.parcels.every(p => p.is_controlled && !p.is_blocked)
+                                      ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-400 hover:text-blue-600'
+                                      : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'}`}
+                                  title={group.parcels.every(p => p.is_controlled && !p.is_blocked) ? "Modifier les infos" : "Tout doit être contrôlé et non bloqué"}
+                                >
+                                  <Edit2 size={13} className={group.parcels.every(p => p.is_controlled && !p.is_blocked) ? "group-hover:scale-110 transition-transform" : ""} />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedExpedition({
+                                      ...group.expedition,
+                                      colis_count: group.parcels.length
+                                    });
+                                    setIsConfirmModalOpen(true);
+                                  }}
+                                  disabled={!group.parcels.every(p => p.is_controlled && !p.is_blocked) || isUpdatingExpedition}
+                                  className={`px-3 py-1.5 border rounded-lg transition-all shadow-sm group flex items-center gap-2
+                                    ${group.parcels.every(p => p.is_controlled && !p.is_blocked)
+                                      ? 'bg-slate-900 border-slate-900 text-white hover:bg-slate-800 active:scale-[0.98]'
+                                      : 'bg-slate-100 border-slate-200 text-slate-300 cursor-not-allowed'}`}
+                                  title={group.parcels.every(p => p.is_controlled && !p.is_blocked) ? "Confirmer le départ" : "Tout doit être contrôlé et non bloqué"}
+                                >
+                                  <Truck size={13} />
+                                  <span className="text-[10px] font-bold uppercase tracking-tight">Départ</span>
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -538,9 +571,7 @@ const Parcels = () => {
                                 <div>
                                   <div className="flex items-center gap-2">
                                     <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
-                                    {parcel.is_blocked && (
-                                      <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[8px] border border-rose-100 uppercase font-bold">Bloqué</span>
-                                    )}
+
                                   </div>
                                   <span className="text-xs font-bold text-slate-400 uppercase">{parcel.designation || 'Sans désignation'}</span>
                                 </div>
@@ -562,59 +593,59 @@ const Parcels = () => {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-3">
+                            <td className="px-6 py-3 text-left">
                               <div className="flex flex-col">
                                 <span className="text-sm font-semibold text-slate-800">{parcel.poids} kg</span>
                               </div>
                             </td>
                             <td className="px-6 py-3 text-right">
                               <div className="flex items-center justify-end gap-2">
-                                  <button
-                                    onClick={() => handleViewParcel(parcel)}
-                                    className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200"
-                                    title="Détails"
-                                  >
-                                    <Eye size={16} />
-                                  </button>
-                                  {parcel.is_blocked ? (
-                                    <div className="flex items-center gap-2">
-                                      <div className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-rose-200 bg-rose-50 text-rose-600 flex items-center gap-2">
-                                        <AlertCircle size={12} />
-                                        Bloqué
-                                      </div>
-                                      <button
-                                        onClick={() => handleSingleValidate(parcel.code_colis)}
-                                        disabled={isBulkControlling || validatingCode === parcel.code_colis}
-                                        className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-500/10 active:scale-95 flex items-center gap-2"
-                                      >
-                                        {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />}
-                                        Débloquer
-                                      </button>
+                                <button
+                                  onClick={() => handleViewParcel(parcel)}
+                                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200"
+                                  title="Détails"
+                                >
+                                  <Eye size={16} />
+                                </button>
+                                {parcel.is_blocked ? (
+                                  <div className="flex items-center gap-2">
+                                    <div className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-rose-200 bg-rose-50 text-rose-600 flex items-center gap-2">
+                                      <AlertCircle size={12} />
+                                      Bloqué
                                     </div>
-                                  ) : parcel.is_controlled ? (
-                                    <div className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center gap-2">
-                                      <ShieldCheck size={12} />
-                                      Contrôlé
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                          onClick={() => handleOpenBlockModal(parcel.code_colis)}
-                                          disabled={isBulkBlocking || isBulkControlling}
-                                          className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border border-rose-200 text-rose-600 hover:bg-rose-50 active:scale-95 flex items-center gap-2 disabled:opacity-50"
-                                        >
-                                          {isBulkBlocking && blockingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : "Écarter"}
-                                        </button>
-                                      <button
-                                        onClick={() => handleSingleValidate(parcel.code_colis)}
-                                        disabled={isBulkControlling || validatingCode === parcel.code_colis}
-                                        className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-slate-900 text-white hover:bg-slate-800 shadow-md shadow-slate-900/10 active:scale-95 flex items-center gap-2 disabled:opacity-50"
-                                      >
-                                        {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
-                                        Valider
-                                      </button>
-                                    </div>
-                                  )}
+                                    <button
+                                      onClick={() => handleSingleValidate(parcel.code_colis)}
+                                      disabled={isBulkControlling || validatingCode === parcel.code_colis}
+                                      className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-500/10 active:scale-95 flex items-center gap-2"
+                                    >
+                                      {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />}
+                                      Débloquer
+                                    </button>
+                                  </div>
+                                ) : parcel.is_controlled ? (
+                                  <div className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center gap-2">
+                                    <ShieldCheck size={12} />
+                                    Contrôlé
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => handleOpenBlockModal(parcel.code_colis)}
+                                      disabled={isBulkBlocking || isBulkControlling}
+                                      className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border border-rose-200 text-rose-600 hover:bg-rose-50 active:scale-95 flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                      {isBulkBlocking && blockingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : "Écarter"}
+                                    </button>
+                                    <button
+                                      onClick={() => handleSingleValidate(parcel.code_colis)}
+                                      disabled={isBulkControlling || validatingCode === parcel.code_colis}
+                                      className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-600/10 active:scale-95 flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                      {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
+                                      Valider
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -633,31 +664,42 @@ const Parcels = () => {
                   <div className="px-3 py-3 bg-slate-100/50 border-b border-slate-200 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-bold text-slate-700 flex items-center gap-1 truncate">
-                        <Truck size={12} className="shrink-0" /> {group.expedition?.reference || 'N/A'}
+                        {group.expedition?.reference || 'N/A'}
                       </span>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[9px] text-slate-500 font-bold">
-                          {Number(group.expedition?.montant_expedition || 0).toLocaleString()} CFA
-                        </span>
-                        <span className={`px-1 rounded text-[8px] font-bold ${group.expedition?.statut_paiement === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                          {group.expedition?.statut_paiement === 'paye' ? 'PAYÉ' : 'NON PAYÉ'}
-                        </span>
-                      </div>
+
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-[9px] font-bold bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-500">
-                        {group.parcels.filter(p => p.is_controlled).length} / {group.parcels.length}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shadow-sm
+                        ${group.parcels.every(p => p.is_controlled && !p.is_blocked)
+                          ? 'bg-emerald-50 border-emerald-100 text-emerald-600'
+                          : 'bg-white border-slate-200 text-slate-500'}`}>
+                        {group.parcels.filter(p => p.is_controlled && !p.is_blocked).length} / {group.parcels.length}
                       </span>
                       <button
                         onClick={() => handleEditExpedition(group.expedition)}
-                        disabled={!group.parcels.every(p => p.is_controlled)}
-                        className={`p-1.5 border rounded-md transition-all
-                          ${group.parcels.every(p => p.is_controlled)
-                            ? 'bg-white border-slate-200 text-slate-400 hover:text-blue-600 active:bg-slate-50'
+                        disabled={!group.parcels.every(p => p.is_controlled && !p.is_blocked)}
+                        className={`p-2 border rounded-md transition-all
+                          ${group.parcels.every(p => p.is_controlled && !p.is_blocked)
+                            ? 'bg-white border-slate-200 text-slate-400 active:bg-slate-50'
                             : 'bg-slate-50 border-slate-100 text-slate-300 opacity-50'}`}
-                        title={group.parcels.every(p => p.is_controlled) ? "Modifier l'expédition" : "Contrôlez tous les colis pour modifier"}
                       >
                         <Edit2 size={12} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedExpedition({
+                            ...group.expedition,
+                            colis_count: group.parcels.length
+                          });
+                          setIsConfirmModalOpen(true);
+                        }}
+                        disabled={!group.parcels.every(p => p.is_controlled && !p.is_blocked) || isUpdatingExpedition}
+                        className={`p-2 border rounded-md transition-all
+                          ${group.parcels.every(p => p.is_controlled && !p.is_blocked)
+                            ? 'bg-slate-900 border-slate-900 text-white active:bg-slate-800'
+                            : 'bg-slate-100 border-slate-100 text-slate-300 opacity-50'}`}
+                      >
+                        <Truck size={12} />
                       </button>
                     </div>
                   </div>
@@ -699,44 +741,44 @@ const Parcels = () => {
 
                           <div className="flex gap-2">
                             <button
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 handleViewParcel(parcel);
-                               }}
-                               className="p-2 bg-slate-100 text-slate-600 rounded-lg active:scale-95 transition-transform border border-slate-200"
-                             >
-                               <Eye size={18} />
-                             </button>
-                             {parcel.is_controlled ? (
-                               <div className="flex-1 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold uppercase flex items-center justify-center gap-2">
-                                 <ShieldCheck size={14} />
-                                 Contrôlé
-                               </div>
-                             ) : (
-                               <div className="flex-1 flex gap-2">
-                                 <button
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     handleOpenBlockModal(parcel.code_colis);
-                                   }}
-                                   disabled={isBulkBlocking || isBulkControlling}
-                                   className="flex-1 px-4 py-2 border border-rose-200 text-rose-600 rounded-lg text-xs font-bold uppercase active:scale-95 transition-transform disabled:opacity-50"
-                                 >
-                                   {isBulkBlocking && blockingCode === parcel.code_colis ? <Loader2 size={14} className="animate-spin" /> : "Écarter"}
-                                 </button>
-                                 <button
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     handleSingleValidate(parcel.code_colis);
-                                   }}
-                                   disabled={isBulkControlling || validatingCode === parcel.code_colis}
-                                   className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase shadow-lg shadow-slate-900/10 active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-50"
-                                 >
-                                   {validatingCode === parcel.code_colis ? <Loader2 size={14} className="animate-spin" /> : <PackageCheck size={14} />}
-                                   Valider
-                                 </button>
-                               </div>
-                             )}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewParcel(parcel);
+                              }}
+                              className="p-2 bg-slate-100 text-slate-600 rounded-lg active:scale-95 transition-transform border border-slate-200"
+                            >
+                              <Eye size={18} />
+                            </button>
+                            {parcel.is_controlled ? (
+                              <div className="flex-1 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold uppercase flex items-center justify-center gap-2">
+                                <ShieldCheck size={14} />
+                                Contrôlé
+                              </div>
+                            ) : (
+                              <div className="flex-1 flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenBlockModal(parcel.code_colis);
+                                  }}
+                                  disabled={isBulkBlocking || isBulkControlling}
+                                  className="flex-1 px-4 py-2 border border-rose-200 text-rose-600 rounded-lg text-xs font-bold uppercase active:scale-95 transition-transform disabled:opacity-50"
+                                >
+                                  {isBulkBlocking && blockingCode === parcel.code_colis ? <Loader2 size={14} className="animate-spin" /> : "Écarter"}
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSingleValidate(parcel.code_colis);
+                                  }}
+                                  disabled={isBulkControlling || validatingCode === parcel.code_colis}
+                                  className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase shadow-lg shadow-emerald-600/10 active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                  {validatingCode === parcel.code_colis ? <Loader2 size={14} className="animate-spin" /> : <PackageCheck size={14} />}
+                                  Valider
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -768,73 +810,120 @@ const Parcels = () => {
         isOpen={isExpeditionModalOpen}
         onClose={() => setIsExpeditionModalOpen(false)}
         title="Modifier l'expédition"
-        subtitle={`Expédition ${selectedExpedition?.reference || ''}`}
+        subtitle={`Réf: ${selectedExpedition?.reference || ''}`}
         size="sm"
-        onConfirm={handleSaveExpedition}
         isLoading={isUpdatingExpedition}
-        confirmLabel="Valider & Transiter"
+        onConfirm={handleSaveExpedition}
+        confirmLabel="Mettre à jour"
+      >
+        <div className="space-y-6">
+
+          <div className="grid grid-cols-1 gap-5">
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Frais Annexes (Optionnel)</label>
+              <div className="relative group">
+                <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors" size={16} />
+                <input
+                  type="number"
+                  value={fraisExpedition}
+                  onChange={(e) => setFraisExpedition(e.target.value)}
+                  placeholder="0"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-bold text-slate-900 transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Code de suivi / Tracking</label>
+              <div className="relative group">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors" size={16} />
+                <input
+                  type="text"
+                  value={lienTracking}
+                  onChange={(e) => setLienTracking(e.target.value)}
+                  placeholder="EX: TRACK-123456"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-bold text-slate-900 transition-all placeholder:font-normal"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* CONFIRM DEPART MODAL */}
+      <Modal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        title="Confirmer le départ"
+        subtitle={`Réf: ${selectedExpedition?.reference || ''}`}
+        size="sm"
+        onConfirm={handleConfirmDepartAction}
+        isLoading={isUpdatingExpedition}
+        confirmLabel="Confirmer"
+        confirmVariant="primary"
       >
         <div className="space-y-4">
-          {/* Price Recap Section */}
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2">
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-              <Euro size={12} /> Récapitulatif des frais
-            </h4>
+          <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex gap-3 text-amber-800">
+            <Info className="text-amber-500 shrink-0 mt-0.5" size={18} />
             <div className="space-y-1">
-              <div className="flex justify-between text-xs font-medium text-slate-500">
-                <span>Base + Prestation + Emballage :</span>
-                <span className="tabular-nums">
-                  {Number(
-                    Number(selectedExpedition?.montant_base || 0) +
-                    Number(selectedExpedition?.montant_prestation || 0) +
-                    Number(selectedExpedition?.frais_emballage || 0)
-                  ).toLocaleString()} CFA
-                </span>
-              </div>
-              <div className="flex justify-between text-xs font-semibold text-amber-600">
-                <span>Frais annexes :</span>
-                <span className="tabular-nums">
-                  +{Number(fraisExpedition || 0).toLocaleString()} CFA
-                </span>
-              </div>
-              <div className="pt-2 border-t border-slate-200 flex justify-between">
-                <span className="text-xs font-bold text-slate-900 uppercase">Total Expédition :</span>
-                <span className="text-sm font-bold text-blue-600 tabular-nums">
-                  {Number(
-                    Number(selectedExpedition?.montant_base || 0) +
-                    Number(selectedExpedition?.montant_prestation || 0) +
-                    Number(selectedExpedition?.frais_emballage || 0) +
-                    (Number(fraisExpedition) || 0)
-                  ).toLocaleString()} CFA
-                </span>
-              </div>
+              <p className="text-[11px] font-bold uppercase tracking-tight">Action Irréversible</p>
+              <p className="text-xs leading-relaxed font-medium">
+                Vérifiez les paiements avant de confirmer. Les colis quitteront votre liste de contrôle.
+              </p>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-800 mb-2">Frais Annexes de l'Expédition</label>
-            <div className="relative">
-              <Info className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-              <input
-                type="number"
-                value={fraisExpedition}
-                onChange={(e) => setFraisExpedition(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-blue-500 text-sm font-bold text-slate-900 transition-all font-sans"
-
-              />
+          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-4">
+            {/* Infos de base */}
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400 font-bold uppercase">Nombre de colis</span>
+              <span className="text-slate-900 font-bold bg-white px-2 py-1 rounded border border-slate-100 shadow-sm">
+                {selectedExpedition?.colis_count || '-'} Colis
+              </span>
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-800 mb-1">Tracking</label>
-            <div className="relative">
-              <Info className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input
-                type="text"
-                value={lienTracking}
-                onChange={(e) => setLienTracking(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-slate-900 text-sm font-medium"
 
-              />
+            <div className="h-px bg-slate-200/60" />
+
+            {/* Frais Annexes */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-400 font-bold uppercase">Frais Annexes</span>
+                <span className="text-slate-900 font-bold">
+                  {Number(selectedExpedition?.frais_annexes || 0).toLocaleString()} <span className="text-[10px] text-slate-400">CFA</span>
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[9px] font-bold text-slate-400 uppercase">Paiement Frais</span>
+                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border shadow-sm
+                  ${selectedExpedition?.statut_paiement_frais_annexes === 'paye'
+                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                    : 'bg-amber-50 text-amber-600 border-amber-100'
+                  }`}>
+                  {selectedExpedition?.statut_paiement_frais_annexes === 'paye' ? 'Réglé' : 'En attente'}
+                </span>
+              </div>
+            </div>
+
+            <div className="h-px bg-slate-200/60" />
+
+            {/* Montant Expédition */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-400 font-bold uppercase">Montant Expédition</span>
+                <span className="text-indigo-600 font-bold">
+                  {Number(selectedExpedition?.montant_expedition || 0).toLocaleString()} <span className="text-[10px] text-slate-400">CFA</span>
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[9px] font-bold text-slate-400 uppercase">Paiement Expédition</span>
+                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border shadow-sm
+                  ${selectedExpedition?.statut_paiement === 'paye'
+                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                    : 'bg-amber-50 text-amber-600 border-amber-100'
+                  }`}>
+                  {selectedExpedition?.statut_paiement === 'paye' ? 'Réglé' : 'Non Réglé'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -854,25 +943,25 @@ const Parcels = () => {
         confirmDisabled={!blockReason.trim()}
         isLoading={isBulkBlocking}
         confirmVariant="danger"
-        confirmLabel="Confirmer le blocage"
+        confirmLabel="Confirmer"
       >
         <div className="space-y-4">
-            <div className="p-4 bg-rose-50 border border-rose-100 rounded-lg flex items-start gap-3">
-                <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={18} />
-                <p className="text-xs font-medium text-rose-800 leading-relaxed">
-                    L'écartement signale une anomalie bloquante. Le motif saisi sera appliqué à {blockingCode ? "ce colis" : "tous les colis sélectionnés"}.
-                </p>
-            </div>
+          <div className="p-4 bg-rose-50 border border-rose-100 rounded-lg flex items-start gap-3">
+            <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={18} />
+            <p className="text-xs font-medium text-rose-800 leading-relaxed">
+              L'écartement signale une anomalie bloquante. Le motif saisi sera appliqué à {blockingCode ? "ce colis" : "tous les colis sélectionnés"}.
+            </p>
+          </div>
 
-            <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
-                <textarea
-                    value={blockReason}
-                    onChange={(e) => setBlockReason(e.target.value)}
-                    placeholder="Précisez la raison de l'écartement..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all min-h-[120px] resize-none"
-                />
-            </div>
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
+            <textarea
+              value={blockReason}
+              onChange={(e) => setBlockReason(e.target.value)}
+              placeholder="Précisez la raison de l'écartement..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all min-h-[120px] resize-none"
+            />
+          </div>
         </div>
       </Modal>
 
@@ -884,17 +973,23 @@ const Parcels = () => {
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sélection</span>
               <span className="text-xs font-bold truncate">{selectedCodes.length} colis</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setSelectedCodes([])}
-                className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+                className="px-2 py-2 text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
               >
                 Annuler
               </button>
               <button
+                onClick={() => handleOpenBlockModal(null)}
+                className="px-3 py-2 border border-rose-500/30 text-rose-500 rounded-lg text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all"
+              >
+                Écarter
+              </button>
+              <button
                 onClick={handleBulkControl}
                 disabled={isBulkControlling}
-                className="bg-white text-slate-900 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                className="bg-emerald-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-emerald-900/40"
               >
                 {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
                 Valider

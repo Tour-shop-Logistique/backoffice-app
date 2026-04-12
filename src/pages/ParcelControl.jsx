@@ -249,12 +249,6 @@ const ParcelControl = () => {
                     <div>
                         <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                              Contrôle Logistique
-                             {currentParcel.is_blocked && (
-                                 <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[10px] border border-rose-100 uppercase tracking-widest font-bold">Bloqué</span>
-                             )}
-                             {currentParcel.is_controlled && !currentParcel.is_blocked && (
-                                 <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] border border-emerald-100 uppercase tracking-widest font-bold">Contrôlé OK</span>
-                             )}
                         </h1>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Colis {currentParcel.code_colis}</p>
                     </div>
@@ -362,16 +356,24 @@ const ParcelControl = () => {
                             <Scale size={14} /> Informations Logistiques
                         </h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-stretch">
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-stretch">
                         {/* Poids */}
                         <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
                             <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Poids</p>
-                            <p className="text-lg font-semibold text-slate-800">{currentParcel.poids} <span className="text-[10px] font-medium text-slate-400 uppercase">kg</span></p>
+                            <p className="text-md font-semibold text-slate-800 tracking-tight">{currentParcel.poids || 0} <span className="text-[10px] font-medium text-slate-400 uppercase">kg</span></p>
+                        </div>
+                        {/* Dimensions */}
+                        <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                            <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Dimensions (Lxlxh)</p>
+                            <p className="text-md font-semibold text-slate-800 tracking-tight">
+                                {currentParcel.longueur || 0}x{currentParcel.largeur || 0}x{currentParcel.hauteur || 0}
+                                <span className="text-[10px] font-medium text-slate-400 uppercase ml-1">cm</span>
+                            </p>
                         </div>
                         {/* Type d'expédition */}
                         <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
                             <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Type d'expédition</p>
-                            <p className="text-sm font-bold text-slate-800 uppercase tracking-tight">
+                            <p className="text-md font-bold text-slate-800 uppercase tracking-tight">
                                 {currentParcel.expedition?.type_expedition?.replace(/_/g, ' ') || 'Standard'}
                             </p>
                         </div>
@@ -498,7 +500,7 @@ const ParcelControl = () => {
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Frais d'Expédition</p>
                                     <p className={`text-sm font-bold uppercase ${currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                        {currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'RÉGLÉ AU DÉPART' : 'NON RÉGLÉ (À ARRIVÉE)'}
+                                        {currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'RÉGLÉ AU DÉPART' : 'NON RÉGLÉ (À L\'ARRIVÉE)'}
                                     </p>
                                 </div>
                             </div>

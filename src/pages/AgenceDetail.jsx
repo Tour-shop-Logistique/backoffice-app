@@ -932,7 +932,7 @@ const AgenceDetail = () => {
                                     subtitle="Bénéfice net agence"
                                 />
                                 <StatCard
-                                    label="À Reverser au BO"
+                                    label="Part Backoffice"
                                     value={currentAgencyAccounting.summary?.potential?.total_backoffice}
                                     icon={Briefcase}
                                     variant="dark"
@@ -954,7 +954,6 @@ const AgenceDetail = () => {
                                         <thead>
                                             <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                                                 <th className="px-6 py-4">Expédition</th>
-                                                <th className="px-6 py-4 whitespace-nowrap">Date / Agence</th>
                                                 <th className="px-6 py-4 text-right">À Percevoir</th>
                                                 <th className="px-6 py-4 text-right bg-slate-100/30 text-slate-900">Part Backoffice</th>
                                                 <th className="px-6 py-4 text-right">Part Agence</th>
@@ -990,17 +989,6 @@ const AgenceDetail = () => {
                                                                 <div className="flex flex-col">
                                                                     <span className="font-bold text-slate-900 text-xs tracking-tight">{item.reference}</span>
                                                                     <span className="text-[10px] font-bold text-slate-400 tracking-tighter uppercase">{item.statut_expedition || 'PENDING'}</span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-xs font-bold text-slate-700">
-                                                                        {item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}
-                                                                    </span>
-                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase truncate max-w-[150px] flex items-center gap-1 mt-0.5">
-                                                                        <Building2 size={10} className="text-slate-300" />
-                                                                        {item.agence?.nom_agence || 'Agence Locale'}
-                                                                    </span>
                                                                 </div>
                                                             </td>
                                                             <td className="px-6 py-4 text-right">

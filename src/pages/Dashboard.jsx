@@ -77,20 +77,20 @@ const Dashboard = () => {
       </div>
 
       {/* KPI CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {[
           { color: '#6366F1', shadow: 'shadow-indigo-200/50', icon: ClipboardCheck, label: 'Colis à contrôler', value: op.colis_a_controler || 0 },
           { color: '#F43F5E', shadow: 'shadow-rose-200/50',   icon: Truck,          label: 'Arrivages prévus',  value: op.arrivages_prevus || 0 },
           { color: '#0EA5E9', shadow: 'shadow-blue-200/50',   icon: PackageCheck,   label: 'Réceptions du Jour', value: op.receptions_du_jour || 0 },
           { color: '#F59E0B', shadow: 'shadow-amber-200/50',  icon: TrendingUp,     label: 'Expéditions du Jour', value: op.colis_expedies_du_jour || 0 },
         ].map(({ color, shadow, icon: Icon, label, value }) => (
-          <div key={label} style={{ backgroundColor: color }} className={`p-4 rounded-xl flex items-center gap-4 shadow-md ${shadow} transition-transform hover:scale-[1.02]`}>
-            <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm" style={{ color }}>
-              <Icon size={24} />
+          <div key={label} style={{ backgroundColor: color }} className={`p-3 md:p-4 rounded-xl flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 shadow-md ${shadow} transition-transform hover:scale-[1.02]`}>
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-lg flex items-center justify-center shadow-sm shrink-0" style={{ color }}>
+              <Icon size={20} className="md:w-6 md:h-6" />
             </div>
-            <div className="text-white">
-              <p className="text-[10px] font-bold opacity-80 uppercase tracking-wider">{label}</p>
-              <p className="text-2xl font-bold leading-none mt-1">{value}</p>
+            <div className="text-white min-w-0">
+              <p className="text-[9px] md:text-[10px] font-bold opacity-80 uppercase tracking-wider truncate">{label}</p>
+              <p className="text-xl md:text-2xl font-bold leading-none mt-1">{value}</p>
             </div>
           </div>
         ))}

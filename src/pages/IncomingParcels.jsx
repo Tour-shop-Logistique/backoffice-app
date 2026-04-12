@@ -237,49 +237,52 @@ const IncomingParcels = () => {
     return (
         <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
 
-            {/* ── HEADER ── */}
-            <header className="space-y-3 md:space-y-0">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-                            Arrivages prévus
-                        </h1>
-                        <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
-                            Expéditions en transit entrant dans votre pays
-                        </p>
-                    </div>
+            {/* STICKY HEADER & SEARCH */}
+            <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 md:pt-6 lg:pt-8 pb-3">
+                {/* ── HEADER ── */}
+                <header className="space-y-3 md:space-y-0 text-black">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+                                Arrivages prévus
+                            </h1>
+                            <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
+                                Expéditions en transit entrant dans votre pays
+                            </p>
+                        </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={handleRefresh}
-                            disabled={isRefreshing || isLoading}
-                            className="inline-flex items-center justify-center p-3 text-sm font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
-                        >
-                            <RefreshCw className={`h-4 w-4 ${(isRefreshing || isLoading) ? 'animate-spin' : ''}`} />
-                            <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-[10px]">Actualiser</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleRefresh}
+                                disabled={isRefreshing || isLoading}
+                                className="inline-flex items-center justify-center p-3 text-sm font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
+                            >
+                                <RefreshCw className={`h-4 w-4 ${(isRefreshing || isLoading) ? 'animate-spin' : ''}`} />
+                                <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-[10px]">Actualiser</span>
+                            </button>
 
-                        <button
-                            onClick={() => setIsQRScannerOpen(true)}
-                            className="flex items-center p-3 text-white text-sm font-bold bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-all border border-slate-900"
-                        >
-                            <PackageCheck className="h-4 w-4" />
-                            <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-[10px]">Scan QR Code</span>
-                        </button>
+                            <button
+                                onClick={() => setIsQRScannerOpen(true)}
+                                className="flex items-center p-3 text-white text-sm font-bold bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-all border border-slate-900"
+                            >
+                                <PackageCheck className="h-4 w-4" />
+                                <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-[10px]">Scan QR Code</span>
+                            </button>
+                        </div>
                     </div>
+                </header>
+
+                {/* ── SEARCH BAR ── */}
+                <div className="relative group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+                    <input
+                        type="text"
+                        placeholder="Rechercher un colis à réceptionner..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
+                    />
                 </div>
-            </header>
-
-            {/* ── SEARCH BAR ── */}
-            <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
-                <input
-                    type="text"
-                    placeholder="Rechercher un colis à réceptionner..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400"
-                />
             </div>
 
             {/* ── MAIN CONTENT ── */}
