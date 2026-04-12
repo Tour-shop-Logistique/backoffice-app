@@ -450,8 +450,12 @@ const SimpleRates = () => {
                 title="Nouveau Tarif Simple"
                 subtitle="Définissez l'indice, la zone et les prix"
                 size="xl"
+                confirmFormId="add-tarif-form"
+                isLoading={isSubmitting}
+                confirmLabel="Enregistrer"
             >
                 <SimpleTarifForm
+                    id="add-tarif-form"
                     onSubmit={handleAddTarif}
                     onCancel={() => setIsModalOpen(false)}
                     zones={zones}
@@ -465,9 +469,13 @@ const SimpleRates = () => {
                 title="Modifier Tarif Simple"
                 subtitle={`Mise à jour de la grille pour l'indice #${selectedTarif?.indice}`}
                 size="xl"
+                confirmFormId="edit-tarif-form"
+                isLoading={isSubmitting}
+                confirmLabel="Mettre à jour"
             >
                 {selectedTarif && (
                     <SimpleTarifForm
+                        id="edit-tarif-form"
                         initialData={selectedTarif}
                         onSubmit={handleEditTarif}
                         onCancel={() => setIsEditingModalOpen(false)}

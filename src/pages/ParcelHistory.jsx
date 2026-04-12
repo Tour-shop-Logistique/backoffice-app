@@ -476,6 +476,9 @@ const ParcelHistory = () => {
                 title="Modifier l'expédition"
                 subtitle={`Expédition ${selectedExpedition?.reference || ''}`}
                 size="sm"
+                onConfirm={handleSaveExpedition}
+                isLoading={isUpdatingExpedition}
+                confirmLabel="Enregistrer"
             >
                 <div className="space-y-4">
                     <div>
@@ -486,7 +489,7 @@ const ParcelHistory = () => {
                                 type="number"
                                 value={fraisExpedition}
                                 onChange={(e) => setFraisExpedition(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-900 text-sm font-medium"
+                                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-slate-900 text-sm font-medium"
                                 placeholder="0.00"
                             />
                         </div>
@@ -499,26 +502,10 @@ const ParcelHistory = () => {
                                 type="text"
                                 value={lienTracking}
                                 onChange={(e) => setLienTracking(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-900 text-sm font-medium"
+                                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-slate-900 text-sm font-medium"
                                 placeholder="https://..."
                             />
                         </div>
-                    </div>
-                    <div className="flex justify-end gap-2 pt-4">
-                        <button
-                            onClick={() => setIsExpeditionModalOpen(false)}
-                            className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            onClick={handleSaveExpedition}
-                            disabled={isUpdatingExpedition}
-                            className="px-6 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 disabled:opacity-50 flex items-center gap-2"
-                        >
-                            {isUpdatingExpedition && <Loader2 className="animate-spin" size={14} />}
-                            Enregistrer
-                        </button>
                     </div>
                 </div>
             </Modal>

@@ -5,6 +5,7 @@ import SearchableDropdown from '../common/SearchableDropdown';
 
 
 const Addtarifgroupe = ({
+  id,
   tarifToEdit,
   closeModal,
   categories = [],
@@ -207,7 +208,7 @@ const Addtarifgroupe = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form id={id} onSubmit={handleSubmit} className="space-y-6">
 
       {/* STEP 1: Type Selection */}
       <div className="relative">
@@ -441,35 +442,6 @@ const Addtarifgroupe = ({
             </div>
           )}
         </div>
-      </div>
-
-      {/* FOOTER BUTTONS */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-        <button
-          type="button"
-          onClick={closeModal}
-          className="px-6 py-2.5 border-2 border-gray-300 rounded-lg text-slate-700 bg-white hover:bg-gray-50 transition-all duration-150 font-semibold hover:border-gray-400 hover:shadow-md"
-          disabled={isSubmitting}
-        >
-          Annuler
-        </button>
-
-        <button
-          type="submit"
-          className="px-6 py-2.5 rounded-lg shadow-lg text-white font-semibold bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 transition-all duration-150 disabled:from-gray-400 disabled:to-gray-400 disabled:shadow-none hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <div className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-              <span>{tarifToEdit ? "En cours..." : "En cours..."}</span>
-            </div>
-          ) : (
-            <span className="flex items-center gap-2">
-              {tarifToEdit ? "Mettre à jour" : "Enregistrer"}
-            </span>
-          )}
-        </button>
       </div>
 
     </form>

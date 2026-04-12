@@ -35,6 +35,8 @@ const IncomingParcels = () => {
         (state) => state.parcels.incomingList
     );
     const isBulkControlling = useSelector((state) => state.parcels.isBulkControlling);
+    const isBulkBlocking = useSelector((state) => state.parcels.isBulkBlocking);
+    const isBulkReceiving = useSelector((state) => state.parcels.isBulkReceiving);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
@@ -302,18 +304,18 @@ const IncomingParcels = () => {
                                 </span>
                                 <button
                                     onClick={handleBulkReceive}
-                                    disabled={isBulkControlling}
+                                    disabled={isBulkReceiving || isBulkBlocking}
                                     className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg md:rounded-md text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm shadow-indigo-200 active:scale-95 disabled:opacity-50"
                                 >
-                                    {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
+                                    {isBulkReceiving ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
                                     Réceptionner la sélection
                                 </button>
                                 <button
                                     onClick={handleBulkBlock}
-                                    disabled={isBulkControlling}
+                                    disabled={isBulkReceiving || isBulkBlocking}
                                     className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg md:rounded-md text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm shadow-rose-200 active:scale-95 disabled:opacity-50"
                                 >
-                                    {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
+                                    {isBulkBlocking ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
                                     Bloquer la sélection
                                 </button>
                                 <button
@@ -472,7 +474,7 @@ const IncomingParcels = () => {
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
                                                                     {parcel.is_blocked && (
-                                                                        <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[8px] border border-rose-100 uppercase font-black">Bloqué</span>
+                                                                        <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[8px] border border-rose-100 uppercase font-bold">Bloqué</span>
                                                                     )}
                                                                 </div>
                                                                 <span className="text-xs font-bold text-slate-400 uppercase">{parcel.designation || 'Sans désignation'}</span>
@@ -571,7 +573,7 @@ const IncomingParcels = () => {
                                                                     <div className="flex items-center gap-2">
                                                                         <p className="font-bold text-slate-800 text-sm truncate">{parcel.code_colis}</p>
                                                                         {parcel.is_blocked && (
-                                                                            <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[8px] border border-rose-100 uppercase font-black shrink-0">Bloqué</span>
+                                                                            <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[8px] border border-rose-100 uppercase font-bold shrink-0">Bloqué</span>
                                                                         )}
                                                                     </div>
                                                                     <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 truncate">
@@ -676,6 +678,10 @@ const IncomingParcels = () => {
                 title="Agence de Réception"
                 subtitle="Sélectionnez l'agence de destination pour ces colis"
                 size="xs"
+                onConfirm={confirmReceive}
+                confirmDisabled={!selectedAgencyId}
+                isLoading={isBulkReceiving}
+                confirmLabel="Confirmer la réception"
             >
                 <div className="space-y-4">
                     <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-3">
@@ -693,7 +699,7 @@ const IncomingParcels = () => {
                         <select
                             value={selectedAgencyId}
                             onChange={(e) => setSelectedAgencyId(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all"
+                            className="w-full bg-white border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all"
                         >
                             <option value="">Sélectionner une agence...</option>
                             {agences.map(agency => (
@@ -702,28 +708,6 @@ const IncomingParcels = () => {
                                 </option>
                             ))}
                         </select>
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            onClick={() => {
-                                setIsAgencyModalOpen(false);
-                                setPendingAction(null);
-                            }}
-                            className="flex-1 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            onClick={confirmReceive}
-                            disabled={!selectedAgencyId || isBulkControlling}
-                            className="flex-[2] px-4 py-2.5 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                        >
-                            {isBulkControlling
-                                ? <><Loader2 size={14} className="animate-spin" /> Traitement...</>
-                                : <><PackageCheck size={14} /> Confirmer la réception</>
-                            }
-                        </button>
                     </div>
                 </div>
             </Modal>
@@ -735,6 +719,11 @@ const IncomingParcels = () => {
                 title="Écarter / Bloquer les colis"
                 subtitle={`${selectedCodes.length} colis sélectionnés`}
                 size="sm"
+                onConfirm={confirmBlockParcels}
+                confirmDisabled={!blockReason.trim()}
+                isLoading={isBulkBlocking}
+                confirmVariant="danger"
+                confirmLabel="Confirmer le blocage"
             >
                 <div className="space-y-4">
                     <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3">
@@ -752,23 +741,6 @@ const IncomingParcels = () => {
                             placeholder="Précisez la raison de l'écartement..."
                             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all min-h-[120px] resize-none"
                         />
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            onClick={() => setIsBlockModalOpen(false)}
-                            className="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            onClick={confirmBlockParcels}
-                            disabled={isBulkControlling || !blockReason.trim()}
-                            className="flex-[2] px-4 py-2.5 bg-rose-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />}
-                            Confirmer le blocage
-                        </button>
                     </div>
                 </div>
             </Modal>

@@ -388,8 +388,12 @@ const ZoneConfiguration = () => {
         title="Nouvelle Zone"
         subtitle="Créez une nouvelle zone géographique de livraison"
         size="xl"
+        confirmFormId="add-zone-form"
+        isLoading={isSubmitting}
+        confirmLabel="Créer la zone"
       >
         <ZoneForm
+          id="add-zone-form"
           onSubmit={handleAddZone}
           onCancel={() => {
             setIsModalOpen(false);
@@ -410,9 +414,13 @@ const ZoneConfiguration = () => {
         title="Modifier la Zone"
         subtitle="Mettez à jour les informations de la zone"
         size="xl"
+        confirmFormId="edit-zone-form"
+        isLoading={isSubmitting}
+        confirmLabel="Enregistrer"
       >
         {selectedZone && (
           <ZoneForm
+            id="edit-zone-form"
             initialData={selectedZone}
             onSubmit={handleEditZone}
             onCancel={() => {

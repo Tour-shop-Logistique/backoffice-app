@@ -17,7 +17,7 @@ import {
   Check
 } from 'lucide-react';
 
-const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData, zones = [] }) => {
+const SimpleTarifForm = ({ id = "simple-tarif-form", onSubmit, onCancel, isLoading, initialData, zones = [] }) => {
   const [formData, setFormData] = useState({
     indice: '',
     zone_destination_id: '',
@@ -106,7 +106,7 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData, zones = [
   const labelClasses = "block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 relative pb-4">
+    <form id={id} onSubmit={handleSubmit} className="space-y-6 relative pb-4">
       {/* Indice & Zone Destination */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className={`bg-slate-50 p-3 rounded-lg border border-slate-200 ${formData.id ? 'opacity-60' : ''}`}>
@@ -252,31 +252,6 @@ const SimpleTarifForm = ({ onSubmit, onCancel, isLoading, initialData, zones = [
           </div>
         )}
       </div>
-
-      {/* Footer Form Actions */}
-      <div className="pt-6 border-t border-gray-100 flex gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-600 rounded-lg transition-colors border border-transparent hover:border-gray-100"
-        >
-          Annuler
-        </button>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="flex-[2] px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 text-xs shadow-lg shadow-slate-900/10"
-        >
-          {isLoading ? (
-            <Loader2 className="animate-spin" size={16} />
-          ) : (
-            <>
-              Enregistrer
-            </>
-          )}
-        </button>
-      </div>
-
     </form>
   );
 };

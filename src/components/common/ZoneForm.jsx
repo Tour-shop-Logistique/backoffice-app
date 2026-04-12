@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Globe, Loader2 } from 'lucide-react';
 
-const ZoneForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
+const ZoneForm = ({ id = "zone-form", onSubmit, onCancel, isLoading, initialData }) => {
   const [formData, setFormData] = useState({
     id: '',
     nom: '',
@@ -58,7 +58,7 @@ const ZoneForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form id={id} onSubmit={handleSubmit} className="space-y-5">
       {/* Afficher l'ID uniquement en mode édition */}
       {initialData && (
         <div className="space-y-1.5">
@@ -144,24 +144,6 @@ const ZoneForm = ({ onSubmit, onCancel, isLoading, initialData }) => {
             </div>
           )}
         </div>
-      </div>
-
-      <div className="flex justify-end items-center space-x-4 pt-4 border-t border-slate-50">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
-        >
-          Annuler
-        </button>
-        <button
-          type="submit"
-          disabled={isLoading || formData.pays.length === 0}
-          className="px-6 py-2.5 bg-slate-900 text-white text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-slate-800 transition-all flex items-center gap-2 shadow-lg shadow-slate-900/10 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-          {initialData ? 'Enregistrer' : 'Créer la zone'}
-        </button>
       </div>
     </form>
   );

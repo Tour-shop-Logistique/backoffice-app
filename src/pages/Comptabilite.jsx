@@ -332,7 +332,7 @@ const Comptabilite = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           label="Potentiel (Attendu)"
           value={totals.total}
@@ -341,13 +341,13 @@ const Comptabilite = () => {
           subtitle="CA Théorique facturé"
         />
 
-        <StatCard 
+        {/* <StatCard 
           label="CA Réel Encaissé"
           value={totals.realTotal}
           icon={TrendingUp}
           colorClass="text-emerald-600"
           subtitle={`${totals.realCount} paiements validés`}
-        />
+        /> */}
 
         <StatCard 
           label="Part Backoffice"
@@ -552,12 +552,12 @@ const Comptabilite = () => {
           </div>
           <div>
             <h4 className="text-xs font-bold text-blue-900 uppercase tracking-widest mb-2">Emballage</h4>
-            <p className="text-xs text-blue-800/70 font-medium">BO: <span className="font-bold text-blue-900">85%</span></p>
+            <p className="text-xs text-blue-800/70 font-medium">Backoffice: <span className="font-bold text-blue-900">85%</span></p>
             <p className="text-xs text-blue-800/70 font-medium">Agence: <span className="font-bold text-blue-900">15%</span></p>
           </div>
           <div>
             <h4 className="text-xs font-bold text-blue-900 uppercase tracking-widest mb-2">Retard</h4>
-            <p className="text-xs text-blue-800/70 font-medium">BO: <span className="font-bold text-blue-900">60%</span></p>
+            <p className="text-xs text-blue-800/70 font-medium">Backoffice: <span className="font-bold text-blue-900">60%</span></p>
             <p className="text-xs text-blue-800/70 font-medium">Agence: <span className="font-bold text-blue-900">40%</span></p>
           </div>
         </div>

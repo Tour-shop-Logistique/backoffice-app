@@ -429,27 +429,12 @@ const Agents = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={editingAgent ? 'Modifier l\'Agent' : 'Nouvel Agent'}
+        title={editingAgent ? "Modifier l'Agent" : 'Nouvel Agent'}
         subtitle={editingAgent ? 'Mettez à jour les informations de connexion' : 'Créez un nouvel accès au backoffice'}
         size="lg"
-        footer={(
-          <>
-            <button
-              onClick={closeModal}
-              className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest"
-            >
-              Annuler
-            </button>
-            <button
-              form="agent-form"
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg shadow-slate-900/10"
-            >
-              {isSubmitting ? <Loader2 className="animate-spin h-4 w-4" /> : editingAgent ? 'Mettre à jour' : 'Enregistrer'}
-            </button>
-          </>
-        )}
+        confirmFormId="agent-form"
+        isLoading={isSubmitting}
+        confirmLabel={editingAgent ? 'Mettre à jour' : 'Enregistrer'}
       >
         <form id="agent-form" onSubmit={handleSubmitAgent} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

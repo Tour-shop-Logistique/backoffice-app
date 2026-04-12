@@ -45,7 +45,10 @@ export default {
           800: '#1e293b',
           900: '#0f172a',
           950: '#020617',
-        }
+        },
+      },
+      fontFamily: {
+        sans: ['DM Sans', 'sans-serif'],
       },
       spacing: {
         'sidebar': '18rem',

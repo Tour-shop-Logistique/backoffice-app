@@ -520,8 +520,12 @@ const GroupedRates = () => {
         title={tarifToEdit ? 'Modifier Tarif Groupage' : 'Nouveau Tarif Groupage'}
         subtitle="Configurez les prix pour les expéditions de type groupage"
         size="xl"
+        confirmFormId="grouped-tarif-form"
+        isLoading={isSubmitting}
+        confirmLabel={tarifToEdit ? "Mettre à jour" : "Enregistrer"}
       >
         <Addtarifgroupe
+          id="grouped-tarif-form"
           onClose={closeModal}
           onSubmit={onSubmit}
           tarifToEdit={tarifToEdit}

@@ -39,7 +39,11 @@ const ParcelControl = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
-    const { todoList, historyList, incomingList, currentParcel, isLoadingDetail, detailError, isBulkControlling } = useSelector(state => state.parcels);
+    const { 
+        todoList, historyList, incomingList, currentParcel, 
+        isLoadingDetail, detailError, 
+        isBulkControlling, isBulkBlocking, isBulkReceiving 
+    } = useSelector(state => state.parcels);
     const { agences, hasLoaded: agencesLoaded, isLoading: isLoadingAgences } = useSelector(state => state.agences);
     const [isValidating, setIsValidating] = useState(false);
     const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
@@ -114,8 +118,8 @@ const ParcelControl = () => {
         }
     };
 
-    const handleConfirmBlock = () => {
-        if (!blockReason.trim()) {
+    const handleConfirmBlock = async () => {
+        if (!blockReason.trim() || !currentParcel?.code_colis) {
             dispatch(showNotification({
                 type: 'error',
                 message: "Veuillez renseigner un motif pour bloquer ce colis."
@@ -123,14 +127,25 @@ const ParcelControl = () => {
             return;
         }
 
-        // Provisoirement, on affiche juste une notif car pas d'API
-        dispatch(showNotification({
-            type: 'warning',
-            message: `Le colis ${currentParcel.code_colis} a été écarté pour le motif suivant : ${blockReason}. (Note: L'API de blocage n'est pas encore connectée)`
-        }));
+        try {
+            await dispatch(blockParcels({
+                codes: [currentParcel.code_colis],
+                motif_blocage: blockReason
+            })).unwrap();
 
-        setIsBlockModalOpen(false);
-        setBlockReason('');
+            dispatch(showNotification({
+                type: 'warning',
+                message: `Le colis ${currentParcel.code_colis} a été écarté avec succès.`
+            }));
+
+            setIsBlockModalOpen(false);
+            setBlockReason('');
+        } catch (err) {
+            dispatch(showNotification({
+                type: 'error',
+                message: err.message || 'Erreur lors du blocage du colis.'
+            }));
+        }
     };
 
     useEffect(() => {
@@ -207,7 +222,7 @@ const ParcelControl = () => {
                 <p className="text-slate-500 mt-2 max-w-sm">Désolé, nous n'avons trouvé aucun colis correspondant au code <span className="font-bold text-slate-900">{code}</span>.</p>
                 <button
                     onClick={() => navigate(-1)}
-                    className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+                    className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95"
                 >
                     <ArrowLeft size={16} /> Retour à la liste
                 </button>
@@ -248,24 +263,24 @@ const ParcelControl = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setIsBlockModalOpen(true)}
-                        disabled={currentParcel.is_blocked || isValidating}
-                        className={`px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-sm border ${currentParcel.is_blocked ? 'bg-slate-50 text-slate-400 border-slate-200' : 'bg-white text-rose-600 border-rose-100 hover:bg-rose-50'}`}
+                        disabled={currentParcel.is_blocked || isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling}
+                        className={`px-6 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-sm border ${currentParcel.is_blocked ? 'bg-slate-50 text-slate-400 border-slate-200' : 'bg-white text-rose-600 border-rose-100 hover:bg-rose-50'}`}
                     >
-                        <AlertCircle size={14} />
+                        {isBulkBlocking ? <Loader2 size={14} className="animate-spin" /> : <AlertCircle size={14} />}
                         {currentParcel.is_blocked ? "Colis Écarté" : "Écarter"}
                     </button>
 
                     <button
                         onClick={handleValidate}
-                        disabled={isValidating || (currentParcel.is_controlled && !isFromIncoming && !currentParcel.is_blocked)}
-                        className={`px-8 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-lg ${
+                        disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling || (currentParcel.is_controlled && !isFromIncoming && !currentParcel.is_blocked)}
+                        className={`px-8 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-lg ${
                             currentParcel.is_blocked ? 'bg-amber-500 text-white shadow-amber-500/20 hover:bg-amber-600' :
                             currentParcel.is_controlled 
                                 ? 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600' 
                                 : 'bg-slate-900 text-white shadow-slate-900/20 hover:bg-slate-800'
                         }`}
                     >
-                        {isValidating ? <Loader2 size={14} className="animate-spin" /> : 
+                        {isValidating || isBulkReceiving || isBulkControlling ? <Loader2 size={14} className="animate-spin" /> : 
                          currentParcel.is_blocked ? <ShieldCheck size={14} /> : <PackageCheck size={14} />}
                         {currentParcel.is_blocked ? 'Débloquer & Valider' : 
                          (isFromIncoming ? 'Réceptionner' : (currentParcel.is_controlled ? 'Déjà Contrôlé' : 'Valider & Libérer'))}
@@ -463,34 +478,6 @@ const ParcelControl = () => {
                     </div>
                 </div>
 
-                {/* LIGNE 3 : Suivi du Trajet (pleine largeur) */}
-                <div className="lg:col-span-3 bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Gauge size={14} className="text-indigo-500" /> Suivi du Trajet
-                    </h3>
-                    <div className="flex items-center justify-between relative px-2 py-4">
-                        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200 -translate-y-1/2 z-0 mx-8"></div>
-                        <div className="relative z-10 flex flex-col items-center">
-                            <div className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center border-4 border-white shadow-md">
-                                <MapPin size={16} />
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-900 mt-2 uppercase tracking-tighter">{currentParcel.expedition?.pays_depart}</span>
-                        </div>
-                        <div className="relative z-10 flex flex-col items-center">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center shadow-md ${currentParcel.is_controlled ? 'bg-emerald-500 text-white' : 'bg-white text-slate-300 border-2 border-slate-100'}`}>
-                                {isAir ? <Plane size={16} /> : <Ship size={16} />}
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-400 mt-2 uppercase italic tracking-tighter">En Transit</span>
-                        </div>
-                        <div className="relative z-10 flex flex-col items-center">
-                            <div className="w-9 h-9 rounded-full bg-slate-50 text-slate-200 border-2 border-slate-100 flex items-center justify-center shadow-inner">
-                                <MapPin size={16} />
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-tighter">{currentParcel.expedition?.pays_destination}</span>
-                        </div>
-                    </div>
-                </div>
-
                 {/* LIGNE 4 : État des Règlements (Important pour la sécurité) */}
                 <div className="lg:col-span-3 bg-white border border-slate-200 rounded-lg p-4 shadow-sm border-l-4 border-l-slate-900">
                     <div className="flex items-center justify-between mb-4">
@@ -503,7 +490,7 @@ const ParcelControl = () => {
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className={`p-4 rounded-xl border flex items-center justify-between ${currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
+                        <div className={`p-4 rounded-lg border flex items-center justify-between ${currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
                             <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
                                     <Truck size={20} />
@@ -518,7 +505,7 @@ const ParcelControl = () => {
                             {currentParcel.expedition?.statut_paiement_expedition === 'paye' && <BadgeCheck size={20} className="text-emerald-500" />}
                         </div>
 
-                        <div className={`p-4 rounded-xl border flex items-center justify-between ${currentParcel.expedition?.statut_paiement_frais === 'paye' ? 'bg-emerald-50/50 border-emerald-100' : 'bg-amber-50/50 border-amber-100'}`}>
+                        <div className={`p-4 rounded-lg border flex items-center justify-between ${currentParcel.expedition?.statut_paiement_frais === 'paye' ? 'bg-emerald-50/50 border-emerald-100' : 'bg-amber-50/50 border-amber-100'}`}>
                             <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${currentParcel.expedition?.statut_paiement_frais === 'paye' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
                                     <ShieldCheck size={20} />
@@ -534,14 +521,6 @@ const ParcelControl = () => {
                         </div>
                     </div>
 
-                    {!currentParcel.is_controlled && currentParcel.expedition?.statut_paiement_frais !== 'paye' && (
-                        <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-center gap-3">
-                            <Info size={16} className="text-amber-500 shrink-0" />
-                            <p className="text-[10px] font-bold text-amber-800 uppercase leading-tight">
-                                Sécurité : Le contrôle ne peut être validé car les frais annexes n'ont pas encore été encaissés physiquement en agence.
-                            </p>
-                        </div>
-                    )}
                 </div>
 
             </div>
@@ -555,6 +534,10 @@ const ParcelControl = () => {
                 title="Agence de Réception"
                 subtitle="Sélectionnez l'agence de destination pour ce colis"
                 size="xs"
+                onConfirm={confirmReceive}
+                isLoading={isBulkReceiving || isValidating}
+                confirmLabel="Confirmer"
+                confirmDisabled={!selectedAgencyId}
             >
                 <div className="space-y-4">
                     <div>
@@ -574,25 +557,6 @@ const ParcelControl = () => {
                             ))}
                         </select>
                     </div>
-
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            onClick={() => setIsAgencyModalOpen(false)}
-                            className="flex-1 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors font-sans"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            onClick={confirmReceive}
-                            disabled={!selectedAgencyId || isValidating}
-                            className="flex-[2] px-4 py-2.5 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2 font-sans"
-                        >
-                            {isValidating
-                                ? <><Loader2 size={14} className="animate-spin" /> Traitement...</>
-                                : <><PackageCheck size={14} /> Confirmer</>
-                            }
-                        </button>
-                    </div>
                 </div>
             </Modal>
 
@@ -603,9 +567,14 @@ const ParcelControl = () => {
                 title="Écarter / Bloquer le colis"
                 subtitle={`Colis ${currentParcel.code_colis}`}
                 size="sm"
+                onConfirm={handleConfirmBlock}
+                isLoading={isBulkBlocking}
+                confirmLabel="Écarter le colis"
+                confirmVariant="danger"
+                confirmDisabled={!blockReason.trim()}
             >
                 <div className="space-y-4">
-                    <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
+                    <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-3">
                         <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
                         <p className="text-xs font-medium text-amber-800 leading-relaxed">
                             En écartant ce colis, vous signalez une anomalie qui empêche sa validation immédiate. Veuillez préciser la raison ci-dessous.
@@ -618,25 +587,8 @@ const ParcelControl = () => {
                             value={blockReason}
                             onChange={(e) => setBlockReason(e.target.value)}
                             placeholder="Ex: Poids non conforme, article interdit, emballage endommagé..."
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all min-h-[120px] resize-none"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all min-h-[120px] resize-none"
                         />
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            onClick={() => setIsBlockModalOpen(false)}
-                            className="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            onClick={handleConfirmBlock}
-                            disabled={isValidating || !blockReason.trim()}
-                            className="flex-[2] px-4 py-2.5 bg-rose-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {isValidating ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
-                            Écarter le colis
-                        </button>
                     </div>
                 </div>
             </Modal>

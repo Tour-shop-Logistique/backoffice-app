@@ -21,25 +21,10 @@ const DeleteModal = ({
             onClose={onClose}
             title={title}
             size="sm"
-            footer={(
-                <>
-                    <button
-                        onClick={onClose}
-                        disabled={isLoading}
-                        className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-200 transition-colors uppercase tracking-widest disabled:opacity-50"
-                    >
-                        Annuler
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        disabled={isLoading}
-                        className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-red-600/10 disabled:opacity-50"
-                    >
-                        {isLoading ? <Loader2 className="animate-spin" size={14} /> : <Trash2 size={14} />}
-                        Supprimer
-                    </button>
-                </>
-            )}
+            onConfirm={onConfirm}
+            isLoading={isLoading}
+            confirmLabel="Supprimer"
+            confirmVariant="danger"
         >
             <div className="flex flex-col items-center text-center p-2">
                 <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">

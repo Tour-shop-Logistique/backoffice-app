@@ -778,24 +778,9 @@ export default function Produits() {
         }}
         title="Nouveau produit"
         subtitle="Ajoutez une nouvelle référence à votre catalogue"
-        footer={(
-          <div className="flex gap-3">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={handleAddProduit}
-              disabled={isSubmitting}
-              className="flex-1 px-6 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10"
-            >
-              {isSubmitting ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
-              Enregistrer
-            </button>
-          </div>
-        )}
+        onConfirm={handleAddProduit}
+        isLoading={isSubmitting}
+        confirmLabel="Enregistrer"
       >
         <div className="space-y-4">
           <div className="space-y-1.5">
@@ -842,24 +827,9 @@ export default function Produits() {
         onClose={() => setEditingProduit(null)}
         title="Modifier le produit"
         subtitle="Mettez à jour les informations du produit"
-        footer={(
-          <div className="flex gap-3">
-            <button
-              onClick={() => setEditingProduit(null)}
-              className="flex-1 px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={handleEditProduit}
-              disabled={isSubmitting}
-              className="flex-1 px-6 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10"
-            >
-              {isSubmitting ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
-              Mettre à jour
-            </button>
-          </div>
-        )}
+        onConfirm={handleEditProduit}
+        isLoading={isSubmitting}
+        confirmLabel="Mettre à jour"
       >
         {editingProduit && (
           <div className="space-y-4">

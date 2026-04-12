@@ -130,65 +130,137 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                     </div>
                 </div>
 
-                {/* Recap Financier */}
-                <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl overflow-hidden relative border border-white/5">
-                    <div className="flex items-center gap-3 mb-8 border-b border-white/10 pb-4">
-                        <Wallet size={18} className="text-blue-400" />
-                        <h4 className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/90">Détails financier</h4>
+                {/* Récapitulatif Financier Simple */}
+                <div className="flex items-center justify-between p-5 bg-slate-50/80 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
+                            <Wallet size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-0.5">Total payé par le client</p>
+                            <h4 className="text-sm font-bold text-slate-900 tracking-tight">Montant Global</h4>
+                        </div>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-y-8 gap-x-4">
-                        <div className="space-y-1">
-                            <p className="text-[9px] text-white/40 uppercase font-bold tracking-widest">Base</p>
-                            <p className="text-base font-bold tracking-tight">{Number(selectedExpedition.montant_base).toLocaleString()} <span className="text-[10px] text-white/30">CFA</span></p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-[9px] text-white/40 uppercase font-bold tracking-widest text-orange-400">Prestation ({selectedExpedition.pourcentage_prestation}%)</p>
-                            <p className="text-base font-bold text-orange-400 tracking-tight">{Number(selectedExpedition.montant_prestation).toLocaleString()} <span className="text-[10px] text-white/30">CFA</span></p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-[9px] text-white/40 uppercase font-bold tracking-widest">Emballage</p>
-                            <p className="text-base font-bold tracking-tight">{Number(selectedExpedition.frais_emballage).toLocaleString()} <span className="text-[10px] text-white/30">CFA</span></p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-[9px] text-white/40 uppercase font-bold tracking-widest">Frais Annexes</p>
-                            <p className="text-base font-bold tracking-tight">{Number(selectedExpedition.frais_annexes).toLocaleString()} <span className="text-[10px] text-white/30">CFA</span></p>
-                        </div>
-                        {Number(selectedExpedition.frais_enlevement_domicile) > 0 && (
-                            <div className="space-y-1">
-                                <p className="text-[9px] text-white/40 uppercase font-bold tracking-widest">Enlèvement</p>
-                                <p className="text-base font-bold tracking-tight">{Number(selectedExpedition.frais_enlevement_domicile).toLocaleString()} <span className="text-[10px] text-white/30">CFA</span></p>
-                            </div>
-                        )}
-                        {Number(selectedExpedition.frais_livraison_domicile) > 0 && (
-                            <div className="space-y-1">
-                                <p className="text-[9px] text-white/40 uppercase font-bold tracking-widest">Livraison</p>
-                                <p className="text-base font-bold tracking-tight">{Number(selectedExpedition.frais_livraison_domicile).toLocaleString()} <span className="text-[10px] text-white/30">CFA</span></p>
-                            </div>
-                        )}
-                        {Number(selectedExpedition.frais_retard_retrait) > 0 && (
-                            <div className="space-y-1">
-                                <p className="text-[9px] text-amber-500 uppercase font-bold tracking-widest">Frais Retard</p>
-                                <p className="text-base font-bold text-amber-500 tracking-tight">{Number(selectedExpedition.frais_retard_retrait).toLocaleString()} <span className="text-[10px] opacity-40">CFA</span></p>
-                            </div>
-                        )}
-                    </div>
-                    <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                            <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Total payé par le client</p>
-                        </div>
-                        <p className="text-3xl font-bold text-emerald-400 tracking-tighter">
-                            {selectedExpedition.accounting_details?.total_client_due.toLocaleString()} <span className="text-xs font-medium text-emerald-500/40 ml-1 italic tracking-normal">CFA</span>
+                    <div className="text-right">
+                        <p className="text-2xl font-bold text-slate-950 tracking-tighter">
+                            {selectedExpedition.accounting_details?.total_client_due?.toLocaleString()} 
+                            <span className="text-xs font-semibold text-slate-400 ml-2 tracking-normal">CFA</span>
                         </p>
                     </div>
                 </div>
 
-                {/* Répartition des Gains */}
+                {/* Détail des Commissions */}
+                <div className="space-y-3">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase px-1 tracking-widest">Détail des Commissions</p>
+                    <div className="grid grid-cols-1 gap-3">
+                        {selectedExpedition.commission_details && Object.entries(selectedExpedition.commission_details).map(([key, value]) => {
+                            if (key === 'total_global_commissions' || value.total === 0 || !value.total) return null;
+
+                            let Icon = Box;
+                            let iconColor = "text-slate-400";
+                            if (key.includes('enlevement')) { Icon = MapPin; iconColor = "text-blue-500"; }
+                            if (key.includes('livraison')) { Icon = Truck; iconColor = "text-emerald-500"; }
+                            if (key.includes('emballage')) { Icon = Package; iconColor = "text-amber-500"; }
+                            if (key.includes('retard')) { Icon = AlertCircle; iconColor = "text-red-500"; }
+
+                            return (
+                                <div key={key} className="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-4 hover:border-slate-300 transition-colors">
+                                    <div className={`h-11 w-11 rounded-xl bg-slate-50 flex items-center justify-center ${iconColor} border border-slate-100`}>
+                                        <Icon size={18} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h5 className="text-xs font-bold text-slate-800 capitalize leading-tight mb-0.5">{key.replace('_', ' ')}</h5>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">{value.total.toLocaleString()} <span className="text-[9px] text-slate-500 font-medium tracking-normal">CFA</span></span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-5">
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-blue-500 uppercase tracking-tight">Agence</p>
+                                            <p className="text-sm font-bold text-slate-900">{value.agence.toLocaleString()} <span className="text-[9px] text-slate-500 font-medium tracking-normal">CFA</span></p>
+                                        </div>
+                                        <div className="h-8 w-px bg-slate-100" />
+                                        <div className="text-right min-w-[90px]">
+                                            {value.livreur > 0 ? (
+                                                <>
+                                                    <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-tight">Livreur</p>
+                                                    <p className="text-sm font-bold text-slate-900">{value.livreur.toLocaleString()} <span className="text-[9px] text-slate-500 font-medium tracking-normal">CFA</span></p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Backoffice</p>
+                                                    <p className="text-sm font-bold text-slate-900">{value.backoffice?.toLocaleString() || 0} <span className="text-[9px] text-slate-500 font-medium tracking-normal">CFA</span></p>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {/* Bloc Expédition (Core) */}
+                        <div className="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-4 hover:border-slate-300 transition-colors">
+                            <div className="h-11 w-11 rounded-xl bg-indigo-50/50 flex items-center justify-center text-indigo-500 border border-indigo-100/50">
+                                <TrendingUp size={18} />
+                            </div>
+                            <div className="flex-1">
+                                <h5 className="text-xs font-bold text-slate-800 capitalize leading-tight mb-0.5">Expédition</h5>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
+                                        {(Number(selectedExpedition.montant_base) + Number(selectedExpedition.montant_prestation)).toLocaleString()} 
+                                        <span className="text-[9px] text-slate-500 font-medium tracking-normal ml-0.5">CFA</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-5">
+                                <div className="text-right">
+                                    <p className="text-[10px] font-bold text-blue-500 uppercase tracking-tight">Agence</p>
+                                    <p className="text-sm font-bold text-slate-900">{Number(selectedExpedition.montant_prestation).toLocaleString()} <span className="text-[9px] text-slate-500 font-medium tracking-normal">CFA</span></p>
+                                </div>
+                                <div className="h-8 w-px bg-slate-100" />
+                                <div className="text-right min-w-[90px]">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Backoffice</p>
+                                    <p className="text-sm font-bold text-slate-900">{Number(selectedExpedition.montant_base).toLocaleString()} <span className="text-[9px] text-slate-500 font-medium tracking-normal">CFA</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Bloc Frais Annexes */}
+                        {Number(selectedExpedition.frais_annexes) > 0 && (
+                            <div className="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-4 hover:border-slate-300 transition-colors">
+                                <div className="h-11 w-11 rounded-xl bg-orange-50/50 flex items-center justify-center text-orange-500 border border-orange-100/50">
+                                    <TrendingUp size={18} className="rotate-45" />
+                                </div>
+                                <div className="flex-1">
+                                    <h5 className="text-xs font-bold text-slate-800 capitalize leading-tight mb-0.5">Frais Annexes</h5>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
+                                            {Number(selectedExpedition.frais_annexes).toLocaleString()} 
+                                            <span className="text-[9px] text-slate-500 font-medium tracking-normal ml-0.5">CFA</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-5">
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-tight">Agence</p>
+                                        <p className="text-sm font-bold text-slate-300">0 <span className="text-[9px] text-slate-300 font-medium tracking-normal">CFA</span></p>
+                                    </div>
+                                    <div className="h-8 w-px bg-slate-100" />
+                                    <div className="text-right min-w-[90px]">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Backoffice</p>
+                                        <p className="text-sm font-bold text-slate-900">{Number(selectedExpedition.frais_annexes).toLocaleString()} <span className="text-[9px] text-slate-500 font-medium tracking-normal">CFA</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                 {/* Répartition des Gains */}
                 {selectedExpedition.accounting_details && (
                     <div className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-sm">
                         <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 flex items-center gap-2">
-                            <TrendingUp size={14} className="text-slate-400" />
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Répartition des Gains</span>
+                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Répartition des Gains</span>
                         </div>
                         <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
                             <div className="text-center sm:text-left">
@@ -207,87 +279,6 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                     </div>
                 )}
 
-                {/* Détail des Commissions */}
-                {selectedExpedition.commission_details && (
-                    <div className="space-y-3">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase px-1 tracking-widest">Détail des Commissions</p>
-                        <div className="grid grid-cols-1 gap-3">
-                            {Object.entries(selectedExpedition.commission_details || {}).map(([key, value]) => {
-                                if (key === 'total_global_commissions' || value.total === 0 || !value.total) return null;
-
-                                let Icon = Box;
-                                let iconColor = "text-slate-400";
-                                if (key.includes('enlevement')) { Icon = MapPin; iconColor = "text-blue-500"; }
-                                if (key.includes('livraison')) { Icon = Truck; iconColor = "text-emerald-500"; }
-                                if (key.includes('emballage')) { Icon = Package; iconColor = "text-amber-500"; }
-                                if (key.includes('retard')) { Icon = AlertCircle; iconColor = "text-red-500"; }
-
-                                return (
-                                    <div key={key} className="bg-white border border-slate-300 rounded-xl p-3 flex items-center gap-4">
-                                        <div className={`h-12 w-12 rounded-xl bg-slate-900 flex items-center justify-center ${iconColor} shadow-inner`}>
-                                            <Icon size={20} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h5 className="text-sm font-bold text-slate-800 capitalize leading-tight mb-1">{key.replace('_', ' ')}</h5>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs font-semibold text-black bg-slate-200 px-3 py-1 rounded-full">{value.total.toLocaleString()} <span className="text-[10px] text-slate-800 font-medium tracking-normal">CFA</span></span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-6">
-                                            <div className="text-right">
-                                                <p className="text-xs font-bold text-blue-500 uppercase">Agence</p>
-                                                <p className="text-base font-bold text-slate-900">{value.agence.toLocaleString()} <span className="text-[10px] text-slate-600 font-medium tracking-normal">CFA</span></p>
-                                            </div>
-                                            <div className="h-10 w-px bg-slate-100" />
-                                            <div className="text-right min-w-[100px]">
-                                                {value.livreur > 0 ? (
-                                                    <>
-                                                        <p className="text-xs font-bold text-emerald-500 uppercase">Livreur</p>
-                                                        <p className="text-base font-bold text-slate-900">{value.livreur.toLocaleString()} <span className="text-[10px] text-slate-600 font-medium tracking-normal">CFA</span></p>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <p className="text-xs font-bold text-slate-400 uppercase">Backoffice</p>
-                                                        <p className="text-base font-bold text-slate-900">{value.backoffice?.toLocaleString() || 0} <span className="text-[10px] text-slate-600 font-medium tracking-normal">CFA</span></p>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 px-1">
-                        <Box size={16} className="text-slate-400" />
-                        <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900">Articles & Colis ({selectedExpedition.colis?.length})</h4>
-                    </div>
-                    <div className="grid grid-cols-1 gap-3">
-                        {selectedExpedition.colis?.map((colis, idx) => (
-                            <div key={colis.id} className="bg-slate-50/50 rounded-xl p-3 border border-slate-100 flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-300 font-bold text-xs shadow-xs">
-                                        {idx + 1}
-                                    </div>
-                                    <div className="space-y-0.5">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">{colis.designation}</span>
-                                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-200/50 text-slate-500 rounded uppercase">{colis.code_colis}</span>
-                                        </div>
-                                        <p className="text-[10px] text-slate-400 font-medium italic leading-none">{colis.articles?.join(', ') || 'Non spécifié'}</p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xs font-bold text-slate-900">{Number(colis.montant_colis_total).toLocaleString()} <span className="text-[9px] text-slate-400">CFA</span></p>
-                                    <p className="text-[9px] text-slate-400 font-medium">{colis.poids} KG | {colis.volume} cm³</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             </div>
         </Modal>
     );

@@ -209,6 +209,8 @@ const initialState = {
     detailError: null,
     isUpdatingExpedition: false,
     isBulkControlling: false,
+    isBulkBlocking: false,
+    isBulkReceiving: false,
     // Dashboard state
     dashboard: {
         data: null,
@@ -401,10 +403,10 @@ const parcelSlice = createSlice({
 
             // Receive Parcels (Bulk)
             .addCase(receiveParcels.pending, (state) => {
-                state.isBulkControlling = true;
+                state.isBulkReceiving = true;
             })
             .addCase(receiveParcels.fulfilled, (state, action) => {
-                state.isBulkControlling = false;
+                state.isBulkReceiving = false;
                 const updatedParcels = action.payload?.data || [];
                 const codesToRemove = updatedParcels.map(p => p.code_colis);
 
@@ -414,7 +416,7 @@ const parcelSlice = createSlice({
                 );
             })
             .addCase(receiveParcels.rejected, (state) => {
-                state.isBulkControlling = false;
+                state.isBulkReceiving = false;
             })
 
             // Fetch Incoming Parcels (mode=arrivee)
@@ -467,10 +469,10 @@ const parcelSlice = createSlice({
             })
             // Block Parcels
             .addCase(blockParcels.pending, (state) => {
-                state.isBulkControlling = true;
+                state.isBulkBlocking = true;
             })
             .addCase(blockParcels.fulfilled, (state, action) => {
-                state.isBulkControlling = false;
+                state.isBulkBlocking = false;
                 const updatedParcels = action.payload?.data || [];
                 
                 // Mise à jour réactive des listes locales
@@ -503,7 +505,7 @@ const parcelSlice = createSlice({
                 });
             })
             .addCase(blockParcels.rejected, (state, action) => {
-                state.isBulkControlling = false;
+                state.isBulkBlocking = false;
                 state.incomingList.error = action.payload;
             });
     }
