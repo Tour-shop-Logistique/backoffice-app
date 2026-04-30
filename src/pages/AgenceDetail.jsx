@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
     fetchAgences,
     fetchAgenceTarifsGroupage,
@@ -58,6 +58,7 @@ import StatCard from "../components/agence/StatCard";
 import ExpeditionDetailModal from "../components/expedition/ExpeditionDetailModal";
 import AgencyTariffTable from "../components/agence/AgencyTariffTable";
 import { getExpeditionStatusLabel, getStatusStyles } from "../utils/statusTranslations";
+import { createPDFHeader, createPDFFooter, createSummaryCards, formatPDFNumber, cleanPDFText } from '../utils/pdfHelper';
 
 const AgenceDetail = () => {
     const { id } = useParams();
@@ -239,56 +240,22 @@ const AgenceDetail = () => {
         const doc = new jsPDF();
         const summary = currentAgencyAccounting.summary;
         const period = `du ${format(new Date(dateRange.startDate), 'dd/MM/yyyy')} au ${format(new Date(dateRange.endDate), 'dd/MM/yyyy')}`;
-        const fmt = (v) => String(v || 0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-        // DESIGN PREMIUM : Bandeau de tête
-        doc.setFillColor(15, 23, 42); // slate-900 
-        doc.rect(0, 0, 210, 45, 'F'); 
-        
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(20);
-        doc.setFont("helvetica", "bold");
-        doc.text("RAPPORT COMPTABLE AGENCE", 14, 25);
-        
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(148, 163, 184); // slate-400
-        doc.text(currentAgence?.nom_agence?.toUpperCase() || 'AGENCE LOCALE', 14, 32);
-        
-        // Bloc de métadonnées en haut à droite
-        doc.setFontSize(8);
-        doc.setTextColor(255, 255, 255);
-        doc.text(`PERIODE : ${period.toUpperCase()}`, 140, 18);
-        doc.text(`PAYS : ${currentAgence?.pays?.toUpperCase() || 'N/A'}`, 140, 24);
-        doc.text(`EDITE LE : ${format(new Date(), 'dd/MM/yyyy')}`, 140, 30);
+        // En-tête uniformisé
+        createPDFHeader(doc, {
+          title: "RAPPORT COMPTABLE AGENCE",
+          subtitle: currentAgence?.nom_agence?.toUpperCase() || 'AGENCE LOCALE',
+          period: period,
+          country: currentAgence?.pays || 'N/A'
+        });
 
-        // CARTES DE SYNTHESE (Summary Cards)
-        const cardsY = 55;
-        const cardW = 43;
-        const cardH = 20;
-        const spacing = 3.5;
-
-        const drawCard = (x, title, value, isDark = false) => {
-            if (isDark) doc.setFillColor(30, 41, 59);
-            else doc.setFillColor(248, 250, 252);
-            
-            doc.roundedRect(x, cardsY, cardW, cardH, 1, 1, 'F');
-            doc.setFontSize(6);
-            doc.setFont("helvetica", "bold");
-            if (isDark) doc.setTextColor(148, 163, 184);
-            else doc.setTextColor(100, 116, 139);
-            doc.text(title, x + 4, cardsY + 6);
-            
-            doc.setFontSize(10);
-            if (isDark) doc.setTextColor(255, 255, 255);
-            else doc.setTextColor(15, 23, 42);
-            doc.text(`${fmt(value)} CFA`, x + 4, cardsY + 14);
-        };
-
-        drawCard(14, "POTENTIEL (DÛ)", summary.potential?.total_client_due || 0);
-        drawCard(14 + (cardW + spacing), "PART BACKOFFICE", summary.potential?.total_backoffice || 0, true);
-        drawCard(14 + (cardW + spacing) * 2, "PART AGENCE", (summary.potential?.total_agence_depart || 0) + (summary.potential?.total_agence_arrivee || 0));
-        drawCard(14 + (cardW + spacing) * 3, "VOL. EXPEDITIONS", summary.count || 0);
+        // Cartes de synthèse inspirées du design Historique
+        createSummaryCards(doc, [
+          { title: "POTENTIEL (DÛ)", value: `${formatPDFNumber(summary.potential?.total_client_due || 0)} CFA`, colorClass: "text-slate-900" },
+          { title: "PART BACKOFFICE", value: `${formatPDFNumber(summary.potential?.total_backoffice || 0)} CFA`, colorClass: "text-emerald-600" },
+          { title: "PART AGENCE", value: `${formatPDFNumber((summary.potential?.total_agence_depart || 0) + (summary.potential?.total_agence_arrivee || 0))} CFA`, colorClass: "text-orange-600" },
+          { title: "VOL. EXPEDITIONS", value: (summary.count || 0).toString(), colorClass: "text-purple-600" }
+        ]);
 
         // Table (Parfaite symétrie avec le tableau de l'application)
         const tableColumn = [
@@ -299,25 +266,6 @@ const AgenceDetail = () => {
             "Part Agence", 
             "Etat Reglements"
         ];
-        
-        // Fonction pour nettoyer les caracteres speciaux pour le PDF
-        const cleanForPDF = (text) => {
-            if (!text) return '';
-            return text
-                .replace(/[éèêë]/g, 'e')
-                .replace(/[àâä]/g, 'a')
-                .replace(/[ùûü]/g, 'u')
-                .replace(/[ôö]/g, 'o')
-                .replace(/[îï]/g, 'i')
-                .replace(/[ç]/g, 'c')
-                .replace(/[ÉÈÊË]/g, 'E')
-                .replace(/[ÀÂÄ]/g, 'A')
-                .replace(/[ÙÛÜ]/g, 'U')
-                .replace(/[ÔÖ]/g, 'O')
-                .replace(/[ÎÏ]/g, 'I')
-                .replace(/[Ç]/g, 'C')
-                .replace(/[']/g, '');
-        };
 
         const tableRows = currentAgencyAccounting.items.map(item => {
             const acc = item.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0 };
@@ -325,11 +273,11 @@ const AgenceDetail = () => {
             const statusFrais = item.statut_paiement_frais === 'paye' ? '[PAYE] Frais' : '[NON PAYE] Frais';
             
             return [
-                `${item.reference}\n${cleanForPDF(getExpeditionStatusLabel(item.statut_expedition))}`,
+                `${item.reference}\n${cleanPDFText(getExpeditionStatusLabel(item.statut_expedition))}`,
                 `${format(new Date(item.date_expedition_depart || item.created_at), 'dd/MM/yyyy')}\n${item.agence?.nom_agence || 'N/A'}`,
-                `${fmt(acc.total_client_due)}`,
-                `${fmt((acc.backoffice_depart || 0) + (acc.backoffice_arrivee || 0))}`,
-                `${fmt((acc.agence_depart || 0) + (acc.agence_arrivee || 0))}`,
+                `${formatPDFNumber(acc.total_client_due)}`,
+                `${formatPDFNumber((acc.backoffice_depart || 0) + (acc.backoffice_arrivee || 0))}`,
+                `${formatPDFNumber((acc.agence_depart || 0) + (acc.agence_arrivee || 0))}`,
                 `${statusExp}\n${statusFrais}`
             ];
         });
@@ -337,7 +285,7 @@ const AgenceDetail = () => {
         autoTable(doc, {
           head: [tableColumn],
           body: tableRows,
-          startY: 85,
+          startY: 95,
           theme: 'grid',
           headStyles: { 
               fillColor: [15, 23, 42], 
@@ -358,6 +306,13 @@ const AgenceDetail = () => {
           alternateRowStyles: { fillColor: [249, 250, 251] },
           margin: { top: 85, left: 14, right: 14 },
           styles: { cellPadding: 2 }
+        });
+
+        // Pied de page uniformisé
+        createPDFFooter(doc, {
+          company: 'Tour Shop',
+          pageNumber: '1',
+          totalPages: '1'
         });
 
         doc.save(`Rapport_Comptable_${currentAgence.nom_agence}_${dateRange.startDate}.pdf`);

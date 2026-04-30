@@ -1,30 +1,33 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchBackofficeExpeditions } from "../redux/slices/backofficeSlice";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import {
-  Search,
-  Filter,
-  Calendar,
-  ArrowLeft,
-  RefreshCw,
-  Package,
-  MapPin,
-  Clock,
-  Building2,
-  TrendingUp,
-  Eye,
-  Loader2,
-  ChevronDown,
-  FileDown
-} from "lucide-react";
+import React, { useState, useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchBackofficeExpeditions } from '../redux/slices/backofficeSlice';
+import { format, subDays, isWithinInterval, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { getExpeditionStatusLabel, getStatusStyles } from "../utils/statusTranslations";
-import Modal from "../components/common/Modal";
-import ExpeditionDetailModal from "../components/expedition/ExpeditionDetailModal";
-import StatCard from "../components/agence/StatCard";
+import {
+  Search,
+  MapPin ,
+  Filter,
+  RefreshCw,
+  Download,
+  ChevronDown,
+  Package,
+  DollarSign,
+  TrendingUp,
+  Eye,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  FileDown,
+  Building2
+} from 'lucide-react';
+import Modal from '../components/common/Modal';
+import ExpeditionDetailModal from '../components/expedition/ExpeditionDetailModal';
+import StatCard from '../components/agence/StatCard';
+import { getExpeditionStatusLabel, getStatusStyles } from '../utils/statusTranslations';
+import { createPDFHeader, createPDFFooter, createSummaryCards, formatPDFNumber, cleanPDFText } from '../utils/pdfHelper';
 
 const Historique = () => {
   const dispatch = useDispatch();
@@ -121,64 +124,21 @@ const Historique = () => {
     const modeLabel = filterMode === 'depart' ? 'DEPARTS' : filterMode === 'arrivee' ? 'ARRIVEES' : 'TOUTES EXPEDITIONS';
     const period = `Filtre: ${modeLabel} - ${filteredExpeditions.length} expéditions`;
 
-    // Helper pour formater les nombres sans caractères spéciaux (éviter les symboles bizarres dans le PDF)
-    const fmt = (v) => String(v || 0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    // En-tête uniformisé
+    createPDFHeader(doc, {
+      title: "HISTORIQUE EXPEDITIONS",
+      subtitle: modeLabel,
+      period: period,
+      metadata1: `GAIN TOTAL: ${formatPDFNumber(totals.totalGain)} CFA`
+    });
 
-    // DESIGN PREMIUM : Bandeau de tête
-    doc.setFillColor(15, 23, 42); // slate-900 
-    doc.rect(0, 0, 210, 45, 'F'); 
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("HISTORIQUE EXPEDITIONS", 14, 20);
-    
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(148, 163, 184); // slate-400
-    doc.text(modeLabel.toUpperCase(), 14, 26);
-    
-    // Bloc de métadonnées en haut à droite
-    doc.setFontSize(7);
-    doc.setTextColor(255, 255, 255);
-    const filterText = `FILTRE: ${period.toUpperCase()}`;
-    const gainText = `GAIN TOTAL: ${fmt(totals.totalGain)} CFA`;
-    const dateText = `EDITE LE: ${format(new Date(), 'dd/MM/yyyy')}`;
-    
-    // Ajuster les positions pour éviter le débordement
-    doc.text(filterText, 105, 16, { align: 'right' });
-    doc.text(gainText, 105, 22, { align: 'right' });
-    doc.text(dateText, 105, 28, { align: 'right' });
-
-    // CARTES DE SYNTHESE (Summary Cards)
-    const cardsY = 55;
-    const cardW = 43;
-    const cardH = 20;
-    const spacing = 3.5;
-
-    const drawCard = (x, title, value, isDark = false) => {
-        if (isDark) doc.setFillColor(30, 41, 59);
-        else doc.setFillColor(248, 250, 252);
-        
-        doc.roundedRect(x, cardsY, cardW, cardH, 1, 1, 'F');
-        doc.setFontSize(6);
-        doc.setFont("helvetica", "bold");
-        if (isDark) doc.setTextColor(148, 163, 184);
-        else doc.setTextColor(100, 116, 139);
-        
-        doc.text(title, x + 4, cardsY + 6);
-        
-        doc.setFontSize(10);
-        if (isDark) doc.setTextColor(255, 255, 255);
-        else doc.setTextColor(15, 23, 42);
-        
-        doc.text(`${fmt(value)}`, x + 4, cardsY + 14);
-    };
-
-    drawCard(14, "TOTAL EXPEDITIONS", totals.count);
-    drawCard(14 + (cardW + spacing), "GAIN TOTAL", totals.totalGain, true);
-    drawCard(14 + (cardW + spacing) * 2, "EN DEPART", totals.departCount);
-    drawCard(14 + (cardW + spacing) * 3, "EN ARRIVEE", totals.arriveeCount);
+    // Cartes de synthèse inspirées du design Historique
+    createSummaryCards(doc, [
+      { title: "Total Expéditions", value: filteredExpeditions.length.toString(), colorClass: "text-slate-900" },
+      { title: "Gain Total", value: `${formatPDFNumber(totals.totalGain)} CFA`, colorClass: "text-emerald-600" },
+      { title: "En départ", value: totals.departCount.toString(), colorClass: "text-orange-600" },
+      { title: "En arrivée", value: totals.arriveeCount.toString(), colorClass: "text-purple-600" }
+    ]);
 
     // Table (Parfaite symétrie avec le tableau de l'application)
     const tableColumn = [
@@ -189,25 +149,6 @@ const Historique = () => {
         "Gain", 
         "Statut"
     ];
-    
-    // Fonction pour nettoyer les caracteres speciaux pour le PDF
-    const cleanForPDF = (text) => {
-        if (!text) return '';
-        return text
-            .replace(/[éèêë]/g, 'e')
-            .replace(/[àâä]/g, 'a')
-            .replace(/[ùûü]/g, 'u')
-            .replace(/[ôö]/g, 'o')
-            .replace(/[îï]/g, 'i')
-            .replace(/[ç]/g, 'c')
-            .replace(/[ÉÈÊË]/g, 'E')
-            .replace(/[ÀÂÄ]/g, 'A')
-            .replace(/[ÙÛÜ]/g, 'U')
-            .replace(/[ÔÖ]/g, 'O')
-            .replace(/[ÎÏ]/g, 'I')
-            .replace(/[Ç]/g, 'C')
-            .replace(/[']/g, '');
-    };
 
     const tableRows = filteredExpeditions.map(exp => {
         const roles = exp.backoffice_role && Array.isArray(exp.backoffice_role) 
@@ -215,19 +156,19 @@ const Historique = () => {
             : 'N/A';
         
         return [
-            `${exp.reference}\n${cleanForPDF(getExpeditionStatusLabel(exp.statut_expedition))}`,
-            `${format(new Date(exp.date_expedition_depart || exp.created_at), 'dd/MM/yyyy')}\n${cleanForPDF(exp.agence?.nom_agence || 'N/A')}`,
-            cleanForPDF(exp.pays_destination || 'N/A'),
+            `${exp.reference}\n${cleanPDFText(getExpeditionStatusLabel(exp.statut_expedition))}`,
+            `${format(new Date(exp.date_expedition_depart || exp.created_at), 'dd/MM/yyyy')}\n${cleanPDFText(exp.agence?.nom_agence || 'N/A')}`,
+            cleanPDFText(exp.pays_destination || 'N/A'),
             roles,
-            `${fmt(exp.backoffice_gain || 0)} CFA`,
-            cleanForPDF(getExpeditionStatusLabel(exp.statut_expedition))
+            `${formatPDFNumber(exp.backoffice_gain || 0)} CFA`,
+            cleanPDFText(getExpeditionStatusLabel(exp.statut_expedition))
         ];
     });
 
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      startY: 80,
+      startY: 95,
       theme: 'grid',
       headStyles: { 
           fillColor: [15, 23, 42], 
@@ -252,7 +193,14 @@ const Historique = () => {
       styles: { cellPadding: 2 }
     });
 
-    doc.save(`Historique_Expeditions_${modeLabel}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    // Pied de page uniformisé
+    createPDFFooter(doc, {
+      company: 'Tour Shop',
+      pageNumber: '1',
+      totalPages: '1'
+    });
+
+    doc.save(`historique-backoffice-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
   return (
@@ -335,13 +283,14 @@ const Historique = () => {
           value={totals.count}
           icon={Package}
           colorClass="text-slate-900"
+          unit=""
         />
         
         <StatCard 
           label="Total gagné"
           value={totals.totalGain}
           unit="CFA"
-          icon={TrendingUp}
+          icon={DollarSign}
           colorClass="text-emerald-600"
         />
         
@@ -350,6 +299,7 @@ const Historique = () => {
           value={totals.departCount}
           icon={MapPin}
           colorClass="text-orange-600"
+          unit=""
         />
         
         <StatCard 
@@ -357,6 +307,7 @@ const Historique = () => {
           value={totals.arriveeCount}
           icon={MapPin}
           colorClass="text-purple-600"
+          unit=""
         />
       </div>
 
