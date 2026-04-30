@@ -17,7 +17,6 @@ import {
   Briefcase,
   PieChart,
   History,
-  Info,
   Eye,
   CheckCircle2,
   Clock,
@@ -27,7 +26,6 @@ import {
   Smartphone,
   Box,
   AlertCircle,
-  Truck,
   Wallet,
   FileDown,
   Building2
@@ -51,6 +49,11 @@ const Comptabilite = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedExpedition, setSelectedExpedition] = useState(null);
+
+  // États pour le modal de date
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
+  const [dateModalMode, setDateModalMode] = useState(null); // 'start' ou 'end'
+  const [tempDate, setTempDate] = useState('');
   const [filterMode, setFilterMode] = useState(filters.mode); // null, 'depart', 'reception'
 
   useEffect(() => {
@@ -172,6 +175,22 @@ const Comptabilite = () => {
     return groups;
   }, [items]);
 
+  // Fonctions pour le modal de date
+  const openDateModal = (mode) => {
+    setDateModalMode(mode);
+    setTempDate(mode === 'start' ? dateDebut : dateFin);
+    setIsDateModalOpen(true);
+  };
+
+  const confirmDateSelection = () => {
+    if (dateModalMode === 'start') {
+      setDateDebut(tempDate);
+    } else {
+      setDateFin(tempDate);
+    }
+    setIsDateModalOpen(false);
+  };
+
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
     const modeLabel = filterMode === 'depart' ? 'DEPARTS' : filterMode === 'reception' ? 'ARRIVEES' : 'TOUTES AGENCES';
@@ -229,7 +248,7 @@ const Comptabilite = () => {
     drawCard(14, "CA ATTENDU (DÛ)", totals.total);
     drawCard(14 + (cardW + spacing), "PART BACKOFFICE", totals.backoffice, true);
     drawCard(14 + (cardW + spacing) * 2, "PART AGENCES", totals.agence_depart + totals.agence_arrivee);
-    drawCard(14 + (cardW + spacing) * 3, "PART LIVREURS", totals.livreur_depart + totals.livreur_arrivee);
+    drawCard(14 + (cardW + spacing) * 3, "VOL. EXPEDITIONS", filteredItems.length);
 
     // Table (Parfaite symétrie avec le tableau de l'application)
     const tableColumn = [
@@ -243,8 +262,8 @@ const Comptabilite = () => {
     
     const tableRows = filteredItems.map(item => {
         const acc = item.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0 };
-        const statusExp = item.statut_paiement_expedition === 'paye' ? 'Exp: RÉGLÉ' : 'Exp: NON RÉGLÉ';
-        const statusFrais = item.statut_paiement_frais === 'paye' ? 'Frais: RÉGLÉ' : 'Frais: NON RÉGLÉ';
+        const statusExp = item.statut_paiement_expedition === 'paye' ? '✓ Exp. réglée' : '✗ Exp. non réglée';
+        const statusFrais = item.statut_paiement_frais === 'paye' ? '✓ Frais réglés' : '✗ Frais non réglés';
         
         return [
             `${item.reference}\n${getExpeditionStatusLabel(item.statut_expedition)}`,
@@ -301,20 +320,21 @@ const Comptabilite = () => {
         <div className="flex items-center gap-3">
           <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm shrink-0">
             <div className="flex items-center px-3 gap-2">
-              <Calendar size={16} className="text-slate-400" />
-              <input
-                type="date"
-                value={dateDebut}
-                onChange={(e) => setDateDebut(e.target.value)}
-                className="text-xs font-bold text-slate-700 outline-none border-none bg-transparent"
-              />
+              {/* Date de début - clic pour ouvrir modal */}
+              <button
+                onClick={() => openDateModal('start')}
+                className="text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors"
+              >
+                {format(new Date(dateDebut), 'dd/MM/yyyy')}
+              </button>
               <ArrowRight size={14} className="text-slate-300" />
-              <input
-                type="date"
-                value={dateFin}
-                onChange={(e) => setDateFin(e.target.value)}
-                className="text-xs font-bold text-slate-700 outline-none border-none bg-transparent"
-              />
+              {/* Date de fin - clic pour ouvrir modal */}
+              <button
+                onClick={() => openDateModal('end')}
+                className="text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors"
+              >
+                {format(new Date(dateFin), 'dd/MM/yyyy')}
+              </button>
             </div>
             <button
               onClick={handleLoadData}
@@ -360,10 +380,10 @@ const Comptabilite = () => {
         />
 
         <StatCard 
-          label="Part Livreurs"
-          value={totals.livreur_depart + totals.livreur_arrivee}
-          icon={Truck}
-           variant="dark"
+          label="Nombre d'expéditions"
+          value={filteredItems.length}
+          icon={Package}
+          variant="dark"
         />
       </div>
 
@@ -417,7 +437,7 @@ const Comptabilite = () => {
                 <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-200">
               {isLoading && items.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="py-20 text-center">
@@ -437,14 +457,14 @@ const Comptabilite = () => {
                   </td>
                 </tr>
               ) : (
-                filteredItems.map((exp) => {
+                filteredItems.map((exp, index) => {
                   const acc = exp.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0 };
                   const clientTotal = acc.total_client_due;
                   const boNet = (acc.backoffice_depart || 0) + (acc.backoffice_arrivee || 0);
                   const agencyPart = (acc.agence_depart || 0) + (acc.agence_arrivee || 0);
 
                   return (
-                    <tr key={exp.id} className="hover:bg-slate-50 transition-colors group">
+                    <tr key={exp.id} className={`transition-colors group ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-slate-100`}>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
                           <span className="font-bold text-slate-900 text-sm group-hover:text-slate-950 transition-colors">{exp.reference}</span>
@@ -520,41 +540,46 @@ const Comptabilite = () => {
         </div>
       </div>
 
-      {/* Commission Structure Info */}
-      <div className="bg-blue-50/50 rounded-xl border border-blue-100 p-6 flex flex-col md:flex-row gap-6 items-start">
-        <div className="p-3 bg-blue-100 rounded-xl text-blue-600">
-          <Info size={24} />
-        </div>
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div>
-            <h4 className="text-xs font-bold text-blue-900 uppercase tracking-widest mb-2">Enlèvement</h4>
-            <p className="text-xs text-blue-800/70 font-medium">Livreur: <span className="font-bold text-blue-900">85%</span></p>
-            <p className="text-xs text-blue-800/70 font-medium">Agence: <span className="font-bold text-blue-900">15%</span></p>
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-blue-900 uppercase tracking-widest mb-2">Livraison</h4>
-            <p className="text-xs text-blue-800/70 font-medium">Livreur: <span className="font-bold text-blue-900">90%</span></p>
-            <p className="text-xs text-blue-800/70 font-medium">Agence: <span className="font-bold text-blue-900">10%</span></p>
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-blue-900 uppercase tracking-widest mb-2">Emballage</h4>
-            <p className="text-xs text-blue-800/70 font-medium">Backoffice: <span className="font-bold text-blue-900">85%</span></p>
-            <p className="text-xs text-blue-800/70 font-medium">Agence: <span className="font-bold text-blue-900">15%</span></p>
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-blue-900 uppercase tracking-widest mb-2">Retard</h4>
-            <p className="text-xs text-blue-800/70 font-medium">Backoffice: <span className="font-bold text-blue-900">60%</span></p>
-            <p className="text-xs text-blue-800/70 font-medium">Agence: <span className="font-bold text-blue-900">40%</span></p>
-          </div>
-        </div>
-      </div>
-
       {/* Modal Détails Expédition */}
       <ExpeditionDetailModal
         isOpen={!!selectedExpedition}
         onClose={() => setSelectedExpedition(null)}
         selectedExpedition={selectedExpedition}
       />
+
+      {/* Modal de sélection de date */}
+      <Modal
+        isOpen={isDateModalOpen}
+        onClose={() => setIsDateModalOpen(false)}
+        title={dateModalMode === 'start' ? 'Date de début' : 'Date de fin'}
+        subtitle="Sélectionnez la date souhaitée"
+        size="sm"
+      >
+        <div className="space-y-6 p-2">
+          <div className="flex flex-col items-center gap-4">
+            <input
+              type="date"
+              value={tempDate}
+              onChange={(e) => setTempDate(e.target.value)}
+              className="w-full text-center text-lg font-bold text-slate-800 bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all"
+            />
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsDateModalOpen(false)}
+              className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition-all"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={confirmDateSelection}
+              className="flex-1 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-all"
+            >
+              Confirmer
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

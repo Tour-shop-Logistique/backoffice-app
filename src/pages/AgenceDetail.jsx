@@ -107,6 +107,11 @@ const AgenceDetail = () => {
         endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd')
     });
 
+    // États pour le modal de date
+    const [isDateModalOpen, setIsDateModalOpen] = useState(false);
+    const [dateModalMode, setDateModalMode] = useState(null); // 'start' ou 'end'
+    const [tempDate, setTempDate] = useState('');
+
     // États pour la recherche locale
     const [simpleSearch, setSimpleSearch] = useState("");
     const [groupageSearch, setGroupageSearch] = useState("");
@@ -212,6 +217,22 @@ const AgenceDetail = () => {
         }));
     };
 
+    // Fonctions pour le modal de date
+    const openDateModal = (mode) => {
+        setDateModalMode(mode);
+        setTempDate(mode === 'start' ? dateRange.startDate : dateRange.endDate);
+        setIsDateModalOpen(true);
+    };
+
+    const confirmDateSelection = () => {
+        if (dateModalMode === 'start') {
+            setDateRange({ ...dateRange, startDate: tempDate });
+        } else {
+            setDateRange({ ...dateRange, endDate: tempDate });
+        }
+        setIsDateModalOpen(false);
+    };
+
     const handleDownloadPDF = () => {
         if (!currentAgencyAccounting.summary) return;
         const doc = new jsPDF();
@@ -275,14 +296,13 @@ const AgenceDetail = () => {
             "À Percevoir", 
             "Part Backoffice", 
             "Part Agence", 
-            "Part Livreurs", 
             "État Règlements"
         ];
         
         const tableRows = currentAgencyAccounting.items.map(item => {
-            const acc = item.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0, livreur_depart: 0, livreur_arrivee: 0 };
-            const statusExp = item.statut_paiement_expedition === 'paye' ? 'Exp: RÉGLÉ' : 'Exp: NON RÉGLÉ';
-            const statusFrais = item.statut_paiement_frais === 'paye' ? 'Frais: RÉGLÉ' : 'Frais: NON RÉGLÉ';
+            const acc = item.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0 };
+            const statusExp = item.statut_paiement_expedition === 'paye' ? '✓ Exp. réglée' : '✗ Exp. non réglée';
+            const statusFrais = item.statut_paiement_frais === 'paye' ? '✓ Frais réglés' : '✗ Frais non réglés';
             
             return [
                 `${item.reference}\n${getExpeditionStatusLabel(item.statut_expedition)}`,
@@ -290,7 +310,6 @@ const AgenceDetail = () => {
                 `${fmt(acc.total_client_due)}`,
                 `${fmt((acc.backoffice_depart || 0) + (acc.backoffice_arrivee || 0))}`,
                 `${fmt((acc.agence_depart || 0) + (acc.agence_arrivee || 0))}`,
-                `${fmt((acc.livreur_depart || 0) + (acc.livreur_arrivee || 0))}`,
                 `${statusExp}\n${statusFrais}`
             ];
         });
@@ -314,8 +333,7 @@ const AgenceDetail = () => {
               2: { halign: 'right' },
               3: { halign: 'right', fontStyle: 'bold' },
               4: { halign: 'right' },
-              5: { halign: 'right' },
-              6: { halign: 'center', fontSize: 6 }
+              5: { halign: 'center', fontSize: 6 }
           },
           alternateRowStyles: { fillColor: [249, 250, 251] },
           margin: { top: 85, left: 14, right: 14 },
@@ -867,19 +885,21 @@ const AgenceDetail = () => {
                                         <Calendar size={16} className="text-slate-400" />
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <input
-                                            type="date"
-                                            value={dateRange.startDate}
-                                            onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
-                                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400 transition-all"
-                                        />
+                                        {/* Date de début - clic pour ouvrir modal */}
+                                        <button
+                                            onClick={() => openDateModal('start')}
+                                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none hover:border-slate-400 focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400 transition-all"
+                                        >
+                                            {format(new Date(dateRange.startDate), 'dd/MM/yyyy')}
+                                        </button>
                                         <span className="text-slate-300 font-bold">→</span>
-                                        <input
-                                            type="date"
-                                            value={dateRange.endDate}
-                                            onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
-                                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400 transition-all"
-                                        />
+                                        {/* Date de fin - clic pour ouvrir modal */}
+                                        <button
+                                            onClick={() => openDateModal('end')}
+                                            className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none hover:border-slate-400 focus:ring-2 focus:ring-slate-900/5 focus:border-slate-400 transition-all"
+                                        >
+                                            {format(new Date(dateRange.endDate), 'dd/MM/yyyy')}
+                                        </button>
                                     </div>
                                     <button
                                         onClick={handleLoadAccounting}
@@ -954,7 +974,7 @@ const AgenceDetail = () => {
                                                 <th className="px-6 py-4 text-right">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-50">
+                                        <tbody className="divide-y divide-slate-200">
                                             {currentAgencyAccounting.isLoading ? (
                                                 <tr>
                                                     <td colSpan={7} className="px-6 py-20 text-center">
@@ -973,13 +993,13 @@ const AgenceDetail = () => {
                                                     </td>
                                                 </tr>
                                             ) : (
-                                                currentAgencyAccounting.items.map((item) => {
+                                                currentAgencyAccounting.items.map((item, index) => {
                                                     const acct = item.accounting_details || {};
                                                     const boNet = (acct.backoffice_depart || 0) + (acct.backoffice_arrivee || 0);
                                                     const agencyPart = (acct.agence_depart || 0) + (acct.agence_arrivee || 0);
 
                                                     return (
-                                                        <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                        <tr key={item.id} className={`transition-colors group ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-slate-100`}>
                                                             <td className="px-6 py-4">
                                                                 <div className="flex flex-col">
                                                                     <span className="font-bold text-slate-900 text-xs tracking-tight">{item.reference}</span>
@@ -1035,6 +1055,40 @@ const AgenceDetail = () => {
                 selectedExpedition={selectedExpedition}
                 getTypeLabel={getTypeLabel}
             />
+
+            {/* Modal de sélection de date */}
+            <Modal
+                isOpen={isDateModalOpen}
+                onClose={() => setIsDateModalOpen(false)}
+                title={dateModalMode === 'start' ? 'Date de début' : 'Date de fin'}
+                subtitle="Sélectionnez la date souhaitée"
+                size="sm"
+            >
+                <div className="space-y-6 p-2">
+                    <div className="flex flex-col items-center gap-4">
+                        <input
+                            type="date"
+                            value={tempDate}
+                            onChange={(e) => setTempDate(e.target.value)}
+                            className="w-full text-center text-lg font-bold text-slate-800 bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all"
+                        />
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setIsDateModalOpen(false)}
+                            className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition-all"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            onClick={confirmDateSelection}
+                            className="flex-1 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-all"
+                        >
+                            Confirmer
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };

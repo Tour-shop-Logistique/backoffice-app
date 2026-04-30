@@ -13,16 +13,16 @@ const StatCard = ({ label, value, unit = "CFA", icon: Icon, variant = "white", c
     };
 
     return (
-        <div className={`group relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+        <div className={`group relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
             isDark 
-                ? 'bg-slate-900 border-slate-800 text-white shadow-2xl' 
+                ? 'bg-slate-900 border-slate-800 text-white shadow-lg' 
                 : 'bg-white border-slate-100 text-slate-900 shadow-sm'
         }`}>
             {/* Accent Top Bar */}
             <div className={`absolute top-0 left-0 w-full h-1 ${getAccentColor()} opacity-60`} />
             
             {/* Background Shape */}
-            <div className={`absolute -right-4 -bottom-4 w-24 h-24 rounded-full ${isDark ? 'bg-white/5' : 'bg-slate-50'} transition-transform duration-500 group-hover:scale-150`} />
+            <div className={`absolute right-0 bottom-0 w-20 h-20 rounded-full ${isDark ? 'bg-white/5' : 'bg-slate-50'} transition-transform duration-500 group-hover:scale-150`} />
 
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-3">

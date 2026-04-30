@@ -363,22 +363,22 @@ const ParcelControl = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-stretch">
                         {/* Poids */}
-                        <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                        <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm min-w-0">
                             <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Poids</p>
-                            <p className="text-md font-semibold text-slate-800 tracking-tight">{currentParcel.poids || 0} <span className="text-[10px] font-medium text-slate-400 uppercase">kg</span></p>
+                            <p className="text-sm font-semibold text-slate-800 tracking-tight whitespace-nowrap">{currentParcel.poids || 0} <span className="text-[10px] font-medium text-slate-400 uppercase">kg</span></p>
                         </div>
                         {/* Dimensions */}
-                        <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                        <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm min-w-0">
                             <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Dimensions (Lxlxh)</p>
-                            <p className="text-md font-semibold text-slate-800 tracking-tight">
+                            <p className="text-sm font-semibold text-slate-800 tracking-tight whitespace-nowrap">
                                 {currentParcel.longueur || 0}x{currentParcel.largeur || 0}x{currentParcel.hauteur || 0}
                                 <span className="text-[10px] font-medium text-slate-400 uppercase ml-1">cm</span>
                             </p>
                         </div>
                         {/* Type d'expédition */}
-                        <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                        <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm min-w-0">
                             <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Type d'expédition</p>
-                            <p className="text-md font-bold text-slate-800 uppercase tracking-tight">
+                            <p className="text-sm font-semibold text-slate-800 tracking-tight whitespace-nowrap uppercase">
                                 {currentParcel.expedition?.type_expedition?.replace(/_/g, ' ') || 'Standard'}
                             </p>
                         </div>
