@@ -16,7 +16,7 @@ import {
   ChevronDown,
   Calendar,
   MoreHorizontal,
-  Circle
+  Package
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -41,10 +41,10 @@ const Dashboard = () => {
   const currentMonthIndex = new Date().getMonth();
   const currentMonthName = monthlyOps?.months?.[currentMonthIndex]?.substring(0, 3) || '';
   
-  // Max pour le scaling
-  const maxExp = Math.max(...monthlyData.map(d => d.exp), 1);
-  const maxRec = Math.max(...monthlyData.map(d => d.rec), 1);
-  const maxCA = Math.max(...monthlyData.map(d => d.ca), 1);
+  // Échelles différentes selon le type
+  const maxExp = 50;  // Opérations : 0-50 par pas de 10
+  const maxRec = 50;
+  const maxCA = 500000;  // Finance : 0-500k par pas de 100k
 
   useEffect(() => {
     if (!data && !loading) dispatch(fetchDashboardStats());
@@ -87,61 +87,81 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* KPI CARDS - Style sombre premium */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="relative overflow-hidden bg-slate-900 rounded-2xl p-5 shadow-lg group hover:shadow-xl transition-all">
-          <div className="absolute top-0 left-0 w-full h-1 bg-indigo-500 opacity-60" />
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-white/5" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">À contrôler</p>
-              <div className="p-1.5 rounded-lg bg-white/10 text-indigo-400">
-                <ClipboardCheck size={14} />
+      {/* KPI CARDS - Design moderne inspiré */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl transform rotate-3 scale-105 opacity-20 group-hover:opacity-30 transition-all duration-300" />
+          <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-blue-100">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg">
+                <ClipboardCheck className="text-white" size={20} />
+              </div>
+              <div className="flex items-center gap-1 text-blue-600 text-xs font-semibold">
+                <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                Actif
               </div>
             </div>
-            <p className="text-2xl font-bold text-white">{op.colis_a_controler || 0}</p>
+            <div className="space-y-2">
+              <p className="text-3xl font-bold text-slate-900">{op.colis_a_controler || 0}</p>
+              <p className="text-sm font-medium text-slate-600">Colis à contrôler</p>
+            </div>
           </div>
         </div>
 
-        <div className="relative overflow-hidden bg-slate-900 rounded-2xl p-5 shadow-lg group hover:shadow-xl transition-all">
-          <div className="absolute top-0 left-0 w-full h-1 bg-rose-500 opacity-60" />
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-white/5" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Arrivages prévus</p>
-              <div className="p-1.5 rounded-lg bg-white/10 text-rose-400">
-                <Truck size={14} />
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-3xl transform -rotate-3 scale-105 opacity-20 group-hover:opacity-30 transition-all duration-300" />
+          <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-emerald-100">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-lg">
+                <Truck className="text-white" size={20} />
+              </div>
+              <div className="flex items-center gap-1 text-emerald-600 text-xs font-semibold">
+                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                En cours
               </div>
             </div>
-            <p className="text-2xl font-bold text-white">{op.arrivages_prevus || 0}</p>
+            <div className="space-y-2">
+              <p className="text-3xl font-bold text-slate-900">{op.arrivages_prevus || 0}</p>
+              <p className="text-sm font-medium text-slate-600">Arrivages prévus</p>
+            </div>
           </div>
         </div>
 
-        <div className="relative overflow-hidden bg-slate-900 rounded-2xl p-5 shadow-lg group hover:shadow-xl transition-all">
-          <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 opacity-60" />
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-white/5" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Réceptions jour</p>
-              <div className="p-1.5 rounded-lg bg-white/10 text-blue-400">
-                <PackageCheck size={14} />
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-purple-700 rounded-3xl transform rotate-3 scale-105 opacity-20 group-hover:opacity-30 transition-all duration-300" />
+          <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-purple-100">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
+                <PackageCheck className="text-white" size={20} />
+              </div>
+              <div className="flex items-center gap-1 text-purple-600 text-xs font-semibold">
+                <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
+                Aujourd'hui
               </div>
             </div>
-            <p className="text-2xl font-bold text-white">{op.receptions_du_jour || 0}</p>
+            <div className="space-y-2">
+              <p className="text-3xl font-bold text-slate-900">{op.receptions_du_jour || 0}</p>
+              <p className="text-sm font-medium text-slate-600">Réceptions</p>
+            </div>
           </div>
         </div>
 
-        <div className="relative overflow-hidden bg-slate-900 rounded-2xl p-5 shadow-lg group hover:shadow-xl transition-all">
-          <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500 opacity-60" />
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-white/5" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Expéditions jour</p>
-              <div className="p-1.5 rounded-lg bg-white/10 text-emerald-400">
-                <TrendingUp size={14} />
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-orange-700 rounded-3xl transform -rotate-3 scale-105 opacity-20 group-hover:opacity-30 transition-all duration-300" />
+          <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-orange-100">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg">
+                <TrendingUp className="text-white" size={20} />
+              </div>
+              <div className="flex items-center gap-1 text-orange-600 text-xs font-semibold">
+                <span className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
+                Aujourd'hui
               </div>
             </div>
-            <p className="text-2xl font-bold text-white">{op.colis_expedies_du_jour || 0}</p>
+            <div className="space-y-2">
+              <p className="text-3xl font-bold text-slate-900">{op.colis_expedies_du_jour || 0}</p>
+              <p className="text-sm font-medium text-slate-600">Expéditions</p>
+            </div>
           </div>
         </div>
       </div>
@@ -163,14 +183,22 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="px-6 pt-4 flex gap-1">
-            {['Opérations', 'Finance'].map(tab => (
+          <div className="px-6 pt-4 flex gap-2">
+            {[
+              { id: 'Opérations', label: 'Opérations', icon: ClipboardCheck, activeClass: 'bg-orange-500 text-white shadow-md' },
+              { id: 'Finance', label: 'Finance', icon: Wallet, activeClass: 'bg-blue-500 text-white shadow-md' }
+            ].map(tab => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === tab ? 'bg-slate-900 text-white' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${
+                  activeTab === tab.id 
+                    ? tab.activeClass
+                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                }`}
               >
-                {tab}
+                <tab.icon size={14} />
+                {tab.label}
               </button>
             ))}
           </div>
@@ -179,8 +207,8 @@ const Dashboard = () => {
             <div className="flex h-48 gap-4 pt-4">
               <div className="flex flex-col justify-between text-[10px] font-bold text-slate-300 h-full pb-6 w-10 text-right">
                 {activeTab === 'Opérations'
-                  ? [maxExp > maxRec ? maxExp : maxRec, Math.round((maxExp > maxRec ? maxExp : maxRec) * 0.75), Math.round((maxExp > maxRec ? maxExp : maxRec) * 0.5), Math.round((maxExp > maxRec ? maxExp : maxRec) * 0.25), 0].map((v, i) => <span key={i}>{v}</span>)
-                  : [maxCA, Math.round(maxCA * 0.75), Math.round(maxCA * 0.5), Math.round(maxCA * 0.25), 0].map((v, i) => <span key={i}>{v >= 1000000 ? (v/1000000).toFixed(1) + 'M' : v >= 1000 ? (v/1000).toFixed(0) + 'k' : v}</span>)
+                  ? [50, 40, 30, 20, 10, 0].map((v, i) => <span key={i}>{v}</span>)
+                  : ['500k', '400k', '300k', '200k', '100k', '0'].map((v, i) => <span key={i}>{v}</span>)
                 }
               </div>
 
@@ -198,21 +226,31 @@ const Dashboard = () => {
                         <>
                           <div className="flex-1 relative group/bar h-full">
                             <motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.exp / maxVal) * 100}%` : '0%' }} className="w-full bg-orange-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-[9px] font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">{d.exp} Exp.</div>
                           </div>
                           <div className="flex-1 relative group/bar h-full">
                             <motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.rec / maxVal) * 100}%` : '0%' }} className="w-full bg-blue-600 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-[9px] font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">{d.rec} Rec.</div>
                           </div>
                         </>
                       ) : (
                         <div className="w-full relative group/bar h-full">
                           <motion.div initial={{ height: 0 }} animate={{ height: maxCA > 0 ? `${(d.ca / maxCA) * 100}%` : '0%' }} className="w-full bg-gradient-to-t from-blue-700 to-blue-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
-                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-[9px] font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">{d.ca.toLocaleString()} CFA</div>
                         </div>
                       )}
                     </div>
-                    <span className={`text-[10px] font-bold uppercase transition-colors ${i === currentMonthIndex ? 'text-slate-900 font-black' : 'text-slate-400'}`}>{d.m}</span>
+                    <div className="relative">
+                      <span className={`text-[10px] font-bold uppercase transition-colors ${i === currentMonthIndex ? 'text-slate-900 font-black' : 'text-slate-400'}`}>{d.m}</span>
+                      {activeTab === 'Opérations' ? (
+                        <>
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-[9px] font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">
+                            {d.exp} Exp. / {d.rec} Rec.
+                          </div>
+                        </>
+                      ) : (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-[9px] font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">
+                          {d.ca.toLocaleString()} CFA
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
                 })}
@@ -232,34 +270,29 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* Sidebar - Recouvrement */}
+        {/* Sidebar - Volumes par Type */}
         <div className="space-y-6">
-          <section className="relative overflow-hidden bg-slate-900 p-6 rounded-2xl shadow-lg space-y-5">
-            <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500 opacity-60" />
-            <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-white/5" />
-            
-            <div className="relative z-10 flex items-center justify-between">
-              <h4 className="text-sm font-bold text-white tracking-tight">Taux de Recouvrement</h4>
-              <div className="p-1.5 rounded-lg bg-white/10 text-emerald-400">
-                <Wallet size={14} />
+          <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 tracking-tight">Volumes par Type</h4>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Répartition des expéditions</p>
+              </div>
+              <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                <Package size={16} />
               </div>
             </div>
             
-            <div className="relative z-10 flex gap-6">
-              <div className="flex-1 space-y-1">
-                <p className="text-emerald-400 text-xl font-bold">{(fin.statut_paiements?.paye || 0).toLocaleString()}</p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Payé</p>
-              </div>
-              <div className="w-px bg-slate-700"></div>
-              <div className="flex-1 space-y-1">
-                <p className="text-rose-400 text-xl font-bold">{(fin.statut_paiements?.impaye || 0).toLocaleString()}</p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Impayés</p>
-              </div>
-            </div>
-            
-            <div className="relative z-10 pt-4 border-t border-slate-700 flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Santé: {paymentHealth}%</span>
-              <button className="text-xs font-bold text-white hover:text-emerald-400 transition-colors">Voir détails →</button>
+            <div className="space-y-3">
+              {(log.volume_par_type || []).map((vol, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${vol.total > 0 ? 'bg-indigo-500' : 'bg-slate-300'}`} />
+                    <span className={`text-xs font-medium ${vol.total > 0 ? 'text-slate-700' : 'text-slate-400'}`}>{vol.type.replace('Type ', '')}</span>
+                  </div>
+                  <span className={`text-xs font-bold ${vol.total > 0 ? 'text-slate-900' : 'text-slate-400'}`}>{vol.total}</span>
+                </div>
+              ))}
             </div>
           </section>
         </div>
@@ -320,7 +353,7 @@ const Dashboard = () => {
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : 'bg-slate-300'}`}>
                         {i + 1}
                       </span>
-                      <span className="text-xs font-bold text-slate-700">{dest.pays.split(' ')[0]}</span>
+                      <span className="text-xs font-bold text-slate-700">{dest.pays}</span>
                     </div>
                     <span className="text-xs font-bold text-slate-900">{dest.total}</span>
                   </div>
@@ -333,11 +366,6 @@ const Dashboard = () => {
                 </div>
               );
             })}
-          </div>
-          
-          <div className="mt-5 pt-4 border-t border-slate-100 flex justify-between items-center">
-            <span className="text-[10px] text-slate-400 font-bold uppercase">{log.top_destinations?.length || 0} pays actifs</span>
-            <button className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">Voir tout →</button>
           </div>
         </section>
 
