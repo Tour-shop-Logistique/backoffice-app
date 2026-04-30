@@ -144,15 +144,42 @@ const Comptabilite = () => {
       const acct = exp.accounting_details || {};
 
       result.total += (acct.total_client_due || 0);
-      result.backoffice += (acct.backoffice_depart || 0) + (acct.backoffice_arrivee || 0);
-      result.agence_depart += (acct.agence_depart || 0);
-      result.agence_arrivee += (acct.agence_arrivee || 0);
-      result.livreur_depart += (acct.livreur_depart || 0);
-      result.livreur_arrivee += (acct.livreur_arrivee || 0);
+      
+      // Logique de filtrage selon les règles métier
+      if (filterMode === 'reception') {
+        // Pour le filtre arrivés :
+        // - Backoffice d'arrivé : ne gagne RIEN sauf frais de retard
+        // - Agence d'arrivée : gagne sur les frais de livraison à domicile
+        // - Livreur d'arrivé : gagne sur les frais de livraison à domicile
+        result.backoffice += (acct.frais_retard || 0); // Le backoffice d'arrivé gagne uniquement sur les frais de retard
+        result.agence_arrivee += (acct.agence_arrivee || 0); // Frais de livraison
+        result.livreur_arrivee += (acct.livreur_arrivee || 0); // Frais de livraison
+      } else if (filterMode === 'departure') {
+        // Pour le filtre départs :
+        // - Backoffice de départ : gagne sur frais d'emballage + montant d'expédition + frais annexes
+        // - Agence de départ : gagne sur frais d'enlèvement + frais d'emballage + montant d'expédition
+        // - Livreur de départ : gagne sur frais d'enlèvement
+        result.backoffice += (acct.backoffice_depart || 0);
+        result.agence_depart += (acct.agence_depart || 0);
+        result.livreur_depart += (acct.livreur_depart || 0);
+      } else {
+        // Sans filtre ou autre, on compte tout
+        result.backoffice += (acct.backoffice_depart || 0) + (acct.backoffice_arrivee || 0);
+        result.agence_depart += (acct.agence_depart || 0);
+        result.agence_arrivee += (acct.agence_arrivee || 0);
+        result.livreur_depart += (acct.livreur_depart || 0);
+        result.livreur_arrivee += (acct.livreur_arrivee || 0);
+      }
 
       if (dateSource && format(new Date(dateSource), 'yyyy-MM-dd') === todayStr) {
         result.today += (acct.total_client_due || 0);
-        result.todayBackoffice += (acct.backoffice_depart || 0) + (acct.backoffice_arrivee || 0);
+        if (filterMode === 'reception') {
+          result.todayBackoffice += (acct.frais_retard || 0); // Le backoffice d'arrivé gagne uniquement sur les frais de retard aujourd'hui
+        } else if (filterMode === 'departure') {
+          result.todayBackoffice += (acct.backoffice_depart || 0);
+        } else {
+          result.todayBackoffice += (acct.backoffice_depart || 0) + (acct.backoffice_arrivee || 0);
+        }
       }
     });
 
@@ -403,6 +430,7 @@ const Comptabilite = () => {
           value={filteredItems.length}
           icon={Package}
           variant="dark"
+          unit=""
         />
       </div>
 
@@ -477,10 +505,31 @@ const Comptabilite = () => {
                 </tr>
               ) : (
                 filteredItems.map((exp, index) => {
-                  const acc = exp.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0 };
+                  const acc = exp.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0, frais_retard: 0 };
                   const clientTotal = acc.total_client_due;
-                  const boNet = (acc.backoffice_depart || 0) + (acc.backoffice_arrivee || 0);
-                  const agencyPart = (acc.agence_depart || 0) + (acc.agence_arrivee || 0);
+                  
+                  // Calcul du backoffice selon le filtre
+                  let boNet;
+                  if (filterMode === 'reception') {
+                    // Pour les arrivés, le backoffice d'arrivé perçoit uniquement les frais de retard
+                    boNet = acc.frais_retard || 0;
+                  } else if (filterMode === 'departure') {
+                    // Pour les départs, le backoffice de départ perçoit sa part
+                    boNet = acc.backoffice_depart || 0;
+                  } else {
+                    // Sans filtre, on affiche la somme des deux backoffices
+                    boNet = (acc.backoffice_depart || 0) + (acc.backoffice_arrivee || 0);
+                  }
+                  
+                  // Calcul de la part agence selon le filtre
+                  let agencyPart;
+                  if (filterMode === 'reception') {
+                    agencyPart = acc.agence_arrivee || 0;
+                  } else if (filterMode === 'departure') {
+                    agencyPart = acc.agence_depart || 0;
+                  } else {
+                    agencyPart = (acc.agence_depart || 0) + (acc.agence_arrivee || 0);
+                  }
 
                   return (
                     <tr key={exp.id} className={`transition-colors group ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-slate-100`}>
@@ -553,7 +602,7 @@ const Comptabilite = () => {
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end">
               <span className="text-[10px] font-bold text-slate-400 uppercase">Grand Total (Net BO)</span>
-              <span className="text-lg font-bold text-slate-900">{(totals.backoffice || 0).toLocaleString()} <span className="text-xs">CFA</span></span>
+              <span className="text-lg font-bold text-slate-900">{(totals.backoffice || 0).toLocaleString()}</span>
             </div>
           </div>
         </div>

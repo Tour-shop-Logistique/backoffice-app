@@ -28,7 +28,29 @@ Le nouveau workflow sépare le flux **logistique** (mouvement des colis) du flux
 
 ---
 
-## 3. Lexique Comptable
+## 3. Répartition des Revenus (Règles Métier)
+
+### Cycle de Vie d'une Expédition - Qui gagne quoi ?
+
+| Acteur | Ce qu'il gagne | Quand il le gagne |
+|--------|----------------|-------------------|
+| **Agence de Départ** | Frais d'enlèvement + Frais d'emballage + Montant d'expédition | À l'enregistrement du colis |
+| **Agence d'Arrivée** | Frais de livraison à domicile | À la livraison finale |
+| **Backoffice de Départ** | Frais d'emballage + Montant d'expédition + Frais annexes | Après contrôle et validation |
+| **Backoffice d'Arrivé** | **Frais de retard uniquement** | Uniquement si des frais de retard sont appliqués |
+| **Livreur de Départ** | Frais d'enlèvement | À la collecte du colis |
+| **Livreur d'Arrivé** | Frais de livraison à domicile | À la remise au client |
+
+### Points Clés :
+- Le **backoffice d'arrivé** ne génère aucun revenu direct sauf frais de retard
+- Les **agences** gagnent sur leurs services respectifs (enlèvement vs livraison)
+- Les **backoffices** sont rémunérés principalement par le backoffice de départ
+- Les **livreurs** sont payés pour leurs services de transport
+- Les **frais de retard** sont une source de revenu supplémentaire pour le backoffice d'arrivé
+
+---
+
+## 4. Lexique Comptable
 
 | Terme | Définition |
 | :--- | :--- |
@@ -41,7 +63,7 @@ Le nouveau workflow sépare le flux **logistique** (mouvement des colis) du flux
 
 ---
 
-## 4. Guide des APIs
+## 5. Guide des APIs
 
 ### 📥 Enregistrer un Paiement
 `POST /api/agence/record-transaction`

@@ -56,6 +56,7 @@ import autoTable from 'jspdf-autotable';
 import Modal from "../components/common/Modal";
 import StatCard from "../components/agence/StatCard";
 import ExpeditionDetailModal from "../components/expedition/ExpeditionDetailModal";
+import AgencyTariffTable from "../components/agence/AgencyTariffTable";
 import { getExpeditionStatusLabel, getStatusStyles } from "../utils/statusTranslations";
 
 const AgenceDetail = () => {
