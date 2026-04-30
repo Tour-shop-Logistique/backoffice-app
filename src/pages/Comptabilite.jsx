@@ -39,6 +39,7 @@ import autoTable from 'jspdf-autotable';
 import Modal from '../components/common/Modal';
 import ExpeditionDetailModal from '../components/expedition/ExpeditionDetailModal';
 import StatCard from '../components/agence/StatCard';
+import { getExpeditionStatusLabel, getStatusStyles } from '../utils/statusTranslations';
 
 const Comptabilite = () => {
   const dispatch = useDispatch();
@@ -98,8 +99,10 @@ const Comptabilite = () => {
         todayBackoffice: 0,
         total: summary.potential?.total_client_due || 0,
         backoffice: summary.potential?.total_backoffice || 0,
-        agences: summary.potential?.total_agence || 0,
-        livreurs: summary.potential?.total_livreur || 0,
+        agence_depart: summary.potential?.total_agence_depart || 0,
+        agence_arrivee: summary.potential?.total_agence_arrivee || 0,
+        livreur_depart: summary.potential?.total_livreur_depart || 0,
+        livreur_arrivee: summary.potential?.total_livreur_arrivee || 0,
         realTotal: summary.real?.total_cash_received || 0,
         realCount: summary.real?.count_transactions || 0,
         tourshop: 0
@@ -110,7 +113,7 @@ const Comptabilite = () => {
         const dateSource = exp.date_expedition_depart || exp.created_at;
         if (dateSource && format(new Date(dateSource), 'yyyy-MM-dd') === todayStr) {
           result.today += (exp.accounting_details?.total_client_due || 0);
-          result.todayBackoffice += (exp.accounting_details?.backoffice || 0);
+          result.todayBackoffice += (exp.accounting_details?.backoffice_depart || 0) + (exp.accounting_details?.backoffice_arrivee || 0);
         }
       });
 
@@ -123,9 +126,11 @@ const Comptabilite = () => {
       todayBackoffice: 0,
       total: 0,
       backoffice: 0,
-      agences: 0,
-      livreurs: 0,
-      realTotal: 0, // Ne peut pas être recalculé localement de façon fiable sans toutes les transactions
+      agence_depart: 0,
+      agence_arrivee: 0,
+      livreur_depart: 0,
+      livreur_arrivee: 0,
+      realTotal: 0, 
       realCount: 0,
       tourshop: 0
     };
@@ -136,13 +141,15 @@ const Comptabilite = () => {
       const acct = exp.accounting_details || {};
 
       result.total += (acct.total_client_due || 0);
-      result.backoffice += (acct.backoffice || 0);
-      result.agences += (acct.agence || 0);
-      result.livreurs += (acct.livreur || 0);
+      result.backoffice += (acct.backoffice_depart || 0) + (acct.backoffice_arrivee || 0);
+      result.agence_depart += (acct.agence_depart || 0);
+      result.agence_arrivee += (acct.agence_arrivee || 0);
+      result.livreur_depart += (acct.livreur_depart || 0);
+      result.livreur_arrivee += (acct.livreur_arrivee || 0);
 
       if (dateSource && format(new Date(dateSource), 'yyyy-MM-dd') === todayStr) {
         result.today += (acct.total_client_due || 0);
-        result.todayBackoffice += (acct.backoffice || 0);
+        result.todayBackoffice += (acct.backoffice_depart || 0) + (acct.backoffice_arrivee || 0);
       }
     });
 
@@ -160,7 +167,7 @@ const Comptabilite = () => {
 
       const date = format(dateObj, 'yyyy-MM-dd');
       if (!groups[date]) groups[date] = 0;
-      groups[date] += (exp.accounting_details?.backoffice || 0);
+      groups[date] += (exp.accounting_details?.backoffice_depart || 0) + (exp.accounting_details?.backoffice_arrivee || 0);
     });
     return groups;
   }, [items]);
@@ -221,8 +228,8 @@ const Comptabilite = () => {
 
     drawCard(14, "CA ATTENDU (DÛ)", totals.total);
     drawCard(14 + (cardW + spacing), "PART BACKOFFICE", totals.backoffice, true);
-    drawCard(14 + (cardW + spacing) * 2, "PART AGENCES", totals.agences);
-    drawCard(14 + (cardW + spacing) * 3, "PART LIVREURS", totals.livreurs);
+    drawCard(14 + (cardW + spacing) * 2, "PART AGENCES", totals.agence_depart + totals.agence_arrivee);
+    drawCard(14 + (cardW + spacing) * 3, "PART LIVREURS", totals.livreur_depart + totals.livreur_arrivee);
 
     // Table (Parfaite symétrie avec le tableau de l'application)
     const tableColumn = [
@@ -231,22 +238,20 @@ const Comptabilite = () => {
         "À Percevoir", 
         "Part Backoffice", 
         "Part Agence", 
-        "Part Livreurs", 
         "État Règlements"
     ];
     
     const tableRows = filteredItems.map(item => {
-        const acc = item.accounting_details || { backoffice: 0, agence: 0, total_client_due: 0, livreur: 0 };
+        const acc = item.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0 };
         const statusExp = item.statut_paiement_expedition === 'paye' ? 'Exp: RÉGLÉ' : 'Exp: NON RÉGLÉ';
         const statusFrais = item.statut_paiement_frais === 'paye' ? 'Frais: RÉGLÉ' : 'Frais: NON RÉGLÉ';
         
         return [
-            `${item.reference}\n${item.statut_expedition}`,
+            `${item.reference}\n${getExpeditionStatusLabel(item.statut_expedition)}`,
             `${format(new Date(item.date_expedition_depart || item.created_at), 'dd/MM/yyyy')}\n${item.agence?.nom_agence || 'N/A'}`,
             `${fmt(acc.total_client_due)}`,
-            `${fmt(acc.backoffice)}`,
-            `${fmt(acc.agence)}`,
-            `${fmt(acc.livreur)}`,
+            `${fmt((acc.backoffice_depart || 0) + (acc.backoffice_arrivee || 0))}`,
+            `${fmt((acc.agence_depart || 0) + (acc.agence_arrivee || 0))}`,
             `${statusExp}\n${statusFrais}`
         ];
     });
@@ -270,8 +275,7 @@ const Comptabilite = () => {
           2: { halign: 'right' },
           3: { halign: 'right', fontStyle: 'bold' },
           4: { halign: 'right' },
-          5: { halign: 'right' },
-          6: { halign: 'center', fontSize: 6 }
+          5: { halign: 'center', fontSize: 6 }
       },
       alternateRowStyles: { fillColor: [249, 250, 251] },
       margin: { top: 80, left: 14, right: 14 },
@@ -337,16 +341,9 @@ const Comptabilite = () => {
           label="Potentiel (Attendu)"
           value={totals.total}
           icon={Wallet}
-          colorClass="text-slate-500"
+            variant="dark"
         />
 
-        {/* <StatCard 
-          label="CA Réel Encaissé"
-          value={totals.realTotal}
-          icon={TrendingUp}
-          colorClass="text-emerald-600"
-          subtitle={`${totals.realCount} paiements validés`}
-        /> */}
 
         <StatCard 
           label="Part Backoffice"
@@ -357,16 +354,16 @@ const Comptabilite = () => {
 
         <StatCard 
           label="Part Agences"
-          value={totals.agences}
+          value={totals.agence_depart + totals.agence_arrivee}
           icon={Building2}
-          colorClass="text-blue-600"
+            variant="dark"
         />
 
         <StatCard 
           label="Part Livreurs"
-          value={totals.livreurs}
+          value={totals.livreur_depart + totals.livreur_arrivee}
           icon={Truck}
-          colorClass="text-slate-400"
+           variant="dark"
         />
       </div>
 
@@ -416,7 +413,6 @@ const Comptabilite = () => {
                 <th className="px-6 py-4 text-right">À Percevoir</th>
                 <th className="px-6 py-4 text-right bg-slate-100/30 text-slate-900">Part Backoffice</th>
                 <th className="px-6 py-4 text-right">Part Agence</th>
-                <th className="px-6 py-4 text-right">Part Livreurs</th>
                 <th className="px-6 py-4 text-center">État Règlements</th>
                 <th className="px-6 py-4 text-center">Actions</th>
               </tr>
@@ -442,18 +438,19 @@ const Comptabilite = () => {
                 </tr>
               ) : (
                 filteredItems.map((exp) => {
-                  const acc = exp.accounting_details || { backoffice: 0, agence: 0, livreur: 0, total_client_due: 0 };
+                  const acc = exp.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0 };
                   const clientTotal = acc.total_client_due;
-                  const boNet = acc.backoffice;
-                  const agencyPart = acc.agence;
-                  const livreurPart = acc.livreur;
+                  const boNet = (acc.backoffice_depart || 0) + (acc.backoffice_arrivee || 0);
+                  const agencyPart = (acc.agence_depart || 0) + (acc.agence_arrivee || 0);
 
                   return (
                     <tr key={exp.id} className="hover:bg-slate-50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
                           <span className="font-bold text-slate-900 text-sm group-hover:text-slate-950 transition-colors">{exp.reference}</span>
-                          <span className="text-xs font-bold text-slate-400  tracking-tighter">{exp.statut_expedition || 'PENDING'}</span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium mt-1 w-fit ${getStatusStyles(exp.statut_expedition)}`}>
+                            {getExpeditionStatusLabel(exp.statut_expedition)}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -479,18 +476,13 @@ const Comptabilite = () => {
                       <td className="px-6 py-4 text-right">
                         <span className="font-bold text-blue-600 text-sm">{agencyPart.toLocaleString()}</span>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex flex-col items-end">
-                          <span className="font-bold text-slate-600 text-sm">{livreurPart.toLocaleString()}</span>
-                        </div>
-                      </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex flex-col gap-1.5 items-center">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider ${exp.statut_paiement_expedition === 'paye' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
-                            Expédition: {exp.statut_paiement_expedition === 'paye' ? 'RÉGLÉ' : 'NON RÉGLÉ'}
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${exp.statut_paiement_expedition === 'paye' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                            {exp.statut_paiement_expedition === 'paye' ? '✓ Expédition réglée' : '✗ Expédition non réglée'}
                           </span>
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider ${exp.statut_paiement_frais === 'paye' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
-                            Frais Annexes: {exp.statut_paiement_frais === 'paye' ? 'RÉGLÉ' : 'NON RÉGLÉ'}
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${exp.statut_paiement_frais === 'paye' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                            {exp.statut_paiement_frais === 'paye' ? '✓ Frais réglés' : '✗ Frais non réglés'}
                           </span>
                         </div>
                       </td>

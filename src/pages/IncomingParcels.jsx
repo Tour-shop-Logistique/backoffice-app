@@ -238,7 +238,7 @@ const IncomingParcels = () => {
         <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
 
             {/* STICKY HEADER & SEARCH */}
-            <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 md:pt-6 lg:pt-8 pb-3">
+            <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
                 {/* ── HEADER ── */}
                 <header className="space-y-3 md:space-y-0 text-black">
                     <div className="flex items-center justify-between">
@@ -389,64 +389,60 @@ const IncomingParcels = () => {
                                                             </span>
                                                         </div>
 
-                                                        {/* Middle: Breakdown Flow */}
-                                                        <div className="flex items-center gap-6">
-                                                            <div className="flex items-baseline gap-1.5">
-                                                                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Base</span>
-                                                                <span className="text-[11px] font-semibold text-slate-600 tabular-nums">
-                                                                    {Number(group.expedition?.montant_base || 0).toLocaleString()}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex items-baseline gap-1.5">
-                                                                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Prestation</span>
-                                                                <span className="text-[11px] font-semibold text-blue-600 tabular-nums">
-                                                                    +{Number(group.expedition?.montant_prestation || 0).toLocaleString()}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex items-baseline gap-1.5">
-                                                                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Emballage</span>
-                                                                <span className="text-[11px] font-semibold text-slate-600 tabular-nums">
-                                                                    +{Number(group.expedition?.frais_emballage || 0).toLocaleString()}
-                                                                </span>
-                                                            </div>
-                                                            {Number(group.expedition?.frais_annexes || 0) > 0 && (
-                                                                <div className="flex items-baseline gap-1.5">
-                                                                    <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Annexes</span>
-                                                                    <span className="text-[11px] font-semibold text-amber-600 tabular-nums">
-                                                                        +{Number(group.expedition?.frais_annexes || 0).toLocaleString()}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-
                                                         {/* Right: nb colis + paiement */}
                                                         <div className="ml-auto flex items-center gap-6">
-                                                            <div className="flex flex-col items-end leading-none">
-                                                                <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.15em] mb-1">Total Expédition</span>
-                                                                <div className="flex items-baseline gap-1">
-                                                                    <span className="text-[14px] font-semibold text-slate-900">
-                                                                        {Number(
-                                                                            Number(group.expedition?.montant_expedition || 0) +
-                                                                            Number(group.expedition?.frais_emballage || 0)
-                                                                        ).toLocaleString()}
-                                                                    </span>
-                                                                    <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
-                                                                </div>
-                                                            </div>
+                                                            {/* Financial Total Section */}
                                                             <div className="flex items-center gap-4 pr-6 border-r border-slate-200">
-                                                                <div className={`px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wider border shadow-sm
-                                                                    ${group.expedition?.statut_paiement === 'paye'
-                                                                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                                        : 'bg-amber-50 text-amber-600 border-amber-100'
-                                                                    }`}>
-                                                                    {group.expedition?.statut_paiement === 'paye' ? 'Payé' : 'Impayé'}
+                                                                <div className="flex flex-col items-end leading-none gap-0.5">
+                                                                    <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Frais Expédition</span>
+                                                                    <div className="flex items-center gap-1.5 flex-row-reverse">
+                                                                        <div className="flex items-baseline gap-1">
+                                                                            <span className="text-[14px] font-bold text-slate-900 tracking-tight">
+                                                                                {Number(
+                                                                                    Number(group.expedition?.montant_expedition || 0) +
+                                                                                    Number(group.expedition?.frais_emballage || 0)
+                                                                                ).toLocaleString()}
+                                                                            </span>
+                                                                            <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
+                                                                        </div>
+                                                                        <span className={`text-[7px] font-bold uppercase px-1 py-0.5 rounded-[4px] border
+                                    ${group.expedition?.statut_paiement_expedition === 'paye'
+                                                                                ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                                                : 'bg-amber-50 text-amber-600 border-amber-100'
+                                                                            }`}>
+                                                                            {group.expedition?.statut_paiement_expedition === 'paye' ? 'Réglé' : 'Crédit (Arrivée)'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="h-8 border-l border-slate-200 ml-2" />
+
+                                                                <div className="flex flex-col items-end leading-none gap-0.5">
+                                                                    <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Frais Annexes</span>
+                                                                    <div className="flex items-center gap-1.5 flex-row-reverse">
+                                                                        <div className="flex items-baseline gap-1">
+                                                                            <span className="text-[14px] font-bold text-slate-900 tracking-tight">
+                                                                                {Number(group.expedition?.frais_annexes || 0).toLocaleString()}
+                                                                            </span>
+                                                                            <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
+                                                                        </div>
+                                                                        <span className={`text-[7px] font-bold uppercase px-1 py-0.5 rounded-[4px] border
+                                    ${group.expedition?.statut_paiement_frais === 'paye'
+                                                                                ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                                                : 'bg-amber-50 text-amber-600 border-amber-100'
+                                                                            }`}>
+                                                                            {group.expedition?.statut_paiement_frais === 'paye' ? 'Réglé' : 'À Régler'}
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
+
                                                             <div className="flex flex-col items-end">
                                                                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
                                                                     {group.parcels.length} Colis
                                                                 </span>
                                                             </div>
+
                                                         </div>
                                                     </div>
                                                 </td>
@@ -629,27 +625,27 @@ const IncomingParcels = () => {
                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sélection</span>
                             <span className="text-xs font-bold truncate">{selectedCodes.length} colis</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setSelectedCodes([])}
-                                className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+                                className="px-2 py-2 text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
                             >
                                 Annuler
                             </button>
                             <button
                                 onClick={handleBulkBlock}
-                                disabled={isBulkControlling}
-                                className="bg-rose-600 text-white px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                                disabled={isBulkReceiving || isBulkBlocking}
+                                className="px-3 py-2 border border-rose-500/30 text-rose-500 rounded-lg text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50"
                             >
-                                {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
-                                Bloquer
+                                {isBulkBlocking ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
+                                Écarter
                             </button>
                             <button
                                 onClick={handleBulkReceive}
-                                disabled={isBulkControlling}
-                                className="bg-white text-slate-900 px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                                disabled={isBulkReceiving || isBulkBlocking}
+                                className="bg-emerald-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-emerald-900/40"
                             >
-                                {isBulkControlling ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
+                                {isBulkReceiving ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
                                 Réceptionner
                             </button>
                         </div>
@@ -680,11 +676,11 @@ const IncomingParcels = () => {
                 }}
                 title="Agence de Réception"
                 subtitle="Sélectionnez l'agence de destination pour ces colis"
-                size="xs"
+                size="lg"
                 onConfirm={confirmReceive}
                 confirmDisabled={!selectedAgencyId}
                 isLoading={isBulkReceiving}
-                confirmLabel="Confirmer la réception"
+                confirmLabel="Confirmer"
             >
                 <div className="space-y-4">
                     <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-3">

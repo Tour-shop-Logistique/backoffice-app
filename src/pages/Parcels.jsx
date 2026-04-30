@@ -302,7 +302,7 @@ const Parcels = () => {
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
 
       {/* STICKY HEADER & SEARCH */}
-      <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 md:pt-6 lg:pt-8 pb-3">
+      <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
         {/* HEADER SECTION */}
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
@@ -461,11 +461,11 @@ const Parcels = () => {
                                     <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
                                   </div>
                                   <span className={`text-[7px] font-bold uppercase px-1 py-0.5 rounded-[4px] border
-                                    ${group.expedition?.statut_paiement === 'paye'
+                                    ${group.expedition?.statut_paiement_expedition === 'paye'
                                       ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                       : 'bg-amber-50 text-amber-600 border-amber-100'
                                     }`}>
-                                    {group.expedition?.statut_paiement === 'paye' ? 'Réglé' : 'Crédit (Arrivée)'}
+                                    {group.expedition?.statut_paiement_expedition === 'paye' ? 'Réglé' : 'Crédit (Arrivée)'}
                                   </span>
                                 </div>
                               </div>
@@ -482,11 +482,11 @@ const Parcels = () => {
                                     <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
                                   </div>
                                   <span className={`text-[7px] font-bold uppercase px-1 py-0.5 rounded-[4px] border
-                                    ${group.expedition?.statut_paiement_frais_annexes === 'paye'
+                                    ${group.expedition?.statut_paiement_frais === 'paye'
                                       ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                       : 'bg-amber-50 text-amber-600 border-amber-100'
                                     }`}>
-                                    {group.expedition?.statut_paiement_frais_annexes === 'paye' ? 'Réglé' : 'À Régler'}
+                                    {group.expedition?.statut_paiement_frais === 'paye' ? 'Réglé' : 'À Régler'}
                                   </span>
                                 </div>
                               </div>
@@ -608,20 +608,14 @@ const Parcels = () => {
                                   <Eye size={16} />
                                 </button>
                                 {parcel.is_blocked ? (
-                                  <div className="flex items-center gap-2">
-                                    <div className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-rose-200 bg-rose-50 text-rose-600 flex items-center gap-2">
-                                      <AlertCircle size={12} />
-                                      Bloqué
-                                    </div>
-                                    <button
-                                      onClick={() => handleSingleValidate(parcel.code_colis)}
-                                      disabled={isBulkControlling || validatingCode === parcel.code_colis}
-                                      className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-500/10 active:scale-95 flex items-center gap-2"
-                                    >
-                                      {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />}
-                                      Débloquer
-                                    </button>
-                                  </div>
+                                  <button
+                                    onClick={() => handleSingleValidate(parcel.code_colis)}
+                                    disabled={isBulkControlling || validatingCode === parcel.code_colis}
+                                    className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-500/10 active:scale-95 flex items-center gap-2"
+                                  >
+                                    {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />}
+                                    Débloquer
+                                  </button>
                                 ) : parcel.is_controlled ? (
                                   <div className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-emerald-200 bg-emerald-50 text-emerald-600 flex items-center gap-2">
                                     <ShieldCheck size={12} />
@@ -754,6 +748,18 @@ const Parcels = () => {
                                 <ShieldCheck size={14} />
                                 Contrôlé
                               </div>
+                            ) : parcel.is_blocked ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSingleValidate(parcel.code_colis);
+                                }}
+                                disabled={isBulkControlling || validatingCode === parcel.code_colis}
+                                className="flex-1 px-4 py-2 bg-amber-500 text-white rounded-lg text-xs font-bold uppercase shadow-lg shadow-amber-500/10 active:scale-95 transition-transform flex items-center justify-center gap-2"
+                              >
+                                {validatingCode === parcel.code_colis ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                                Débloquer
+                              </button>
                             ) : (
                               <div className="flex-1 flex gap-2">
                                 <button
@@ -817,7 +823,6 @@ const Parcels = () => {
         confirmLabel="Mettre à jour"
       >
         <div className="space-y-6">
-
           <div className="grid grid-cols-1 gap-5">
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Frais Annexes (Optionnel)</label>
@@ -895,11 +900,11 @@ const Parcels = () => {
               <div className="flex justify-between items-center">
                 <span className="text-[9px] font-bold text-slate-400 uppercase">Paiement Frais</span>
                 <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border shadow-sm
-                  ${selectedExpedition?.statut_paiement_frais_annexes === 'paye'
+                  ${selectedExpedition?.statut_paiement_frais === 'paye'
                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                     : 'bg-amber-50 text-amber-600 border-amber-100'
                   }`}>
-                  {selectedExpedition?.statut_paiement_frais_annexes === 'paye' ? 'Réglé' : 'En attente'}
+                  {selectedExpedition?.statut_paiement_frais === 'paye' ? 'Réglé' : 'En attente'}
                 </span>
               </div>
             </div>
@@ -917,11 +922,11 @@ const Parcels = () => {
               <div className="flex justify-between items-center">
                 <span className="text-[9px] font-bold text-slate-400 uppercase">Paiement Expédition</span>
                 <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border shadow-sm
-                  ${selectedExpedition?.statut_paiement === 'paye'
+                  ${selectedExpedition?.statut_paiement_expedition === 'paye'
                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                     : 'bg-amber-50 text-amber-600 border-amber-100'
                   }`}>
-                  {selectedExpedition?.statut_paiement === 'paye' ? 'Réglé' : 'Non Réglé'}
+                  {selectedExpedition?.statut_paiement_expedition === 'paye' ? 'Réglé' : 'Non Réglé'}
                 </span>
               </div>
             </div>

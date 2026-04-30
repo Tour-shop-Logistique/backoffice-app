@@ -55,8 +55,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Modal from "../components/common/Modal";
 import StatCard from "../components/agence/StatCard";
-import AgencyTariffTable from "../components/agence/AgencyTariffTable";
 import ExpeditionDetailModal from "../components/expedition/ExpeditionDetailModal";
+import { getExpeditionStatusLabel, getStatusStyles } from "../utils/statusTranslations";
 
 const AgenceDetail = () => {
     const { id } = useParams();
@@ -265,7 +265,7 @@ const AgenceDetail = () => {
 
         drawCard(14, "POTENTIEL (DÛ)", summary.potential?.total_client_due || 0);
         drawCard(14 + (cardW + spacing), "PART BACKOFFICE", summary.potential?.total_backoffice || 0, true);
-        drawCard(14 + (cardW + spacing) * 2, "PART AGENCE", summary.potential?.total_agence || 0);
+        drawCard(14 + (cardW + spacing) * 2, "PART AGENCE", (summary.potential?.total_agence_depart || 0) + (summary.potential?.total_agence_arrivee || 0));
         drawCard(14 + (cardW + spacing) * 3, "VOL. EXPEDITIONS", summary.count || 0);
 
         // Table (Parfaite symétrie avec le tableau de l'application)
@@ -280,17 +280,17 @@ const AgenceDetail = () => {
         ];
         
         const tableRows = currentAgencyAccounting.items.map(item => {
-            const acc = item.accounting_details || { backoffice: 0, agence: 0, total_client_due: 0, livreur: 0 };
+            const acc = item.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0, livreur_depart: 0, livreur_arrivee: 0 };
             const statusExp = item.statut_paiement_expedition === 'paye' ? 'Exp: RÉGLÉ' : 'Exp: NON RÉGLÉ';
             const statusFrais = item.statut_paiement_frais === 'paye' ? 'Frais: RÉGLÉ' : 'Frais: NON RÉGLÉ';
             
             return [
-                `${item.reference}\n${item.statut_expedition || 'PENDING'}`,
+                `${item.reference}\n${getExpeditionStatusLabel(item.statut_expedition)}`,
                 `${format(new Date(item.created_at), 'dd/MM/yyyy')}\n${item.agence?.nom_agence || 'Agence Locale'}`,
                 `${fmt(acc.total_client_due)}`,
-                `${fmt(acc.backoffice)}`,
-                `${fmt(acc.agence)}`,
-                `${fmt(acc.livreur)}`,
+                `${fmt((acc.backoffice_depart || 0) + (acc.backoffice_arrivee || 0))}`,
+                `${fmt((acc.agence_depart || 0) + (acc.agence_arrivee || 0))}`,
+                `${fmt((acc.livreur_depart || 0) + (acc.livreur_arrivee || 0))}`,
                 `${statusExp}\n${statusFrais}`
             ];
         });
@@ -908,42 +908,35 @@ const AgenceDetail = () => {
                             </div>
 
                             {/* Cartes de synthèse */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <StatCard
                                     label="Potentiel (Total Dû)"
                                     value={currentAgencyAccounting.summary?.potential?.total_client_due}
                                     icon={Wallet}
-                                    colorClass="text-slate-500"
-                                    subtitle="Chiffre d'affaires attendu"
-                                />
-                                <StatCard
-                                    label="Réel Encaissé"
-                                    value={currentAgencyAccounting.summary?.real?.total_cash_received}
-                                    icon={TrendingUp}
-                                    colorClass="text-emerald-600"
-                                    unit="CFA"
-                                    subtitle={`${currentAgencyAccounting.summary?.real?.count_transactions || 0} paiements enregistrés`}
-                                />
-                                <StatCard
-                                    label="Part Agence (Net)"
-                                    value={currentAgencyAccounting.summary?.potential?.total_agence}
-                                    icon={BadgeCheck}
-                                    colorClass="text-blue-600"
-                                    subtitle="Bénéfice net agence"
+                                    variant="dark"
+                                    // subtitle="Chiffre d'affaires attendu"
                                 />
                                 <StatCard
                                     label="Part Backoffice"
                                     value={currentAgencyAccounting.summary?.potential?.total_backoffice}
                                     icon={Briefcase}
                                     variant="dark"
-                                    subtitle="Reliquat Hub Central"
+                                    // subtitle="Reliquat Hub Central"
+                                />
+                                 <StatCard
+                                    label="Part Agence (Net)"
+                                    value={currentAgencyAccounting.summary?.potential?.total_agence}
+                                    icon={BadgeCheck}
+                                    variant="dark"
+                                    // subtitle="Bénéfice net agence"
                                 />
                                 <StatCard
                                     label="Vol. Expéditions"
                                     value={currentAgencyAccounting.summary?.count}
                                     icon={ListOrdered}
                                     unit="COLIS"
-                                    subtitle="Volume d'activité"
+                                    variant="dark"
+                                    // subtitle="Volume d'activité"
                                 />
                             </div>
 
@@ -957,7 +950,6 @@ const AgenceDetail = () => {
                                                 <th className="px-6 py-4 text-right">À Percevoir</th>
                                                 <th className="px-6 py-4 text-right bg-slate-100/30 text-slate-900">Part Backoffice</th>
                                                 <th className="px-6 py-4 text-right">Part Agence</th>
-                                                <th className="px-6 py-4 text-right">Part Livreurs</th>
                                                 <th className="px-6 py-4 text-center">État Règlements</th>
                                                 <th className="px-6 py-4 text-right">Actions</th>
                                             </tr>
@@ -965,14 +957,14 @@ const AgenceDetail = () => {
                                         <tbody className="divide-y divide-slate-50">
                                             {currentAgencyAccounting.isLoading ? (
                                                 <tr>
-                                                    <td colSpan={8} className="px-6 py-20 text-center">
+                                                    <td colSpan={7} className="px-6 py-20 text-center">
                                                         <Loader2 size={32} className="animate-spin text-slate-200 mx-auto mb-4" />
                                                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Calcul du bilan comptable...</p>
                                                     </td>
                                                 </tr>
                                             ) : currentAgencyAccounting.items.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={8} className="px-6 py-24 text-center bg-slate-50/20">
+                                                    <td colSpan={7} className="px-6 py-24 text-center bg-slate-50/20">
                                                         <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-sm text-slate-200">
                                                             <PieChart size={28} />
                                                         </div>
@@ -983,33 +975,35 @@ const AgenceDetail = () => {
                                             ) : (
                                                 currentAgencyAccounting.items.map((item) => {
                                                     const acct = item.accounting_details || {};
+                                                    const boNet = (acct.backoffice_depart || 0) + (acct.backoffice_arrivee || 0);
+                                                    const agencyPart = (acct.agence_depart || 0) + (acct.agence_arrivee || 0);
+
                                                     return (
                                                         <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
                                                             <td className="px-6 py-4">
                                                                 <div className="flex flex-col">
                                                                     <span className="font-bold text-slate-900 text-xs tracking-tight">{item.reference}</span>
-                                                                    <span className="text-[10px] font-bold text-slate-400 tracking-tighter uppercase">{item.statut_expedition || 'PENDING'}</span>
+                                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium mt-1 w-fit ${getStatusStyles(item.statut_expedition)}`}>
+                                                                        {getExpeditionStatusLabel(item.statut_expedition)}
+                                                                    </span>
                                                                 </div>
                                                             </td>
                                                             <td className="px-6 py-4 text-right">
                                                                 <span className="font-bold text-slate-900 text-xs">{(acct.total_client_due || 0).toLocaleString()}</span>
                                                             </td>
                                                             <td className="px-6 py-4 text-right bg-slate-50/50 group-hover:bg-slate-100/50 transition-colors">
-                                                                <span className="font-bold text-slate-900 text-xs">{(acct.backoffice || 0).toLocaleString()}</span>
+                                                                <span className="font-bold text-slate-900 text-xs">{boNet.toLocaleString()}</span>
                                                             </td>
                                                             <td className="px-6 py-4 text-right">
-                                                                <span className="font-bold text-blue-600 text-xs">{(acct.agence || 0).toLocaleString()}</span>
-                                                            </td>
-                                                            <td className="px-6 py-4 text-right">
-                                                                <span className="font-bold text-slate-500 text-xs">{(acct.livreur || 0).toLocaleString()}</span>
+                                                                <span className="font-bold text-blue-600 text-xs">{agencyPart.toLocaleString()}</span>
                                                             </td>
                                                             <td className="px-6 py-4 text-center">
-                                                                <div className="flex flex-col gap-1 items-center">
-                                                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold tracking-wider ${item.statut_paiement_expedition === 'paye' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
-                                                                        Expédition: {item.statut_paiement_expedition === 'paye' ? 'RÉGLÉ' : 'NON RÉGLÉ'}
+                                                                <div className="flex flex-col gap-1.5 items-center">
+                                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${item.statut_paiement_expedition === 'paye' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                                                                        {item.statut_paiement_expedition === 'paye' ? '✓ Expédition réglée' : '✗ Expédition non réglée'}
                                                                     </span>
-                                                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold tracking-wider ${item.statut_paiement_frais === 'paye' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
-                                                                        Frais Annexes: {item.statut_paiement_frais === 'paye' ? 'RÉGLÉ' : 'NON RÉGLÉ'}
+                                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${item.statut_paiement_frais === 'paye' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                                                                        {item.statut_paiement_frais === 'paye' ? '✓ Frais réglés' : '✗ Frais non réglés'}
                                                                     </span>
                                                                 </div>
                                                             </td>
