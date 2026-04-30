@@ -341,77 +341,80 @@ const Comptabilite = () => {
             </div>
           </div>
         </header>
+
+        {/* SEARCH & FILTERS ROW */}
+        <div className="flex flex-col md:flex-row gap-3 items-stretch">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Rechercher par référence, agence ou pays..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium transition-all shadow-sm"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm shrink-0">
+            <button
+              onClick={() => updateMode(null)}
+              className={`flex-1 md:flex-none px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === null ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-900'}`}
+            >
+              Tout
+            </button>
+            <button
+              onClick={() => updateMode('depart')}
+              className={`flex-1 md:flex-none px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'depart' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-900'}`}
+            >
+              Départs
+            </button>
+            <button
+              onClick={() => updateMode('reception')}
+              className={`flex-1 md:flex-none px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'reception' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-900'}`}
+            >
+              Arrivées
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Statistiques */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
-          label="Potentiel (Attendu)"
+          label="CA Attendu"
           value={totals.total}
           icon={Wallet}
-          variant="dark"
+          unit="CFA"
+          colorClass="text-slate-900"
         />
 
         <StatCard 
           label="Part Backoffice"
           value={totals.backoffice}
-          icon={Briefcase}
-          variant="dark"
+          icon={DollarSign}
+          unit="CFA"
+          colorClass="text-emerald-600"
         />
 
         <StatCard 
           label="Part Agences"
           value={totals.agence_depart + totals.agence_arrivee}
           icon={Building2}
-          variant="dark"
+          unit="CFA"
+          colorClass="text-orange-600"
         />
 
         <StatCard 
-          label="Nombre d'expéditions"
+          label="Expéditions"
           value={filteredItems.length}
           icon={Package}
-          variant="dark"
           unit=""
+          colorClass="text-purple-600"
         />
       </div>
 
-      {/* Filters & Search */}
-      <div className="flex flex-col lg:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input
-            type="text"
-            placeholder="Rechercher par référence, agence ou pays..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium transition-all shadow-sm"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm shrink-0">
-          <button
-            onClick={() => updateMode(null)}
-            className={`flex-1 md:flex-none px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === null ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-900'}`}
-          >
-            Tout
-          </button>
-          <button
-            onClick={() => updateMode('depart')}
-            className={`flex-1 md:flex-none px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'depart' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-900'}`}
-          >
-            Départs
-          </button>
-          <button
-            onClick={() => updateMode('reception')}
-            className={`flex-1 md:flex-none px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'reception' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-900'}`}
-          >
-            Arrivées
-          </button>
-        </div>
-      </div>
-
       {/* Main Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-black transition-all">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>

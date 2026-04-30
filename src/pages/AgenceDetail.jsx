@@ -905,33 +905,32 @@ const AgenceDetail = () => {
                             {/* Cartes de synthèse */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <StatCard
-                                    label="Potentiel (Total Dû)"
+                                    label="CA Attendu"
                                     value={currentAgencyAccounting.summary?.potential?.total_client_due}
                                     icon={Wallet}
-                                    variant="dark"
-                                    // subtitle="Chiffre d'affaires attendu"
+                                    unit="CFA"
+                                    colorClass="text-slate-900"
                                 />
                                 <StatCard
                                     label="Part Backoffice"
                                     value={currentAgencyAccounting.summary?.potential?.total_backoffice}
                                     icon={Briefcase}
-                                    variant="dark"
-                                    // subtitle="Reliquat Hub Central"
+                                    unit="CFA"
+                                    colorClass="text-emerald-600"
                                 />
-                                 <StatCard
+                                <StatCard
                                     label="Part Agence (Net)"
-                                    value={currentAgencyAccounting.summary?.potential?.total_agence}
+                                    value={(currentAgencyAccounting.summary?.potential?.total_agence_depart || 0) + (currentAgencyAccounting.summary?.potential?.total_agence_arrivee || 0)}
                                     icon={BadgeCheck}
-                                    variant="dark"
-                                    // subtitle="Bénéfice net agence"
+                                    unit="CFA"
+                                    colorClass="text-orange-600"
                                 />
                                 <StatCard
                                     label="Vol. Expéditions"
                                     value={currentAgencyAccounting.summary?.count}
                                     icon={ListOrdered}
-                                    unit="COLIS"
-                                    variant="dark"
-                                    // subtitle="Volume d'activité"
+                                    unit=""
+                                    colorClass="text-purple-600"
                                 />
                             </div>
 
