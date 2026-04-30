@@ -296,17 +296,36 @@ const AgenceDetail = () => {
             "À Percevoir", 
             "Part Backoffice", 
             "Part Agence", 
-            "État Règlements"
+            "Etat Reglements"
         ];
         
+        // Fonction pour nettoyer les caracteres speciaux pour le PDF
+        const cleanForPDF = (text) => {
+            if (!text) return '';
+            return text
+                .replace(/[éèêë]/g, 'e')
+                .replace(/[àâä]/g, 'a')
+                .replace(/[ùûü]/g, 'u')
+                .replace(/[ôö]/g, 'o')
+                .replace(/[îï]/g, 'i')
+                .replace(/[ç]/g, 'c')
+                .replace(/[ÉÈÊË]/g, 'E')
+                .replace(/[ÀÂÄ]/g, 'A')
+                .replace(/[ÙÛÜ]/g, 'U')
+                .replace(/[ÔÖ]/g, 'O')
+                .replace(/[ÎÏ]/g, 'I')
+                .replace(/[Ç]/g, 'C')
+                .replace(/[']/g, '');
+        };
+
         const tableRows = currentAgencyAccounting.items.map(item => {
             const acc = item.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0 };
-            const statusExp = item.statut_paiement_expedition === 'paye' ? '✓ Exp. réglée' : '✗ Exp. non réglée';
-            const statusFrais = item.statut_paiement_frais === 'paye' ? '✓ Frais réglés' : '✗ Frais non réglés';
+            const statusExp = item.statut_paiement_expedition === 'paye' ? '[PAYE] Expedition' : '[NON PAYE] Expedition';
+            const statusFrais = item.statut_paiement_frais === 'paye' ? '[PAYE] Frais' : '[NON PAYE] Frais';
             
             return [
-                `${item.reference}\n${getExpeditionStatusLabel(item.statut_expedition)}`,
-                `${format(new Date(item.created_at), 'dd/MM/yyyy')}\n${item.agence?.nom_agence || 'Agence Locale'}`,
+                `${item.reference}\n${cleanForPDF(getExpeditionStatusLabel(item.statut_expedition))}`,
+                `${format(new Date(item.date_expedition_depart || item.created_at), 'dd/MM/yyyy')}\n${item.agence?.nom_agence || 'N/A'}`,
                 `${fmt(acc.total_client_due)}`,
                 `${fmt((acc.backoffice_depart || 0) + (acc.backoffice_arrivee || 0))}`,
                 `${fmt((acc.agence_depart || 0) + (acc.agence_arrivee || 0))}`,
