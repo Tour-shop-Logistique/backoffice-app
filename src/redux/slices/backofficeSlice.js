@@ -57,6 +57,20 @@ export const fetchBackofficeConfig = createAsyncThunk(
   }
 );
 
+export const fetchBackofficeExpeditions = createAsyncThunk(
+  'backoffice/fetchExpeditions',
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/backoffice/list-expedition', { params });
+      console.log('API Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Error:', error);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 // Charger le cache au démarrage
 const cachedConfig = loadBackofficeFromCache();
 
@@ -69,6 +83,10 @@ const backofficeSlice = createSlice({
     backoffice_id: cachedConfig?.id || null,
     pays: cachedConfig?.pays || null,
     error: null,
+    expeditions: [],
+    isLoadingExpeditions: false,
+    expeditionsError: null,
+    hasLoadedExpeditions: false,
   },
   reducers: {
     setConfigured: (state, action) => {
@@ -110,6 +128,30 @@ const backofficeSlice = createSlice({
         } else {
           state.error = action.payload || action.error.message;
         }
+      })
+      .addCase(fetchBackofficeExpeditions.pending, (state) => {
+        state.isLoadingExpeditions = true;
+        state.expeditionsError = null;
+      })
+      .addCase(fetchBackofficeExpeditions.fulfilled, (state, action) => {
+        state.isLoadingExpeditions = false;
+        state.hasLoadedExpeditions = true;
+        // S'assurer que les données sont toujours un tableau
+        const payload = action.payload;
+        if (Array.isArray(payload)) {
+          state.expeditions = payload;
+        } else if (payload && Array.isArray(payload.data)) {
+          state.expeditions = payload.data;
+        } else {
+          state.expeditions = [];
+        }
+        state.expeditionsError = null;
+      })
+      .addCase(fetchBackofficeExpeditions.rejected, (state, action) => {
+        state.isLoadingExpeditions = false;
+        state.hasLoadedExpeditions = true;
+        state.expeditionsError = action.payload;
+        state.expeditions = [];
       });
   },
 });

@@ -15,7 +15,8 @@ import {
   Package,
   ClipboardCheck,
   ArrowDownToLine,
-  CreditCard
+  CreditCard,
+  History
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
@@ -36,6 +37,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     // { name: "Historique contrôles", href: "/parcels-history", icon: Archive },
     { name: 'Agences partenaires', href: '/agence-partenaire', icon: Blocks },
     { name: "Comptabilité", href: "/comptabilite", icon: CreditCard },
+    { name: "Historique", href: "/historique", icon: History },
     { name: "Tarification simple", href: "/simple-rates", icon: DollarSign },
     { name: "Tarification groupée", href: "/grouped-rates", icon: BadgeEuro },
     { name: "Zones d'expéditions", href: "/zone-configuration", icon: MapPin },

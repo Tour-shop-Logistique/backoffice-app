@@ -3,56 +3,58 @@ import React from 'react';
 const StatCard = ({ label, value, unit = "CFA", icon: Icon, variant = "white", colorClass = "text-slate-900", subtitle }) => {
     const isDark = variant === "dark";
     
-    // Determine the accent color from colorClass
-    const getAccentColor = () => {
-        if (isDark) return 'bg-slate-700';
-        if (colorClass.includes('emerald')) return 'bg-emerald-500';
-        if (colorClass.includes('blue')) return 'bg-blue-500';
-        if (colorClass.includes('amber')) return 'bg-amber-500';
-        return 'bg-slate-200';
+    // Déterminer la couleur de fond pour l'icône selon la couleur du texte
+    const getIconBgColor = () => {
+        if (colorClass.includes('emerald')) return 'bg-emerald-50';
+        if (colorClass.includes('blue')) return 'bg-blue-50';
+        if (colorClass.includes('amber')) return 'bg-amber-50';
+        if (colorClass.includes('orange')) return 'bg-orange-50';
+        if (colorClass.includes('purple')) return 'bg-purple-50';
+        if (colorClass.includes('rose')) return 'bg-rose-50';
+        return 'bg-slate-50';
+    };
+    
+    // Déterminer la couleur de l'icône
+    const getIconColor = () => {
+        if (colorClass.includes('emerald')) return 'text-emerald-600';
+        if (colorClass.includes('blue')) return 'text-blue-600';
+        if (colorClass.includes('amber')) return 'text-amber-600';
+        if (colorClass.includes('orange')) return 'text-orange-600';
+        if (colorClass.includes('purple')) return 'text-purple-600';
+        if (colorClass.includes('rose')) return 'text-rose-600';
+        return 'text-slate-600';
     };
 
     return (
-        <div className={`group relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
+        <div className={`rounded-xl shadow-sm border border-slate-200 p-6 transition-all duration-300 hover:shadow-md ${
             isDark 
-                ? 'bg-slate-900 border-slate-800 text-white shadow-lg' 
-                : 'bg-white border-slate-100 text-slate-900 shadow-sm'
+                ? 'bg-slate-900 border-slate-800 text-white' 
+                : 'bg-white border-slate-200 text-slate-900'
         }`}>
-            {/* Accent Top Bar */}
-            <div className={`absolute top-0 left-0 w-full h-1 ${getAccentColor()} opacity-60`} />
-            
-            {/* Background Shape */}
-            <div className={`absolute right-0 bottom-0 w-20 h-20 rounded-full ${isDark ? 'bg-white/5' : 'bg-slate-50'} transition-transform duration-500 group-hover:scale-150`} />
-
-            <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                    <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            <div className="flex items-center justify-between">
+                <div className="flex-1">
+                    <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                         {label}
                     </p>
-                    {Icon && (
-                        <div className={`p-1.5 rounded-lg ${isDark ? 'bg-white/10 text-white' : 'bg-slate-50 text-slate-400'} group-hover:scale-110 transition-transform`}>
-                            <Icon size={14} />
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex items-baseline gap-1.5">
-                    <h3 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : colorClass.replace('text-', 'text-')}`}>
-                        {(value || 0).toLocaleString()}
-                    </h3>
-                    {unit && (
-                        <span className={`text-[10px] font-bold uppercase ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>
-                            {unit}
-                        </span>
-                    )}
-                </div>
-
-                {(subtitle || (unit && unit.includes('('))) && (
-                    <div className="mt-3 flex items-center gap-2">
-                        <div className={`w-1 h-1 rounded-full ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
-                        <p className={`text-[9px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                            {subtitle || unit.split(' ')[1]?.replace(/[()]/g, '') || 'Global'}
+                    <div className="flex items-baseline gap-1 mt-1">
+                        <p className={`text-2xl font-bold ${isDark ? 'text-white' : colorClass}`}>
+                            {(value || 0).toLocaleString()}
                         </p>
+                        {unit && (
+                            <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                                {unit}
+                            </span>
+                        )}
+                    </div>
+                    {subtitle && (
+                        <p className={`text-xs text-slate-500 mt-2`}>
+                            {subtitle}
+                        </p>
+                    )}
+                </div>
+                {Icon && (
+                    <div className={`p-3 rounded-lg ${getIconBgColor()} ml-4`}>
+                        <Icon className={getIconColor()} size={20} />
                     </div>
                 )}
             </div>

@@ -299,7 +299,7 @@ const Dashboard = () => {
       </div>
 
       {/* BOTTOM GRID - Designs variés */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Agences Actives - Style liste avec avatars */}
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -309,9 +309,9 @@ const Dashboard = () => {
           </div>
           
           <div className="divide-y divide-slate-100">
-            {(log.activite_agences || []).slice(0, 3).map((ag, i) => (
+            {(log.activite_agences || []).slice(0, 5).map((ag, i) => (
               <div key={i} className="p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors group cursor-pointer">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 ${i === 0 ? 'bg-indigo-500' : i === 1 ? 'bg-purple-500' : 'bg-pink-500'}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 ${i === 0 ? 'bg-indigo-500' : i === 1 ? 'bg-purple-500' : i === 2 ? 'bg-pink-500' : i === 3 ? 'bg-emerald-500' : 'bg-amber-500'}`}>
                   {ag.nom_agence.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -343,14 +343,14 @@ const Dashboard = () => {
           </div>
           
           <div className="space-y-4">
-            {(log.top_destinations || []).slice(0, 3).map((dest, i) => {
+            {(log.top_destinations || []).slice(0, 6).map((dest, i) => {
               const maxVal = Math.max(...(log.top_destinations || []).map(d => d.total));
               const percentage = maxVal > 0 ? (dest.total / maxVal) * 100 : 0;
               return (
                 <div key={i}>
                   <div className="flex justify-between items-center mb-1.5">
                     <div className="flex items-center gap-2">
-                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : 'bg-slate-300'}`}>
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-slate-300' : i === 3 ? 'bg-slate-200' : i === 4 ? 'bg-slate-100' : 'bg-slate-50'}`}>
                         {i + 1}
                       </span>
                       <span className="text-xs font-bold text-slate-700">{dest.pays}</span>
@@ -359,63 +359,13 @@ const Dashboard = () => {
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div 
-                      className={`h-full rounded-full ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : 'bg-slate-300'}`}
+                      className={`h-full rounded-full ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-slate-300' : i === 3 ? 'bg-slate-200' : i === 4 ? 'bg-slate-100' : 'bg-slate-50'}`}
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
                 </div>
               );
             })}
-          </div>
-        </section>
-
-        {/* Encours à Recouvrer - Style jauge circulaire */}
-        <section className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl shadow-lg p-6 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          
-          <div className="relative z-10 flex justify-between items-start mb-6">
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Encours à Recouvrer</p>
-              <h3 className="text-2xl font-bold text-white mt-1">{(fin.encours_a_recouvrer || 0).toLocaleString()} <span className="text-sm font-medium text-slate-500">CFA</span></h3>
-            </div>
-            <div className="p-2 bg-rose-500/20 rounded-lg text-rose-400">
-              <Wallet size={16} />
-            </div>
-          </div>
-          
-          {/* Jauge circulaire simplifiée */}
-          <div className="relative z-10 flex items-center justify-center py-4">
-            <div className="relative w-32 h-32">
-              <svg className="w-full h-full transform -rotate-90">
-                <circle cx="64" cy="64" r="56" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-700" />
-                <circle 
-                  cx="64" 
-                  cy="64" 
-                  r="56" 
-                  stroke="currentColor" 
-                  strokeWidth="12" 
-                  fill="transparent"
-                  strokeDasharray={`${paymentHealth * 3.52} 351.86`}
-                  className="text-emerald-500"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-white">{paymentHealth}%</span>
-                <span className="text-[9px] text-slate-400 font-bold uppercase">Recouvré</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="relative z-10 mt-4 grid grid-cols-2 gap-3">
-            <div className="bg-white/10 rounded-xl p-3">
-              <p className="text-emerald-400 text-lg font-bold">{(fin.statut_paiements?.paye || 0).toLocaleString()}</p>
-              <p className="text-[9px] text-slate-400 font-bold uppercase">Payé</p>
-            </div>
-            <div className="bg-white/10 rounded-xl p-3">
-              <p className="text-rose-400 text-lg font-bold">{(fin.statut_paiements?.impaye || 0).toLocaleString()}</p>
-              <p className="text-[9px] text-slate-400 font-bold uppercase">Impayé</p>
-            </div>
           </div>
         </section>
       </div>
