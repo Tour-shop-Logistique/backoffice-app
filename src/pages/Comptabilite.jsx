@@ -50,10 +50,7 @@ const Comptabilite = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedExpedition, setSelectedExpedition] = useState(null);
 
-  // États pour le modal de date
-  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
-  const [dateModalMode, setDateModalMode] = useState(null); // 'start' ou 'end'
-  const [tempDate, setTempDate] = useState('');
+  // Plus besoin de modal pour les dates - utilisation de champs directs
   const [filterMode, setFilterMode] = useState(filters.mode); // null, 'depart', 'reception'
 
   useEffect(() => {
@@ -202,21 +199,7 @@ const Comptabilite = () => {
     return groups;
   }, [items]);
 
-  // Fonctions pour le modal de date
-  const openDateModal = (mode) => {
-    setDateModalMode(mode);
-    setTempDate(mode === 'start' ? dateDebut : dateFin);
-    setIsDateModalOpen(true);
-  };
-
-  const confirmDateSelection = () => {
-    if (dateModalMode === 'start') {
-      setDateDebut(tempDate);
-    } else {
-      setDateFin(tempDate);
-    }
-    setIsDateModalOpen(false);
-  };
+  // Plus besoin de fonctions pour le modal - les dates sont gérées directement
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
@@ -231,21 +214,26 @@ const Comptabilite = () => {
     doc.rect(0, 0, 210, 45, 'F'); 
     
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
+    doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("RAPPORT COMPTABILITE", 14, 25);
+    doc.text("RAPPORT COMPTABILITE", 14, 20);
     
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(148, 163, 184); // slate-400
-    doc.text(modeLabel.toUpperCase(), 14, 32);
+    doc.text(modeLabel.toUpperCase(), 14, 26);
     
     // Bloc de métadonnées en haut à droite
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setTextColor(255, 255, 255);
-    doc.text(`PERIODE : ${period.toUpperCase()}`, 140, 18);
-    doc.text(`PAYS : ${paysBackoffice?.toUpperCase() || 'N/A'}`, 140, 24);
-    doc.text(`EDITE LE : ${format(new Date(), 'dd/MM/yyyy')}`, 140, 30);
+    const periodeText = `PERIODE: ${period.toUpperCase()}`;
+    const paysText = `PAYS: ${paysBackoffice?.toUpperCase() || 'N/A'}`;
+    const dateText = `EDITE LE: ${format(new Date(), 'dd/MM/yyyy')}`;
+    
+    // Ajuster les positions pour éviter le débordement
+    doc.text(periodeText, 105, 16, { align: 'right' });
+    doc.text(paysText, 105, 22, { align: 'right' });
+    doc.text(dateText, 105, 28, { align: 'right' });
 
     // CARTES DE SYNTHESE (Summary Cards)
     const cardsY = 55;
@@ -351,65 +339,71 @@ const Comptabilite = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12 font-sans overflow-x-hidden">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            Gestion Comptable
-          </h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">
-            Suivi des revenus, commissions et répartition des gains
-          </p>
-        </div>
+    <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
 
-        <div className="flex items-center gap-3">
-          <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm shrink-0">
-            <div className="flex items-center px-3 gap-2">
-              {/* Date de début - clic pour ouvrir modal */}
+      {/* STICKY HEADER & SEARCH */}
+      <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
+        {/* HEADER SECTION */}
+        <header className="space-y-3 md:space-y-0 text-black">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+                Gestion Comptable
+              </h1>
+              <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
+                Suivi des revenus, commissions et répartition des gains
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm shrink-0">
+                <div className="flex items-center px-3 gap-2">
+                  {/* Date de début - champ direct */}
+                  <input
+                    type="date"
+                    value={dateDebut}
+                    onChange={(e) => setDateDebut(e.target.value)}
+                    className="text-xs font-bold text-slate-700 bg-transparent border-none focus:outline-none cursor-pointer"
+                  />
+                  <ArrowRight size={14} className="text-slate-300" />
+                  {/* Date de fin - champ direct */}
+                  <input
+                    type="date"
+                    value={dateFin}
+                    onChange={(e) => setDateFin(e.target.value)}
+                    className="text-xs font-bold text-slate-700 bg-transparent border-none focus:outline-none cursor-pointer"
+                  />
+                </div>
+                <button
+                  onClick={handleLoadData}
+                  disabled={isLoading || isRefreshing}
+                  className="p-2 bg-white text-slate-600 border-l border-slate-200 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {isLoading || isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                </button>
+              </div>
+
               <button
-                onClick={() => openDateModal('start')}
-                className="text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors"
+                onClick={handleDownloadPDF}
+                disabled={filteredItems.length === 0}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10 disabled:opacity-50"
               >
-                {format(new Date(dateDebut), 'dd/MM/yyyy')}
-              </button>
-              <ArrowRight size={14} className="text-slate-300" />
-              {/* Date de fin - clic pour ouvrir modal */}
-              <button
-                onClick={() => openDateModal('end')}
-                className="text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors"
-              >
-                {format(new Date(dateFin), 'dd/MM/yyyy')}
+                <FileDown size={14} />
+                Exporter PDF
               </button>
             </div>
-            <button
-              onClick={handleLoadData}
-              disabled={isLoading || isRefreshing}
-              className="p-2 bg-white text-slate-600 border-l border-slate-200 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
-            >
-              {isLoading || isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-            </button>
           </div>
+        </header>
+      </div>
 
-          <button
-            onClick={handleDownloadPDF}
-            disabled={filteredItems.length === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10 disabled:opacity-50"
-          >
-            <FileDown size={14} />
-            PDF
-          </button>
-        </div>
-      </header>
-
+      {/* Statistiques */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           label="Potentiel (Attendu)"
           value={totals.total}
           icon={Wallet}
-            variant="dark"
+          variant="dark"
         />
-
 
         <StatCard 
           label="Part Backoffice"
@@ -422,7 +416,7 @@ const Comptabilite = () => {
           label="Part Agences"
           value={totals.agence_depart + totals.agence_arrivee}
           icon={Building2}
-            variant="dark"
+          variant="dark"
         />
 
         <StatCard 
@@ -567,10 +561,10 @@ const Comptabilite = () => {
                       <td className="px-6 py-4 text-center">
                         <div className="flex flex-col gap-1.5 items-center">
                           <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${exp.statut_paiement_expedition === 'paye' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
-                            {exp.statut_paiement_expedition === 'paye' ? '✓ Expédition réglée' : '✗ Expédition non réglée'}
+                            {exp.statut_paiement_expedition === 'paye' ? 'Expédition réglée' : 'Expédition non réglée'}
                           </span>
                           <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${exp.statut_paiement_frais === 'paye' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
-                            {exp.statut_paiement_frais === 'paye' ? '✓ Frais réglés' : '✗ Frais non réglés'}
+                            {exp.statut_paiement_frais === 'paye' ? 'Frais réglés' : 'Frais non réglés'}
                           </span>
                         </div>
                       </td>
@@ -614,40 +608,6 @@ const Comptabilite = () => {
         onClose={() => setSelectedExpedition(null)}
         selectedExpedition={selectedExpedition}
       />
-
-      {/* Modal de sélection de date */}
-      <Modal
-        isOpen={isDateModalOpen}
-        onClose={() => setIsDateModalOpen(false)}
-        title={dateModalMode === 'start' ? 'Date de début' : 'Date de fin'}
-        subtitle="Sélectionnez la date souhaitée"
-        size="sm"
-      >
-        <div className="space-y-6 p-2">
-          <div className="flex flex-col items-center gap-4">
-            <input
-              type="date"
-              value={tempDate}
-              onChange={(e) => setTempDate(e.target.value)}
-              className="w-full text-center text-lg font-bold text-slate-800 bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all"
-            />
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => setIsDateModalOpen(false)}
-              className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition-all"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={confirmDateSelection}
-              className="flex-1 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-all"
-            >
-              Confirmer
-            </button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };

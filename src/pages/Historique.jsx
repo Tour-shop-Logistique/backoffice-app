@@ -118,34 +118,141 @@ const Historique = () => {
   // Export PDF
   const exportToPDF = () => {
     const doc = new jsPDF();
+    const modeLabel = filterMode === 'depart' ? 'DEPARTS' : filterMode === 'arrivee' ? 'ARRIVEES' : 'TOUTES EXPEDITIONS';
+    const period = `Filtre: ${modeLabel} - ${filteredExpeditions.length} expéditions`;
+
+    // Helper pour formater les nombres sans caractères spéciaux (éviter les symboles bizarres dans le PDF)
+    const fmt = (v) => String(v || 0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+    // DESIGN PREMIUM : Bandeau de tête
+    doc.setFillColor(15, 23, 42); // slate-900 
+    doc.rect(0, 0, 210, 45, 'F'); 
     
-    // En-tête
-    doc.setFontSize(20);
-    doc.text('Historique des Expéditions - Backoffice', 14, 15);
-    doc.setFontSize(10);
-    doc.text(`Filtre: ${filterMode === 'all' ? 'Toutes' : filterMode === 'depart' ? 'Départs' : 'Arrivées'} - ${filteredExpeditions.length} expéditions`, 14, 25);
-    doc.text(`Gagné total: ${totals.totalGain.toLocaleString()} CFA`, 14, 32);
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("HISTORIQUE EXPEDITIONS", 14, 20);
     
-    // Tableau
-    const tableData = filteredExpeditions.map(exp => [
-      exp.reference,
-      format(new Date(exp.date_expedition_depart || exp.created_at), 'dd/MM/yyyy'),
-      exp.agence?.nom_agence || 'N/A',
-      exp.destination_pays || 'N/A',
-      exp.backoffice_role ? exp.backoffice_role.join(', ') : 'N/A',
-      `${(exp.backoffice_gain || 0).toLocaleString()} CFA`,
-      getExpeditionStatusLabel(exp.statut_expedition)
-    ]);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.text(modeLabel.toUpperCase(), 14, 26);
     
-    autoTable(doc, {
-      head: [['Réf', 'Date', 'Agence', 'Destination', 'Rôle BO', 'Gain', 'Statut']],
-      body: tableData,
-      startY: 40,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [59, 130, 246] }
+    // Bloc de métadonnées en haut à droite
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255);
+    const filterText = `FILTRE: ${period.toUpperCase()}`;
+    const gainText = `GAIN TOTAL: ${fmt(totals.totalGain)} CFA`;
+    const dateText = `EDITE LE: ${format(new Date(), 'dd/MM/yyyy')}`;
+    
+    // Ajuster les positions pour éviter le débordement
+    doc.text(filterText, 105, 16, { align: 'right' });
+    doc.text(gainText, 105, 22, { align: 'right' });
+    doc.text(dateText, 105, 28, { align: 'right' });
+
+    // CARTES DE SYNTHESE (Summary Cards)
+    const cardsY = 55;
+    const cardW = 43;
+    const cardH = 20;
+    const spacing = 3.5;
+
+    const drawCard = (x, title, value, isDark = false) => {
+        if (isDark) doc.setFillColor(30, 41, 59);
+        else doc.setFillColor(248, 250, 252);
+        
+        doc.roundedRect(x, cardsY, cardW, cardH, 1, 1, 'F');
+        doc.setFontSize(6);
+        doc.setFont("helvetica", "bold");
+        if (isDark) doc.setTextColor(148, 163, 184);
+        else doc.setTextColor(100, 116, 139);
+        
+        doc.text(title, x + 4, cardsY + 6);
+        
+        doc.setFontSize(10);
+        if (isDark) doc.setTextColor(255, 255, 255);
+        else doc.setTextColor(15, 23, 42);
+        
+        doc.text(`${fmt(value)}`, x + 4, cardsY + 14);
+    };
+
+    drawCard(14, "TOTAL EXPEDITIONS", totals.count);
+    drawCard(14 + (cardW + spacing), "GAIN TOTAL", totals.totalGain, true);
+    drawCard(14 + (cardW + spacing) * 2, "EN DEPART", totals.departCount);
+    drawCard(14 + (cardW + spacing) * 3, "EN ARRIVEE", totals.arriveeCount);
+
+    // Table (Parfaite symétrie avec le tableau de l'application)
+    const tableColumn = [
+        "Expédition", 
+        "Date / Agence", 
+        "Destination", 
+        "Rôle Backoffice", 
+        "Gain", 
+        "Statut"
+    ];
+    
+    // Fonction pour nettoyer les caracteres speciaux pour le PDF
+    const cleanForPDF = (text) => {
+        if (!text) return '';
+        return text
+            .replace(/[éèêë]/g, 'e')
+            .replace(/[àâä]/g, 'a')
+            .replace(/[ùûü]/g, 'u')
+            .replace(/[ôö]/g, 'o')
+            .replace(/[îï]/g, 'i')
+            .replace(/[ç]/g, 'c')
+            .replace(/[ÉÈÊË]/g, 'E')
+            .replace(/[ÀÂÄ]/g, 'A')
+            .replace(/[ÙÛÜ]/g, 'U')
+            .replace(/[ÔÖ]/g, 'O')
+            .replace(/[ÎÏ]/g, 'I')
+            .replace(/[Ç]/g, 'C')
+            .replace(/[']/g, '');
+    };
+
+    const tableRows = filteredExpeditions.map(exp => {
+        const roles = exp.backoffice_role && Array.isArray(exp.backoffice_role) 
+            ? exp.backoffice_role.map(r => r === 'depart' ? 'Départ' : 'Arrivée').join(', ')
+            : 'N/A';
+        
+        return [
+            `${exp.reference}\n${cleanForPDF(getExpeditionStatusLabel(exp.statut_expedition))}`,
+            `${format(new Date(exp.date_expedition_depart || exp.created_at), 'dd/MM/yyyy')}\n${cleanForPDF(exp.agence?.nom_agence || 'N/A')}`,
+            cleanForPDF(exp.pays_destination || 'N/A'),
+            roles,
+            `${fmt(exp.backoffice_gain || 0)} CFA`,
+            cleanForPDF(getExpeditionStatusLabel(exp.statut_expedition))
+        ];
     });
-    
-    doc.save(`historique-backoffice-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 80,
+      theme: 'grid',
+      headStyles: { 
+          fillColor: [15, 23, 42], 
+          fontSize: 7, 
+          fontStyle: 'bold', 
+          halign: 'center' 
+      },
+      bodyStyles: { 
+          fontSize: 6.5, 
+          valign: 'middle' 
+      },
+      columnStyles: {
+          0: { cellWidth: 35 },
+          1: { cellWidth: 35 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 35 },
+          4: { halign: 'right', fontStyle: 'bold', cellWidth: 25 },
+          5: { halign: 'center', cellWidth: 25 }
+      },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
+      margin: { top: 80, left: 14, right: 14 },
+      styles: { cellPadding: 2 }
+    });
+
+    doc.save(`Historique_Expeditions_${modeLabel}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
   return (
