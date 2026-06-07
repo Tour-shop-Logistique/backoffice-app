@@ -66,7 +66,7 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className="font-semibold text-slate-600 text-sm">
-                                        {Number(tarif.montant_base).toLocaleString()} <span className="text-[10px] text-slate-400 uppercase">CFA</span>
+                                        {Number(tarif.montant_base).toLocaleString()} <span className="text-xs text-slate-400 uppercase">CFA</span>
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
@@ -75,14 +75,14 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                             {tarif.pourcentage_prestation}%
                                         </span>
                                         <span className="text-slate-400 text-xs font-semibold">
-                                            ({Number(tarif.montant_prestation).toLocaleString()} <span className="text-[10px]">CFA</span>)
+                                            ({Number(tarif.montant_prestation).toLocaleString()} <span className="text-xs">CFA</span>)
                                         </span>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex flex-col">
                                         <span className="text-green-600 font-bold text-base tracking-tight">
-                                            {Number(tarif.montant_expedition).toLocaleString()} <span className="text-[10px] text-slate-400 uppercase font-semibold">CFA</span>
+                                            {Number(tarif.montant_expedition).toLocaleString()} <span className="text-xs text-slate-400 uppercase font-semibold">CFA</span>
                                         </span>
                                     </div>
                                 </td>
@@ -115,10 +115,10 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                         </div>
                                     </div>
                                     <span className="text-xs font-bold text-emerald-600 shrink-0">
-                                        {Number(total).toLocaleString()} <span className="text-[10px]">CFA</span>
+                                        {Number(total).toLocaleString()} <span className="text-xs">CFA</span>
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-4 text-[10px] text-slate-500 font-medium px-1">
+                                <div className="flex items-center gap-4 text-xs text-slate-500 font-medium px-1">
                                     <span>Base: {Number(mb).toLocaleString()}</span>
                                     <span>Presta: {pp}% ({Number(mp).toLocaleString()})</span>
                                 </div>
@@ -129,7 +129,7 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                             <div key={tarif.id} className="p-4 space-y-3 active:bg-slate-50 transition-colors">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="space-y-1 min-w-0">
-                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${tarif.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded uppercase ${tarif.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
                                             {getTypeLabel(tarif.type_expedition)}
                                         </span>
                                         <p className="text-xs font-bold text-slate-900 truncate uppercase mt-1">
@@ -137,17 +137,17 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                         </p>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <p className="text-sm font-bold text-emerald-600">{Number(total).toLocaleString()} <span className="text-[10px]">CFA</span></p>
-                                        <p className="text-[10px] text-slate-400 font-medium">Prix Final</p>
+                                        <p className="text-sm font-bold text-emerald-600">{Number(total).toLocaleString()} <span className="text-xs">CFA</span></p>
+                                        <p className="text-xs text-slate-400 font-medium">Prix Final</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50">
                                     <div>
-                                        <p className="text-[9px] text-slate-400 uppercase font-bold">Montant Base</p>
+                                        <p className="text-xs text-slate-400 uppercase font-bold">Montant Base</p>
                                         <p className="text-xs font-semibold text-slate-700">{Number(mb).toLocaleString()} CFA</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[9px] text-slate-400 uppercase font-bold">Prestation</p>
+                                        <p className="text-xs text-slate-400 uppercase font-bold">Prestation</p>
                                         <p className="text-xs font-semibold text-orange-600">{pp}% ({Number(mp).toLocaleString()} CFA)</p>
                                     </div>
                                 </div>

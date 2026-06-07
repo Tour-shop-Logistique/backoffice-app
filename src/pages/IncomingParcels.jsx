@@ -238,12 +238,12 @@ const IncomingParcels = () => {
         <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
 
             {/* STICKY HEADER & SEARCH */}
-            <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
+            <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
                 {/* ── HEADER ── */}
                 <header className="space-y-3 md:space-y-0 text-black">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+                            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                                 Arrivages prévus
                             </h1>
                             <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
@@ -258,7 +258,7 @@ const IncomingParcels = () => {
                                 className="inline-flex items-center justify-center p-3 text-sm font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
                             >
                                 <RefreshCw className={`h-4 w-4 ${(isRefreshing || isLoading) ? 'animate-spin' : ''}`} />
-                                <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-[10px]">Actualiser</span>
+                                <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-xs">Actualiser</span>
                             </button>
 
                             <button
@@ -266,7 +266,7 @@ const IncomingParcels = () => {
                                 className="flex items-center p-3 text-white text-sm font-bold bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-all border border-slate-900"
                             >
                                 <PackageCheck className="h-4 w-4" />
-                                <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-[10px]">Scan QR Code</span>
+                                <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-xs">Scan QR Code</span>
                             </button>
                         </div>
                     </div>
@@ -292,7 +292,7 @@ const IncomingParcels = () => {
                 <div className="px-4 py-3 md:px-6 md:py-4 border-b border-slate-100 bg-slate-50/10">
                     <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between">
                         <div className="flex items-center gap-4">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                                 {groupedParcels.length} expédition{groupedParcels.length !== 1 ? 's' : ''} ({filteredParcels.length} colis)
                             </span>
                             {(isLoading || isRefreshing) && (
@@ -302,13 +302,13 @@ const IncomingParcels = () => {
 
                         {selectedCodes.length > 0 && (
                             <div className="flex items-center hidden md:flex gap-2 md:gap-3 md:pl-4 md:border-l md:border-slate-200 animate-in fade-in slide-in-from-top-2 md:slide-in-from-left-2 transition-all">
-                                <span className="hidden md:inline text-[10px] font-bold text-indigo-600 uppercase tracking-widest whitespace-nowrap">
+                                <span className="hidden md:inline text-xs font-bold text-indigo-600 uppercase tracking-widest whitespace-nowrap">
                                     {selectedCodes.length} sélectionné(s)
                                 </span>
                                 <button
                                     onClick={handleBulkReceive}
                                     disabled={isBulkReceiving || isBulkBlocking}
-                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg md:rounded-md text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm shadow-indigo-200 active:scale-95 disabled:opacity-50"
+                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm shadow-indigo-200 active:scale-95 disabled:opacity-50"
                                 >
                                     {isBulkReceiving ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
                                     Réceptionner la sélection
@@ -316,14 +316,14 @@ const IncomingParcels = () => {
                                 <button
                                     onClick={handleBulkBlock}
                                     disabled={isBulkReceiving || isBulkBlocking}
-                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg md:rounded-md text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm shadow-rose-200 active:scale-95 disabled:opacity-50"
+                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm shadow-rose-200 active:scale-95 disabled:opacity-50"
                                 >
                                     {isBulkBlocking ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
                                     Bloquer la sélection
                                 </button>
                                 <button
                                     onClick={() => setSelectedCodes([])}
-                                    className="px-2 py-2 md:py-1 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center"
+                                    className="px-2 py-2 md:py-1 text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center"
                                 >
                                     Annuler
                                 </button>
@@ -336,7 +336,7 @@ const IncomingParcels = () => {
                 {isLoading && !isRefreshing ? (
                     <div className="flex flex-col items-center justify-center py-24 px-6">
                         <Loader2 className="animate-spin text-slate-900 mb-4" size={40} strokeWidth={1.5} />
-                        <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Chargement des réceptions...</p>
+                        <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">Chargement des réceptions...</p>
                     </div>
                 ) : filteredParcels.length === 0 ? (
                     <div className="py-24 text-center px-6">
@@ -384,7 +384,7 @@ const IncomingParcels = () => {
                                                         {/* Référence expédition */}
                                                         <div className="flex items-center gap-2 px-2.5 py-1 bg-white border border-slate-200/60 rounded-lg shadow-sm">
                                                             <Truck size={13} className="text-indigo-500/80" />
-                                                            <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-tight">
+                                                            <span className="text-xs font-semibold text-slate-700 uppercase tracking-tight">
                                                                 {group.expedition?.reference || 'Sans ref'}
                                                             </span>
                                                         </div>
@@ -394,7 +394,7 @@ const IncomingParcels = () => {
                                                             {/* Financial Total Section */}
                                                             <div className="flex items-center gap-4 pr-6 border-r border-slate-200">
                                                                 <div className="flex flex-col items-end leading-none gap-0.5">
-                                                                    <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Frais Expédition</span>
+                                                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-[0.12em]">Frais Expédition</span>
                                                                     <div className="flex items-center gap-1.5 flex-row-reverse">
                                                                         <div className="flex items-baseline gap-1">
                                                                             <span className="text-[14px] font-bold text-slate-900 tracking-tight">
@@ -403,9 +403,9 @@ const IncomingParcels = () => {
                                                                                     Number(group.expedition?.frais_emballage || 0)
                                                                                 ).toLocaleString()}
                                                                             </span>
-                                                                            <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
+                                                                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
                                                                         </div>
-                                                                        <span className={`text-[7px] font-bold uppercase px-1 py-0.5 rounded-[4px] border
+                                                                        <span className={`text-xs font-bold uppercase px-1 py-0.5 rounded-[4px] border
                                     ${group.expedition?.statut_paiement_expedition === 'paye'
                                                                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                                                 : 'bg-amber-50 text-amber-600 border-amber-100'
@@ -418,15 +418,15 @@ const IncomingParcels = () => {
                                                                 <div className="h-8 border-l border-slate-200 ml-2" />
 
                                                                 <div className="flex flex-col items-end leading-none gap-0.5">
-                                                                    <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Frais Annexes</span>
+                                                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-[0.12em]">Frais Annexes</span>
                                                                     <div className="flex items-center gap-1.5 flex-row-reverse">
                                                                         <div className="flex items-baseline gap-1">
                                                                             <span className="text-[14px] font-bold text-slate-900 tracking-tight">
                                                                                 {Number(group.expedition?.frais_annexes || 0).toLocaleString()}
                                                                             </span>
-                                                                            <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
+                                                                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
                                                                         </div>
-                                                                        <span className={`text-[7px] font-bold uppercase px-1 py-0.5 rounded-[4px] border
+                                                                        <span className={`text-xs font-bold uppercase px-1 py-0.5 rounded-[4px] border
                                     ${group.expedition?.statut_paiement_frais === 'paye'
                                                                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                                                 : 'bg-amber-50 text-amber-600 border-amber-100'
@@ -438,7 +438,7 @@ const IncomingParcels = () => {
                                                             </div>
 
                                                             <div className="flex flex-col items-end">
-                                                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+                                                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                                                                     {group.parcels.length} Colis
                                                                 </span>
                                                             </div>
@@ -473,7 +473,7 @@ const IncomingParcels = () => {
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
                                                                     {parcel.is_blocked && (
-                                                                        <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[8px] border border-rose-100 uppercase font-bold">Bloqué</span>
+                                                                        <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs border border-rose-100 uppercase font-bold">Bloqué</span>
                                                                     )}
                                                                 </div>
                                                                 <span className="text-xs font-bold text-slate-400 uppercase">{parcel.designation || 'Sans désignation'}</span>
@@ -499,14 +499,14 @@ const IncomingParcels = () => {
                                                         <div className="flex items-center justify-end gap-2">
                                                             <button
                                                                 onClick={() => handleViewParcel(parcel)}
-                                                                className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-95"
+                                                                className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-95"
                                                             >
                                                                 Détails
                                                             </button>
                                                             <button
                                                                 onClick={() => handleSingleReceive(parcel.code_colis)}
                                                                 disabled={isBulkControlling || validatingCode === parcel.code_colis}
-                                                                className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center gap-2 disabled:opacity-50 ${parcel.is_blocked ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-500/10' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/10'}`}
+                                                                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center gap-2 disabled:opacity-50 ${parcel.is_blocked ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-500/10' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/10'}`}
                                                             >
                                                                 {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : (parcel.is_blocked ? <ShieldCheck size={12} /> : <PackageCheck size={12} />)}
                                                                 {parcel.is_blocked ? 'Débloquer & Réceptionner' : 'Réceptionner'}
@@ -535,12 +535,12 @@ const IncomingParcels = () => {
                                                     {group.expedition?.reference || 'Sans ref'}
                                                 </span>
                                                 <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[9px] text-slate-500 font-bold uppercase">
+                                                    <span className="text-xs text-slate-500 font-bold uppercase">
                                                         {group.expedition?.pays_depart} → {group.expedition?.destinataire?.ville}
                                                     </span>
                                                 </div>
                                             </div>
-                                            <span className="text-[9px] font-bold bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-500 shrink-0">
+                                            <span className="text-xs font-bold bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-500 shrink-0">
                                                 {group.parcels.length} colis
                                             </span>
                                         </div>
@@ -572,10 +572,10 @@ const IncomingParcels = () => {
                                                                     <div className="flex items-center gap-2">
                                                                         <p className="font-bold text-slate-800 text-sm truncate">{parcel.code_colis}</p>
                                                                         {parcel.is_blocked && (
-                                                                            <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[8px] border border-rose-100 uppercase font-bold shrink-0">Bloqué</span>
+                                                                            <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs border border-rose-100 uppercase font-bold shrink-0">Bloqué</span>
                                                                         )}
                                                                     </div>
-                                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 truncate">
+                                                                    <p className="text-xs font-bold text-slate-400 uppercase mt-0.5 truncate">
                                                                         {parcel.designation || 'Sans désignation'}
                                                                     </p>
                                                                 </div>
@@ -622,20 +622,20 @@ const IncomingParcels = () => {
                 <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 animate-in slide-in-from-bottom-10 duration-300">
                     <div className="bg-slate-900 text-white rounded-lg shadow-2xl shadow-slate-900/40 p-2 flex items-center justify-between border border-white/10 backdrop-blur-lg">
                         <div className="flex flex-col min-w-0 pr-2">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sélection</span>
+                            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Sélection</span>
                             <span className="text-xs font-bold truncate">{selectedCodes.length} colis</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setSelectedCodes([])}
-                                className="px-2 py-2 text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+                                className="px-2 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
                             >
                                 Annuler
                             </button>
                             <button
                                 onClick={handleBulkBlock}
                                 disabled={isBulkReceiving || isBulkBlocking}
-                                className="px-3 py-2 border border-rose-500/30 text-rose-500 rounded-lg text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50"
+                                className="px-3 py-2 border border-rose-500/30 text-rose-500 rounded-lg text-xs font-bold uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50"
                             >
                                 {isBulkBlocking ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
                                 Écarter
@@ -643,7 +643,7 @@ const IncomingParcels = () => {
                             <button
                                 onClick={handleBulkReceive}
                                 disabled={isBulkReceiving || isBulkBlocking}
-                                className="bg-emerald-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-emerald-900/40"
+                                className="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-emerald-900/40"
                             >
                                 {isBulkReceiving ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
                                 Réceptionner
@@ -685,14 +685,14 @@ const IncomingParcels = () => {
                 <div className="space-y-4">
                     <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-3">
                         <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={16} />
-                        <div className="text-[11px] text-amber-700 font-medium">
+                        <div className="text-xs text-amber-700 font-medium">
                             Vous allez marquer <strong>{pendingAction?.codes.length} colis</strong> comme réceptionnés.
                             Veuillez sélectionner l'agence locale de destination.
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
                             Agence de destination
                         </label>
                         <select
@@ -733,7 +733,7 @@ const IncomingParcels = () => {
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
                         <textarea
                             value={blockReason}
                             onChange={(e) => setBlockReason(e.target.value)}

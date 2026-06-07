@@ -91,7 +91,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           onClick={toggleSidebar}
           className="md:hidden p-2 rounded hover:bg-slate-800 transition-colors"
         >
-          <X className="h-5 w-5 text-slate-400" />
+          <X className="h-6 w-6 text-slate-400" />
         </button>
       </div>
 
@@ -117,7 +117,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                   return (
                     <>
                       <item.icon
-                        className={`h-4 w-4 mr-3 ${active ? "text-slate-100" : "text-slate-500"}`}
+                        className={`h-5 w-5 mr-3 ${active ? "text-slate-100" : "text-slate-500"}`}
                       />
                       <span className="flex-1">{item.name}</span>
                     </>
@@ -137,7 +137,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-white truncate">{user?.name || user?.nom + " " + user?.prenoms || 'Administrateur'}</p>
-              <p className="text-[10px] text-slate-500 truncate lowercase">{user?.email || 'admin@tourshop.com'}</p>
+              <p className="text-xs text-slate-500 truncate lowercase">{user?.email || 'admin@tourshop.com'}</p>
             </div>
           </div>
         </div>

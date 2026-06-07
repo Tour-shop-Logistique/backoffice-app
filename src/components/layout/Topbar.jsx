@@ -34,7 +34,7 @@ const Topbar = ({ toggleSidebar }) => {
             onClick={toggleSidebar}
             className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors md:hidden"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-6 w-6" />
           </button>
 
           {/* Titre */}
@@ -50,7 +50,7 @@ const Topbar = ({ toggleSidebar }) => {
             className="relative p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="Notifications"
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-6 w-6" />
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
 
@@ -60,7 +60,7 @@ const Topbar = ({ toggleSidebar }) => {
             className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="Paramètres"
           >
-            <Settings className="h-5 w-5" />
+            <Settings className="h-6 w-6" />
           </button>
 
           {/* Séparateur */}
@@ -80,7 +80,7 @@ const Topbar = ({ toggleSidebar }) => {
                   {user?.name || (user?.nom ? (user.nom + " " + (user.prenoms || "")) : "Administrateur")}
                 </p>
               </div>
-              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Menu déroulant */}
@@ -105,7 +105,7 @@ const Topbar = ({ toggleSidebar }) => {
                       onClick={handleSettingsClick}
                       className="w-full flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                     >
-                      <Settings className="h-4 w-4 mr-3 text-slate-400" />
+                      <Settings className="h-5 w-5 mr-3 text-slate-400" />
                       Paramètres
                     </button>
 
@@ -113,7 +113,7 @@ const Topbar = ({ toggleSidebar }) => {
                       onClick={handleLogout}
                       className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >
-                      <LogOut className="h-4 w-4 mr-3" />
+                      <LogOut className="h-5 w-5 mr-3" />
                       Déconnexion
                     </button>
                   </div>

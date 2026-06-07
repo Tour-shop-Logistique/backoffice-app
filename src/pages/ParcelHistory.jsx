@@ -170,7 +170,7 @@ const ParcelHistory = () => {
                             className="inline-flex items-center justify-center p-3 text-sm font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
                         >
                             <RefreshCw className={`h-4 w-4 ${(isRefreshing || isLoading) ? 'animate-spin' : ''}`} />
-                            <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-[10px]">Actualiser</span>
+                            <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-xs">Actualiser</span>
                         </button>
                     </div>
                 </div>
@@ -200,7 +200,7 @@ const ParcelHistory = () => {
                             onChange={(e) => setDateDebut(e.target.value)}
                             className="w-full md:w-40 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-slate-900"
                         />
-                        <span className="absolute top-0 right-0 -mt-2 -mr-1 text-[10px] bg-white px-1 text-slate-400 font-bold uppercase tracking-wider">Du</span>
+                        <span className="absolute top-0 right-0 -mt-2 -mr-1 text-xs bg-white px-1 text-slate-400 font-bold uppercase tracking-wider">Du</span>
                     </div>
                     <div className="relative flex-1 md:flex-none">
                         <input
@@ -209,7 +209,7 @@ const ParcelHistory = () => {
                             onChange={(e) => setDateFin(e.target.value)}
                             className="w-full md:w-40 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-slate-900"
                         />
-                        <span className="absolute top-0 right-0 -mt-2 -mr-1 text-[10px] bg-white px-1 text-slate-400 font-bold uppercase tracking-wider">Au</span>
+                        <span className="absolute top-0 right-0 -mt-2 -mr-1 text-xs bg-white px-1 text-slate-400 font-bold uppercase tracking-wider">Au</span>
                     </div>
                     <button
                         onClick={handleSearch}
@@ -233,7 +233,7 @@ const ParcelHistory = () => {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-black transition-all">
                 {/* Header Summary */}
                 <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/10 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                         {filteredParcels.length} colis trouvés
                     </span>
                 </div>
@@ -242,7 +242,7 @@ const ParcelHistory = () => {
                 {isLoading && !isRefreshing ? (
                     <div className="flex flex-col items-center justify-center py-24 px-6">
                         <Loader2 className="animate-spin text-slate-900 mb-4" size={40} strokeWidth={1.5} />
-                        <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Chargement de l'historique...</p>
+                        <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">Chargement de l'historique...</p>
                     </div>
                 ) : filteredParcels.length === 0 ? (
                     <div className="py-24 text-center px-6">
@@ -276,7 +276,7 @@ const ParcelHistory = () => {
                                                     {/* Left: Reference Container */}
                                                     <div className="flex items-center gap-2 px-2.5 py-1 bg-white border border-slate-200/60 rounded-lg shadow-sm">
                                                         <Truck size={13} className="text-blue-500/80" />
-                                                        <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-tight">
+                                                        <span className="text-xs font-semibold text-slate-700 uppercase tracking-tight">
                                                             {group.expedition?.reference || 'Sans ref'}
                                                         </span>
                                                     </div>
@@ -284,27 +284,27 @@ const ParcelHistory = () => {
                                                     {/* Middle: Breakdown Flow */}
                                                     <div className="flex items-center gap-6">
                                                         <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Base</span>
-                                                            <span className="text-[11px] font-semibold text-slate-600 tabular-nums">
+                                                            <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Base</span>
+                                                            <span className="text-xs font-semibold text-slate-600 tabular-nums">
                                                                 {Number(group.expedition?.montant_base || 0).toLocaleString()}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Prestation</span>
-                                                            <span className="text-[11px] font-semibold text-blue-600 tabular-nums">
+                                                            <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Prestation</span>
+                                                            <span className="text-xs font-semibold text-blue-600 tabular-nums">
                                                                 +{Number(group.expedition?.montant_prestation || 0).toLocaleString()}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Emballage</span>
-                                                            <span className="text-[11px] font-semibold text-slate-600 tabular-nums">
+                                                            <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Emballage</span>
+                                                            <span className="text-xs font-semibold text-slate-600 tabular-nums">
                                                                 +{Number(group.expedition?.frais_emballage || 0).toLocaleString()}
                                                             </span>
                                                         </div>
                                                         {Number(group.expedition?.frais_annexes || 0) > 0 && (
                                                             <div className="flex items-baseline gap-1.5">
-                                                                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">Annexes</span>
-                                                                <span className="text-[11px] font-semibold text-amber-600 tabular-nums">
+                                                                <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Annexes</span>
+                                                                <span className="text-xs font-semibold text-amber-600 tabular-nums">
                                                                     +{Number(group.expedition?.frais_annexes || 0).toLocaleString()}
                                                                 </span>
                                                             </div>
@@ -316,16 +316,16 @@ const ParcelHistory = () => {
                                                         {/* Financial Total Section */}
                                                         <div className="flex items-center gap-4 pr-6 border-r border-slate-200">
                                                             <div className="flex flex-col items-end leading-none">
-                                                                <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-[0.15em] mb-1">Total Expédition</span>
+                                                                <span className="text-xs font-semibold text-slate-400 uppercase tracking-[0.15em] mb-1">Total Expédition</span>
                                                                 <div className="flex items-baseline gap-1">
                                                                     <span className="text-[14px] font-semibold text-slate-900">
                                                                         {Number(group.expedition?.montant_expedition || 0).toLocaleString()}
                                                                     </span>
-                                                                    <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
+                                                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
                                                                 </div>
                                                             </div>
 
-                                                            <div className={`px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wider border shadow-sm transition-all
+                                                            <div className={`px-2 py-1 rounded text-xs font-semibold uppercase tracking-wider border shadow-sm transition-all
                                                                 ${group.expedition?.statut_paiement === 'paye'
                                                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                                     : 'bg-amber-50 text-amber-600 border-amber-100'
@@ -337,7 +337,7 @@ const ParcelHistory = () => {
                                                         {/* Group stats & Actions */}
                                                         <div className="flex items-center gap-4">
                                                             <div className="flex flex-col items-end">
-                                                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+                                                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                                                                     {group.parcels.length} Colis
                                                                 </span>
                                                             </div>
@@ -412,7 +412,7 @@ const ParcelHistory = () => {
                                             <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
                                                 <Truck size={12} /> {group.expedition?.reference || 'N/A'}
                                             </span>
-                                            <span className="text-[10px] text-slate-500 uppercase font-bold mt-0.5 flex items-center gap-2">
+                                            <span className="text-xs text-slate-500 uppercase font-bold mt-0.5 flex items-center gap-2">
                                                 {Number(group.expedition?.montant_expedition || 0).toLocaleString()} CFA
                                                 <span className={`px-1 rounded ${group.expedition?.statut_paiement === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                                                     {group.expedition?.statut_paiement === 'paye' ? 'PAYÉ' : 'NON PAYÉ'}
@@ -420,7 +420,7 @@ const ParcelHistory = () => {
                                             </span>
                                         </div>
                                         <div className="flex items-center">
-                                            <span className="text-[10px] font-bold bg-white px-2 py-1 rounded border border-slate-200 text-slate-500">
+                                            <span className="text-xs font-bold bg-white px-2 py-1 rounded border border-slate-200 text-slate-500">
                                                 {group.parcels.length}
                                             </span>
                                             <button

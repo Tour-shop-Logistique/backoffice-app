@@ -62,7 +62,7 @@ const ZoneForm = ({ id = "zone-form", onSubmit, onCancel, isLoading, initialData
       {/* Afficher l'ID uniquement en mode édition */}
       {initialData && (
         <div className="space-y-1.5">
-          <label htmlFor="id" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+          <label htmlFor="id" className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
             ID de la Zone
           </label>
           <input
@@ -77,7 +77,7 @@ const ZoneForm = ({ id = "zone-form", onSubmit, onCancel, isLoading, initialData
       )}
 
       <div className="space-y-1.5">
-        <label htmlFor="nom" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+        <label htmlFor="nom" className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
           Nom de la Zone <span className="text-red-500">*</span>
         </label>
         <input
@@ -93,7 +93,7 @@ const ZoneForm = ({ id = "zone-form", onSubmit, onCancel, isLoading, initialData
       </div>
 
       <div className="space-y-3">
-        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
           Destinations (Pays) <span className="text-red-500">*</span>
         </label>
 
@@ -122,7 +122,7 @@ const ZoneForm = ({ id = "zone-form", onSubmit, onCancel, isLoading, initialData
         <div className="min-h-[100px] p-3 bg-slate-50 border border-slate-100 rounded-xl overflow-hidden">
           {formData.pays.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center py-4 text-slate-400">
-              <p className="text-[11px] font-medium italic">Aucun pays ajouté pour le moment</p>
+              <p className="text-xs font-medium italic">Aucun pays ajouté pour le moment</p>
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">

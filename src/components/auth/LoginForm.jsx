@@ -48,7 +48,7 @@ const LoginForm = ({ onSuccess, switchToRegister }) => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-1.5">
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider ml-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">
                         Numéro de téléphone
                     </label>
                     <input
@@ -64,10 +64,10 @@ const LoginForm = ({ onSuccess, switchToRegister }) => {
 
                 <div className="space-y-1.5">
                     <div className="flex items-center justify-between ml-1">
-                        <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                             Mot de passe
                         </label>
-                        <button type="button" className="text-[10px] font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">
+                        <button type="button" className="text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">
                             Oublié ?
                         </button>
                     </div>

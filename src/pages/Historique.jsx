@@ -207,12 +207,12 @@ const Historique = () => {
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
 
       {/* STICKY HEADER & SEARCH */}
-      <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
+      <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
         {/* HEADER SECTION */}
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                 Historique des Expéditions
               </h1>
               <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
@@ -266,7 +266,7 @@ const Historique = () => {
               <button
                 onClick={exportToPDF}
                 disabled={filteredExpeditions.length === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10 disabled:opacity-50"
               >
                 <FileDown size={14} />
                 Exporter PDF
@@ -317,7 +317,7 @@ const Historique = () => {
         <div className="px-4 py-3 md:px-6 md:py-4 border-b border-slate-100 bg-slate-50/10">
           <div className="flex flex-col md:flex-row md:items-center gap-3 md:items-center justify-between">
             <div className="flex items-center justify-between md:justify-start gap-4">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                 {filteredExpeditions.length} expéditions trouvées
               </span>
             </div>
@@ -414,7 +414,7 @@ const Historique = () => {
                         {(exp.backoffice_role || []).map((role, i) => (
                           <span
                             key={i}
-                            className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-medium ${
+                            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
                               role === 'depart'
                                 ? 'bg-orange-100 text-orange-700'
                                 : 'bg-purple-100 text-purple-700'
@@ -431,7 +431,7 @@ const Historique = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-medium ${getStatusStyles(exp.statut_expedition)}`}>
+                      <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${getStatusStyles(exp.statut_expedition)}`}>
                         {getExpeditionStatusLabel(exp.statut_expedition)}
                       </span>
                     </td>

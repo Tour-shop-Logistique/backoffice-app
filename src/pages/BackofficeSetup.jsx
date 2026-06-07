@@ -170,7 +170,7 @@ const BackofficeSetup = () => {
                                 style={{ width: `${(step / 2) * 100}%` }}
                             ></div>
                         </div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400 bg-blue-400/10 px-2 py-1 rounded-md">
+                        <span className="text-xs font-bold uppercase tracking-widest text-blue-400 bg-blue-400/10 px-2 py-1 rounded-md">
                             Étape {step}/2
                         </span>
                     </div>
@@ -333,7 +333,7 @@ const BackofficeSetup = () => {
                                     <div className="flex items-center justify-between px-1">
                                         <label className={labelBase}>Coordonnées GPS</label>
                                         {gpsSuccess && (
-                                            <span className="text-[10px] font-bold text-green-600 uppercase flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full">
+                                            <span className="text-xs font-bold text-green-600 uppercase flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full">
                                                 <CheckCircle2 size={12} /> Position Capturée
                                             </span>
                                         )}
@@ -357,7 +357,7 @@ const BackofficeSetup = () => {
                                             <button
                                                 type="button"
                                                 onClick={getLocation}
-                                                className="h-14 sm:px-6 px-4 bg-white border-2 border-slate-900 text-slate-900 text-[11px] font-bold uppercase tracking-wider rounded-xl hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-2"
+                                                className="h-14 sm:px-6 px-4 bg-white border-2 border-slate-900 text-slate-900 text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-2"
                                             >
                                                 <Search size={16} />
                                                 Auto-détection
@@ -376,7 +376,7 @@ const BackofficeSetup = () => {
                                 <button
                                     type="button"
                                     onClick={prevStep}
-                                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-slate-500 font-bold uppercase tracking-widest text-[11px] hover:text-slate-900 transition-colors"
+                                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-slate-500 font-bold uppercase tracking-widest text-xs hover:text-slate-900 transition-colors"
                                 >
                                     <ChevronLeft size={18} />
                                     Retour
@@ -386,7 +386,7 @@ const BackofficeSetup = () => {
                                     <button
                                         type="button"
                                         onClick={() => navigate(-1)}
-                                        className="w-full sm:w-auto px-8 py-4 text-slate-400 font-bold uppercase tracking-widest text-[11px] hover:text-slate-900 transition-colors text-center"
+                                        className="w-full sm:w-auto px-8 py-4 text-slate-400 font-bold uppercase tracking-widest text-xs hover:text-slate-900 transition-colors text-center"
                                     >
                                         Fermer
                                     </button>

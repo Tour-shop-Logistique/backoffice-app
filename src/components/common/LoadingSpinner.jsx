@@ -13,7 +13,7 @@ const LoadingSpinner = ({ fullScreen = false }) => {
     return (
         <div className="flex flex-col items-center justify-center h-full min-h-[400px] w-full">
             <Loader2 className="w-8 h-8 text-slate-400 animate-spin mb-4" />
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Chargement...</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Chargement...</p>
         </div>
     );
 };

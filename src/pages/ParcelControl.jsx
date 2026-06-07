@@ -31,7 +31,9 @@ import {
     CheckCircle,
     Info,
     Clock,
-    PackageCheck
+    PackageCheck,
+    History,
+    Layers
 } from 'lucide-react';
 
 const ParcelControl = () => {
@@ -39,10 +41,10 @@ const ParcelControl = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
-    const { 
-        todoList, historyList, incomingList, currentParcel, 
-        isLoadingDetail, detailError, 
-        isBulkControlling, isBulkBlocking, isBulkReceiving 
+    const {
+        todoList, historyList, incomingList, currentParcel,
+        isLoadingDetail, detailError,
+        isBulkControlling, isBulkBlocking, isBulkReceiving
     } = useSelector(state => state.parcels);
     const { agences, hasLoaded: agencesLoaded, isLoading: isLoadingAgences } = useSelector(state => state.agences);
     const [isValidating, setIsValidating] = useState(false);
@@ -207,24 +209,34 @@ const ParcelControl = () => {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
                 <Loader2 className="h-12 w-12 text-slate-900 animate-spin mb-4" strokeWidth={1.5} />
-                <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Recherche du colis {code}...</p>
+                <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">Recherche du colis {code}...</p>
             </div>
         );
     }
 
     if (detailError) {
+        const isNotFound = detailError === 'Colis introuvable.' || (typeof detailError === 'object' && detailError.message === 'Colis introuvable.');
+        const errorMessage = typeof detailError === 'string' ? detailError : (detailError.message || detailError.error || 'Une erreur est survenue');
+
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-                <div className="p-4 bg-rose-50 rounded-2xl mb-4 text-rose-500 border border-rose-100">
-                    <AlertCircle size={40} />
+            <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center animate-in fade-in duration-500">
+                <div className={`p-5 rounded-3xl mb-6 shadow-xl border ${isNotFound ? 'bg-amber-50 text-amber-500 border-amber-100' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>
+                    {isNotFound ? <Info size={48} strokeWidth={1.5} /> : <AlertCircle size={48} strokeWidth={1.5} />}
                 </div>
-                <h2 className="text-xl font-bold text-slate-900">Colis introuvable</h2>
-                <p className="text-slate-500 mt-2 max-w-sm">Désolé, nous n'avons trouvé aucun colis correspondant au code <span className="font-bold text-slate-900">{code}</span>.</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+                    {isNotFound ? 'Colis non répertorié' : 'Accès Restreint'}
+                </h2>
+                <p className="text-slate-500 mt-3 max-w-md text-sm font-medium leading-relaxed">
+                    {isNotFound
+                        ? `Le code ${code} n'a pas été trouvé dans notre système ou n'est pas encore synchronisé.`
+                        : `Impossible d'accéder aux détails du colis ${code}. Raison : ${errorMessage}`
+                    }
+                </p>
                 <button
                     onClick={() => navigate(-1)}
                     className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95"
                 >
-                    <ArrowLeft size={16} /> Retour à la liste
+                    <ArrowLeft size={22} /> Retour à la liste
                 </button>
             </div>
         );
@@ -236,365 +248,313 @@ const ParcelControl = () => {
     const isAir = currentParcel.code_colis?.includes('AERIEN');
 
     return (
-        <div className="max-w-7xl mx-auto space-y-4 pb-12 px-2 animate-in fade-in duration-300">
-            {/* HEADER PREMIUM FIXE */}
-            <header className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-2 pt-4 lg:pt-2 pb-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+        <div className="w-full space-y-6 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+
+            {/* --- HEADER SECTION --- */}
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-4 pb-6 border-b border-slate-100">
+                <div className="flex items-center gap-5">
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+                        className="group p-2.5 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all active:scale-95"
                     >
-                        <ArrowLeft size={20} className="text-slate-600" />
+                        <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
                     </button>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                             Contrôle Logistique
-                        </h1>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Colis {currentParcel.code_colis}</p>
+                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Contrôle Logistique</h1>
+                        <div className="flex items-center gap-3 mt-1.5">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Référence Colis</span>
+                            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded border border-indigo-100 tracking-wider uppercase">{currentParcel.code_colis}</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* ACTIONS - On cache si déjà fini pour éviter la redondance */}
-                {!(currentParcel.is_controlled && !isFromIncoming && !currentParcel.is_blocked) && (
-                    <div className="flex items-center gap-2">
-                        {!currentParcel.is_controlled && !currentParcel.is_blocked && (
-                            <button
-                                onClick={() => setIsBlockModalOpen(true)}
-                                disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling}
-                                className="px-6 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-sm border bg-white text-rose-600 border-rose-100 hover:bg-rose-50"
-                            >
-                                {isBulkBlocking ? <Loader2 size={14} className="animate-spin" /> : <AlertCircle size={14} />}
-                                Écarter
-                            </button>
-                        )}
+                <div className="flex items-center gap-3">
+                    {!currentParcel.is_controlled && !currentParcel.is_blocked && (
+                        <button
+                            onClick={() => setIsBlockModalOpen(true)}
+                            disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-rose-500 bg-white border border-rose-100 hover:bg-rose-50 transition-all active:scale-95 shadow-sm"
+                        >
+                            {isBulkBlocking ? <Loader2 size={14} className="animate-spin" /> : <AlertCircle size={14} />}
+                            Écarter
+                        </button>
+                    )}
 
+                    {!(currentParcel.is_controlled && !isFromIncoming && !currentParcel.is_blocked) && (
                         <button
                             onClick={handleValidate}
-                            disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling || (currentParcel.is_controlled && !isFromIncoming && !currentParcel.is_blocked)}
-                            className={`px-8 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-lg ${
-                                currentParcel.is_blocked ? 'bg-amber-500 text-white shadow-amber-500/20 hover:bg-amber-600' :
-                                currentParcel.is_controlled 
-                                    ? 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600' 
-                                    : 'bg-slate-900 text-white shadow-slate-900/20 hover:bg-slate-800'
-                            }`}
+                            disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling}
+                            className={`flex items-center gap-2 px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all shadow-sm active:scale-95 ${currentParcel.is_blocked ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-200' :
+                                    currentParcel.is_controlled ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200' :
+                                        'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200'
+                                }`}
                         >
-                            {isValidating || isBulkReceiving || isBulkControlling ? <Loader2 size={14} className="animate-spin" /> : 
-                             currentParcel.is_blocked ? <ShieldCheck size={14} /> : <PackageCheck size={14} />}
-                            {currentParcel.is_blocked ? 'Débloquer et Valider' : 
-                             (isFromIncoming ? 'Réceptionner' : (currentParcel.is_controlled ? 'Contrôlé' : 'Valider'))}
+                            {isValidating || isBulkReceiving || isBulkControlling ? <Loader2 size={16} className="animate-spin" /> :
+                                currentParcel.is_blocked ? <ShieldCheck size={16} /> : <PackageCheck size={16} />}
+                            {currentParcel.is_blocked ? 'Débloquer et Valider' :
+                                (isFromIncoming ? 'Réceptionner' : 'Valider')}
                         </button>
-                    </div>
-                )}
+                    )}
+                </div>
             </header>
 
-
-            <div className={`border rounded-lg p-4 flex flex-wrap items-center gap-6 shadow-sm transition-all duration-300 ${currentParcel.is_blocked ? 'bg-rose-50/40 border-rose-200' : 'bg-white border-slate-200'}`}>
-                <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center border transition-colors ${currentParcel.is_blocked ? 'bg-rose-100/50 border-rose-200 text-rose-600' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
-                        {currentParcel.is_blocked ? <AlertCircle size={24} className="animate-pulse" /> : (isAir ? <Plane size={24} /> : <Ship size={24} />)}
+            {/* --- BLOCK NOTIFICATION --- */}
+            {currentParcel.is_blocked && (
+                <div className="bg-rose-50 border border-rose-100 p-5 rounded-lg flex items-start gap-5 shadow-sm animate-in zoom-in-95 duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 border border-rose-200">
+                        <AlertCircle size={24} />
                     </div>
-                    <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-2">Désignation</p>
-                        <p className={`text-sm font-bold leading-tight uppercase py-0.5 tracking-tight ${currentParcel.is_blocked ? 'text-rose-900' : 'text-slate-900'}`}>{currentParcel.designation || 'Non spécifié'}</p>
-                    </div>
-                </div>
-
-                <div className={`h-8 border-l hidden sm:block ${currentParcel.is_blocked ? 'border-rose-200' : 'border-slate-200'}`}></div>
-
-                <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-2">Code Colis</p>
-                    <p className={`text-sm font-mono font-bold px-2 py-0.5 rounded border ${currentParcel.is_blocked ? 'bg-white border-rose-200 text-rose-700' : 'bg-slate-50 border-slate-100 text-slate-900'}`}>
-                        {currentParcel.code_colis}
-                    </p>
-                </div>
-
-                {currentParcel.is_blocked && (
-                    <>
-                        <div className="h-8 border-l border-rose-200 hidden lg:block"></div>
-                        <div className="flex-1 min-w-[200px]">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                <p className="text-[10px] font-bold text-rose-500 uppercase leading-none">Anomalie / Motif</p>
-                            </div>
-                            <p className="text-xs font-bold text-rose-800 italic leading-tight">
-                                {currentParcel.motif_blocage || 'Motif non précisé'}
-                            </p>
-                        </div>
-                    </>
-                )}
-
-                <div className="md:ml-auto flex items-center gap-2">
-                    {currentParcel.is_received_by_backoffice ? (
-                        <div className="flex flex-col items-end gap-1">
-                            <div className="px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-                                <CheckCircle size={14} />
-                                Colis Réceptionné
-                            </div>
-                            {currentParcel.received_at_backoffice && (
-                                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                                    <Clock size={10} />
-                                    {new Date(currentParcel.received_at_backoffice).toLocaleString('fr-FR', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    ) : (currentParcel.is_controlled && !currentParcel.is_blocked && !isFromIncoming) ? (
-                        <div className="px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-                            <ShieldCheck size={14} />
-                            Colis Validé
-                        </div>
-                    ) : null}
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                {/* LIGNE 1 : Informations Logistiques (pleine largeur) */}
-                <div className="lg:col-span-3 bg-slate-50 border border-slate-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-200/60">
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                            <Scale size={14} /> Informations Logistiques
-                        </h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-stretch">
-                        {/* Poids */}
-                        <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm min-w-0">
-                            <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Poids</p>
-                            <p className="text-sm font-semibold text-slate-800 tracking-tight whitespace-nowrap">{currentParcel.poids || 0} <span className="text-[10px] font-medium text-slate-400 uppercase">kg</span></p>
-                        </div>
-                        {/* Dimensions */}
-                        <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm min-w-0">
-                            <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Dimensions (Lxlxh)</p>
-                            <p className="text-sm font-semibold text-slate-800 tracking-tight whitespace-nowrap">
-                                {currentParcel.longueur || 0}x{currentParcel.largeur || 0}x{currentParcel.hauteur || 0}
-                                <span className="text-[10px] font-medium text-slate-400 uppercase ml-1">cm</span>
-                            </p>
-                        </div>
-                        {/* Type d'expédition */}
-                        <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm min-w-0">
-                            <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Type d'expédition</p>
-                            <p className="text-sm font-semibold text-slate-800 tracking-tight whitespace-nowrap uppercase">
-                                {currentParcel.expedition?.type_expedition?.replace(/_/g, ' ') || 'Standard'}
-                            </p>
-                        </div>
-                        {/* Articles */}
-                        <div className="bg-white p-3 rounded-lg md:col-span-3 border border-slate-200 shadow-sm flex flex-col h-full">
-
-                            <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Articles</p>
-                            {currentParcel.articles && currentParcel.articles.length > 0 ? (
-                                <div className="flex flex-wrap gap-1.5 flex-1 content-start">
-                                    {currentParcel.articles.map((article, idx) => (
-                                        <div key={idx} className="bg-slate-50 text-slate-700 px-2.5 py-1 rounded-md text-xs font-bold border border-slate-100 flex items-center gap-1.5">
-                                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full shrink-0"></div>
-                                            {article}
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="flex-1 flex items-center justify-center border-2 border-dashed border-slate-100 rounded-lg">
-                                    <p className="text-xs text-slate-400 font-medium italic">Aucun article</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* LIGNE 2 : Expéditeur | Destinataire | Provenance */}
-
-                {/* Expéditeur */}
-                <div className="bg-white border border-slate-200 rounded-lg p-4">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                        Expéditeur
-                    </h3>
-                    <div className="space-y-3">
-                        <p className="text-base font-bold text-slate-900 leading-tight">
-                            {currentParcel.expedition?.expediteur?.nom_prenom}
+                    <div className="pt-1">
+                        <h3 className="text-xs font-bold text-rose-900 uppercase tracking-widest">Colis en Opposition</h3>
+                        <p className="text-sm font-semibold text-rose-700 italic mt-1 leading-relaxed">
+                            "{currentParcel.motif_blocage || 'Aucune raison spécifiée par l\'agent.'}"
                         </p>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-slate-600 text-sm font-semibold tracking-wide">
-                                <Phone size={14} className="text-slate-400" />
-                                {currentParcel.expedition?.expediteur?.telephone}
-                            </div>
-                            <div className="flex items-start gap-2 text-slate-600 text-xs font-semibold tracking-wide">
-                                <MapPin size={14} className="text-slate-400 mt-0.5 shrink-0" />
-                                <div className="flex flex-col">
-                                    <span className="text-slate-400 font-bold uppercase mb-1">{currentParcel.expedition?.pays_depart}</span>
-                                    {currentParcel.expedition?.expediteur?.adresse}, {currentParcel.expedition?.expediteur?.ville}
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
+            )}
 
-                {/* Destinataire */}
-                <div className="bg-white border border-slate-200 rounded-lg p-4">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
-                        Destinataire
-                    </h3>
-                    <div className="space-y-3">
-                        <p className="text-base font-bold text-slate-900 leading-tight">
-                            {currentParcel.expedition?.destinataire?.nom_prenom}
-                        </p>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-slate-600 text-sm font-semibold tracking-wide">
-                                <Phone size={14} className="text-slate-400" />
-                                {currentParcel.expedition?.destinataire?.telephone}
-                            </div>
-                            <div className="flex items-start gap-2 text-slate-600 text-xs font-semibold tracking-wide">
-                                <MapPin size={14} className="text-slate-400 mt-0.5 shrink-0" />
-                                <div className="flex flex-col">
-                                    <span className="text-slate-400 font-bold uppercase mb-1">{currentParcel.expedition?.pays_destination}</span>
-                                    {currentParcel.expedition?.destinataire?.adresse}, {currentParcel.expedition?.destinataire?.ville}
-                                </div>
-                            </div>
+            {/* --- PRIMARY INFO SECTION --- */}
+            <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                    <div className="md:col-span-7 p-6 flex items-center gap-5">
+                        <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100 shrink-0">
+                            <Tag size={24} />
                         </div>
-                    </div>
-                </div>
-
-                {/* Provenance */}
-                <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-4 shadow-sm">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                        <Truck size={14} /> Provenance
-                    </h3>
-                    <div className="space-y-2">
-                        <div className="flex items-start gap-3">
-                            <div className="h-8 w-8 bg-slate-50 rounded flex items-center justify-center shrink-0 border border-slate-100">
-                                <Building2 size={14} className="text-slate-400" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase">Agence</p>
-                                <p className="text-xs font-bold text-slate-900 truncate tracking-tight">{currentParcel.expedition?.agence?.code_agence} | {currentParcel.expedition?.agence?.nom_agence}</p>
-                            </div>
+                        <div>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Désignation du Colis</p>
+                            <h2 className="text-xl md:text-2xl font-bold text-slate-900 uppercase leading-tight">{currentParcel.designation || 'Non spécifié'}</h2>
                         </div>
-                        <div className="flex items-start gap-3 pt-3 border-t border-slate-50">
-                            <div className="h-8 w-8 bg-slate-50 rounded flex items-center justify-center shrink-0 border border-slate-100">
-                                <Phone size={14} className="text-slate-400" />
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-slate-400 uppercase">Téléphone</p>
-                                <p className="text-xs font-bold text-slate-900">{currentParcel.expedition?.agence?.telephone}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* LIGNE 4 : État des Règlements (Important pour la sécurité) */}
-                <div className="lg:col-span-3 bg-white border border-slate-200 rounded-lg p-4 shadow-sm border-l-4 border-l-slate-900">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                             <CreditCard size={14} /> État des Règlements
-                        </h3>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className={`p-4 rounded-lg border flex items-center justify-between ${currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
-                                    <Truck size={20} />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Frais d'Expédition</p>
-                                    <p className={`text-sm font-bold uppercase ${currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                        {currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'RÉGLÉ AU DÉPART' : 'NON RÉGLÉ (À L\'ARRIVÉE)'}
-                                    </p>
-                                </div>
+                    <div className="md:col-span-5 p-6 bg-slate-50/50 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">État du Contrôle</p>
+                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-bold uppercase border ${status.styles}`}>
+                                <status.icon size={14} />
+                                {status.label}
                             </div>
-                            {currentParcel.expedition?.statut_paiement_expedition === 'paye' && <BadgeCheck size={20} className="text-emerald-500" />}
                         </div>
-
-                        <div className={`p-4 rounded-lg border flex items-center justify-between ${currentParcel.expedition?.statut_paiement_frais === 'paye' ? 'bg-emerald-50/50 border-emerald-100' : 'bg-amber-50/50 border-amber-100'}`}>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${currentParcel.expedition?.statut_paiement_frais === 'paye' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
-                                    <ShieldCheck size={20} />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Frais Annexes</p>
-                                    <p className={`text-sm font-bold uppercase ${currentParcel.expedition?.statut_paiement_frais === 'paye' ? 'text-emerald-700' : 'text-amber-700'}`}>
-                                        {currentParcel.expedition?.statut_paiement_frais === 'paye' ? 'RÉGLÉ' : 'EN ATTENTE DE PAIEMENT'}
-                                    </p>
-                                </div>
+                        <div className="text-right">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Transport</p>
+                            <div className="flex items-center gap-2 justify-end text-slate-700">
+                                {isAir ? <Plane size={18} className="text-blue-500" /> : <Ship size={18} className="text-slate-500" />}
+                                <span className="text-sm font-bold uppercase">{isAir ? 'Aérien' : 'Maritime'}</span>
                             </div>
-                            {currentParcel.expedition?.statut_paiement_frais === 'paye' ? <BadgeCheck size={20} className="text-emerald-500" /> : <AlertCircle size={20} className="text-amber-500 animate-pulse" />}
                         </div>
                     </div>
-
                 </div>
-
             </div>
 
-            {/* AGENCY SELECTION MODAL */}
+            {/* --- LOGISTICS & ARTICLES --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                        { label: 'Poids', value: `${currentParcel.poids || '0.00'}`, unit: 'KG', icon: Scale, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                        { label: 'Dimensions', value: `${currentParcel.longueur}x${currentParcel.largeur}x${currentParcel.hauteur}`, unit: 'CM', icon: Gauge, color: 'text-amber-600', bg: 'bg-amber-50' },
+                        { label: 'Service', value: currentParcel.expedition?.type_expedition?.replace(/groupage_|dhd_/gi, '') || 'Standard', unit: '', icon: Layers, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                    ].map((item, i) => (
+                        <div key={i} className="bg-white border border-slate-200 p-5 rounded-lg shadow-sm">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className={`p-2 rounded ${item.bg} ${item.color}`}>
+                                    <item.icon size={18} />
+                                </div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{item.label}</p>
+                            </div>
+                            <div className="flex items-baseline gap-1.5">
+                                <span className="text-xl font-bold text-slate-900 uppercase tracking-tight">{item.value}</span>
+                                {item.unit && <span className="text-xs font-bold text-slate-400">{item.unit}</span>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="lg:col-span-1 bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Blocks size={18} className="text-slate-400" />
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Articles ({ (currentParcel.articles || []).length })</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto pr-2 custom-scrollbar">
+                        {(currentParcel.articles || []).length > 0 ? (
+                            currentParcel.articles.map((article, idx) => (
+                                <span key={idx} className="px-2 py-1 bg-slate-100 border border-slate-200 text-slate-600 rounded text-[10px] font-bold uppercase whitespace-nowrap">
+                                    {article}
+                                </span>
+                            ))
+                        ) : (
+                            <p className="text-xs font-medium text-slate-400 italic">Aucun article</p>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* --- CONTACTS & ORIGIN --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Contacts */}
+                <div className="lg:col-span-8 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                        <div className="p-6">
+                            <div className="flex items-center gap-3 mb-5">
+                                <div className="w-9 h-9 rounded bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                                    <User size={18} />
+                                </div>
+                                <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Expéditeur</h4>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Nom complet</p>
+                                    <p className="text-base font-bold text-slate-800">{currentParcel.expedition?.expediteur?.nom_prenom}</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Téléphone</p>
+                                        <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.expediteur?.telephone}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Ville/Pays</p>
+                                        <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.expediteur?.ville}, {currentParcel.expedition?.pays_depart}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-slate-50/30">
+                            <div className="flex items-center gap-3 mb-5">
+                                <div className="w-9 h-9 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+                                    <MapPin size={18} />
+                                </div>
+                                <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Destinataire</h4>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Nom complet</p>
+                                    <p className="text-base font-bold text-slate-800">{currentParcel.expedition?.destinataire?.nom_prenom}</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Téléphone</p>
+                                        <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.destinataire?.telephone}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Ville/Pays</p>
+                                        <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.destinataire?.ville}, {currentParcel.expedition?.pays_destination}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Agency Origin */}
+                <div className="lg:col-span-4 bg-white border border-slate-200 rounded-lg shadow-sm p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-9 h-9 rounded bg-slate-100 text-slate-500 flex items-center justify-center">
+                            <Building2 size={18} />
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Provenance Agence</h4>
+                    </div>
+                    <div className="space-y-5">
+                        <div className="p-4 bg-slate-50 rounded border border-slate-100">
+                            <p className="text-xs font-bold text-slate-400 uppercase mb-1">Agence de départ</p>
+                            <p className="text-sm font-bold text-slate-900">{currentParcel.expedition?.agence?.nom_agence}</p>
+                        </div>
+                        <div className="flex items-center justify-between px-1">
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Contact Agence</p>
+                                <p className="text-sm font-bold text-slate-800">{currentParcel.expedition?.agence?.telephone || '-'}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Date d'Envoi</p>
+                                <p className="text-sm font-bold text-slate-800">
+                                    {currentParcel.expedition?.created_at ? new Date(currentParcel.expedition.created_at).toLocaleDateString('fr-FR', {
+                                        day: '2-digit', month: '2-digit'
+                                    }) : '-'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* --- PAYMENT SECTION --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                    { 
+                        label: 'Règlement Expédition', 
+                        value: currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'Entièrement Réglé' : 'À régler à l\'arrivée',
+                        isPaid: currentParcel.expedition?.statut_paiement_expedition === 'paye',
+                        icon: Truck,
+                        accent: currentParcel.expedition?.statut_paiement_expedition === 'paye' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-amber-600 bg-amber-50 border-amber-100'
+                    },
+                    { 
+                        label: 'Frais Annexes (Douane)', 
+                        value: currentParcel.expedition?.statut_paiement_frais === 'paye' ? 'Règlements Encaissés' : 'En attente de paiement',
+                        isPaid: currentParcel.expedition?.statut_paiement_frais === 'paye',
+                        icon: ShieldCheck,
+                        accent: currentParcel.expedition?.statut_paiement_frais === 'paye' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-amber-600 bg-amber-50 border-amber-100'
+                    }
+                ].map((pay, i) => (
+                    <div key={i} className={`p-5 rounded-lg border flex items-center justify-between ${pay.isPaid ? 'bg-white border-emerald-100 shadow-sm shadow-emerald-50' : 'bg-white border-amber-100 shadow-sm shadow-amber-50'}`}>
+                        <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded flex items-center justify-center border ${pay.accent}`}>
+                                <pay.icon size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">{pay.label}</p>
+                                <p className="text-sm md:text-base font-bold text-slate-900">{pay.value}</p>
+                            </div>
+                        </div>
+                        {pay.isPaid ? <CheckCircle size={22} className="text-emerald-500" /> : <Info size={22} className="text-amber-500" />}
+                    </div>
+                ))}
+            </div>
+
+            {/* --- MODALS --- */}
             <Modal
                 isOpen={isAgencyModalOpen}
-                onClose={() => {
-                    setIsAgencyModalOpen(false);
-                }}
+                onClose={() => setIsAgencyModalOpen(false)}
                 title="Agence de Réception"
-                subtitle="Sélectionnez l'agence de destination pour ce colis"
-                size="lg"
+                subtitle="Confirmation de l'entrée en entrepôt central"
+                size="md"
                 onConfirm={confirmReceive}
                 isLoading={isBulkReceiving || isValidating}
-                confirmLabel="Confirmer"
-                confirmDisabled={!selectedAgencyId}
+                confirmLabel="Confirmer la Réception"
             >
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                            Agence de destination
-                        </label>
-                        <select
-                            value={selectedAgencyId}
-                            onChange={(e) => setSelectedAgencyId(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all font-sans"
-                        >
-                            <option value="">Choisir une agence...</option>
-                            {agences.map(agency => (
-                                <option key={agency.id} value={agency.id}>
-                                    {agency.nom_agence} ({agency.ville}, {agency.adresse})
-                                </option>
-                            ))}
-                        </select>
+                <div className="space-y-6">
+                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-xs font-medium text-blue-700 leading-relaxed">
+                        Veuillez confirmer l'agence qui réceptionne physiquement ce colis pour valider son statut.
                     </div>
+                    <select
+                        value={selectedAgencyId}
+                        onChange={(e) => setSelectedAgencyId(e.target.value)}
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all outline-none"
+                    >
+                        <option value="">Sélectionner une agence...</option>
+                        {agences.map(agency => (
+                            <option key={agency.id} value={agency.id}>
+                                {agency.nom_agence} ({agency.ville})
+                            </option>
+                        ))}
+                    </select>
                 </div>
             </Modal>
 
-            {/* BLOCK MODAL */}
             <Modal
                 isOpen={isBlockModalOpen}
                 onClose={() => setIsBlockModalOpen(false)}
-                title="Écarter / Bloquer le colis"
-                subtitle={`Colis ${currentParcel.code_colis}`}
+                title="Signaler une Anomalie"
+                subtitle={`Colis ID: ${currentParcel.code_colis}`}
                 size="sm"
                 onConfirm={handleConfirmBlock}
                 isLoading={isBulkBlocking}
-                confirmLabel="Écarter le colis"
+                confirmLabel="Mettre en Opposition"
                 confirmVariant="danger"
-                confirmDisabled={!blockReason.trim()}
             >
-                <div className="space-y-4">
-                    <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-3">
-                        <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
-                        <p className="text-xs font-medium text-amber-800 leading-relaxed">
-                            En écartant ce colis, vous signalez une anomalie qui empêche sa validation immédiate. Veuillez préciser la raison ci-dessous.
-                        </p>
-                    </div>
-
-                    <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
-                        <textarea
-                            value={blockReason}
-                            onChange={(e) => setBlockReason(e.target.value)}
-                            placeholder="Ex: Poids non conforme, article interdit, emballage endommagé..."
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all min-h-[120px] resize-none"
-                        />
-                    </div>
-                </div>
+                <textarea
+                    value={blockReason}
+                    onChange={(e) => setBlockReason(e.target.value)}
+                    placeholder="Précisez le motif du blocage (poids, non-conformité...)"
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-rose-500/5 focus:border-rose-500 transition-all outline-none min-h-[150px] resize-none"
+                />
             </Modal>
         </div>
     );

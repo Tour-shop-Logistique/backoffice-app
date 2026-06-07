@@ -39,7 +39,7 @@ const RegisterForm = ({ onSuccess, switchToLogin }) => {
     };
 
     const inputBase = "w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-sm font-medium text-slate-700";
-    const labelBase = "block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1";
+    const labelBase = "block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1";
 
     return (
         <div className="space-y-6">

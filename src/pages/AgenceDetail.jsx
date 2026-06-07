@@ -343,7 +343,7 @@ const AgenceDetail = () => {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
                 <Loader2 className="h-10 w-10 text-slate-900 animate-spin mb-4" />
-                <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">Chargement des données...</p>
+                <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em]">Chargement des données...</p>
             </div>
         );
     }
@@ -360,7 +360,7 @@ const AgenceDetail = () => {
                     onClick={() => navigate(-1)}
                     className="inline-flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-xl text-sm font-semibold transition-all hover:bg-slate-800"
                 >
-                    <ArrowLeft size={16} /> Retour
+                    <ArrowLeft size={22} /> Retour
                 </button>
             </div>
         );
@@ -369,7 +369,7 @@ const AgenceDetail = () => {
     if (!currentAgence) return null;
 
     return (
-        <div className="space-y-6 pb-20 font-sans max-w-7xl mx-auto">
+        <div className="space-y-6 pb-20 font-sans w-full">
             {/* Header / Nav */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -378,15 +378,15 @@ const AgenceDetail = () => {
                         className="relative z-10 p-2 bg-white border border-slate-200 text-slate-400 hover:text-slate-900 hover:border-slate-300 rounded-lg transition-all shadow-sm active:scale-95"
                         aria-label="Retour"
                     >
-                        <ArrowLeft size={20} />
+                        <ArrowLeft size={26} />
                     </button>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+                            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                                 {currentAgence.nom_agence}
                             </h1>
                         </div>
-                        <p className="text-xs md:text-sm text-slate-500 mt-0.5 flex items-center gap-1.5">
+                        <p className="text-sm md:text-base text-slate-500 mt-0.5 flex items-center gap-1.5">
                             <span className="text-slate-400 ml-1">Inscrit depuis le {new Date(currentAgence.created_at).toLocaleDateString()}</span>
                         </p>
                     </div>
@@ -407,12 +407,12 @@ const AgenceDetail = () => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`py-4 md:py-5 text-[10px] md:text-xs font-bold uppercase tracking-[0.1em] border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === tab.id
+                                className={`py-4 md:py-5 text-sm md:text-sm font-bold uppercase tracking-[0.1em] border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === tab.id
                                     ? 'border-slate-900 text-slate-900'
                                     : 'border-transparent text-slate-400 hover:text-slate-600'
                                     }`}
                             >
-                                <tab.icon size={14} />
+                                <tab.icon size={22} />
                                 {tab.label}
                             </button>
                         ))}
@@ -430,8 +430,8 @@ const AgenceDetail = () => {
                             className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group"
                             title="Rafraîchir les données"
                         >
-                            <RefreshCw size={14} className={`${(isLoadingTarifs) ? 'animate-spin text-slate-900' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
-                            <span className="text-[10px] font-bold uppercase tracking-wider hidden md:inline">Rafraîchir</span>
+                            <RefreshCw size={20} className={`${(isLoadingTarifs) ? 'animate-spin text-slate-900' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+                            <span className="text-xs font-bold uppercase tracking-wider hidden md:inline">Rafraîchir</span>
                         </button>
                     )}
                 </div>
@@ -444,7 +444,7 @@ const AgenceDetail = () => {
                             <div className="md:w-80 shrink-0 space-y-6">
                                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                                     <div className="bg-slate-50 border-b border-slate-100 p-4">
-                                        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Identité Partenaire</h3>
+                                        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Identité Partenaire</h3>
                                     </div>
                                     <div className="p-4">
                                         <div className="flex flex-row justify-start items-center">
@@ -452,7 +452,7 @@ const AgenceDetail = () => {
                                                 <div className="h-20 w-20 rounded-lg border border-slate-100 bg-white shadow-sm flex items-center justify-center relative overflow-hidden">
                                                     {isLogoLoading && (
                                                         <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-10">
-                                                            <Loader2 size={20} className="animate-spin text-slate-300" />
+                                                            <Loader2 size={26} className="animate-spin text-slate-300" />
                                                         </div>
                                                     )}
                                                     <img
@@ -470,29 +470,29 @@ const AgenceDetail = () => {
                                                 </div>
                                             )}
                                             <div className="flex flex-col items-start ml-4">
-                                                <h4 className="font-bold text-slate-900 text-lg">{currentAgence.nom_agence}</h4>
-                                                <p className="text-xs font-bold text-slate-500 mt-1">Code Agence : {currentAgence.code_agence || 'AGN-001'}</p>
+                                                <h4 className="font-bold text-slate-900 text-xl">{currentAgence.nom_agence}</h4>
+                                                <p className="text-sm font-bold text-slate-500 mt-1 uppercase tracking-tight">Code : {currentAgence.code_agence || 'AGN-001'}</p>
                                             </div>
                                         </div>
 
                                         <div className="space-y-4 mt-4 border-t border-slate-200 pt-4">
                                             <div className="space-y-1">
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase">Téléphone</p>
+                                                <p className="text-xs font-bold text-slate-400 uppercase">Téléphone</p>
                                                 <p className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                                                    <Phone size={14} className="text-slate-400" /> {currentAgence.telephone}
+                                                    <Phone size={20} className="text-slate-400" /> {currentAgence.telephone}
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase">Localisation</p>
+                                                <p className="text-xs font-bold text-slate-400 uppercase">Localisation</p>
                                                 <p className="text-sm font-semibold text-slate-900 flex items-start gap-2 leading-snug">
-                                                    <MapPin size={14} className="text-slate-400 mt-0.5" />
+                                                    <MapPin size={20} className="text-slate-400 mt-0.5" />
                                                     <span>{currentAgence.ville}, {currentAgence.commune}</span>
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase">Bureau physique</p>
+                                                <p className="text-xs font-bold text-slate-400 uppercase">Bureau physique</p>
                                                 <p className="text-sm font-semibold text-slate-900 flex items-start gap-2 leading-snug">
-                                                    <MapPinned size={14} className="text-slate-400 mt-0.5" />
+                                                    <MapPinned size={20} className="text-slate-400 mt-0.5" />
                                                     <span>{currentAgence.adresse}</span>
                                                 </p>
                                             </div>
@@ -507,7 +507,7 @@ const AgenceDetail = () => {
                                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
                                     <div className="p-4">
                                         <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-                                            <Info size={16} className="text-slate-400" />
+                                            <Info size={22} className="text-slate-400" />
                                             <h3 className="text-sm font-bold text-slate-900">Description détaillée</h3>
                                         </div>
                                         <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
@@ -518,7 +518,7 @@ const AgenceDetail = () => {
                                     {currentAgence.message_accueil && (
                                         <div className="p-6 bg-slate-50/30">
                                             <div className="border-l-4 border-slate-900 pl-4 py-1">
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Message client</p>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Message client</p>
                                                 <p className="text-sm font-semibold text-slate-700 italic">
                                                     "{currentAgence.message_accueil}"
                                                 </p>
@@ -528,7 +528,7 @@ const AgenceDetail = () => {
 
                                     <div className="p-4">
                                         <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-                                            <Clock size={16} className="text-slate-400" />
+                                            <Clock size={22} className="text-slate-400" />
                                             <h3 className="text-sm font-bold text-slate-900">Horaires de fonctionnement</h3>
                                         </div>
                                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -600,7 +600,7 @@ const AgenceDetail = () => {
                             {isLoadingExpeditions ? (
                                 <div className="bg-white rounded-xl border border-slate-200 py-32 flex flex-col items-center justify-center">
                                     <Loader2 size={40} className="animate-spin text-slate-300 mb-4" />
-                                    <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Récupération des expéditions...</p>
+                                    <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Récupération des expéditions...</p>
                                 </div>
                             ) : currentAgencyExpeditions.length === 0 ? (
                                 <div className="bg-white rounded-xl border border-slate-200 py-24 text-center">
@@ -662,7 +662,7 @@ const AgenceDetail = () => {
                                                                             {expo.reference}
                                                                         </span>
                                                                         <span className="text-xs text-slate-400 font-medium flex items-center gap-1 mt-1">
-                                                                            <Calendar size={14} />
+                                                                            <Calendar size={20} />
                                                                             {new Date(expo.created_at).toLocaleDateString()} à {new Date(expo.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                                         </span>
                                                                     </div>
@@ -698,7 +698,7 @@ const AgenceDetail = () => {
                                                                 <td className="px-6 py-4 text-right">
                                                                     <div className="flex flex-col">
                                                                         <span className="font-semibold text-slate-900">
-                                                                            {Number(expo.montant_expedition).toLocaleString()} <span className="text-[10px] font-medium text-slate-400">CFA</span>
+                                                                            {Number(expo.montant_expedition).toLocaleString()} <span className="text-xs font-medium text-slate-400">CFA</span>
                                                                         </span>
                                                                         <span className="text-xs text-slate-400 font-medium">
                                                                             {expo.colis?.length} colis
@@ -711,7 +711,7 @@ const AgenceDetail = () => {
                                                                         className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all active:scale-90"
                                                                         title="Voir les détails"
                                                                     >
-                                                                        <Eye size={18} />
+                                                                        <Eye size={24} />
                                                                     </button>
                                                                 </td>
                                                             </tr>
@@ -731,35 +731,35 @@ const AgenceDetail = () => {
                                                         <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                                                             <div className="flex flex-col">
                                                                 <span className="text-xs font-bold text-slate-900">{expo.reference}</span>
-                                                                <span className="text-[10px] text-slate-400 font-medium">{new Date(expo.created_at).toLocaleDateString()}</span>
+                                                                <span className="text-xs text-slate-400 font-medium">{new Date(expo.created_at).toLocaleDateString()}</span>
                                                             </div>
-                                                            <span className={`text-[9px] font-bold px-2 py-1 rounded-full border uppercase tracking-wider ${expo.statut_expedition === 'accepted' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+                                                            <span className={`text-xs font-bold px-2 py-1 rounded-full border uppercase tracking-wider ${expo.statut_expedition === 'accepted' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
                                                                 {expo.statut_expedition === 'accepted' ? 'Acceptée' : 'En attente'}
                                                             </span>
                                                         </div>
                                                         <div className="p-4 space-y-4">
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-left">Expéditeur</span>
+                                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 text-left">Expéditeur</span>
                                                                     <span className="text-xs font-bold text-slate-900">{expo.expediteur?.nom_prenom}</span>
-                                                                    <span className="text-[10px] text-slate-500">{expo.expediteur?.ville}, {expo.pays_depart}</span>
+                                                                    <span className="text-xs text-slate-500">{expo.expediteur?.ville}, {expo.pays_depart}</span>
                                                                 </div>
-                                                                <ChevronRight size={16} className="text-slate-300" />
+                                                                <ChevronRight size={22} className="text-slate-300" />
                                                                 <div className="flex flex-col text-right">
-                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Destinataire</span>
+                                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Destinataire</span>
                                                                     <span className="text-xs font-bold text-slate-900">{expo.destinataire?.nom_prenom}</span>
-                                                                    <span className="text-[10px] text-slate-500">{expo.destinataire?.ville}, {expo.pays_destination}</span>
+                                                                    <span className="text-xs text-slate-500">{expo.destinataire?.ville}, {expo.pays_destination}</span>
                                                                 </div>
                                                             </div>
 
                                                             <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
                                                                 <div>
-                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Montant Total</p>
+                                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Montant Total</p>
                                                                     <p className="text-sm font-bold text-slate-900">{Number(expo.montant_expedition).toLocaleString()} CFA</p>
                                                                 </div>
                                                                 <div className="text-right">
-                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Paiement</p>
-                                                                    <span className={`text-[10px] font-bold ${expo.statut_paiement === 'paye' ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Paiement</p>
+                                                                    <span className={`text-xs font-bold ${expo.statut_paiement === 'paye' ? 'text-emerald-500' : 'text-amber-500'}`}>
                                                                         {expo.statut_paiement === 'paye' ? 'Payé' : 'À régler'}
                                                                     </span>
                                                                 </div>
@@ -778,14 +778,14 @@ const AgenceDetail = () => {
                                                             disabled={currentPage === 1}
                                                             className="relative inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed group transition-all"
                                                         >
-                                                            <ChevronLeft size={16} className="mr-1 group-active:-translate-x-1 transition-transform" /> Précédent
+                                                            <ChevronLeft size={22} className="mr-1 group-active:-translate-x-1 transition-transform" /> Précédent
                                                         </button>
                                                         <button
                                                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, expeditionsMeta.last_page))}
                                                             disabled={currentPage === expeditionsMeta.last_page}
                                                             className="relative ml-3 inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed group transition-all"
                                                         >
-                                                            Suivant <ChevronRight size={16} className="ml-1 group-active:translate-x-1 transition-transform" />
+                                                            Suivant <ChevronRight size={22} className="ml-1 group-active:translate-x-1 transition-transform" />
                                                         </button>
                                                     </div>
                                                     <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
@@ -857,7 +857,7 @@ const AgenceDetail = () => {
                             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
-                                        <Calendar size={16} className="text-slate-400" />
+                                        <Calendar size={22} className="text-slate-400" />
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {/* Date de début - clic pour ouvrir modal */}
@@ -879,24 +879,24 @@ const AgenceDetail = () => {
                                     <button
                                         onClick={handleLoadAccounting}
                                         disabled={currentAgencyAccounting.isLoading}
-                                        className="px-6 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm active:scale-95"
+                                        className="px-6 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-50 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm active:scale-95"
                                     >
-                                        {currentAgencyAccounting.isLoading ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
+                                        {currentAgencyAccounting.isLoading ? <RefreshCw size={20} className="animate-spin" /> : <Search size={20} />}
                                         Actualiser
                                     </button>
 
                                     <button
                                         onClick={handleDownloadPDF}
                                         disabled={currentAgencyAccounting.isLoading || currentAgencyAccounting.items.length === 0}
-                                        className="px-6 py-2 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm active:scale-95"
+                                        className="px-6 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm active:scale-95"
                                     >
-                                        <FileDown size={14} />
+                                        <FileDown size={20} />
                                         PDF
                                     </button>
                                 </div>
 
                                 {currentAgencyAccounting.lastUpdated && (
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">
+                                    <p className="text-xs font-bold text-slate-400 uppercase">
                                         Dernière mise à jour : {new Date(currentAgencyAccounting.lastUpdated).toLocaleTimeString()}
                                     </p>
                                 )}
@@ -939,7 +939,7 @@ const AgenceDetail = () => {
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left border-collapse min-w-[1000px]">
                                         <thead>
-                                            <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                            <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-widest">
                                                 <th className="px-6 py-4">Expédition</th>
                                                 <th className="px-6 py-4 text-right">À Percevoir</th>
                                                 <th className="px-6 py-4 text-right bg-slate-100/30 text-slate-900">Part Backoffice</th>
@@ -953,7 +953,7 @@ const AgenceDetail = () => {
                                                 <tr>
                                                     <td colSpan={7} className="px-6 py-20 text-center">
                                                         <Loader2 size={32} className="animate-spin text-slate-200 mx-auto mb-4" />
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Calcul du bilan comptable...</p>
+                                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Calcul du bilan comptable...</p>
                                                     </td>
                                                 </tr>
                                             ) : currentAgencyAccounting.items.length === 0 ? (
@@ -977,7 +977,7 @@ const AgenceDetail = () => {
                                                             <td className="px-6 py-4">
                                                                 <div className="flex flex-col">
                                                                     <span className="font-bold text-slate-900 text-xs tracking-tight">{item.reference}</span>
-                                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium mt-1 w-fit ${getStatusStyles(item.statut_expedition)}`}>
+                                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-1 w-fit ${getStatusStyles(item.statut_expedition)}`}>
                                                                         {getExpeditionStatusLabel(item.statut_expedition)}
                                                                     </span>
                                                                 </div>
@@ -993,10 +993,10 @@ const AgenceDetail = () => {
                                                             </td>
                                                             <td className="px-6 py-4 text-center">
                                                                 <div className="flex flex-col gap-1.5 items-center">
-                                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${item.statut_paiement_expedition === 'paye' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${item.statut_paiement_expedition === 'paye' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
                                                                         {item.statut_paiement_expedition === 'paye' ? '✓ Expédition réglée' : '✗ Expédition non réglée'}
                                                                     </span>
-                                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${item.statut_paiement_frais === 'paye' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${item.statut_paiement_frais === 'paye' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
                                                                         {item.statut_paiement_frais === 'paye' ? '✓ Frais réglés' : '✗ Frais non réglés'}
                                                                     </span>
                                                                 </div>

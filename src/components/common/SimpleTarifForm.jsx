@@ -103,7 +103,7 @@ const SimpleTarifForm = ({ id = "simple-tarif-form", onSubmit, onCancel, isLoadi
   };
 
   const inputClasses = "w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white transition-all font-medium text-slate-800";
-  const labelClasses = "block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1";
+  const labelClasses = "block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
     <form id={id} onSubmit={handleSubmit} className="space-y-6 relative pb-4">

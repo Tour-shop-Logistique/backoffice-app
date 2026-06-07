@@ -157,12 +157,12 @@ const ZoneConfiguration = () => {
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
 
       {/* STICKY HEADER & SEARCH */}
-      <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
+      <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
         {/* HEADER SECTION */}
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                 Gestion des Zones
               </h1>
               <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">

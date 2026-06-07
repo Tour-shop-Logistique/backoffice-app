@@ -61,7 +61,7 @@ const Layout = ({ children }) => {
       <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="flex-1 flex flex-col overflow-hidden md:ml-64">
         <Topbar toggleSidebar={toggleSidebar} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-surface-100 p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-surface-100 p-6 md:p-8">
           {loading === 'pending' && <LoadingSpinner fullScreen={false} />}
 
           {loading === 'failed' && !isConfigured && (

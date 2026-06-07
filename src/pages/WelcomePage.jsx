@@ -52,7 +52,7 @@ const WelcomePage = () => {
           </div>
 
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest">
               Backoffice Tourshop
             </div>
             <div className="space-y-2">
@@ -110,7 +110,7 @@ const WelcomePage = () => {
             </button> */}
           </div>
 
-          <div className="pt-6 border-t border-white/10 flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+          <div className="pt-6 border-t border-white/10 flex justify-between items-center text-xs text-slate-500 font-bold uppercase tracking-widest">
             <span>&copy; {new Date().getFullYear()} Tour Shop</span>
             <div className="flex gap-4">
               <a href="#" className="hover:text-blue-400 transition-colors">Contact</a>
@@ -121,7 +121,7 @@ const WelcomePage = () => {
       </div>
 
       {/* Footer Mobile (Only visible on small screens to avoid scroll) */}
-      <footer className="md:hidden relative z-20 pb-8 px-6 text-center text-[9px] font-bold text-slate-600 uppercase tracking-[0.3em]">
+      <footer className="md:hidden relative z-20 pb-8 px-6 text-center text-xs font-bold text-slate-600 uppercase tracking-[0.3em]">
         Tour Shop Logistique
       </footer>
 

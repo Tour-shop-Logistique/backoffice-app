@@ -45,8 +45,8 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                 <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-50/50 rounded-xl border border-slate-300">
                     <div className="flex items-center gap-4">
                         <div className="space-y-1">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">Statut Expédition</p>
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusStyles(selectedExpedition.statut_expedition)}`}>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-left">Statut Expédition</p>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase border ${getStatusStyles(selectedExpedition.statut_expedition)}`}>
                                 {selectedExpedition.statut_expedition === 'accepted' || selectedExpedition.statut_expedition === 'termined' ? <CheckCircle2 size={12} /> : <Clock size={12} />}
                                 {getExpeditionStatusLabel(selectedExpedition.statut_expedition)}
                             </span>
@@ -54,7 +54,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                         <div className="w-px h-10 bg-slate-300 mx-2 hidden sm:block" />
                     </div>
                     <div className="flex flex-col text-right">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Type d'expédition</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Type d'expédition</p>
                         <span className="text-xs font-bold text-slate-900 uppercase tracking-tight">{getTypeLabel(selectedExpedition.type_expedition)}</span>
                     </div>
                 </div>
@@ -66,7 +66,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                                 <ArrowLeft className="rotate-180" size={16} />
                             </div>
                             <div>
-                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expéditeur</h4>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Expéditeur</h4>
                                 <p className="text-xs font-bold text-slate-900">{selectedExpedition.expediteur?.nom_prenom}</p>
                             </div>
                         </div>
@@ -79,7 +79,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                                 <MapPin size={12} className="text-slate-400 mt-0.5" />
                                 <span className="text-xs font-semibold leading-relaxed">
                                     {selectedExpedition.expediteur?.adresse}, {selectedExpedition.expediteur?.ville}<br />
-                                    <span className="text-slate-400 uppercase text-[9px] font-bold">{selectedExpedition.pays_depart}</span>
+                                    <span className="text-slate-400 uppercase text-xs font-bold">{selectedExpedition.pays_depart}</span>
                                 </span>
                             </div>
                         </div>
@@ -91,7 +91,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                                 <ChevronRight size={16} />
                             </div>
                             <div>
-                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Destinataire</h4>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Destinataire</h4>
                                 <p className="text-xs font-bold text-slate-900">{selectedExpedition.destinataire?.nom_prenom}</p>
                             </div>
                         </div>
@@ -104,7 +104,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                                 <MapPin size={12} className="text-slate-400 mt-0.5" />
                                 <span className="text-xs font-semibold leading-relaxed">
                                     {selectedExpedition.destinataire?.adresse}, {selectedExpedition.destinataire?.ville}<br />
-                                    <span className="text-slate-400 uppercase text-[9px] font-bold">{selectedExpedition.pays_destination}</span>
+                                    <span className="text-slate-400 uppercase text-xs font-bold">{selectedExpedition.pays_destination}</span>
                                 </span>
                             </div>
                         </div>
@@ -118,7 +118,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                             <Wallet size={20} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-0.5">Total payé par le client</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.15em] mb-0.5">Total payé par le client</p>
                             <h4 className="text-sm font-bold text-slate-900 tracking-tight">Montant Global</h4>
                         </div>
                     </div>
@@ -132,13 +132,13 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
 
                 {/* Détail des Commissions par Acteur */}
                 <div className="space-y-4">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase px-1 tracking-widest">Répartition détaillée des gains</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase px-1 tracking-widest">Répartition détaillée des gains</p>
                     
                     <div className="grid grid-cols-1 gap-4">
                         {/* 1. Agence de Départ */}
                         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                             <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Agence de Départ ({selectedExpedition.agence?.nom_agence || 'N/A'})</span>
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Agence de Départ ({selectedExpedition.agence?.nom_agence || 'N/A'})</span>
                                 <span className="text-xs font-bold text-slate-900">{selectedExpedition.accounting_details?.agence_depart?.toLocaleString()} CFA</span>
                             </div>
                             <div className="p-4 space-y-2">
@@ -164,7 +164,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                         {/* 2. Agence d'Arrivée */}
                         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                             <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Agence d'Arrivée</span>
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Agence d'Arrivée</span>
                                 <span className="text-xs font-bold text-slate-900">{selectedExpedition.accounting_details?.agence_arrivee?.toLocaleString()} CFA</span>
                             </div>
                             <div className="p-4 space-y-2">
@@ -181,7 +181,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                                     </div>
                                 )}
                                 {!selectedExpedition.commission_details?.livraison?.agence && !selectedExpedition.commission_details?.retard?.agence && (
-                                    <p className="text-[10px] text-slate-400 italic">Aucun gain sur cette expédition</p>
+                                    <p className="text-xs text-slate-400 italic">Aucun gain sur cette expédition</p>
                                 )}
                             </div>
                         </div>
@@ -189,7 +189,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                         {/* 3. Backoffice */}
                         <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
                             <div className="bg-slate-800/50 px-4 py-2 border-b border-slate-800 flex justify-between items-center">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Backoffice (Central)</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Backoffice (Central)</span>
                                 <span className="text-xs font-bold text-white">{(selectedExpedition.accounting_details?.backoffice_depart + selectedExpedition.accounting_details?.backoffice_arrivee)?.toLocaleString()} CFA</span>
                             </div>
                             <div className="p-4 space-y-2">
@@ -222,7 +222,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                                 <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Livreur Départ</span>
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Livreur Départ</span>
                                     <span className="text-xs font-bold text-slate-900">{selectedExpedition.accounting_details?.livreur_depart?.toLocaleString()} CFA</span>
                                 </div>
                                 <div className="p-4">
@@ -234,7 +234,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                             </div>
                             <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                                 <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Livreur Arrivée</span>
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Livreur Arrivée</span>
                                     <span className="text-xs font-bold text-slate-900">{selectedExpedition.accounting_details?.livreur_arrivee?.toLocaleString()} CFA</span>
                                 </div>
                                 <div className="p-4">

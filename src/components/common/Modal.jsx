@@ -56,7 +56,7 @@ const Modal = ({
             disabled={isLoading || confirmDisabled}
             className={`px-6 py-2.5 ${confirmVariant === 'danger' ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/10' : 'bg-slate-900 hover:bg-slate-800 shadow-slate-900/10'} text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg disabled:opacity-50`}
           >
-            {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : confirmLabel}
+            {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : confirmLabel}
           </button>
         </>
       );
@@ -85,14 +85,14 @@ const Modal = ({
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               {title}
             </h2>
-            {subtitle && <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-1">{subtitle}</p>}
+            {subtitle && <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">{subtitle}</p>}
           </div>
           {showCloseButton && (
             <button
               onClick={onClose}
               className="p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-colors"
             >
-              <X size={20} />
+              <X size={26} />
             </button>
           )}
         </div>

@@ -185,19 +185,15 @@ const SimpleRates = () => {
     return (
         <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
 
-            {/* STICKY HEADER & SEARCH */}
-            <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
-                {/* HEADER SECTION */}
-                <header className="space-y-3 md:space-y-0 text-black">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-                                Tarifs Simples
-                            </h1>
-                            <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
-                                Gérez les prix par indice d'expédition
-                            </p>
-                        </div>
+      <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
+        <header className="space-y-3 md:space-y-0 text-black">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Tarifs Simples</h1>
+              <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
+                Gérez les prix par indice d'expédition
+              </p>
+            </div>
 
                         <div className="flex items-center gap-2">
                             <button
@@ -322,7 +318,7 @@ const SimpleRates = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-3">
-                                                    <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-[10px]">FCFA</span></p>
+                                                    <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-xs">FCFA</span></p>
                                                 </td>
                                                 <td className="px-6 py-3">
                                                     <div className="flex flex-row gap-2">
@@ -330,12 +326,12 @@ const SimpleRates = () => {
                                                             {pp}%
                                                         </span>
                                                         <span className="text-slate-400 font-medium mt-0.5 whitespace-nowrap">
-                                                            ({mp.toLocaleString()} <span className="text-[10px]">FCFA</span>)
+                                                            ({mp.toLocaleString()} <span className="text-xs">FCFA</span>)
                                                         </span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-3">
-                                                    <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-[10px]">FCFA</span></p>
+                                                    <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-xs">FCFA</span></p>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
                                                     <button
@@ -411,11 +407,11 @@ const SimpleRates = () => {
 
                                         <div className="grid grid-cols-2 gap-2">
                                             <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
-                                                <span className="text-[9px] text-slate-400 font-bold">Montant Base</span>
+                                                <span className="text-xs text-slate-400 font-bold">Montant Base</span>
                                                 <span className="text-xs font-semibold text-slate-700">{mb.toLocaleString()}</span>
                                             </div>
                                             <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
-                                                <span className="text-[9px] text-slate-400 font-bold">Prestation</span>
+                                                <span className="text-xs text-slate-400 font-bold">Prestation</span>
                                                 <div className="flex flex-row items-center gap-2">
                                                     <span className="text-xs font-semibold text-orange-600">{pp}%</span>
                                                     <span className="text-xs text-slate-400 font-medium">({mp.toLocaleString()} F)</span>

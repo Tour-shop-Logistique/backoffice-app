@@ -97,11 +97,11 @@ const AgencePartenaire = () => {
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
       {/* STICKY HEADER & SEARCH */}
-      <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
+      <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Agences Partenaires</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Agences Partenaires</h1>
               <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">Consultez et gérez le réseau d'agences physiques</p>
             </div>
             <button
@@ -152,7 +152,7 @@ const AgencePartenaire = () => {
         {isLoading && !hasLoaded ? (
           <div className="flex flex-col items-center justify-center py-24 grayscale opacity-50">
             <Loader2 className="h-10 w-10 text-slate-900 animate-spin mb-4" />
-            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">Initialisation du réseau...</p>
+            <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em]">Initialisation du réseau...</p>
           </div>
         ) : error ? (
           <div className="m-6 p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-center gap-3 text-rose-700 font-bold text-xs uppercase tracking-wide">
@@ -239,7 +239,7 @@ const AgencePartenaire = () => {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0 space-y-2">
                       <div className="flex items-center gap-2.5">
-                        <span className="px-1.5 py-0.5 bg-slate-100 text-[10px] font-bold text-slate-500 rounded uppercase border border-slate-200/60 shadow-sm leading-none">{agence.code_agence || 'AGN'}</span>
+                        <span className="px-1.5 py-0.5 bg-slate-100 text-xs font-bold text-slate-500 rounded uppercase border border-slate-200/60 shadow-sm leading-none">{agence.code_agence || 'AGN'}</span>
                         <h3 className="font-semibold text-slate-900 text-[15px] leading-tight truncate">{agence.nom_agence}</h3>
                       </div>
                       <div className="space-y-1.5 pl-1">

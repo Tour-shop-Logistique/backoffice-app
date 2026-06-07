@@ -35,7 +35,7 @@ const DeleteModal = ({
                         <>
                             Êtes-vous sûr de vouloir supprimer <span className="font-bold text-slate-900">{itemName || "cet élément"}</span> ?
                             <br />
-                            <span className="text-[11px] text-red-500 mt-2 block italic">Cette action est irréversible.</span>
+                            <span className="text-xs text-red-500 mt-2 block italic">Cette action est irréversible.</span>
                         </>
                     )}
                 </p>

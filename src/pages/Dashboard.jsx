@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { fetchDashboardStats } from '../redux/slices/parcelSlice';
 import {
   TrendingUp,
@@ -39,7 +37,6 @@ const Dashboard = () => {
     })) : [];
   
   const currentMonthIndex = new Date().getMonth();
-  const currentMonthName = monthlyOps?.months?.[currentMonthIndex]?.substring(0, 3) || '';
   
   // Échelles différentes selon le type
   const maxExp = 50;  // Opérations : 0-50 par pas de 10
@@ -60,11 +57,9 @@ const Dashboard = () => {
   }
 
   const op = data?.operational || {};
-  const fin = data?.financial || {};
   const log = data?.logistics || {};
 
-  const totalPayment = (fin.statut_paiements?.paye || 0) + (fin.statut_paiements?.impaye || 0);
-  const paymentHealth = totalPayment > 0 ? Math.round((fin.statut_paiements.paye / totalPayment) * 100) : 100;
+  
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
@@ -72,17 +67,17 @@ const Dashboard = () => {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Tableau de bord</h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">Vue d'ensemble de votre activité logistique</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Tableau de bord</h1>
+          <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">Vue d'ensemble de votre activité logistique</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg text-xs font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors shadow-sm">
-            <Calendar size={14} className="text-slate-500" />
+            <Calendar size={18} className="text-slate-500" />
             {new Date().toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })} - Présent
-            <ChevronDown size={14} className="ml-1 opacity-50" />
+            <ChevronDown size={20} className="ml-1 opacity-50" />
           </div>
           <button onClick={() => dispatch(fetchDashboardStats())} disabled={loading} className="p-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 text-slate-500 transition-all">
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={22} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
@@ -94,7 +89,7 @@ const Dashboard = () => {
           <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-blue-100">
             <div className="flex items-start justify-between mb-4">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg">
-                <ClipboardCheck className="text-white" size={20} />
+                <ClipboardCheck className="text-white" size={26} />
               </div>
               <div className="flex items-center gap-1 text-blue-600 text-xs font-semibold">
                 <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
@@ -102,8 +97,8 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-3xl font-bold text-slate-900">{op.colis_a_controler || 0}</p>
-              <p className="text-sm font-medium text-slate-600">Colis à contrôler</p>
+              <p className="text-4xl font-bold text-slate-900 tracking-tighter">{op.colis_a_controler || 0}</p>
+              <p className="text-base font-semibold text-slate-600 uppercase tracking-wide">Colis à contrôler</p>
             </div>
           </div>
         </div>
@@ -113,7 +108,7 @@ const Dashboard = () => {
           <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-emerald-100">
             <div className="flex items-start justify-between mb-4">
               <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-lg">
-                <Truck className="text-white" size={20} />
+                <Truck className="text-white" size={26} />
               </div>
               <div className="flex items-center gap-1 text-emerald-600 text-xs font-semibold">
                 <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
@@ -121,8 +116,8 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-3xl font-bold text-slate-900">{op.arrivages_prevus || 0}</p>
-              <p className="text-sm font-medium text-slate-600">Arrivages prévus</p>
+              <p className="text-4xl font-bold text-slate-900 tracking-tighter">{op.arrivages_prevus || 0}</p>
+              <p className="text-base font-semibold text-slate-600 uppercase tracking-wide">Arrivages prévus</p>
             </div>
           </div>
         </div>
@@ -132,7 +127,7 @@ const Dashboard = () => {
           <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-purple-100">
             <div className="flex items-start justify-between mb-4">
               <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
-                <PackageCheck className="text-white" size={20} />
+                <PackageCheck className="text-white" size={26} />
               </div>
               <div className="flex items-center gap-1 text-purple-600 text-xs font-semibold">
                 <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
@@ -140,8 +135,8 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-3xl font-bold text-slate-900">{op.receptions_du_jour || 0}</p>
-              <p className="text-sm font-medium text-slate-600">Réceptions</p>
+              <p className="text-4xl font-bold text-slate-900 tracking-tighter">{op.receptions_du_jour || 0}</p>
+              <p className="text-base font-semibold text-slate-600 uppercase tracking-wide">Réceptions</p>
             </div>
           </div>
         </div>
@@ -151,7 +146,7 @@ const Dashboard = () => {
           <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-orange-100">
             <div className="flex items-start justify-between mb-4">
               <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg">
-                <TrendingUp className="text-white" size={20} />
+                <TrendingUp className="text-white" size={26} />
               </div>
               <div className="flex items-center gap-1 text-orange-600 text-xs font-semibold">
                 <span className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
@@ -159,8 +154,8 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-3xl font-bold text-slate-900">{op.colis_expedies_du_jour || 0}</p>
-              <p className="text-sm font-medium text-slate-600">Expéditions</p>
+              <p className="text-4xl font-bold text-slate-900 tracking-tighter">{op.colis_expedies_du_jour || 0}</p>
+              <p className="text-base font-semibold text-slate-600 uppercase tracking-wide">Expéditions</p>
             </div>
           </div>
         </div>
@@ -174,11 +169,11 @@ const Dashboard = () => {
           <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
             <div>
               <h3 className="text-base font-bold text-slate-900 tracking-tight">{activeTab === 'Opérations' ? (monthlyOps?.title || 'Aperçu des Flux') : (monthlyFin?.title || 'Récapitulatif Financier')}</h3>
-              <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wider">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires mensuel'}</p>
+              <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires mensuel'}</p>
             </div>
             <div className="flex items-center gap-2">
               <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold hover:bg-slate-100 hover:border-slate-300 transition-all">
-                <Download size={14} /> Exporter
+                <Download size={20} /> Exporter
               </button>
             </div>
           </div>
@@ -197,7 +192,7 @@ const Dashboard = () => {
                     : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <tab.icon size={14} />
+                <tab.icon size={20} />
                 {tab.label}
               </button>
             ))}
@@ -205,7 +200,7 @@ const Dashboard = () => {
 
           <div className="p-6 pt-4">
             <div className="flex h-48 gap-4 pt-4">
-              <div className="flex flex-col justify-between text-[10px] font-bold text-slate-300 h-full pb-6 w-10 text-right">
+              <div className="flex flex-col justify-between text-xs font-bold text-slate-300 h-full pb-6 w-10 text-right">
                 {activeTab === 'Opérations'
                   ? [50, 40, 30, 20, 10, 0].map((v, i) => <span key={i}>{v}</span>)
                   : ['500k', '400k', '300k', '200k', '100k', '0'].map((v, i) => <span key={i}>{v}</span>)
@@ -238,15 +233,15 @@ const Dashboard = () => {
                       )}
                     </div>
                     <div className="relative">
-                      <span className={`text-[10px] font-bold uppercase transition-colors ${i === currentMonthIndex ? 'text-slate-900 font-black' : 'text-slate-400'}`}>{d.m}</span>
+                      <span className={`text-xs font-bold uppercase transition-colors ${i === currentMonthIndex ? 'text-slate-900 font-black' : 'text-slate-400'}`}>{d.m}</span>
                       {activeTab === 'Opérations' ? (
                         <>
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-[9px] font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-xs font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">
                             {d.exp} Exp. / {d.rec} Rec.
                           </div>
                         </>
                       ) : (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-[9px] font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-xs font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">
                           {d.ca.toLocaleString()} CFA
                         </div>
                       )}
@@ -260,11 +255,11 @@ const Dashboard = () => {
             <div className="flex gap-6 pt-6 border-t border-slate-100 mt-6">
               {activeTab === 'Opérations' ? (
                 <>
-                  <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-orange-500" /><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expéditions</span></div>
-                  <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-blue-600" /><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Réceptions</span></div>
+                  <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-orange-500" /><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Expéditions</span></div>
+                  <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-blue-600" /><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Réceptions</span></div>
                 </>
               ) : (
-                <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-blue-600" /><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Chiffre d'Affaires</span></div>
+                <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-blue-600" /><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Chiffre d'Affaires</span></div>
               )}
             </div>
           </div>
@@ -276,10 +271,10 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-sm font-bold text-slate-900 tracking-tight">Volumes par Type</h4>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Répartition des expéditions</p>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">Répartition des expéditions</p>
               </div>
               <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                <Package size={16} />
+                <Package size={22} />
               </div>
             </div>
             
@@ -305,7 +300,7 @@ const Dashboard = () => {
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-white flex justify-between items-center">
             <h3 className="text-sm font-bold text-slate-900">Agences Actives</h3>
-            <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full">{(log.activite_agences || []).length} agences</span>
+            <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">{(log.activite_agences || []).length} agences</span>
           </div>
           
           <div className="divide-y divide-slate-100">
@@ -318,12 +313,12 @@ const Dashboard = () => {
                   <h5 className="text-sm font-bold text-slate-900 truncate">{ag.nom_agence}</h5>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-[10px] text-slate-500">{ag.ville}</span>
+                    <span className="text-xs text-slate-500">{ag.ville}</span>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-bold text-slate-900">{ag.total || 0}</p>
-                  <p className="text-[9px] text-slate-400 uppercase">expéditions</p>
+                  <p className="text-xs text-slate-400 uppercase">expéditions</p>
                 </div>
               </div>
             ))}
@@ -335,10 +330,10 @@ const Dashboard = () => {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-sm font-bold text-slate-900">Top Destinations</h3>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Les pays les plus actifs</p>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">Les pays les plus actifs</p>
             </div>
             <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
-              <TrendingUp size={16} />
+              <TrendingUp size={22} />
             </div>
           </div>
           
@@ -350,7 +345,7 @@ const Dashboard = () => {
                 <div key={i}>
                   <div className="flex justify-between items-center mb-1.5">
                     <div className="flex items-center gap-2">
-                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-slate-300' : i === 3 ? 'bg-slate-200' : i === 4 ? 'bg-slate-100' : 'bg-slate-50'}`}>
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-slate-300' : i === 3 ? 'bg-slate-200' : i === 4 ? 'bg-slate-100' : 'bg-slate-50'}`}>
                         {i + 1}
                       </span>
                       <span className="text-xs font-bold text-slate-700">{dest.pays}</span>

@@ -200,12 +200,12 @@ const Agents = () => {
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
 
       {/* STICKY HEADER & SEARCH */}
-      <div className="sticky top-[-16px] md:top-[-24px] lg:top-[-32px] z-30 bg-[#f1f5f9] -mx-4 px-4 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
+      <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
         {/* HEADER SECTION */}
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                 Gestion des Agents
               </h1>
               <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
@@ -321,7 +321,7 @@ const Agents = () => {
                           </div>
                           <div>
                             <p className="font-semibold text-slate-900">{agent.nom} {agent.prenoms}</p>
-                            <p className="text-[11px] text-slate-500 uppercase font-medium">{agent.type || 'Agent'}</p>
+                            <p className="text-xs text-slate-500 uppercase font-medium">{agent.type || 'Agent'}</p>
                           </div>
                         </div>
                       </td>
@@ -379,12 +379,12 @@ const Agents = () => {
                 <div key={agent.id || `agent-mobile-${index}`} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 font-bold border border-slate-200 text-[10px] shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 font-bold border border-slate-200 text-xs shrink-0">
                         {agent.nom?.[0]}{agent.prenoms?.[0]}
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-slate-900 text-sm truncate leading-tight">{agent.nom} {agent.prenoms}</p>
-                        <p className="text-[11px] text-slate-500 truncate lowercase">{agent.email}</p>
+                        <p className="text-xs text-slate-500 truncate lowercase">{agent.email}</p>
                       </div>
                     </div>
                     <button
@@ -400,9 +400,9 @@ const Agents = () => {
 
                   <div className="flex items-center gap-1.5 text-slate-600 px-1 font-medium">
                     <PhoneIcon size={11} className="text-slate-400" />
-                    <span className="text-[11px]">{agent.telephone}</span>
+                    <span className="text-xs">{agent.telephone}</span>
                     <span className="mx-1 text-slate-300">|</span>
-                    <span className="text-[11px] text-slate-400 font-bold uppercase">{agent.type || 'Agent'}</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase">{agent.type || 'Agent'}</span>
                   </div>
 
                   <div className="flex gap-2 pt-1">
@@ -442,28 +442,28 @@ const Agents = () => {
         <form id="agent-form" onSubmit={handleSubmitAgent} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Nom <span className="text-red-500">*</span></label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nom <span className="text-red-500">*</span></label>
               <input type="text" name="nom" value={agentForm.nom || ""} onChange={handleInputChange} placeholder="Ex: Dupont" className={inputStyle} required />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Prénoms <span className="text-red-500">*</span></label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Prénoms <span className="text-red-500">*</span></label>
               <input type="text" name="prenoms" value={agentForm.prenoms || ""} onChange={handleInputChange} placeholder="Ex: Jean" className={inputStyle} required />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Téléphone <span className="text-red-500">*</span></label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Téléphone <span className="text-red-500">*</span></label>
             <input type="text" name="telephone" value={agentForm.telephone || ""} onChange={handleInputChange} placeholder="+225 ..." className={inputStyle} required />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email <span className="text-red-500">*</span></label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email <span className="text-red-500">*</span></label>
             <input type="email" name="email" value={agentForm.email || ""} onChange={handleInputChange} placeholder="agent@tousshop.com" className={inputStyle} required />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">{editingAgent ? 'Nouveau mot de passe' : 'Mot de passe'} {!editingAgent && <span className="text-red-500">*</span>}</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">{editingAgent ? 'Nouveau mot de passe' : 'Mot de passe'} {!editingAgent && <span className="text-red-500">*</span>}</label>
               <div className="relative">
                 <input type={showPassword ? "text" : "password"} name="password" value={agentForm.password || ""} onChange={handleInputChange} placeholder="••••••••" className={`${inputStyle} pr-10`} required={!editingAgent} />
                 <button
@@ -476,7 +476,7 @@ const Agents = () => {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Confirmation</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Confirmation</label>
               <div className="relative">
                 <input type={showConfirmPassword ? "text" : "password"} name="password_confirmation" value={agentForm.password_confirmation || ""} onChange={handleInputChange} placeholder="••••••••" className={`${inputStyle} pr-10`} required={!editingAgent} />
                 <button
@@ -491,7 +491,7 @@ const Agents = () => {
           </div>
 
           {editingAgent && (
-            <div className="px-3 py-2 bg-blue-50/50 border border-blue-100 rounded-lg flex gap-2.5 items-center text-blue-700 text-[11px] font-medium">
+            <div className="px-3 py-2 bg-blue-50/50 border border-blue-100 rounded-lg flex gap-2.5 items-center text-blue-700 text-xs font-medium">
               <Shield size={14} className="shrink-0 text-blue-500" />
               <p>Laissez vide pour conserver le mot de passe actuel.</p>
             </div>
