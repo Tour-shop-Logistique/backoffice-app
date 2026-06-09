@@ -44,26 +44,22 @@ const Historique = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Charger les expéditions uniquement si pas déjà chargé
+  // Charger toutes les expéditions au premier rendu si pas déjà fait.
+  // Le filtrage Toutes/Départs/Arrivées se fait ensuite en local sur la liste déjà chargée.
   useEffect(() => {
     if (!hasLoadedExpeditions && !isLoadingExpeditions) {
       loadExpeditions();
     }
-  }, [hasLoadedExpeditions, isLoadingExpeditions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadExpeditions = async () => {
     if (isRefreshing || isLoadingExpeditions) return;
     
     setIsRefreshing(true);
     try {
-      const params = {};
-      if (filterMode === "depart") {
-        params.mode = "depart";
-      } else if (filterMode === "arrivee") {
-        params.mode = "arrivee";
-      }
-      
-      const result = await dispatch(fetchBackofficeExpeditions(params)).unwrap();
+      // Pas de params : on récupère tout, le filtrage se fait en local ensuite
+      const result = await dispatch(fetchBackofficeExpeditions({})).unwrap();
       setLastUpdated(new Date());
     } catch (error) {
       console.error("Erreur lors du chargement des expéditions:", error);
@@ -72,11 +68,19 @@ const Historique = () => {
     }
   };
 
-  // Filtrer les expéditions selon le terme de recherche
+  // Filtrer les expéditions selon le terme de recherche ET le mode (Toutes / Départs / Arrivées)
   const filteredExpeditions = useMemo(() => {
     if (!expeditions || !Array.isArray(expeditions)) return [];
     
     return expeditions.filter((exp) => {
+      // Filtre par mode (toutes / depart / arrivee) basé sur backoffice_role
+      if (filterMode !== "all") {
+        const roles = Array.isArray(exp.backoffice_role) ? exp.backoffice_role : [];
+        if (!roles.includes(filterMode)) return false;
+      }
+
+      // Filtre par recherche texte
+      if (!searchTerm) return true;
       const searchLower = searchTerm.toLowerCase();
       return (
         exp.reference?.toLowerCase().includes(searchLower) ||
@@ -85,7 +89,7 @@ const Historique = () => {
         exp.expediteur?.nom_prenom?.toLowerCase().includes(searchLower)
       );
     });
-  }, [expeditions, searchTerm]);
+  }, [expeditions, searchTerm, filterMode]);
 
   // Calculer les totaux
   const totals = useMemo(() => {
