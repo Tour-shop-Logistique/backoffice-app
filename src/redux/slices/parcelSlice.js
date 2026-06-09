@@ -149,9 +149,40 @@ export const controlParcels = createAsyncThunk(
 
 export const receiveParcels = createAsyncThunk(
     'parcels/receiveParcels',
-    async ({ codes, agence_id }, { rejectWithValue }) => {
+    async (payload, { rejectWithValue }) => {
         try {
-            const response = await api.put(`/backoffice/receive-colis`, { codes, agence_id });
+            // Support both old and new format
+            let requestBody;
+            
+            if (payload.colis_assignments) {
+                // New format: { colis_assignments: { code1: agence_id1, code2: agence_id2, ... } }
+                requestBody = { colis_assignments: payload.colis_assignments };
+            } else {
+                // Old format: { codes: [...], agence_id: "..." } - for backward compatibility
+                requestBody = { codes: payload.codes, agence_id: payload.agence_id };
+            }
+            
+            const response = await api.put(`/backoffice/receive-colis`, requestBody);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
+export const assignParcels = createAsyncThunk(
+    'parcels/assignParcels',
+    async (payload, { rejectWithValue }) => {
+        try {
+            // Support both formats
+            let requestBody;
+            if (payload.colis_assignments) {
+                requestBody = { colis_assignments: payload.colis_assignments };
+            } else {
+                requestBody = { codes: payload.codes, agence_id: payload.agence_id };
+            }
+
+            const response = await api.put(`/backoffice/assign-colis`, requestBody);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);

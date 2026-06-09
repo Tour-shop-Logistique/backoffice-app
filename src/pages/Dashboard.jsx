@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion as Motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardStats } from '../redux/slices/parcelSlice';
 import {
@@ -220,15 +221,15 @@ const Dashboard = () => {
                       {activeTab === 'Opérations' ? (
                         <>
                           <div className="flex-1 relative group/bar h-full">
-                            <motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.exp / maxVal) * 100}%` : '0%' }} className="w-full bg-orange-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
+                            <Motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.exp / maxVal) * 100}%` : '0%' }} className="w-full bg-orange-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
                           </div>
                           <div className="flex-1 relative group/bar h-full">
-                            <motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.rec / maxVal) * 100}%` : '0%' }} className="w-full bg-blue-600 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
+                            <Motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.rec / maxVal) * 100}%` : '0%' }} className="w-full bg-blue-600 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
                           </div>
                         </>
                       ) : (
                         <div className="w-full relative group/bar h-full">
-                          <motion.div initial={{ height: 0 }} animate={{ height: maxCA > 0 ? `${(d.ca / maxCA) * 100}%` : '0%' }} className="w-full bg-gradient-to-t from-blue-700 to-blue-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
+                          <Motion.div initial={{ height: 0 }} animate={{ height: maxCA > 0 ? `${(d.ca / maxCA) * 100}%` : '0%' }} className="w-full bg-gradient-to-t from-blue-700 to-blue-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
                         </div>
                       )}
                     </div>
