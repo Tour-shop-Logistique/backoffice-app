@@ -20,7 +20,8 @@ import {
     ArrowRight,
     Edit2,
     Euro,
-    Info
+    Info,
+    ShieldCheck
 } from "lucide-react";
 
 /**

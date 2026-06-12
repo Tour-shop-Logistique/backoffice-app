@@ -194,8 +194,19 @@ export const fetchDashboardStats = createAsyncThunk(
     'parcels/fetchDashboardStats',
     async (params = {}, { rejectWithValue }) => {
         try {
-            const days = params.delayed_control_days || 3;
-            const response = await api.get(`/backoffice/dashboard?delayed_control_days=${days}`);
+            const response = await api.get(`/backoffice/dashboard`, { params });
+            return response.data.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
+export const fetchDashboardRecap = createAsyncThunk(
+    'parcels/fetchDashboardRecap',
+    async (params = {}, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/backoffice/dashboard/recap`, { params });
             return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
@@ -258,7 +269,8 @@ const initialState = {
         data: null,
         loading: false,
         error: null,
-        lastUpdated: null
+        lastUpdated: null,
+        recapLoading: false,
     },
     // Accounting state
     accounting: {
@@ -309,6 +321,39 @@ const parcelSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            // Dashboard Stats
+            .addCase(fetchDashboardStats.pending, (state) => {
+                state.dashboard.loading = true;
+                state.dashboard.error = null;
+            })
+            .addCase(fetchDashboardStats.fulfilled, (state, action) => {
+                state.dashboard.loading = false;
+                state.dashboard.data = {
+                    ...(state.dashboard.data || {}),
+                    ...action.payload
+                };
+                state.dashboard.lastUpdated = new Date().toISOString();
+            })
+            .addCase(fetchDashboardStats.rejected, (state, action) => {
+                state.dashboard.loading = false;
+                state.dashboard.error = action.payload;
+            })
+            // Dashboard Recap (Partial Update)
+            .addCase(fetchDashboardRecap.pending, (state) => {
+                state.dashboard.recapLoading = true;
+            })
+            .addCase(fetchDashboardRecap.fulfilled, (state, action) => {
+                state.dashboard.recapLoading = false;
+                state.dashboard.data = {
+                    ...(state.dashboard.data || {}),
+                    daily_operations: action.payload.daily_operations,
+                    daily_finance: action.payload.daily_finance
+                };
+            })
+            .addCase(fetchDashboardRecap.rejected, (state, action) => {
+                state.dashboard.recapLoading = false;
+                state.dashboard.error = action.payload;
+            })
             // Fetch Parcels
             .addCase(fetchParcels.pending, (state, action) => {
                 const listType = action.meta.arg.listType || 'todo';
@@ -489,20 +534,7 @@ const parcelSlice = createSlice({
                 state.incomingList.error = action.payload;
             })
 
-            // Dashboard
-            .addCase(fetchDashboardStats.pending, (state) => {
-                state.dashboard.loading = true;
-                state.dashboard.error = null;
-            })
-            .addCase(fetchDashboardStats.fulfilled, (state, action) => {
-                state.dashboard.loading = false;
-                state.dashboard.data = action.payload;
-                state.dashboard.lastUpdated = new Date().toISOString();
-            })
-            .addCase(fetchDashboardStats.rejected, (state, action) => {
-                state.dashboard.loading = false;
-                state.dashboard.error = action.payload;
-            })
+
 
             // Accounting
             .addCase(fetchAccountingData.pending, (state) => {

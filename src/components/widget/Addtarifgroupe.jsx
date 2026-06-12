@@ -87,7 +87,7 @@ const Addtarifgroupe = ({
       let ville_depart = '';
       let ville_arrivee = '';
       if (tarifToEdit.ligne && tarifToEdit.ligne.includes('-')) {
-        [ville_depart, ville_arrivee] = tarifToEdit.ligne.split('-');
+        [ville_depart, ville_arrivee] = tarifToEdit.ligne.split('-').map(v => v.trim());
       }
 
       setFormData({
@@ -185,7 +185,7 @@ const Addtarifgroupe = ({
 
     if (type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
       dataToSubmit.category_id = formData.category_id;
-      dataToSubmit.ligne = `${formData.ville_depart}-${formData.ville_arrivee}`;
+      dataToSubmit.ligne = `${formData.ville_depart.trim().toLowerCase()}-${formData.ville_arrivee.trim().toLowerCase()}`;
     } else if (type_expedition === 'GROUPAGE_AFRIQUE') {
       dataToSubmit.pays = formData.pays;
     }

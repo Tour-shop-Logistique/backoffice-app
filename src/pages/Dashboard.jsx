@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion as Motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchDashboardStats } from '../redux/slices/parcelSlice';
+import { fetchDashboardStats, fetchDashboardRecap } from '../redux/slices/parcelSlice';
 import {
   TrendingUp,
   Truck,
@@ -21,34 +21,47 @@ import {
 const Dashboard = () => {
   const dispatch = useDispatch();
   const { dashboard } = useSelector(state => state.parcels);
-  const { data, loading } = dashboard;
+  const { data, loading, recapLoading } = dashboard;
   const [activeTab, setActiveTab] = useState('Opérations');
+  
+  // State pour le filtre de date du recap (Mois/Année)
+  const [selectedDate, setSelectedDate] = useState({
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear()
+  });
 
-  // Utilisation des données réelles de l'API
-  const monthlyOps = data?.monthly_operations;
-  const monthlyFin = data?.monthly_finance;
+  // Utilisation des données réelles de l'API (Daily maintenant)
+  const dailyOps = data?.daily_operations;
+  const dailyFin = data?.daily_finance;
   
-  // Données pour le graphique d'opérations
-  const monthlyData = monthlyOps ? 
-    monthlyOps.months.map((m, i) => ({
-      m: m.substring(0, 3),
-      exp: monthlyOps.datasets[0]?.data[i] || 0,
-      rec: monthlyOps.datasets[1]?.data[i] || 0,
-      ca: monthlyFin?.datasets[0]?.data[i] || 0
+  // Données pour le graphique (Axe X = Jours du mois)
+  const chartData = dailyOps ? 
+    dailyOps.days.map((day, i) => ({
+      day: day,
+      exp: dailyOps.datasets[0]?.data[i] || 0,
+      rec: dailyOps.datasets[1]?.data[i] || 0,
+      ca: dailyFin?.datasets[0]?.data[i] || 0
     })) : [];
-  
-  const currentMonthIndex = new Date().getMonth();
   
   // Échelles différentes selon le type
   const maxExp = 50;  // Opérations : 0-50 par pas de 10
   const maxRec = 50;
   const maxCA = 500000;  // Finance : 0-500k par pas de 100k
 
+  // Lancement initial des stats du dashboard
   useEffect(() => {
-    if (!data && !loading) dispatch(fetchDashboardStats());
-  }, [dispatch, data, loading]);
+    dispatch(fetchDashboardStats());
+  }, [dispatch]);
 
-  if (loading && !data) {
+  // Chargement du récapitulatif au montage et quand le mois/année change
+  useEffect(() => {
+    dispatch(fetchDashboardRecap({ 
+      month: selectedDate.month, 
+      year: selectedDate.year 
+    }));
+  }, [dispatch, selectedDate.month, selectedDate.year]);
+
+  if (loading && !data?.operational) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-3">
         <Loader2 className="animate-spin text-slate-600" size={40} strokeWidth={1.5} />
@@ -72,11 +85,6 @@ const Dashboard = () => {
           <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">Vue d'ensemble de votre activité logistique</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg text-xs font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors shadow-sm">
-            <Calendar size={18} className="text-slate-500" />
-            {new Date().toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })} - Présent
-            <ChevronDown size={20} className="ml-1 opacity-50" />
-          </div>
           <button onClick={() => dispatch(fetchDashboardStats())} disabled={loading} className="p-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 text-slate-500 transition-all">
             <RefreshCw size={22} className={loading ? 'animate-spin' : ''} />
           </button>
@@ -168,9 +176,33 @@ const Dashboard = () => {
         {/* Chart */}
         <section className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">{activeTab === 'Opérations' ? (monthlyOps?.title || 'Aperçu des Flux') : (monthlyFin?.title || 'Récapitulatif Financier')}</h3>
-              <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires mensuel'}</p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 tracking-tight">{activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}</h3>
+                <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires quotidien'}</p>
+              </div>
+              
+              {/* Nouveau sélecteur de mois/année local à la section Recap */}
+              <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
+                <select 
+                  value={selectedDate.month}
+                  onChange={(e) => setSelectedDate(prev => ({ ...prev, month: parseInt(e.target.value) }))}
+                  className="bg-transparent text-xs font-bold text-slate-600 focus:outline-none px-2 py-1 cursor-pointer"
+                >
+                  {['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'].map((m, i) => (
+                    <option key={i+1} value={i+1}>{m}</option>
+                  ))}
+                </select>
+                <select 
+                  value={selectedDate.year}
+                  onChange={(e) => setSelectedDate(prev => ({ ...prev, year: parseInt(e.target.value) }))}
+                  className="bg-transparent text-xs font-bold text-slate-600 focus:outline-none px-2 py-1 cursor-pointer border-l border-slate-200"
+                >
+                  {[2024, 2025, 2026].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold hover:bg-slate-100 hover:border-slate-300 transition-all">
@@ -208,48 +240,50 @@ const Dashboard = () => {
                 }
               </div>
 
-              <div className="flex-1 flex justify-between gap-2 relative h-full">
+              <div className="flex-1 overflow-x-auto relative h-full scrollbar-hide">
                 <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-6">
                   {[0,1,2,3,4].map(i => <div key={i} className="w-full border-t border-dashed border-slate-100 h-0" />)}
                 </div>
 
-                {monthlyData.map((d, i) => {
-                  const maxVal = maxExp > maxRec ? maxExp : maxRec;
-                  return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-3 h-full group relative z-10">
-                    <div className="w-full flex-1 flex items-end gap-1 px-0.5">
-                      {activeTab === 'Opérations' ? (
-                        <>
-                          <div className="flex-1 relative group/bar h-full">
-                            <Motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.exp / maxVal) * 100}%` : '0%' }} className="w-full bg-orange-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
+                <div className="flex h-full gap-4 min-w-max">
+                  {chartData.map((d, i) => {
+                    const maxVal = maxExp > maxRec ? maxExp : maxRec;
+                    return (
+                    <div key={i} className="w-12 flex flex-col items-center gap-3 h-full group relative z-10">
+                      <div className="w-full flex-1 flex items-end gap-1 px-0.5">
+                        {activeTab === 'Opérations' ? (
+                          <>
+                            <div className="flex-1 relative group/bar h-full">
+                              <Motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.exp / maxVal) * 100}%` : '0%' }} className="w-full bg-orange-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
+                            </div>
+                            <div className="flex-1 relative group/bar h-full">
+                              <Motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.rec / maxVal) * 100}%` : '0%' }} className="w-full bg-blue-600 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full relative group/bar h-full">
+                            <Motion.div initial={{ height: 0 }} animate={{ height: maxCA > 0 ? `${(d.ca / maxCA) * 100}%` : '0%' }} className="w-full bg-gradient-to-t from-blue-700 to-blue-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
                           </div>
-                          <div className="flex-1 relative group/bar h-full">
-                            <Motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.rec / maxVal) * 100}%` : '0%' }} className="w-full bg-blue-600 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
-                          </div>
-                        </>
-                      ) : (
-                        <div className="w-full relative group/bar h-full">
-                          <Motion.div initial={{ height: 0 }} animate={{ height: maxCA > 0 ? `${(d.ca / maxCA) * 100}%` : '0%' }} className="w-full bg-gradient-to-t from-blue-700 to-blue-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="relative">
-                      <span className={`text-xs font-bold uppercase transition-colors ${i === currentMonthIndex ? 'text-slate-900 font-black' : 'text-slate-400'}`}>{d.m}</span>
-                      {activeTab === 'Opérations' ? (
-                        <>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <span className={`text-xs font-bold uppercase transition-colors ${i === new Date().getDate() - 1 ? 'text-slate-900 font-black' : 'text-slate-400'}`}>{d.day}</span>
+                        {activeTab === 'Opérations' ? (
+                          <>
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-xs font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">
+                              {d.exp} Exp. / {d.rec} Rec.
+                            </div>
+                          </>
+                        ) : (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-xs font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">
-                            {d.exp} Exp. / {d.rec} Rec.
+                              {d.ca.toLocaleString()} CFA
                           </div>
-                        </>
-                      ) : (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-xs font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">
-                          {d.ca.toLocaleString()} CFA
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-                })}
+                  );
+                  })}
+                </div>
               </div>
             </div>
 
