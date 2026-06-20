@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { register } from '../../redux/slices/authSlice';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 
-const RegisterForm = ({ onSuccess, switchToLogin }) => {
+const RegisterForm = ({ onSuccess, onVerificationRequired, switchToLogin }) => {
     const dispatch = useDispatch();
     const { isLoading, error } = useSelector((state) => state.auth);
 
@@ -31,9 +31,12 @@ const RegisterForm = ({ onSuccess, switchToLogin }) => {
 
         dispatch(register(formData)).then((result) => {
             if (register.fulfilled.match(result)) {
-                alert('Inscription réussie ! Connectez-vous.');
-                if (onSuccess) onSuccess(); // Ferme la modale ou switch vers Login
-                if (switchToLogin) switchToLogin();
+                if (onSuccess) onSuccess();
+                if (onVerificationRequired) {
+                    onVerificationRequired(formData.email);
+                } else if (switchToLogin) {
+                    switchToLogin();
+                }
             }
         });
     };

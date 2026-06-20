@@ -17,6 +17,16 @@ const register = async (userData) => {
   return response.data;
 };
 
+const verifyEmail = async ({ email, code }) => {
+  const response = await api.post('/verify-email', { email, code });
+  return response.data;
+};
+
+const resendEmailVerification = async (email) => {
+  const response = await api.post('/resend-email-verification', { email });
+  return response.data;
+};
+
 const logout = async () => {
   try {
     await api.post('/logout');
@@ -51,6 +61,8 @@ const resetPassword = async ({ email, code, password, password_confirmation }) =
 const authService = {
   login,
   register,
+  verifyEmail,
+  resendEmailVerification,
   logout,
   forgotPassword,
   verifyResetCode,
