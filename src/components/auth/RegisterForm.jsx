@@ -38,48 +38,30 @@ const RegisterForm = ({ onSuccess, switchToLogin }) => {
         });
     };
 
-    const inputBase = "w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-sm font-medium text-slate-700";
-    const labelBase = "block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1";
+    const inputBase = "w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-full focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-base font-medium text-slate-700";
+    const labelBase = "block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1";
 
     return (
         <div className="space-y-6">
-            <div className="space-y-1">
-                <p className="text-sm text-slate-500 font-medium">Rejoignez notre réseau. Complétez les informations pour configurer votre agence.</p>
-            </div>
-
             {error && (
-                <div className="p-4 text-xs font-bold text-red-600 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
+                <div className="p-4 text-sm font-bold text-red-600 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0"></span>
                     {error.message || 'Une erreur est survenue lors de la création du compte.'}
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="space-y-0.5">
-                        <label className={labelBase}>Nom</label>
-                        <input
-                            name="nom"
-                            type="text"
-                            required
-                            value={formData.nom}
-                            onChange={handleChange}
-                            className={inputBase}
-                            placeholder="Ex: Tounkara"
-                        />
-                    </div>
-                    <div className="space-y-0.5">
-                        <label className={labelBase}>Prénoms</label>
-                        <input
-                            name="prenoms"
-                            type="text"
-                            required
-                            value={formData.prenoms}
-                            onChange={handleChange}
-                            className={inputBase}
-                            placeholder="Ex: Amadou"
-                        />
-                    </div>
+                <div className="space-y-0.5">
+                    <label className={labelBase}>Nom Complet</label>
+                    <input
+                        name="nom"
+                        type="text"
+                        required
+                        value={formData.nom}
+                        onChange={handleChange}
+                        className={inputBase}
+                        placeholder="Ex: Amadou Tounkara"
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -128,9 +110,9 @@ const RegisterForm = ({ onSuccess, switchToLogin }) => {
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                             >
                                 {showPassword ? (
-                                    <EyeOff className="w-4 h-4" />
+                                    <EyeOff className="w-5 h-5" />
                                 ) : (
-                                    <Eye className="w-4 h-4" />
+                                    <Eye className="w-5 h-5" />
                                 )}
                             </button>
                         </div>
@@ -153,9 +135,9 @@ const RegisterForm = ({ onSuccess, switchToLogin }) => {
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                             >
                                 {showConfirmPassword ? (
-                                    <EyeOff className="w-4 h-4" />
+                                    <EyeOff className="w-5 h-5" />
                                 ) : (
-                                    <Eye className="w-4 h-4" />
+                                    <Eye className="w-5 h-5" />
                                 )}
                             </button>
                         </div>
@@ -165,11 +147,11 @@ const RegisterForm = ({ onSuccess, switchToLogin }) => {
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest mt-4"
+                    className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-full transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest mt-4"
                 >
                     {isLoading ? (
                         <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <Loader2 className="w-5 h-5 animate-spin" />
                             <span>Traitement en cours...</span>
                         </>
                     ) : (
@@ -177,18 +159,6 @@ const RegisterForm = ({ onSuccess, switchToLogin }) => {
                     )}
                 </button>
             </form>
-
-            <div className="pt-4 border-t border-slate-100 text-center">
-                <p className="text-xs font-medium text-slate-500">
-                    Déjà membre du réseau ?{' '}
-                    <button
-                        onClick={switchToLogin}
-                        className="text-slate-900 font-bold hover:underline focus:outline-none"
-                    >
-                        Se connecter au portail
-                    </button>
-                </p>
-            </div>
         </div>
     );
 };

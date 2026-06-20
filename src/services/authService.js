@@ -28,10 +28,33 @@ const logout = async () => {
   }
 };
 
+const forgotPassword = async (email) => {
+  const response = await api.post('/forgot-password', { email });
+  return response.data;
+};
+
+const verifyResetCode = async ({ email, code }) => {
+  const response = await api.post('/verify-reset-code', { email, code });
+  return response.data;
+};
+
+const resetPassword = async ({ email, code, password, password_confirmation }) => {
+  const response = await api.post('/reset-password', {
+    email,
+    code,
+    password,
+    password_confirmation,
+  });
+  return response.data;
+};
+
 const authService = {
   login,
   register,
   logout,
+  forgotPassword,
+  verifyResetCode,
+  resetPassword,
 };
 
 export default authService;

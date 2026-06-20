@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../routes';
 import {
   ArrowRight,
   LayoutDashboard,
@@ -11,147 +14,163 @@ import {
 import Modal from "../components/common/Modal";
 import LoginForm from "../components/auth/LoginForm";
 import RegisterForm from "../components/auth/RegisterForm";
+import ForgotPasswordForm from "../components/auth/ForgotPasswordForm";
 
 import logo from "../assets/logo_transparent.png";
 import background from "../assets/background1.jpg";
 
 const WelcomePage = () => {
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const [activeView, setActiveView] = useState('login'); // 'login' | 'register' | 'forgot'
 
-  const openLogin = () => {
-    setIsRegisterOpen(false);
-    setIsLoginOpen(true);
-  };
-
-  const openRegister = () => {
-    setIsLoginOpen(false);
-    setIsRegisterOpen(true);
-  };
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(ROUTES.DASHBOARD);
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
-    <div className="h-screen w-full bg-slate-900 flex flex-col font-sans overflow-hidden text-white selection:bg-blue-500/30">
+    <div className="min-h-screen w-full bg-white flex flex-col md:flex-row p-4 md:p-6 gap-6 md:gap-10 font-sans selection:bg-slate-900/10">
 
-      {/* ─── BACKGROUND LAYER ─── */}
-      <div className="absolute inset-0 z-0">
-        <img
-          src={background}
-          alt=""
-          className="w-full h-full object-cover opacity-60"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/70 to-slate-900/90 md:bg-gradient-to-r md:from-slate-900/80 md:to-transparent"></div>
+      {/* ─── LEFT COLUMN: INSET ROUNDED IMAGE (Desktop only) ─── */}
+      <div className="hidden md:flex relative md:w-1/2 lg:w-3/5 rounded-[2rem] overflow-hidden flex-col justify-between p-8 md:p-12 text-white">
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={background}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-slate-950/40"></div>
+        </div>
+
+        {/* Top Section: Logo */}
+        <div className="relative z-10">
+          <img src={logo} alt="Tour Shop Logo" className="w-auto h-12 object-contain brightness-0 invert" />
+        </div>
+
+        {/* Center Section: Main Message */}
+        <div className="relative z-10 max-w-lg w-full flex flex-col justify-center items-start text-left space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest">
+            Backoffice Tourshop
+          </div>
+          <h1 className="text-3xl lg:text-4xl font-extrabold text-white leading-tight">
+            Pilotez vos <br />
+            <span className="bg-blue-600 px-3 py-1 rounded-lg text-white inline-block mt-2">Opérations.</span>
+          </h1>
+          <p className="text-sm text-slate-200 font-medium leading-relaxed">
+            Le centre de commande local pour la gestion des expéditions de votre pays, la supervision de votre réseau d'agences et l'optimisation des flux régionaux.
+          </p>
+        </div>
+
+        {/* Bottom Section: Badges */}
+        <div className="relative z-10 flex items-center gap-6 opacity-80">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={18} className="text-blue-400" />
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-100">Sécurisé</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Globe size={18} className="text-blue-400" />
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-100">Global Sync</span>
+          </div>
+        </div>
       </div>
 
-      {/* ─── MAIN CONTENT ─── */}
-      <div className="relative z-20 flex-1 flex flex-col md:flex-row items-center justify-center md:justify-between px-6 md:px-20 max-w-7xl mx-auto w-full gap-12 md:gap-24">
+      {/* ─── RIGHT COLUMN: DYNAMIC AUTH FORMS ─── */}
+      <div className="w-full md:w-1/2 flex flex-col justify-between py-6 px-4 md:px-8 text-slate-900">
+        <div className="w-full space-y-6 max-w-xl mx-auto my-auto">
 
-        {/* Left Side: Branding & Visuals (Desktop Focus) */}
-        <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-8 md:space-y-12 max-w-xl">
-          <div>
-            <img src={logo} alt="Tour Shop Logo" className="w-full h-16 md:h-20 object-contain" />
+          {/* Logo visible only on mobile/tablet (hidden on desktop) */}
+          <div className="md:hidden flex justify-center mb-6">
+            <img src={logo} alt="Tour Shop Logo" className="h-14 object-contain" />
           </div>
 
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest">
-              Backoffice Tourshop
+          {/* Pill Switcher Tab (hidden on forgot password step) */}
+          {activeView !== 'forgot' && (
+            <div className="flex bg-slate-100 p-1 rounded-xl mb-4 border border-slate-200/50">
+              <button
+                onClick={() => setActiveView('login')}
+                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                  activeView === 'login'
+                    ? 'bg-white text-slate-900 shadow-sm border border-slate-200/10'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                Connexion
+              </button>
+              <button
+                onClick={() => setActiveView('register')}
+                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                  activeView === 'register'
+                    ? 'bg-white text-slate-900 shadow-sm border border-slate-200/10'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                Créer un compte
+              </button>
             </div>
-            <div className="space-y-2">
-              <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
-                Pilotez vos <br />
-                <span className="text-blue-400">Opérations.</span>
-              </h1>
-            </div>
-            <p className="text-sm md:text-lg text-slate-200 font-medium max-w-md hidden sm:block leading-relaxed">
-              Le centre de commande local pour la gestion des expéditions de votre pays, la supervision de votre réseau d'agences et l'optimisation des flux régionaux.
+          )}
+
+          {/* Form Header */}
+          <div className="space-y-1.5 mb-6 text-center md:text-left">
+            <h2 className="text-3xl font-extrabold text-slate-950 tracking-tight flex items-center justify-center md:justify-start gap-2">
+              {activeView === 'login' && (
+                <>
+                  Bon retour ! <span className="animate-bounce">👋</span>
+                </>
+              )}
+              {activeView === 'register' && 'Créer un Compte'}
+              {activeView === 'forgot' && 'Mot de passe oublié'}
+            </h2>
+            <p className="text-base text-slate-500 font-medium">
+              {activeView === 'login' && 'Heureux de vous revoir. Veuillez vous connecter.'}
+              {activeView === 'register' && 'Rejoignez le réseau et configurez votre agence.'}
+              {activeView === 'forgot' && 'Entrez votre adresse email pour réinitialiser.'}
             </p>
           </div>
 
-          {/* Desktop Trust Badges */}
-          <div className="hidden md:flex items-center gap-8 opacity-60">
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={20} className="text-blue-400" />
-              <span className="text-xs font-bold uppercase tracking-widest">Sécurisé</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Globe size={20} className="text-blue-400" />
-              <span className="text-xs font-bold uppercase tracking-widest">Global Sync</span>
-            </div>
+          {/* Form Container */}
+          <div className="bg-white">
+            {activeView === 'login' && (
+              <LoginForm
+                onSuccess={() => {}}
+                switchToRegister={() => setActiveView('register')}
+                switchToForgotPassword={() => setActiveView('forgot')}
+              />
+            )}
+            {activeView === 'register' && (
+              <RegisterForm
+                onSuccess={() => {}}
+                switchToLogin={() => setActiveView('login')}
+              />
+            )}
+            {activeView === 'forgot' && (
+              <ForgotPasswordForm
+                onClose={() => setActiveView('login')}
+              />
+            )}
           </div>
+
         </div>
 
-        {/* Right Side: Auth Actions Card */}
-        <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl space-y-6">
-          <div className="space-y-2 border-l-2 border-blue-500 pl-4">
-            <h3 className="text-xl font-bold text-white uppercase tracking-tight">Accès Portail</h3>
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-widest">Console Admin v3.0</p>
-          </div>
-
-          <div className="space-y-4">
+        {/* Footer */}
+        <div className="pt-6 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400 font-bold uppercase tracking-widest mt-6 max-w-xl mx-auto w-full">
+          <span>&copy; {new Date().getFullYear()} Tour Shop</span>
+          {activeView !== 'login' && (
             <button
-              onClick={openLogin}
-              className="w-full group bg-white text-slate-950 h-14 rounded-lg flex items-center px-6 justify-between transition-all hover:bg-blue-50 active:scale-[0.98] shadow-lg shadow-white/5"
+              onClick={() => setActiveView('login')}
+              className="hover:text-slate-900 text-blue-600 transition-colors uppercase font-bold"
             >
-              <div className="flex items-center gap-3">
-                <Lock className="w-4 h-4 text-slate-900" />
-                <span className="text-sm font-bold uppercase tracking-wide">Se Connecter</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+              Retour
             </button>
-
-            {/* <button
-              onClick={openRegister}
-              className="w-full bg-slate-900/40 border border-white/10 h-14 rounded-lg flex items-center px-6 justify-between transition-all hover:bg-slate-800 active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-3">
-                <Building2 className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-bold uppercase tracking-wide">Créer un Compte</span>
-              </div>
-              <ArrowRight className="w-4 h-4 text-white/20" />
-            </button> */}
-          </div>
-
-          <div className="pt-6 border-t border-white/10 flex justify-between items-center text-xs text-slate-500 font-bold uppercase tracking-widest">
-            <span>&copy; {new Date().getFullYear()} Tour Shop</span>
-            <div className="flex gap-4">
-              <a href="#" className="hover:text-blue-400 transition-colors">Contact</a>
-            </div>
-          </div>
+          )}
         </div>
-
       </div>
-
-      {/* Footer Mobile (Only visible on small screens to avoid scroll) */}
-      <footer className="md:hidden relative z-20 pb-8 px-6 text-center text-xs font-bold text-slate-600 uppercase tracking-[0.3em]">
-        Tour Shop Logistique
-      </footer>
-
-      {/* Modals */}
-      <Modal
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-        title="Connexion Sécurisée"
-        size="md"
-      >
-        <LoginForm
-          onSuccess={() => setIsLoginOpen(false)}
-          switchToRegister={openRegister}
-        />
-      </Modal>
-
-      <Modal
-        isOpen={isRegisterOpen}
-        onClose={() => setIsRegisterOpen(false)}
-        title="Enregistrement Agence"
-        size="lg"
-      >
-        <RegisterForm
-          onSuccess={() => setIsRegisterOpen(false)}
-          switchToLogin={openLogin}
-        />
-      </Modal>
 
     </div>
   );
 };
 
 export default WelcomePage;
+
