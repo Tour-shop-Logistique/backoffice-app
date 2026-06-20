@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../../redux/slices/authSlice';
-import { Loader2, Eye, EyeOff, Phone, Lock } from 'lucide-react';
+import { Loader2, Eye, EyeOff, User, Lock } from 'lucide-react';
 import { ROUTES } from '../../routes';
 
 const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword }) => {
@@ -11,7 +11,7 @@ const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword }) => {
     const { isLoading, error, isAuthenticated } = useSelector((state) => state.auth);
 
     const [formData, setFormData] = useState({
-        telephone: '',
+        identifier: '',
         password: '',
     });
     const [showPassword, setShowPassword] = useState(false);
@@ -30,7 +30,12 @@ const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        dispatch(login(formData));
+        const identifier = formData.identifier.trim();
+        const credentials = identifier.includes('@')
+            ? { email: identifier, password: formData.password }
+            : { telephone: identifier, password: formData.password };
+
+        dispatch(login(credentials));
     };
 
     return (
@@ -45,20 +50,20 @@ const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword }) => {
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-1.5">
                     <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider ml-1">
-                        Numéro de téléphone
+                        Email ou numéro de téléphone
                     </label>
                     <div className="relative">
                         <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">
-                            <Phone className="w-5 h-5" />
+                            <User className="w-5 h-5" />
                         </span>
                         <input
-                            name="telephone"
+                            name="identifier"
                             type="text"
                             required
-                            value={formData.telephone}
+                            value={formData.identifier}
                             onChange={handleChange}
                             className="w-full pl-14 pr-6 py-3.5 bg-slate-50 border border-slate-200 rounded-full focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-base font-medium text-slate-700"
-                            placeholder="Ex: 0102030405"
+                            placeholder="Email ou téléphone"
                         />
                     </div>
                 </div>
@@ -72,7 +77,7 @@ const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword }) => {
                             id="login-forgot-password-btn"
                             type="button"
                             onClick={switchToForgotPassword}
-                            className="text-sm font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest"
+                            className="text-sm font-bold text-slate-900 transition-colors uppercase tracking-widest"
                         >
                             Oublié ?
                         </button>
