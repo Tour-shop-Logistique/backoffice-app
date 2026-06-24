@@ -29,8 +29,12 @@ const StepEmail = ({ onSuccess }) => {
         setIsLoading(true);
 
         try {
-            await authService.forgotPassword(email);
-            onSuccess(email);
+            const response = await authService.forgotPassword(email);
+            if (response.success === false) {
+                setError(response.message || 'Une erreur est survenue.');
+            } else {
+                onSuccess(email);
+            }
         } catch (err) {
             setError(errorMessage(err));
         } finally {
