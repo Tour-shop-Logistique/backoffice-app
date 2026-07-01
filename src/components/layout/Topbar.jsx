@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { performLogout } from "../../redux/slices/authSlice";
-import { LogOut, Menu, Settings, Bell, Search, ChevronDown } from "lucide-react";
+import { LogOut, Menu, Settings, Bell, Search, ChevronDown, User } from "lucide-react";
 import { ROUTES } from "../../routes";
 
 const Topbar = ({ toggleSidebar }) => {
@@ -101,6 +101,17 @@ const Topbar = ({ toggleSidebar }) => {
                   </div>
 
                   <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        navigate(ROUTES.PROFILE);
+                      }}
+                      className="w-full flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <User className="h-5 w-5 mr-3 text-slate-400" />
+                      Mon profil
+                    </button>
+
                     <button
                       onClick={handleSettingsClick}
                       className="w-full flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"

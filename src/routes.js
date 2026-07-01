@@ -11,6 +11,7 @@ export const ROUTES = {
     AGENCE_DETAIL: '/agence-partenaire/:id',
     PRODUITS: '/produits',
     BACKOFFICE_SETUP: '/backoffice-setup',
+    PROFILE: '/profile',
     PARCEL_CONTROL: '/parcels/control/:code',
     PARCEL_HISTORY: '/parcels-history',
     INCOMING_PARCELS: '/incoming-parcels',

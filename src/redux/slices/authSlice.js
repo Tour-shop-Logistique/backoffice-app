@@ -1,5 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authService from '../../services/authService';
+import profileService from '../../services/profileService';
+import { resetBackoffice } from './backofficeSlice';
+import { showNotification } from './uiSlice';
 
 // Récupérer l'utilisateur et le token depuis le localStorage pour la persistance
 const user = JSON.parse(localStorage.getItem('user'));
@@ -24,7 +27,6 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
   }
 });
 
-
 // Thunk pour l'inscription
 export const register = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
   try {
@@ -35,9 +37,6 @@ export const register = createAsyncThunk('auth/register', async (userData, { rej
     return rejectWithValue(error.response.data);
   }
 });
-
-import { resetBackoffice } from './backofficeSlice';
-import { showNotification } from './uiSlice';
 
 // Thunk pour la déconnexion avec feedback
 export const performLogout = createAsyncThunk('auth/performLogout', async (_, { dispatch }) => {
@@ -62,6 +61,46 @@ export const performLogout = createAsyncThunk('auth/performLogout', async (_, { 
 
   // 6. Redirection forcée vers l'accueil
   window.location.href = '/';
+});
+
+// Thunk pour mettre à jour le profil de l'utilisateur
+export const updateUserProfile = createAsyncThunk('auth/updateUserProfile', async (profileData, { dispatch, rejectWithValue }) => {
+  try {
+    const data = await profileService.updateProfile(profileData);
+    dispatch(showNotification({
+      type: 'success',
+      message: data.message || 'Profil mis à jour avec succès.'
+    }));
+    return data.user;
+  } catch (error) {
+    const message = error.response?.data?.message || 'Erreur lors de la mise à jour du profil.';
+    dispatch(showNotification({
+      type: 'error',
+      message: message
+    }));
+    return rejectWithValue(error.response?.data || { message });
+  }
+});
+
+// Thunk pour changer le mot de passe de l'utilisateur
+export const changeUserPassword = createAsyncThunk('auth/changeUserPassword', async (passwordData, { dispatch, rejectWithValue }) => {
+  try {
+    const data = await profileService.changePassword(passwordData);
+    dispatch(showNotification({
+      type: 'success',
+      message: 'Mot de passe changé avec succès. Veuillez vous reconnecter.'
+    }));
+    // Se déconnecter car le backend invalide les tokens lors du changement de mot de passe
+    dispatch(performLogout());
+    return data;
+  } catch (error) {
+    const message = error.response?.data?.message || 'Erreur lors du changement de mot de passe.';
+    dispatch(showNotification({
+      type: 'error',
+      message: message
+    }));
+    return rejectWithValue(error.response?.data || { message });
+  }
 });
 
 const authSlice = createSlice({
@@ -106,6 +145,33 @@ const authSlice = createSlice({
         state.token = null;
       })
       .addCase(register.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      // Update User Profile
+      .addCase(updateUserProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        // Persister les nouvelles données locales
+        localStorage.setItem('user', JSON.stringify(action.payload));
+      })
+      .addCase(updateUserProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      // Change Password
+      .addCase(changeUserPassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(changeUserPassword.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(changeUserPassword.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       });
