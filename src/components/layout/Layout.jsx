@@ -7,6 +7,7 @@ import { fetchTarifs, fetchGroupedTarifs } from '../../redux/slices/tarification
 import { fetchZones } from '../../redux/slices/zoneSlice';
 import { fetchAgences } from '../../redux/slices/agenceSlice';
 import { fetchProduits } from '../../redux/slices/produitSlice';
+import useRealtimeUpdates from '../../hooks/useRealtimeUpdates';
 import { ROUTES } from '../../routes';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
@@ -29,6 +30,8 @@ const Layout = ({ children }) => {
       dispatch(fetchBackofficeConfig());
     }
   }, [dispatch, loading, config]);
+
+  useRealtimeUpdates(config?.id);
 
   // Redirection forcée vers le setup si non configuré
   useEffect(() => {

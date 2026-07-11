@@ -3,6 +3,7 @@ import authService from '../../services/authService';
 import profileService from '../../services/profileService';
 import { resetBackoffice } from './backofficeSlice';
 import { showNotification } from './uiSlice';
+import { disconnectEcho } from '../../services/echo';
 
 // Récupérer l'utilisateur et le token depuis le localStorage pour la persistance
 const user = JSON.parse(localStorage.getItem('user'));
@@ -49,6 +50,7 @@ export const performLogout = createAsyncThunk('auth/performLogout', async (_, { 
   // 2. Nettoyage immédiat des données locales
   localStorage.removeItem('user');
   localStorage.removeItem('token');
+  disconnectEcho();
 
   // 3. Vider le cache du backoffice
   dispatch(resetBackoffice());

@@ -317,6 +317,53 @@ const parcelSlice = createSlice({
             // But usually the user calls handleLoadData manually after changing dates.
             // Let's set hasLoaded to false so the next useEffect trigger (if any) knows it's dirty.
             state.accounting.hasLoaded = false;
+        },
+        // Reçu via WebSocket (event universel "model.updated", voir WEBSOCKETS.md).
+        // Un seul reducer pour toutes les entités : on merge les champs reçus dans
+        // les listes locales, sans re-fetch. Étendre avec un bloc "if (model === ...)"
+        // pour réagir à un nouveau type d'entité.
+        realtimeModelUpdated: (state, action) => {
+            const { model, data } = action.payload || {};
+            if (!model || !Array.isArray(data) || data.length === 0) return;
+
+            if (model === 'Colis') {
+                const patch = (list) => {
+                    data.forEach(updated => {
+                        const idx = list.items.findIndex(p => p.id === updated.id);
+                        if (idx !== -1) {
+                            list.items[idx] = { ...list.items[idx], ...updated };
+                        }
+                    });
+                };
+                patch(state.todoList);
+                patch(state.historyList);
+                patch(state.incomingList);
+
+                data.forEach(updated => {
+                    if (state.currentParcel && state.currentParcel.id === updated.id) {
+                        state.currentParcel = { ...state.currentParcel, ...updated };
+                    }
+                });
+            }
+
+            if (model === 'Expedition') {
+                const patch = (list) => {
+                    list.items.forEach(parcel => {
+                        const match = data.find(d => d.id === parcel.expedition?.id);
+                        if (match) {
+                            parcel.expedition = { ...parcel.expedition, ...match };
+                        }
+                    });
+                };
+                patch(state.todoList);
+                patch(state.historyList);
+                patch(state.incomingList);
+
+                const currentMatch = data.find(d => d.id === state.currentParcel?.expedition?.id);
+                if (currentMatch) {
+                    state.currentParcel.expedition = { ...state.currentParcel.expedition, ...currentMatch };
+                }
+            }
         }
     },
     extraReducers: (builder) => {
@@ -596,5 +643,12 @@ const parcelSlice = createSlice({
     }
 });
 
-export const { cleartodoList, clearHistoryList, clearCurrentParcel, setCurrentParcel, setAccountingFilters } = parcelSlice.actions;
+export const {
+    cleartodoList,
+    clearHistoryList,
+    clearCurrentParcel,
+    setCurrentParcel,
+    setAccountingFilters,
+    realtimeModelUpdated
+} = parcelSlice.actions;
 export default parcelSlice.reducer;

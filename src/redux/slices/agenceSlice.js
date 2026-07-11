@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import agenceService from '../../services/agenceService';
+import { realtimeModelUpdated } from './parcelSlice';
 
 export const fetchAgences = createAsyncThunk(
     'agences/fetchAgences',
@@ -277,6 +278,22 @@ const agenceSlice = createSlice({
             .addCase(fetchAgenceAccounting.rejected, (state, action) => {
                 state.currentAgencyAccounting.isLoading = false;
                 state.currentAgencyAccounting.error = action.payload;
+            })
+            // Reçu via WebSocket (event universel "model.updated", voir WEBSOCKETS.md).
+            // Une agence a été activée/désactivée ailleurs (ou par une autre session).
+            .addCase(realtimeModelUpdated, (state, action) => {
+                const { model, data } = action.payload || {};
+                if (model !== 'Agence' || !Array.isArray(data)) return;
+
+                data.forEach(updated => {
+                    const index = state.agences.findIndex(a => String(a.id) === String(updated.id));
+                    if (index !== -1) {
+                        state.agences[index] = { ...state.agences[index], ...updated };
+                    }
+                    if (state.currentAgence && String(state.currentAgence.id) === String(updated.id)) {
+                        state.currentAgence = { ...state.currentAgence, ...updated };
+                    }
+                });
             });
     }
 });
