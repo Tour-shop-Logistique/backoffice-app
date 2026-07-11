@@ -8,7 +8,7 @@ import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
 import EmailVerificationForm from '../components/auth/EmailVerificationForm';
 
 import logo from '../assets/logo_transparent.png';
-import background from '../assets/background1.png';
+import background from '../assets/background1.jpg';
 
 const viewCopy = {
   login: {

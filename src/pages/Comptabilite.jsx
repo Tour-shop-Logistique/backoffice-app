@@ -32,8 +32,6 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import Modal from '../components/common/Modal';
 import ExpeditionDetailModal from '../components/expedition/ExpeditionDetailModal';
 import StatCard from '../components/agence/StatCard';
@@ -202,7 +200,9 @@ const Comptabilite = () => {
 
   // Plus besoin de fonctions pour le modal - les dates sont gérées directement
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
+    const { jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
     const doc = new jsPDF();
     const modeLabel = filterMode === 'depart' ? 'DEPARTS' : filterMode === 'reception' ? 'ARRIVEES' : 'TOUTES AGENCES';
     const period = `du ${format(new Date(dateDebut), 'dd/MM/yyyy')} au ${format(new Date(dateFin), 'dd/MM/yyyy')}`;

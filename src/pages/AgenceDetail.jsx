@@ -51,8 +51,6 @@ import {
     BarChart3,
     FileDown
 } from "lucide-react";
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import Modal from "../components/common/Modal";
 import StatCard from "../components/agence/StatCard";
 import ExpeditionDetailModal from "../components/expedition/ExpeditionDetailModal";
@@ -235,8 +233,10 @@ const AgenceDetail = () => {
         setIsDateModalOpen(false);
     };
 
-    const handleDownloadPDF = () => {
+    const handleDownloadPDF = async () => {
         if (!currentAgencyAccounting.summary) return;
+        const { jsPDF } = await import('jspdf');
+        const { default: autoTable } = await import('jspdf-autotable');
         const doc = new jsPDF();
         const summary = currentAgencyAccounting.summary;
         const period = `du ${format(new Date(dateRange.startDate), 'dd/MM/yyyy')} au ${format(new Date(dateRange.endDate), 'dd/MM/yyyy')}`;

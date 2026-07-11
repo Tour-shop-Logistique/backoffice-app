@@ -20,6 +20,7 @@ dist-ssr
 
 # Editor directories and files
 .vscode/*
+.claude/*
 .kilo
 !.vscode/extensions.json
 .idea

@@ -3,8 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchBackofficeExpeditions } from '../redux/slices/backofficeSlice';
 import { format, subDays, isWithinInterval, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import {
   Search,
   MapPin ,
@@ -123,7 +121,9 @@ const Historique = () => {
   }, [filteredExpeditions]);
 
   // Export PDF
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
+    const { jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
     const doc = new jsPDF();
     const modeLabel = filterMode === 'depart' ? 'DEPARTS' : filterMode === 'arrivee' ? 'ARRIVEES' : 'TOUTES EXPEDITIONS';
     const period = `Filtre: ${modeLabel} - ${filteredExpeditions.length} expéditions`;

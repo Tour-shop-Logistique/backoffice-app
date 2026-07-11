@@ -1,7 +1,6 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { Loader2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { hideNotification } from './redux/slices/uiSlice';
 import NotificationPortal from './components/widget/notification';
@@ -14,22 +13,23 @@ import ScrollToTop from './components/common/ScrollToTop';
 import Layout from './components/layout/Layout';
 import WelcomePage from './pages/WelcomePage';
 
-import Dashboard from './pages/Dashboard';
-import Agents from './pages/Agents';
-import Parcels from './pages/Parcels';
-import ParcelHistory from './pages/ParcelHistory';
-import SimpleRates from './pages/SimpleRates';
-import GroupedRates from './pages/GroupedRates';
-import ZoneConfiguration from './pages/ZoneConfiguration';
-import AgencePartenaire from './pages/AgencePartenaire';
-import AgenceDetail from './pages/AgenceDetail';
-import Produits from './pages/produits';
-import BackofficeSetup from './pages/BackofficeSetup';
-import ProfilePage from './pages/ProfilePage';
-import ParcelControl from './pages/ParcelControl';
-import IncomingParcels from './pages/IncomingParcels';
-import Comptabilite from './pages/Comptabilite';
-import Historique from './pages/Historique';
+// Pages chargées à la demande (code-splitting par route)
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Agents = lazy(() => import('./pages/Agents'));
+const Parcels = lazy(() => import('./pages/Parcels'));
+const ParcelHistory = lazy(() => import('./pages/ParcelHistory'));
+const SimpleRates = lazy(() => import('./pages/SimpleRates'));
+const GroupedRates = lazy(() => import('./pages/GroupedRates'));
+const ZoneConfiguration = lazy(() => import('./pages/ZoneConfiguration'));
+const AgencePartenaire = lazy(() => import('./pages/AgencePartenaire'));
+const AgenceDetail = lazy(() => import('./pages/AgenceDetail'));
+const Produits = lazy(() => import('./pages/produits'));
+const BackofficeSetup = lazy(() => import('./pages/BackofficeSetup'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const ParcelControl = lazy(() => import('./pages/ParcelControl'));
+const IncomingParcels = lazy(() => import('./pages/IncomingParcels'));
+const Comptabilite = lazy(() => import('./pages/Comptabilite'));
+const Historique = lazy(() => import('./pages/Historique'));
 
 // Composant de chargement
 import LoadingSpinner from './components/common/LoadingSpinner';
