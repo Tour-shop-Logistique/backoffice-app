@@ -96,7 +96,7 @@ const NotificationPortal = ({ notification, onClose }) => {
         </div>
 
         <div className="flex-1 min-w-0 py-0.5">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-400 mb-0.5">
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 mb-0.5">
             {current.label}
           </p>
           <p className="text-slate-900 text-sm font-medium leading-relaxed">

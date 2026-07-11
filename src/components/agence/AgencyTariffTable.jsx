@@ -66,7 +66,7 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className="font-semibold text-slate-600 text-sm">
-                                        {Number(tarif.montant_base).toLocaleString()} <span className="text-xs text-slate-400 uppercase">CFA</span>
+                                        {Number(tarif.montant_base).toLocaleString()} <span className="text-xs text-slate-500 uppercase">CFA</span>
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
@@ -74,7 +74,7 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                         <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold text-xs">
                                             {tarif.pourcentage_prestation}%
                                         </span>
-                                        <span className="text-slate-400 text-xs font-semibold">
+                                        <span className="text-slate-500 text-xs font-semibold">
                                             ({Number(tarif.montant_prestation).toLocaleString()} <span className="text-xs">CFA</span>)
                                         </span>
                                     </div>
@@ -82,7 +82,7 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                 <td className="px-6 py-4">
                                     <div className="flex flex-col">
                                         <span className="text-green-600 font-bold text-base tracking-tight">
-                                            {Number(tarif.montant_expedition).toLocaleString()} <span className="text-xs text-slate-400 uppercase font-semibold">CFA</span>
+                                            {Number(tarif.montant_expedition).toLocaleString()} <span className="text-xs text-slate-500 uppercase font-semibold">CFA</span>
                                         </span>
                                     </div>
                                 </td>
@@ -138,16 +138,16 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                     </div>
                                     <div className="text-right shrink-0">
                                         <p className="text-sm font-bold text-emerald-600">{Number(total).toLocaleString()} <span className="text-xs">CFA</span></p>
-                                        <p className="text-xs text-slate-400 font-medium">Prix Final</p>
+                                        <p className="text-xs text-slate-500 font-medium">Prix Final</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50">
                                     <div>
-                                        <p className="text-xs text-slate-400 uppercase font-bold">Montant Base</p>
+                                        <p className="text-xs text-slate-500 uppercase font-bold">Montant Base</p>
                                         <p className="text-xs font-semibold text-slate-700">{Number(mb).toLocaleString()} CFA</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-xs text-slate-400 uppercase font-bold">Prestation</p>
+                                        <p className="text-xs text-slate-500 uppercase font-bold">Prestation</p>
                                         <p className="text-xs font-semibold text-orange-600">{pp}% ({Number(mp).toLocaleString()} CFA)</p>
                                     </div>
                                 </div>

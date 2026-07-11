@@ -384,7 +384,7 @@ const GroupedRates = () => {
                             <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold w-fit">
                               {prest}%
                             </span>
-                            <span className="text-slate-400 font-medium mt-0.5 whitespace-nowrap">
+                            <span className="text-slate-500 font-medium mt-0.5 whitespace-nowrap">
                               ({mp.toLocaleString()} <span className="text-xs">FCFA</span>)
                             </span>
                           </div>
@@ -456,8 +456,8 @@ const GroupedRates = () => {
                             <span className="text-xs text-slate-500 font-bold uppercase shrink-0">
                               {exp.toLocaleString()} FCFA
                             </span>
-                            <span className="text-slate-300">•</span>
-                            <span className="text-xs uppercase text-slate-400 font-medium truncate">
+                            <span className="text-slate-400">•</span>
+                            <span className="text-xs uppercase text-slate-500 font-medium truncate">
                               {tarif.ligne ? tarif.ligne.replace('-', ' → ') : tarif.pays}
                             </span>
                           </div>
@@ -481,14 +481,14 @@ const GroupedRates = () => {
 
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
-                        <span className="text-xs text-slate-400 font-bold">Montant Base</span>
+                        <span className="text-xs text-slate-500 font-bold">Montant Base</span>
                         <span className="text-xs font-semibold text-slate-700">{base.toLocaleString()}</span>
                       </div>
                       <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
-                        <span className="text-xs text-slate-400 font-bold">Prestation</span>
+                        <span className="text-xs text-slate-500 font-bold">Prestation</span>
                         <div className="flex flex-row items-center gap-2">
                           <span className="text-xs font-semibold text-orange-600">{prest}%</span>
-                          <span className="text-xs text-slate-400 font-medium">({mp.toLocaleString()} F)</span>
+                          <span className="text-xs text-slate-500 font-medium">({mp.toLocaleString()} F)</span>
                         </div>
                       </div>
                     </div>

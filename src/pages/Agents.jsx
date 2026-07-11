@@ -402,7 +402,7 @@ const Agents = () => {
                     <PhoneIcon size={11} className="text-slate-400" />
                     <span className="text-xs">{agent.telephone}</span>
                     <span className="mx-1 text-slate-300">|</span>
-                    <span className="text-xs text-slate-400 font-bold uppercase">{agent.type || 'Agent'}</span>
+                    <span className="text-xs text-slate-500 font-bold uppercase">{agent.type || 'Agent'}</span>
                   </div>
 
                   <div className="flex gap-2 pt-1">

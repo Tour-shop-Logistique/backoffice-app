@@ -180,8 +180,8 @@ const ProfilePage = () => {
       {/* En-tête */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200 pb-5 mb-6 space-y-4 md:space-y-0">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Mon Profil</h2>
-          <p className="text-sm text-slate-500 mt-1">Gérez vos informations de compte et vos paramètres de sécurité</p>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">Mon Profil</h2>
+          <p className="text-sm md:text-base text-slate-500 mt-1">Gérez vos informations de compte et vos paramètres de sécurité</p>
         </div>
         <div className="flex items-center space-x-2">
           {getRoleBadge(user?.role)}
@@ -306,7 +306,7 @@ const ProfilePage = () => {
                         className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors bg-white text-slate-900"
                       />
                     </div>
-                    <p className="text-[10px] text-slate-400 italic">Note : Si vous changez d'e-mail, un code de vérification vous sera envoyé.</p>
+                    <p className="text-xs text-slate-500 italic">Note : Si vous changez d'e-mail, un code de vérification vous sera envoyé.</p>
                   </div>
                 </div>
 

@@ -355,7 +355,7 @@ const Parcels = () => {
         <div className="px-4 py-3 md:px-6 md:py-4 border-b border-slate-100 bg-slate-50/10">
           <div className="flex flex-col md:flex-row md:items-center gap-3 md:items-center justify-between">
             <div className="flex items-center justify-between md:justify-start gap-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                 {groupedParcels.length} expéditions ({filteredParcels.length} colis)
               </span>
 
@@ -384,7 +384,7 @@ const Parcels = () => {
                 </button>
                 <button
                   onClick={() => setSelectedCodes([])}
-                  className="px-2 py-1 text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center"
+                  className="px-2 py-1 text-xs font-bold text-slate-500 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center"
                 >
                   Annuler
                 </button>
@@ -440,7 +440,7 @@ const Parcels = () => {
                           {/* Left: Reference Container - Styled as a badge */}
                           <div className="flex items-center gap-3 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full shadow-sm">
                             <Truck size={18} className="text-indigo-600" />
-                            <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-widest">
+                            <span className="text-xs font-bold text-indigo-700 uppercase tracking-widest">
                               {group.expedition?.reference || 'Sans ref'}
                             </span>
                           </div>
@@ -451,9 +451,9 @@ const Parcels = () => {
                             <div className="flex items-center gap-6 pr-6 border-r border-slate-200">
                               {/* Frais Expédition */}
                               <div className="flex flex-col gap-1">
-                                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Frais Expédition</span>
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Frais Expédition</span>
                                 <div className="flex items-center gap-2">
-                                  <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border leading-none
+                                  <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded border leading-none
                                     ${group.expedition?.statut_paiement_expedition === 'paye'
                                       ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                       : 'bg-amber-50 text-amber-600 border-amber-100'
@@ -464,16 +464,16 @@ const Parcels = () => {
                                     <span className="text-sm font-bold text-slate-800 tracking-tight">
                                       {Number(Number(group.expedition?.montant_expedition || 0) + Number(group.expedition?.frais_emballage || 0)).toLocaleString()}
                                     </span>
-                                    <span className="text-[10px] font-medium text-slate-400 uppercase">CFA</span>
+                                    <span className="text-xs font-medium text-slate-500 uppercase">CFA</span>
                                   </div>
                                 </div>
                               </div>
 
                               {/* Frais Annexes */}
                               <div className="flex flex-col gap-1">
-                                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Frais Annexes</span>
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Frais Annexes</span>
                                 <div className="flex items-center gap-2">
-                                  <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border leading-none
+                                  <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded border leading-none
                                     ${group.expedition?.statut_paiement_frais === 'paye'
                                       ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                       : 'bg-amber-50 text-amber-600 border-amber-100'
@@ -484,7 +484,7 @@ const Parcels = () => {
                                     <span className="text-sm font-bold text-slate-800 tracking-tight">
                                       {Number(group.expedition?.frais_annexes || 0).toLocaleString()}
                                     </span>
-                                    <span className="text-[10px] font-medium text-slate-400 uppercase">CFA</span>
+                                    <span className="text-xs font-medium text-slate-500 uppercase">CFA</span>
                                   </div>
                                 </div>
                               </div>
@@ -493,8 +493,8 @@ const Parcels = () => {
                             {/* Group stats & Actions */}
                             <div className="flex items-center gap-4">
                               <div className="flex flex-col">
-                                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{group.parcels.length} Colis</span>
-                                <span className={`text-[11px] font-bold uppercase tracking-tight ${group.parcels.every(p => p.is_controlled && !p.is_blocked) ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{group.parcels.length} Colis</span>
+                                <span className={`text-xs font-bold uppercase tracking-tight ${group.parcels.every(p => p.is_controlled && !p.is_blocked) ? 'text-emerald-500' : 'text-slate-500'}`}>
                                   {group.parcels.filter(p => p.is_controlled && !p.is_blocked).length} / {group.parcels.length} Contrôlés
                                 </span>
                               </div>
@@ -534,7 +534,7 @@ const Parcels = () => {
                                   title={group.parcels.every(p => p.is_controlled && !p.is_blocked) ? "Confirmer le départ" : "Tout doit être contrôlé et non bloqué"}
                                 >
                                   <Truck size={16} />
-                                  <span className="text-[11px] font-bold uppercase tracking-tight">Départ</span>
+                                  <span className="text-xs font-bold uppercase tracking-tight">Départ</span>
                                 </button>
                               </div>
                             </div>
@@ -568,7 +568,7 @@ const Parcels = () => {
                                   <div className="flex items-center gap-2">
                                     <span className="block font-bold text-slate-900 text-base">{parcel.code_colis}</span>
                                   </div>
-                                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{parcel.designation || 'Sans désignation'}</span>
+                                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{parcel.designation || 'Sans désignation'}</span>
                                 </div>
                               </div>
                             </td>
@@ -724,7 +724,7 @@ const Parcels = () => {
                                     <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs border border-rose-100 uppercase font-bold shrink-0">Bloqué</span>
                                   )}
                                 </div>
-                                <p className="text-xs font-bold text-slate-400 uppercase mt-0.5 truncate">{parcel.expedition?.pays_destination}</p>
+                                <p className="text-xs font-bold text-slate-500 uppercase mt-0.5 truncate">{parcel.expedition?.pays_destination}</p>
                               </div>
                             </div>
                           </div>
@@ -821,7 +821,7 @@ const Parcels = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-5">
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Frais Annexes (Optionnel)</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Frais Annexes (Optionnel)</label>
               <div className="relative group">
                 <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors" size={22} />
                 <input
@@ -835,7 +835,7 @@ const Parcels = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Code de suivi / Tracking</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Code de suivi / Tracking</label>
               <div className="relative group">
                 <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors" size={22} />
                 <input
@@ -877,7 +877,7 @@ const Parcels = () => {
           <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-4">
             {/* Infos de base */}
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400 font-bold uppercase">Nombre de colis</span>
+              <span className="text-slate-500 font-bold uppercase">Nombre de colis</span>
               <span className="text-slate-900 font-bold bg-white px-2 py-1 rounded border border-slate-100 shadow-sm">
                 {selectedExpedition?.colis_count || '-'} Colis
               </span>
@@ -888,13 +888,13 @@ const Parcels = () => {
             {/* Frais Annexes */}
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-bold uppercase">Frais Annexes</span>
+                <span className="text-slate-500 font-bold uppercase">Frais Annexes</span>
                 <span className="text-slate-900 font-bold">
-                  {Number(selectedExpedition?.frais_annexes || 0).toLocaleString()} <span className="text-xs text-slate-400">CFA</span>
+                  {Number(selectedExpedition?.frais_annexes || 0).toLocaleString()} <span className="text-xs text-slate-500">CFA</span>
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-slate-400 uppercase">Paiement Frais</span>
+                <span className="text-xs font-bold text-slate-500 uppercase">Paiement Frais</span>
                 <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider border shadow-sm
                   ${selectedExpedition?.statut_paiement_frais === 'paye'
                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
@@ -910,13 +910,13 @@ const Parcels = () => {
             {/* Montant Expédition */}
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-bold uppercase">Montant Expédition</span>
+                <span className="text-slate-500 font-bold uppercase">Montant Expédition</span>
                 <span className="text-indigo-600 font-bold">
-                  {Number(selectedExpedition?.montant_expedition || 0).toLocaleString()} <span className="text-xs text-slate-400">CFA</span>
+                  {Number(selectedExpedition?.montant_expedition || 0).toLocaleString()} <span className="text-xs text-slate-500">CFA</span>
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-slate-400 uppercase">Paiement Expédition</span>
+                <span className="text-xs font-bold text-slate-500 uppercase">Paiement Expédition</span>
                 <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider border shadow-sm
                   ${selectedExpedition?.statut_paiement_expedition === 'paye'
                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
@@ -955,7 +955,7 @@ const Parcels = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
             <textarea
               value={blockReason}
               onChange={(e) => setBlockReason(e.target.value)}

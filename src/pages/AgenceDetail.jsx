@@ -343,7 +343,7 @@ const AgenceDetail = () => {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
                 <Loader2 className="h-10 w-10 text-slate-900 animate-spin mb-4" />
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em]">Chargement des données...</p>
+                <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em]">Chargement des données...</p>
             </div>
         );
     }
@@ -387,7 +387,7 @@ const AgenceDetail = () => {
                             </h1>
                         </div>
                         <p className="text-sm md:text-base text-slate-500 mt-0.5 flex items-center gap-1.5">
-                            <span className="text-slate-400 ml-1">Inscrit depuis le {new Date(currentAgence.created_at).toLocaleDateString()}</span>
+                            <span className="text-slate-500 ml-1">Inscrit depuis le {new Date(currentAgence.created_at).toLocaleDateString()}</span>
                         </p>
                     </div>
                 </div>
@@ -409,7 +409,7 @@ const AgenceDetail = () => {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`py-4 md:py-5 text-sm md:text-sm font-bold uppercase tracking-[0.1em] border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === tab.id
                                     ? 'border-slate-900 text-slate-900'
-                                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                                    : 'border-transparent text-slate-500 hover:text-slate-600'
                                     }`}
                             >
                                 <tab.icon size={22} />
@@ -477,20 +477,20 @@ const AgenceDetail = () => {
 
                                         <div className="space-y-4 mt-4 border-t border-slate-200 pt-4">
                                             <div className="space-y-1">
-                                                <p className="text-xs font-bold text-slate-400 uppercase">Téléphone</p>
+                                                <p className="text-xs font-bold text-slate-500 uppercase">Téléphone</p>
                                                 <p className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                                                     <Phone size={20} className="text-slate-400" /> {currentAgence.telephone}
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-xs font-bold text-slate-400 uppercase">Localisation</p>
+                                                <p className="text-xs font-bold text-slate-500 uppercase">Localisation</p>
                                                 <p className="text-sm font-semibold text-slate-900 flex items-start gap-2 leading-snug">
                                                     <MapPin size={20} className="text-slate-400 mt-0.5" />
                                                     <span>{currentAgence.ville}, {currentAgence.commune}</span>
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-xs font-bold text-slate-400 uppercase">Bureau physique</p>
+                                                <p className="text-xs font-bold text-slate-500 uppercase">Bureau physique</p>
                                                 <p className="text-sm font-semibold text-slate-900 flex items-start gap-2 leading-snug">
                                                     <MapPinned size={20} className="text-slate-400 mt-0.5" />
                                                     <span>{currentAgence.adresse}</span>
@@ -518,7 +518,7 @@ const AgenceDetail = () => {
                                     {currentAgence.message_accueil && (
                                         <div className="p-6 bg-slate-50/30">
                                             <div className="border-l-4 border-slate-900 pl-4 py-1">
-                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Message client</p>
+                                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Message client</p>
                                                 <p className="text-sm font-semibold text-slate-700 italic">
                                                     "{currentAgence.message_accueil}"
                                                 </p>
@@ -534,7 +534,7 @@ const AgenceDetail = () => {
                                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                             {currentAgence.horaires?.map((h, idx) => (
                                                 <div key={idx} className="p-3 bg-white border border-slate-100 rounded-lg shadow-sm flex flex-col items-center justify-center gap-1">
-                                                    <span className="text-xs font-bold text-slate-400 uppercase">{h.jour}</span>
+                                                    <span className="text-xs font-bold text-slate-500 uppercase">{h.jour}</span>
                                                     {h.ferme ? (
                                                         <span className="text-xs font-bold text-rose-500 uppercase tracking-tighter">Fermé</span>
                                                     ) : (
@@ -558,7 +558,7 @@ const AgenceDetail = () => {
                             {isLoadingTarifs ? (
                                 <div className="flex flex-col items-center justify-center py-32 opacity-50">
                                     <RefreshCw size={32} className="animate-spin text-slate-400 mb-4" />
-                                    <span className="text-xs font-semibold text-center text-slate-400">Actualisation de la grille tarifaire...</span>
+                                    <span className="text-xs font-semibold text-center text-slate-500">Actualisation de la grille tarifaire...</span>
                                 </div>
                             ) : (
                                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
@@ -581,7 +581,7 @@ const AgenceDetail = () => {
                                             <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-sm text-slate-300">
                                                 <Tag size={32} />
                                             </div>
-                                            <p className="text-slate-400 text-sm font-semibold italic">Aucune donnée tarifaire spécifique ne correspond à cette agence.</p>
+                                            <p className="text-slate-500 text-sm font-semibold italic">Aucune donnée tarifaire spécifique ne correspond à cette agence.</p>
                                         </div>
                                     ) : (
                                         <AgencyTariffTable
@@ -600,7 +600,7 @@ const AgenceDetail = () => {
                             {isLoadingExpeditions ? (
                                 <div className="bg-white rounded-xl border border-slate-200 py-32 flex flex-col items-center justify-center">
                                     <Loader2 size={40} className="animate-spin text-slate-300 mb-4" />
-                                    <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Récupération des expéditions...</p>
+                                    <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">Récupération des expéditions...</p>
                                 </div>
                             ) : currentAgencyExpeditions.length === 0 ? (
                                 <div className="bg-white rounded-xl border border-slate-200 py-24 text-center">
@@ -661,7 +661,7 @@ const AgenceDetail = () => {
                                                                         <span className="font-semibold text-slate-900 flex items-center gap-1.5">
                                                                             {expo.reference}
                                                                         </span>
-                                                                        <span className="text-xs text-slate-400 font-medium flex items-center gap-1 mt-1">
+                                                                        <span className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-1">
                                                                             <Calendar size={20} />
                                                                             {new Date(expo.created_at).toLocaleDateString()} à {new Date(expo.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                                         </span>
@@ -698,9 +698,9 @@ const AgenceDetail = () => {
                                                                 <td className="px-6 py-4 text-right">
                                                                     <div className="flex flex-col">
                                                                         <span className="font-semibold text-slate-900">
-                                                                            {Number(expo.montant_expedition).toLocaleString()} <span className="text-xs font-medium text-slate-400">CFA</span>
+                                                                            {Number(expo.montant_expedition).toLocaleString()} <span className="text-xs font-medium text-slate-500">CFA</span>
                                                                         </span>
-                                                                        <span className="text-xs text-slate-400 font-medium">
+                                                                        <span className="text-xs text-slate-500 font-medium">
                                                                             {expo.colis?.length} colis
                                                                         </span>
                                                                     </div>
@@ -731,7 +731,7 @@ const AgenceDetail = () => {
                                                         <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                                                             <div className="flex flex-col">
                                                                 <span className="text-xs font-bold text-slate-900">{expo.reference}</span>
-                                                                <span className="text-xs text-slate-400 font-medium">{new Date(expo.created_at).toLocaleDateString()}</span>
+                                                                <span className="text-xs text-slate-500 font-medium">{new Date(expo.created_at).toLocaleDateString()}</span>
                                                             </div>
                                                             <span className={`text-xs font-bold px-2 py-1 rounded-full border uppercase tracking-wider ${expo.statut_expedition === 'accepted' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
                                                                 {expo.statut_expedition === 'accepted' ? 'Acceptée' : 'En attente'}
@@ -740,13 +740,13 @@ const AgenceDetail = () => {
                                                         <div className="p-4 space-y-4">
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 text-left">Expéditeur</span>
+                                                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 text-left">Expéditeur</span>
                                                                     <span className="text-xs font-bold text-slate-900">{expo.expediteur?.nom_prenom}</span>
                                                                     <span className="text-xs text-slate-500">{expo.expediteur?.ville}, {expo.pays_depart}</span>
                                                                 </div>
                                                                 <ChevronRight size={22} className="text-slate-300" />
                                                                 <div className="flex flex-col text-right">
-                                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Destinataire</span>
+                                                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Destinataire</span>
                                                                     <span className="text-xs font-bold text-slate-900">{expo.destinataire?.nom_prenom}</span>
                                                                     <span className="text-xs text-slate-500">{expo.destinataire?.ville}, {expo.pays_destination}</span>
                                                                 </div>
@@ -754,11 +754,11 @@ const AgenceDetail = () => {
 
                                                             <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
                                                                 <div>
-                                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Montant Total</p>
+                                                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Montant Total</p>
                                                                     <p className="text-sm font-bold text-slate-900">{Number(expo.montant_expedition).toLocaleString()} CFA</p>
                                                                 </div>
                                                                 <div className="text-right">
-                                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Paiement</p>
+                                                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Paiement</p>
                                                                     <span className={`text-xs font-bold ${expo.statut_paiement === 'paye' ? 'text-emerald-500' : 'text-amber-500'}`}>
                                                                         {expo.statut_paiement === 'paye' ? 'Payé' : 'À régler'}
                                                                     </span>
@@ -896,7 +896,7 @@ const AgenceDetail = () => {
                                 </div>
 
                                 {currentAgencyAccounting.lastUpdated && (
-                                    <p className="text-xs font-bold text-slate-400 uppercase">
+                                    <p className="text-xs font-bold text-slate-500 uppercase">
                                         Dernière mise à jour : {new Date(currentAgencyAccounting.lastUpdated).toLocaleTimeString()}
                                     </p>
                                 )}
@@ -953,7 +953,7 @@ const AgenceDetail = () => {
                                                 <tr>
                                                     <td colSpan={7} className="px-6 py-20 text-center">
                                                         <Loader2 size={32} className="animate-spin text-slate-200 mx-auto mb-4" />
-                                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Calcul du bilan comptable...</p>
+                                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Calcul du bilan comptable...</p>
                                                     </td>
                                                 </tr>
                                             ) : currentAgencyAccounting.items.length === 0 ? (
@@ -963,7 +963,7 @@ const AgenceDetail = () => {
                                                             <PieChart size={28} />
                                                         </div>
                                                         <h4 className="text-slate-900 font-bold text-sm">Aucun mouvement</h4>
-                                                        <p className="text-slate-400 text-xs mt-1 italic">Aucune donnée comptable n'a été trouvée pour cette période.</p>
+                                                        <p className="text-slate-500 text-xs mt-1 italic">Aucune donnée comptable n'a été trouvée pour cette période.</p>
                                                     </td>
                                                 </tr>
                                             ) : (

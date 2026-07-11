@@ -121,7 +121,7 @@ const ZoneForm = ({ id = "zone-form", onSubmit, onCancel, isLoading, initialData
         {/* Liste des pays ajoutés */}
         <div className="min-h-[100px] p-3 bg-slate-50 border border-slate-100 rounded-xl overflow-hidden">
           {formData.pays.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center py-4 text-slate-400">
+            <div className="h-full flex flex-col items-center justify-center py-4 text-slate-500">
               <p className="text-xs font-medium italic">Aucun pays ajouté pour le moment</p>
             </div>
           ) : (

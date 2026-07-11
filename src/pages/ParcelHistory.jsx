@@ -156,10 +156,10 @@ const ParcelHistory = () => {
             <header className="space-y-3 md:space-y-0">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             Historique des Contrôles
                         </h1>
-                        <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
+                        <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
                             Consultez la liste des colis déjà contrôlés et validés
                         </p>
                     </div>
@@ -201,7 +201,7 @@ const ParcelHistory = () => {
                             onChange={(e) => setDateDebut(e.target.value)}
                             className="w-full md:w-40 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-slate-900"
                         />
-                        <span className="absolute top-0 right-0 -mt-2 -mr-1 text-xs bg-white px-1 text-slate-400 font-bold uppercase tracking-wider">Du</span>
+                        <span className="absolute top-0 right-0 -mt-2 -mr-1 text-xs bg-white px-1 text-slate-500 font-bold uppercase tracking-wider">Du</span>
                     </div>
                     <div className="relative flex-1 md:flex-none">
                         <input
@@ -210,7 +210,7 @@ const ParcelHistory = () => {
                             onChange={(e) => setDateFin(e.target.value)}
                             className="w-full md:w-40 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-slate-900"
                         />
-                        <span className="absolute top-0 right-0 -mt-2 -mr-1 text-xs bg-white px-1 text-slate-400 font-bold uppercase tracking-wider">Au</span>
+                        <span className="absolute top-0 right-0 -mt-2 -mr-1 text-xs bg-white px-1 text-slate-500 font-bold uppercase tracking-wider">Au</span>
                     </div>
                     <button
                         onClick={handleSearch}
@@ -234,7 +234,7 @@ const ParcelHistory = () => {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-black transition-all">
                 {/* Header Summary */}
                 <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/10 flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                         {filteredParcels.length} colis trouvés
                     </span>
                 </div>
@@ -285,26 +285,26 @@ const ParcelHistory = () => {
                                                     {/* Middle: Breakdown Flow */}
                                                     <div className="flex items-center gap-6">
                                                         <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Base</span>
+                                                            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Base</span>
                                                             <span className="text-xs font-semibold text-slate-600 tabular-nums">
                                                                 {Number(group.expedition?.montant_base || 0).toLocaleString()}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Prestation</span>
+                                                            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Prestation</span>
                                                             <span className="text-xs font-semibold text-blue-600 tabular-nums">
                                                                 +{Number(group.expedition?.montant_prestation || 0).toLocaleString()}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Emballage</span>
+                                                            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Emballage</span>
                                                             <span className="text-xs font-semibold text-slate-600 tabular-nums">
                                                                 +{Number(group.expedition?.frais_emballage || 0).toLocaleString()}
                                                             </span>
                                                         </div>
                                                         {Number(group.expedition?.frais_annexes || 0) > 0 && (
                                                             <div className="flex items-baseline gap-1.5">
-                                                                <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Annexes</span>
+                                                                <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Annexes</span>
                                                                 <span className="text-xs font-semibold text-amber-600 tabular-nums">
                                                                     +{Number(group.expedition?.frais_annexes || 0).toLocaleString()}
                                                                 </span>
@@ -317,12 +317,12 @@ const ParcelHistory = () => {
                                                         {/* Financial Total Section */}
                                                         <div className="flex items-center gap-4 pr-6 border-r border-slate-200">
                                                             <div className="flex flex-col items-end leading-none">
-                                                                <span className="text-xs font-semibold text-slate-400 uppercase tracking-[0.15em] mb-1">Total Expédition</span>
+                                                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-[0.15em] mb-1">Total Expédition</span>
                                                                 <div className="flex items-baseline gap-1">
                                                                     <span className="text-[14px] font-semibold text-slate-900">
                                                                         {Number(group.expedition?.montant_expedition || 0).toLocaleString()}
                                                                     </span>
-                                                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">CFA</span>
+                                                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">CFA</span>
                                                                 </div>
                                                             </div>
 
@@ -366,7 +366,7 @@ const ParcelHistory = () => {
                                                                 </div>
                                                                 <div>
                                                                     <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
-                                                                    <span className="text-xs font-bold text-slate-400 uppercase">{parcel.designation || 'Sans désignation'}</span>
+                                                                    <span className="text-xs font-bold text-slate-500 uppercase">{parcel.designation || 'Sans désignation'}</span>
                                                                 </div>
                                                             </div>
                                                         </td>

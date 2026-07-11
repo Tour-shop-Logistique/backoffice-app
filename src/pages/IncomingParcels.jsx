@@ -387,7 +387,7 @@ const IncomingParcels = () => {
                 <div className="px-4 py-3 md:px-6 md:py-4 border-b border-slate-100 bg-slate-50/10">
                     <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between">
                         <div className="flex items-center gap-4">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                                 {groupedParcels.length} expédition{groupedParcels.length !== 1 ? 's' : ''} ({filteredParcels.length} colis)
                             </span>
                             {(isLoading || isRefreshing) && (
@@ -426,7 +426,7 @@ const IncomingParcels = () => {
                                 </button>
                                 <button
                                     onClick={() => setSelectedCodes([])}
-                                    className="px-2 py-2 md:py-1 text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center"
+                                    className="px-2 py-2 md:py-1 text-xs font-bold text-slate-500 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center"
                                 >
                                     Annuler
                                 </button>
@@ -530,7 +530,7 @@ const IncomingParcels = () => {
                                                                         <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs border border-rose-100 uppercase font-bold">Bloqué</span>
                                                                     )}
                                                                 </div>
-                                                                <span className="text-xs font-bold text-slate-400 uppercase">{parcel.designation || 'Sans désignation'}</span>
+                                                                <span className="text-xs font-bold text-slate-500 uppercase">{parcel.designation || 'Sans désignation'}</span>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -661,7 +661,7 @@ const IncomingParcels = () => {
                                                                             <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs border border-rose-100 uppercase font-bold shrink-0">Bloqué</span>
                                                                         )}
                                                                     </div>
-                                                                    <p className="text-xs font-bold text-slate-400 uppercase mt-0.5 truncate">
+                                                                    <p className="text-xs font-bold text-slate-500 uppercase mt-0.5 truncate">
                                                                         {parcel.designation || 'Sans désignation'}
                                                                     </p>
                                                                 </div>
@@ -790,7 +790,7 @@ const IncomingParcels = () => {
                     {pendingAction?.codes.length === 1 ? (
                         // Single colis - simple dropdown
                         <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
                                 Agence de destination
                             </label>
                             <select
@@ -877,7 +877,7 @@ const IncomingParcels = () => {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
                         <textarea
                             value={blockReason}
                             onChange={(e) => setBlockReason(e.target.value)}

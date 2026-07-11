@@ -294,10 +294,10 @@ const Comptabilite = () => {
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
                 Gestion Comptable
               </h1>
-              <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
+              <p className="text-sm md:text-base text-slate-600 mt-1 font-medium">
                 Suivi des revenus, commissions et répartition des gains
               </p>
             </div>
@@ -358,19 +358,19 @@ const Comptabilite = () => {
           <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm shrink-0">
             <button
               onClick={() => updateMode(null)}
-              className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === null ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-900'}`}
+              className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === null ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
             >
               Tout
             </button>
             <button
               onClick={() => updateMode('depart')}
-              className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'depart' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-900'}`}
+              className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'depart' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
             >
               Départs
             </button>
             <button
               onClick={() => updateMode('reception')}
-              className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'reception' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-900'}`}
+              className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'reception' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
             >
               Arrivées
             </button>
@@ -418,7 +418,7 @@ const Comptabilite = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-widest">
+              <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-widest">
                 <th className="px-6 py-4">Expédition</th>
                 <th className="px-6 py-4 whitespace-nowrap">Date / Agence</th>
                 <th className="px-6 py-4 text-right">À Percevoir</th>
@@ -479,34 +479,34 @@ const Comptabilite = () => {
                     <tr key={exp.id} className={`transition-colors group ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-slate-100`}>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="font-bold text-slate-900 text-sm group-hover:text-slate-950 transition-colors">{exp.reference}</span>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-1 w-fit ${getStatusStyles(exp.statut_expedition)}`}>
+                          <span className="font-bold text-slate-900 text-base group-hover:text-slate-950 transition-colors">{exp.reference}</span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold mt-1 w-fit ${getStatusStyles(exp.statut_expedition)}`}>
                             {getExpeditionStatusLabel(exp.statut_expedition)}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold text-slate-700">
+                          <span className="text-sm font-semibold text-slate-700">
                             {exp.created_at
                               ? format(new Date(exp.created_at), 'dd MMM yyyy', { locale: fr })
                               : 'Date inconnue'
                             }
                           </span>
-                          <span className="text-xs font-bold text-slate-400 uppercase truncate max-w-[200px] flex items-center gap-1.5 mt-0.5">
-                            <Building2 size={10} className="text-slate-300" />
+                          <span className="text-xs font-bold text-slate-500 uppercase truncate max-w-[200px] flex items-center gap-1.5 mt-0.5">
+                            <Building2 size={11} className="text-slate-400" />
                             {exp.agence?.nom_agence || 'N/A'}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="font-bold text-slate-900 text-sm">{clientTotal.toLocaleString()}</span>
+                        <span className="font-bold text-slate-900 text-base">{clientTotal.toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4 text-right bg-slate-50/50 group-hover:bg-slate-100/50 transition-colors">
-                        <span className="font-bold text-slate-900 text-sm">{boNet.toLocaleString()}</span>
+                        <span className="font-bold text-slate-900 text-base">{boNet.toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="font-bold text-blue-600 text-sm">{agencyPart.toLocaleString()}</span>
+                        <span className="font-bold text-blue-600 text-base">{agencyPart.toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex flex-col gap-1.5 items-center">
@@ -537,7 +537,7 @@ const Comptabilite = () => {
 
         {/* Pagination/Summary line */}
         <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
+          <div className="flex items-center gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
             <span>{filteredItems.length} EXPÉDITIONS</span>
             <span className="h-4 w-px bg-slate-200"></span>
             <span>Dernière mise à jour: {lastUpdated ? format(new Date(lastUpdated), 'HH:mm:ss') : 'N/A'}</span>
@@ -545,8 +545,8 @@ const Comptabilite = () => {
 
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end">
-              <span className="text-xs font-bold text-slate-400 uppercase">Grand Total (Net BO)</span>
-              <span className="text-lg font-bold text-slate-900">{(totals.backoffice || 0).toLocaleString()}</span>
+              <span className="text-xs font-bold text-slate-500 uppercase">Grand Total (Net BO)</span>
+              <span className="text-xl font-bold text-slate-900">{(totals.backoffice || 0).toLocaleString()}</span>
             </div>
           </div>
         </div>

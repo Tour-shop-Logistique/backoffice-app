@@ -321,7 +321,7 @@ const Historique = () => {
         <div className="px-4 py-3 md:px-6 md:py-4 border-b border-slate-100 bg-slate-50/10">
           <div className="flex flex-col md:flex-row md:items-center gap-3 md:items-center justify-between">
             <div className="flex items-center justify-between md:justify-start gap-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                 {filteredExpeditions.length} expéditions trouvées
               </span>
             </div>
@@ -351,7 +351,7 @@ const Historique = () => {
           <div className="flex flex-col items-center justify-center py-24 px-6">
             <Package className="text-slate-300 mb-4" size={48} strokeWidth={1.5} />
             <p className="text-sm text-slate-600 font-medium">Aucune expédition trouvée</p>
-            <p className="text-xs text-slate-400 mt-2">Essayez de modifier vos filtres ou votre recherche</p>
+            <p className="text-xs text-slate-500 mt-2">Essayez de modifier vos filtres ou votre recherche</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

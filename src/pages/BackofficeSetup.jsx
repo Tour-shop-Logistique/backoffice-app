@@ -386,7 +386,7 @@ const BackofficeSetup = () => {
                                     <button
                                         type="button"
                                         onClick={() => navigate(-1)}
-                                        className="w-full sm:w-auto px-8 py-4 text-slate-400 font-bold uppercase tracking-widest text-xs hover:text-slate-900 transition-colors text-center"
+                                        className="w-full sm:w-auto px-8 py-4 text-slate-500 font-bold uppercase tracking-widest text-xs hover:text-slate-900 transition-colors text-center"
                                     >
                                         Fermer
                                     </button>

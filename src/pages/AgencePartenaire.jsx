@@ -152,7 +152,7 @@ const AgencePartenaire = () => {
         {isLoading && !hasLoaded ? (
           <div className="flex flex-col items-center justify-center py-24 grayscale opacity-50">
             <Loader2 className="h-10 w-10 text-slate-900 animate-spin mb-4" />
-            <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em]">Initialisation du réseau...</p>
+            <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em]">Initialisation du réseau...</p>
           </div>
         ) : error ? (
           <div className="m-6 p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-center gap-3 text-rose-700 font-bold text-xs uppercase tracking-wide">
@@ -263,7 +263,7 @@ const AgencePartenaire = () => {
                       </button>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center justify-end gap-1 text-xs font-semibold text-slate-400 uppercase">
+                  <div className="mt-3 flex items-center justify-end gap-1 text-xs font-semibold text-slate-500 uppercase">
                     <span>Détails & Tarifs</span>
                     <ChevronRight size={10} strokeWidth={3} />
                   </div>

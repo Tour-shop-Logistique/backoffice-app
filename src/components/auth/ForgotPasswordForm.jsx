@@ -324,8 +324,8 @@ const ForgotPasswordForm = ({ onClose }) => {
                 <div className="flex items-center gap-2 mb-6">
                     {steps.map((item, index) => (
                         <React.Fragment key={item.id}>
-                            <div className={`flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide transition-colors ${step >= item.id ? 'text-slate-900' : 'text-slate-400'}`}>
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step > item.id ? 'bg-emerald-500 text-white' : step === item.id ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-400'}`}>
+                            <div className={`flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide transition-colors ${step >= item.id ? 'text-slate-900' : 'text-slate-500'}`}>
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step > item.id ? 'bg-emerald-500 text-white' : step === item.id ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-500'}`}>
                                     {step > item.id ? '✓' : item.id}
                                 </div>
                                 <span className="hidden sm:block">{item.label}</span>

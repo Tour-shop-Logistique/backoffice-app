@@ -203,7 +203,7 @@ const SimpleTarifForm = ({ id = "simple-tarif-form", onSubmit, onCancel, isLoadi
                 className={inputClasses}
                 required
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500">
                 FCFA
               </div>
             </div>
