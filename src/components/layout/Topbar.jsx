@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { performLogout } from "../../redux/slices/authSlice";
-import { LogOut, Menu, Settings, Bell, Search, ChevronDown, User } from "lucide-react";
+import { LogOut, Menu, Settings, ChevronDown, User } from "lucide-react";
 import { ROUTES } from "../../routes";
 
 const Topbar = ({ toggleSidebar }) => {
@@ -45,24 +45,6 @@ const Topbar = ({ toggleSidebar }) => {
 
         {/* Section droite */}
         <div className="flex items-center space-x-2 md:space-x-4">
-          {/* Notifications */}
-          <button
-            className="relative p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-            title="Notifications"
-          >
-            <Bell className="h-6 w-6" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
-
-          {/* Paramètres */}
-          <button
-            onClick={handleSettingsClick}
-            className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-            title="Paramètres"
-          >
-            <Settings className="h-6 w-6" />
-          </button>
-
           {/* Séparateur */}
           <div className="hidden sm:block w-px h-8 bg-slate-200"></div>
 
