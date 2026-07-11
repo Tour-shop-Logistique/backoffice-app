@@ -4,19 +4,20 @@
 
 @layer base {
   html {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Geist Variable', system-ui, -apple-system, sans-serif;
+    font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-size: 16px;
-  }
-
-  @media (min-width: 1536px) {
-    html {
-      font-size: 17px;
-    }
   }
 
   body {
     @apply bg-slate-100 text-slate-900;
+    font-weight: 450; /* Geist Variable : un poids par défaut légèrement plus dense que 400, évite le rendu "fin" */
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-slate-900 font-semibold tracking-tight;
   }
 }
 
@@ -95,7 +96,7 @@
 
   /* --- Buttons --- */
   .ts-btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wide transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .ts-btn-primary   { @apply ts-btn bg-slate-900 text-white hover:bg-slate-800 shadow-md shadow-slate-900/10; }
   .ts-btn-secondary { @apply ts-btn bg-white text-slate-600 border border-slate-200 hover:bg-slate-50; }
@@ -114,9 +115,9 @@
   .ts-panel { @apply bg-slate-50 border border-slate-200 rounded-xl; }
 
   /* --- Typography --- */
-  .ts-page-title    { @apply text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight; }
-  .ts-page-subtitle { @apply text-xs md:text-sm lg:text-base text-slate-500 font-medium mt-1; }
-  .ts-section-title { @apply text-xs font-bold text-slate-400 uppercase tracking-widest; }
+  .ts-page-title    { @apply text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight; }
+  .ts-page-subtitle { @apply text-sm md:text-base text-slate-600 font-medium mt-1; }
+  .ts-section-title { @apply text-xs font-bold text-slate-500 uppercase tracking-widest; }
 
   /* --- Status Badges --- */
   .ts-badge         { @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border; }
@@ -199,6 +200,10 @@
 
 .animate-blob {
   animation: blob 7s infinite;
+}
+
+.animate-slide-in-right {
+  animation: slideIn 0.25s ease-out;
 }
 
 .animate-fade-in {

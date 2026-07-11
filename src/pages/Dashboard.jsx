@@ -3,27 +3,19 @@ import { motion as Motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardStats, fetchDashboardRecap } from '../redux/slices/parcelSlice';
 import {
-  TrendingUp,
-  Truck,
   ClipboardCheck,
   Loader2,
   RefreshCw,
-  PackageCheck,
-  Download,
   Wallet,
-  Activity,
-  ChevronDown,
-  Calendar,
-  MoreHorizontal,
-  Package
+  Download,
 } from "lucide-react";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
   const { dashboard } = useSelector(state => state.parcels);
-  const { data, loading, recapLoading } = dashboard;
+  const { data, loading } = dashboard;
   const [activeTab, setActiveTab] = useState('Opérations');
-  
+
   // State pour le filtre de date du recap (Mois/Année)
   const [selectedDate, setSelectedDate] = useState({
     month: new Date().getMonth() + 1,
@@ -33,16 +25,16 @@ const Dashboard = () => {
   // Utilisation des données réelles de l'API (Daily maintenant)
   const dailyOps = data?.daily_operations;
   const dailyFin = data?.daily_finance;
-  
+
   // Données pour le graphique (Axe X = Jours du mois)
-  const chartData = dailyOps ? 
+  const chartData = dailyOps ?
     dailyOps.days.map((day, i) => ({
       day: day,
       exp: dailyOps.datasets[0]?.data[i] || 0,
       rec: dailyOps.datasets[1]?.data[i] || 0,
       ca: dailyFin?.datasets[0]?.data[i] || 0
     })) : [];
-  
+
   // Échelles différentes selon le type
   const maxExp = 50;  // Opérations : 0-50 par pas de 10
   const maxRec = 50;
@@ -55,9 +47,9 @@ const Dashboard = () => {
 
   // Chargement du récapitulatif au montage et quand le mois/année change
   useEffect(() => {
-    dispatch(fetchDashboardRecap({ 
-      month: selectedDate.month, 
-      year: selectedDate.year 
+    dispatch(fetchDashboardRecap({
+      month: selectedDate.month,
+      year: selectedDate.year
     }));
   }, [dispatch, selectedDate.month, selectedDate.year]);
 
@@ -65,7 +57,7 @@ const Dashboard = () => {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-3">
         <Loader2 className="animate-spin text-slate-600" size={40} strokeWidth={1.5} />
-        <p className="text-sm font-medium text-slate-500">Chargement de votre plateforme...</p>
+        <p className="text-base font-medium text-slate-500">Chargement de votre plateforme...</p>
       </div>
     );
   }
@@ -73,167 +65,101 @@ const Dashboard = () => {
   const op = data?.operational || {};
   const log = data?.logistics || {};
 
-  
+  const kpiCards = [
+    { emoji: '📦', label: 'Colis à contrôler', value: op.colis_a_controler || 0, bg: 'bg-blue-50' },
+    { emoji: '🚚', label: 'Arrivages prévus', value: op.arrivages_prevus || 0, bg: 'bg-emerald-50' },
+    { emoji: '✅', label: 'Réceptions du jour', value: op.receptions_du_jour || 0, bg: 'bg-purple-50' },
+    { emoji: '📤', label: 'Expéditions du jour', value: op.colis_expedies_du_jour || 0, bg: 'bg-amber-50' },
+  ];
 
   return (
-    <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
+    <div className="space-y-5 pb-6 md:space-y-7 md:pb-12">
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Tableau de bord</h1>
-          <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">Vue d'ensemble de votre activité logistique</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">👋 Tableau de bord</h1>
+          <p className="text-base text-slate-500 font-medium mt-1">Vue d'ensemble de votre activité logistique</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => dispatch(fetchDashboardStats())} disabled={loading} className="p-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 text-slate-500 transition-all">
-            <RefreshCw size={22} className={loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
+        <button onClick={() => dispatch(fetchDashboardStats())} disabled={loading} className="p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 text-slate-500 transition-all self-start md:self-auto">
+          <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+        </button>
       </div>
 
-      {/* KPI CARDS - Design moderne inspiré */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl transform rotate-3 scale-105 opacity-20 group-hover:opacity-30 transition-all duration-300" />
-          <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-blue-100">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg">
-                <ClipboardCheck className="text-white" size={26} />
-              </div>
-              <div className="flex items-center gap-1 text-blue-600 text-xs font-semibold">
-                <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                Actif
-              </div>
+      {/* KPI CARDS — design simple et doux, sans dégradés ni ombres lourdes */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {kpiCards.map((kpi, i) => (
+          <div key={i} className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-2xl ${kpi.bg} flex items-center justify-center text-2xl shrink-0`}>
+              {kpi.emoji}
             </div>
-            <div className="space-y-2">
-              <p className="text-4xl font-bold text-slate-900 tracking-tighter">{op.colis_a_controler || 0}</p>
-              <p className="text-base font-semibold text-slate-600 uppercase tracking-wide">Colis à contrôler</p>
+            <div className="min-w-0">
+              <p className="text-3xl font-bold text-slate-900 leading-tight">{kpi.value}</p>
+              <p className="text-sm font-semibold text-slate-500 leading-snug">{kpi.label}</p>
             </div>
           </div>
-        </div>
-
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-3xl transform -rotate-3 scale-105 opacity-20 group-hover:opacity-30 transition-all duration-300" />
-          <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-emerald-100">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-lg">
-                <Truck className="text-white" size={26} />
-              </div>
-              <div className="flex items-center gap-1 text-emerald-600 text-xs font-semibold">
-                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                En cours
-              </div>
-            </div>
-            <div className="space-y-2">
-              <p className="text-4xl font-bold text-slate-900 tracking-tighter">{op.arrivages_prevus || 0}</p>
-              <p className="text-base font-semibold text-slate-600 uppercase tracking-wide">Arrivages prévus</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-purple-700 rounded-3xl transform rotate-3 scale-105 opacity-20 group-hover:opacity-30 transition-all duration-300" />
-          <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-purple-100">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
-                <PackageCheck className="text-white" size={26} />
-              </div>
-              <div className="flex items-center gap-1 text-purple-600 text-xs font-semibold">
-                <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
-                Aujourd'hui
-              </div>
-            </div>
-            <div className="space-y-2">
-              <p className="text-4xl font-bold text-slate-900 tracking-tighter">{op.receptions_du_jour || 0}</p>
-              <p className="text-base font-semibold text-slate-600 uppercase tracking-wide">Réceptions</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-orange-700 rounded-3xl transform -rotate-3 scale-105 opacity-20 group-hover:opacity-30 transition-all duration-300" />
-          <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 p-6 border border-orange-100">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg">
-                <TrendingUp className="text-white" size={26} />
-              </div>
-              <div className="flex items-center gap-1 text-orange-600 text-xs font-semibold">
-                <span className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
-                Aujourd'hui
-              </div>
-            </div>
-            <div className="space-y-2">
-              <p className="text-4xl font-bold text-slate-900 tracking-tighter">{op.colis_expedies_du_jour || 0}</p>
-              <p className="text-base font-semibold text-slate-600 uppercase tracking-wide">Expéditions</p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* CHART + SIDEBAR */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
         {/* Chart */}
         <section className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
-            <div className="flex items-center gap-4">
-              <div>
-                <h3 className="text-base font-bold text-slate-900 tracking-tight">{activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}</h3>
-                <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires quotidien'}</p>
-              </div>
-              
-              {/* Nouveau sélecteur de mois/année local à la section Recap */}
-              <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
-                <select 
+          <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight">📈 {activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}</h3>
+              <p className="text-sm text-slate-500 font-medium mt-0.5">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires quotidien'}</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200">
+                <select
                   value={selectedDate.month}
                   onChange={(e) => setSelectedDate(prev => ({ ...prev, month: parseInt(e.target.value) }))}
-                  className="bg-transparent text-xs font-bold text-slate-600 focus:outline-none px-2 py-1 cursor-pointer"
+                  className="bg-transparent text-sm font-semibold text-slate-600 focus:outline-none px-2 py-1 cursor-pointer"
                 >
                   {['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'].map((m, i) => (
-                    <option key={i+1} value={i+1}>{m}</option>
+                    <option key={i + 1} value={i + 1}>{m}</option>
                   ))}
                 </select>
-                <select 
+                <select
                   value={selectedDate.year}
                   onChange={(e) => setSelectedDate(prev => ({ ...prev, year: parseInt(e.target.value) }))}
-                  className="bg-transparent text-xs font-bold text-slate-600 focus:outline-none px-2 py-1 cursor-pointer border-l border-slate-200"
+                  className="bg-transparent text-sm font-semibold text-slate-600 focus:outline-none px-2 py-1 cursor-pointer border-l border-slate-200"
                 >
                   {[2024, 2025, 2026].map(y => (
                     <option key={y} value={y}>{y}</option>
                   ))}
                 </select>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold hover:bg-slate-100 hover:border-slate-300 transition-all">
-                <Download size={20} /> Exporter
+              <button className="flex items-center gap-2 px-3 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-100 transition-all">
+                <Download size={16} /> Exporter
               </button>
             </div>
           </div>
 
-          <div className="px-6 pt-4 flex gap-2">
+          <div className="px-5 pt-4 flex gap-2">
             {[
-              { id: 'Opérations', label: 'Opérations', icon: ClipboardCheck, activeClass: 'bg-orange-500 text-white shadow-md' },
-              { id: 'Finance', label: 'Finance', icon: Wallet, activeClass: 'bg-blue-500 text-white shadow-md' }
+              { id: 'Opérations', label: '📋 Opérations', activeClass: 'bg-orange-100 text-orange-700' },
+              { id: 'Finance', label: '💳 Finance', activeClass: 'bg-blue-100 text-blue-700' }
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${
-                  activeTab === tab.id 
-                    ? tab.activeClass
-                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === tab.id
+                  ? tab.activeClass
+                  : 'text-slate-500 hover:text-slate-600 hover:bg-slate-50'
+                  }`}
               >
-                <tab.icon size={20} />
                 {tab.label}
               </button>
             ))}
           </div>
 
-          <div className="p-6 pt-4">
+          <div className="p-5 pt-4">
             <div className="flex h-48 gap-4 pt-4">
-              <div className="flex flex-col justify-between text-xs font-bold text-slate-300 h-full pb-6 w-10 text-right">
+              <div className="flex flex-col justify-between text-sm font-semibold text-slate-500 h-full pb-6 w-12 text-right">
                 {activeTab === 'Opérations'
                   ? [50, 40, 30, 20, 10, 0].map((v, i) => <span key={i}>{v}</span>)
                   : ['500k', '400k', '300k', '200k', '100k', '0'].map((v, i) => <span key={i}>{v}</span>)
@@ -242,136 +168,132 @@ const Dashboard = () => {
 
               <div className="flex-1 overflow-x-auto relative h-full scrollbar-hide">
                 <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-6">
-                  {[0,1,2,3,4].map(i => <div key={i} className="w-full border-t border-dashed border-slate-100 h-0" />)}
+                  {[0, 1, 2, 3, 4].map(i => <div key={i} className="w-full border-t border-dashed border-slate-100 h-0" />)}
                 </div>
 
                 <div className="flex h-full gap-4 min-w-max">
                   {chartData.map((d, i) => {
                     const maxVal = maxExp > maxRec ? maxExp : maxRec;
                     return (
-                    <div key={i} className="w-12 flex flex-col items-center gap-3 h-full group relative z-10">
-                      <div className="w-full flex-1 flex items-end gap-1 px-0.5">
-                        {activeTab === 'Opérations' ? (
-                          <>
-                            <div className="flex-1 relative group/bar h-full">
-                              <Motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.exp / maxVal) * 100}%` : '0%' }} className="w-full bg-orange-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
+                      <div key={i} className="w-12 flex flex-col items-center gap-3 h-full group relative z-10">
+                        <div className="w-full flex-1 flex items-end gap-1 px-0.5">
+                          {activeTab === 'Opérations' ? (
+                            <>
+                              <div className="flex-1 relative group/bar h-full">
+                                <Motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.exp / maxVal) * 100}%` : '0%' }} className="w-full bg-orange-400 rounded-t-md absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
+                              </div>
+                              <div className="flex-1 relative group/bar h-full">
+                                <Motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.rec / maxVal) * 100}%` : '0%' }} className="w-full bg-blue-400 rounded-t-md absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
+                              </div>
+                            </>
+                          ) : (
+                            <div className="w-full relative group/bar h-full">
+                              <Motion.div initial={{ height: 0 }} animate={{ height: maxCA > 0 ? `${(d.ca / maxCA) * 100}%` : '0%' }} className="w-full bg-blue-400 rounded-t-md absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
                             </div>
-                            <div className="flex-1 relative group/bar h-full">
-                              <Motion.div initial={{ height: 0 }} animate={{ height: maxVal > 0 ? `${(d.rec / maxVal) * 100}%` : '0%' }} className="w-full bg-blue-600 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
-                            </div>
-                          </>
-                        ) : (
-                          <div className="w-full relative group/bar h-full">
-                            <Motion.div initial={{ height: 0 }} animate={{ height: maxCA > 0 ? `${(d.ca / maxCA) * 100}%` : '0%' }} className="w-full bg-gradient-to-t from-blue-700 to-blue-500 rounded-t-sm absolute bottom-0 opacity-90 group-hover/bar:opacity-100 transition-opacity" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="relative">
-                        <span className={`text-xs font-bold uppercase transition-colors ${i === new Date().getDate() - 1 ? 'text-slate-900 font-black' : 'text-slate-400'}`}>{d.day}</span>
-                        {activeTab === 'Opérations' ? (
-                          <>
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-xs font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">
+                          )}
+                        </div>
+                        <div className="relative">
+                          <span className={`text-sm font-semibold transition-colors ${i === new Date().getDate() - 1 ? 'text-slate-900 font-bold' : 'text-slate-500'}`}>{d.day}</span>
+                          {activeTab === 'Opérations' ? (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-800 text-white px-2.5 py-1.5 rounded-lg text-sm font-semibold z-20 pointer-events-none whitespace-nowrap shadow-lg">
                               {d.exp} Exp. / {d.rec} Rec.
                             </div>
-                          </>
-                        ) : (
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 text-white px-2 py-1 rounded-lg text-xs font-bold z-20 pointer-events-none whitespace-nowrap shadow-xl">
+                          ) : (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-800 text-white px-2.5 py-1.5 rounded-lg text-sm font-semibold z-20 pointer-events-none whitespace-nowrap shadow-lg">
                               {d.ca.toLocaleString()} CFA
-                          </div>
-                        )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
+                    );
                   })}
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-6 pt-6 border-t border-slate-100 mt-6">
+            <div className="flex gap-6 pt-5 border-t border-slate-100 mt-5">
               {activeTab === 'Opérations' ? (
                 <>
-                  <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-orange-500" /><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Expéditions</span></div>
-                  <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-blue-600" /><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Réceptions</span></div>
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-orange-400" /><span className="text-sm font-semibold text-slate-600">Expéditions</span></div>
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-blue-400" /><span className="text-sm font-semibold text-slate-600">Réceptions</span></div>
                 </>
               ) : (
-                <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-blue-600" /><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Chiffre d'Affaires</span></div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-blue-400" /><span className="text-sm font-semibold text-slate-600">Chiffre d'Affaires</span></div>
               )}
             </div>
           </div>
         </section>
 
         {/* Sidebar - Volumes par Type */}
-        <div className="space-y-6">
-          <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-bold text-slate-900 tracking-tight">Volumes par Type</h4>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">Répartition des expéditions</p>
-              </div>
-              <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                <Package size={22} />
-              </div>
+        <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 h-fit">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center text-xl shrink-0">
+              📦
             </div>
-            
-            <div className="space-y-3">
-              {(log.volume_par_type || []).map((vol, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${vol.total > 0 ? 'bg-indigo-500' : 'bg-slate-300'}`} />
-                    <span className={`text-xs font-medium ${vol.total > 0 ? 'text-slate-700' : 'text-slate-400'}`}>{vol.type.replace('Type ', '')}</span>
-                  </div>
-                  <span className={`text-xs font-bold ${vol.total > 0 ? 'text-slate-900' : 'text-slate-400'}`}>{vol.total}</span>
+            <div>
+              <h4 className="text-base font-bold text-slate-900 tracking-tight">Volumes par type</h4>
+              <p className="text-sm text-slate-500 font-medium">Répartition des expéditions</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-1">
+            {(log.volume_par_type || []).map((vol, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-2.5 h-2.5 rounded-full ${vol.total > 0 ? 'bg-indigo-500' : 'bg-slate-300'}`} />
+                  <span className={`text-sm font-medium ${vol.total > 0 ? 'text-slate-700' : 'text-slate-500'}`}>{vol.type.replace('Type ', '')}</span>
                 </div>
-              ))}
-            </div>
-          </section>
-        </div>
+                <span className={`text-sm font-bold ${vol.total > 0 ? 'text-slate-900' : 'text-slate-500'}`}>{vol.total}</span>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
-      {/* BOTTOM GRID - Designs variés */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* BOTTOM GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-        {/* Agences Actives - Style liste avec avatars */}
+        {/* Agences Actives */}
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-white flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-900">Agences Actives</h3>
-            <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">{(log.activite_agences || []).length} agences</span>
+          <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">🏢 Agences actives</h3>
+            <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-sm font-bold rounded-full">{(log.activite_agences || []).length} agences</span>
           </div>
-          
+
           <div className="divide-y divide-slate-100">
             {(log.activite_agences || []).slice(0, 5).map((ag, i) => (
-              <div key={i} className="p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors group cursor-pointer">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 ${i === 0 ? 'bg-indigo-500' : i === 1 ? 'bg-purple-500' : i === 2 ? 'bg-pink-500' : i === 3 ? 'bg-emerald-500' : 'bg-amber-500'}`}>
+              <div key={i} className="p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors">
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-white text-sm shrink-0 ${i === 0 ? 'bg-indigo-400' : i === 1 ? 'bg-purple-400' : i === 2 ? 'bg-pink-400' : i === 3 ? 'bg-emerald-400' : 'bg-amber-400'}`}>
                   {ag.nom_agence.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h5 className="text-sm font-bold text-slate-900 truncate">{ag.nom_agence}</h5>
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <h5 className="text-base font-bold text-slate-900 truncate">{ag.nom_agence}</h5>
+                  <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-xs text-slate-500">{ag.ville}</span>
+                    <span className="text-sm text-slate-500">{ag.ville}</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-slate-900">{ag.total || 0}</p>
-                  <p className="text-xs text-slate-400 uppercase">expéditions</p>
+                <div className="text-right shrink-0">
+                  <p className="text-base font-bold text-slate-900">{ag.total || 0}</p>
+                  <p className="text-xs text-slate-500">expéditions</p>
                 </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Top Destinations - Style barres horizontales */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">Top Destinations</h3>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">Les pays les plus actifs</p>
+        {/* Top Destinations */}
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center text-xl shrink-0">
+              🌍
             </div>
-            <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
-              <TrendingUp size={22} />
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Top destinations</h3>
+              <p className="text-sm text-slate-500 font-medium">Les pays les plus actifs</p>
             </div>
           </div>
-          
+
           <div className="space-y-4">
             {(log.top_destinations || []).slice(0, 6).map((dest, i) => {
               const maxVal = Math.max(...(log.top_destinations || []).map(d => d.total));
@@ -380,16 +302,16 @@ const Dashboard = () => {
                 <div key={i}>
                   <div className="flex justify-between items-center mb-1.5">
                     <div className="flex items-center gap-2">
-                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-slate-300' : i === 3 ? 'bg-slate-200' : i === 4 ? 'bg-slate-100' : 'bg-slate-50'}`}>
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${i === 0 ? 'bg-amber-400' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-slate-300' : 'bg-slate-200'}`}>
                         {i + 1}
                       </span>
-                      <span className="text-xs font-bold text-slate-700">{dest.pays}</span>
+                      <span className="text-sm font-semibold text-slate-700">{dest.pays}</span>
                     </div>
-                    <span className="text-xs font-bold text-slate-900">{dest.total}</span>
+                    <span className="text-sm font-bold text-slate-900">{dest.total}</span>
                   </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-slate-300' : i === 3 ? 'bg-slate-200' : i === 4 ? 'bg-slate-100' : 'bg-slate-50'}`}
+                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${i === 0 ? 'bg-amber-400' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-slate-300' : 'bg-slate-200'}`}
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
