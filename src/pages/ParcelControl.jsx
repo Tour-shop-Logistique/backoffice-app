@@ -262,7 +262,7 @@ const ParcelControl = () => {
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Contrôle Logistique</h1>
                         <div className="flex items-center gap-3 mt-1.5">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Référence Colis</span>
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Référence Colis</span>
                             <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded border border-indigo-100 tracking-wider uppercase">{currentParcel.code_colis}</span>
                         </div>
                     </div>
@@ -314,28 +314,28 @@ const ParcelControl = () => {
             )}
 
             {/* --- PRIMARY INFO SECTION --- */}
-            <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+            <div className="bg-gradient-to-br from-white to-indigo-50/60 border border-slate-200 border-t-4 border-t-indigo-500 rounded-lg shadow-sm overflow-hidden">
+                <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-slate-200/70">
                     <div className="md:col-span-7 p-6 flex items-center gap-5">
-                        <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100 shrink-0">
+                        <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 border border-indigo-200 shrink-0">
                             <Tag size={24} />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Désignation du Colis</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Désignation du Colis</p>
                             <h2 className="text-xl md:text-2xl font-bold text-slate-900 uppercase leading-tight">{currentParcel.designation || 'Non spécifié'}</h2>
                         </div>
                     </div>
-                    
-                    <div className="md:col-span-5 p-6 bg-slate-50/50 flex items-center justify-between">
+
+                    <div className="md:col-span-5 p-6 bg-white/60 flex items-center justify-between">
                         <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">État du Contrôle</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">État du Contrôle</p>
                             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-bold uppercase border ${status.styles}`}>
                                 <status.icon size={14} />
                                 {status.label}
                             </div>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Transport</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Transport</p>
                             <div className="flex items-center gap-2 justify-end text-slate-700">
                                 {isAir ? <Plane size={18} className="text-blue-500" /> : <Ship size={18} className="text-slate-500" />}
                                 <span className="text-sm font-bold uppercase">{isAir ? 'Aérien' : 'Maritime'}</span>
@@ -349,39 +349,41 @@ const ParcelControl = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
                     {[
-                        { label: 'Poids', value: `${currentParcel.poids || '0.00'}`, unit: 'KG', icon: Scale, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                        { label: 'Dimensions', value: `${currentParcel.longueur}x${currentParcel.largeur}x${currentParcel.hauteur}`, unit: 'CM', icon: Gauge, color: 'text-amber-600', bg: 'bg-amber-50' },
-                        { label: 'Service', value: currentParcel.expedition?.type_expedition?.replace(/groupage_|dhd_/gi, '') || 'Standard', unit: '', icon: Layers, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                        { label: 'Poids', value: `${currentParcel.poids || '0.00'}`, unit: 'KG', icon: Scale, color: 'text-indigo-600', bg: 'bg-indigo-100', border: 'border-t-indigo-400', tint: 'from-white to-indigo-50/50' },
+                        { label: 'Dimensions', value: `${currentParcel.longueur}x${currentParcel.largeur}x${currentParcel.hauteur}`, unit: 'CM', icon: Gauge, color: 'text-amber-600', bg: 'bg-amber-100', border: 'border-t-amber-400', tint: 'from-white to-amber-50/50' },
+                        { label: 'Service', value: currentParcel.expedition?.type_expedition?.replace(/groupage_|dhd_/gi, '') || 'Standard', unit: '', icon: Layers, color: 'text-emerald-600', bg: 'bg-emerald-100', border: 'border-t-emerald-400', tint: 'from-white to-emerald-50/50' },
                     ].map((item, i) => (
-                        <div key={i} className="bg-white border border-slate-200 p-5 rounded-lg shadow-sm">
+                        <div key={i} className={`bg-gradient-to-br ${item.tint} border border-slate-200 border-t-4 ${item.border} p-5 rounded-lg shadow-sm`}>
                             <div className="flex items-center gap-3 mb-4">
                                 <div className={`p-2 rounded ${item.bg} ${item.color}`}>
                                     <item.icon size={18} />
                                 </div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{item.label}</p>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{item.label}</p>
                             </div>
                             <div className="flex items-baseline gap-1.5">
                                 <span className="text-xl font-bold text-slate-900 uppercase tracking-tight">{item.value}</span>
-                                {item.unit && <span className="text-xs font-bold text-slate-400">{item.unit}</span>}
+                                {item.unit && <span className="text-xs font-bold text-slate-500">{item.unit}</span>}
                             </div>
                         </div>
                     ))}
                 </div>
 
-                <div className="lg:col-span-1 bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+                <div className="lg:col-span-1 bg-white border border-slate-200 border-t-4 border-t-slate-400 rounded-lg p-5 shadow-sm">
                     <div className="flex items-center gap-3 mb-4">
-                        <Blocks size={18} className="text-slate-400" />
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Articles ({ (currentParcel.articles || []).length })</p>
+                        <div className="p-2 rounded bg-slate-100 text-slate-500">
+                            <Blocks size={18} />
+                        </div>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Articles ({ (currentParcel.articles || []).length })</p>
                     </div>
                     <div className="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto pr-2 custom-scrollbar">
                         {(currentParcel.articles || []).length > 0 ? (
                             currentParcel.articles.map((article, idx) => (
-                                <span key={idx} className="px-2 py-1 bg-slate-100 border border-slate-200 text-slate-600 rounded text-[10px] font-bold uppercase whitespace-nowrap">
-                                    {article}
+                                <span key={idx} className="px-2 py-1 bg-slate-100 border border-slate-200 text-slate-600 rounded text-xs font-bold uppercase whitespace-nowrap">
+                                    {typeof article === 'string' ? article : article?.designation}
                                 </span>
                             ))
                         ) : (
-                            <p className="text-xs font-medium text-slate-400 italic">Aucun article</p>
+                            <p className="text-xs font-medium text-slate-500 italic">Aucun article</p>
                         )}
                     </div>
                 </div>
@@ -391,7 +393,7 @@ const ParcelControl = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Contacts */}
                 <div className="lg:col-span-8 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                    <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                    <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200/70">
                         <div className="p-6">
                             <div className="flex items-center gap-3 mb-5">
                                 <div className="w-9 h-9 rounded bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
@@ -401,23 +403,29 @@ const ParcelControl = () => {
                             </div>
                             <div className="space-y-4">
                                 <div>
-                                    <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Nom complet</p>
-                                    <p className="text-base font-bold text-slate-800">{currentParcel.expedition?.expediteur?.nom_prenom}</p>
+                                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nom complet</p>
+                                    <p className="text-base font-bold text-slate-900">{currentParcel.expedition?.expediteur?.nom_prenom}</p>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Téléphone</p>
-                                        <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.expediteur?.telephone}</p>
+                                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-slate-100">
+                                    <div className="flex items-start gap-2">
+                                        <Phone size={14} className="text-slate-300 mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Téléphone</p>
+                                            <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.expediteur?.telephone}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Ville/Pays</p>
-                                        <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.expediteur?.ville}, {currentParcel.expedition?.pays_depart}</p>
+                                    <div className="flex items-start gap-2">
+                                        <MapPin size={14} className="text-slate-300 mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Ville/Pays</p>
+                                            <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.expediteur?.ville}, {currentParcel.expedition?.pays_depart}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="p-6 bg-slate-50/30">
+                        <div className="p-6">
                             <div className="flex items-center gap-3 mb-5">
                                 <div className="w-9 h-9 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
                                     <MapPin size={18} />
@@ -426,17 +434,23 @@ const ParcelControl = () => {
                             </div>
                             <div className="space-y-4">
                                 <div>
-                                    <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Nom complet</p>
-                                    <p className="text-base font-bold text-slate-800">{currentParcel.expedition?.destinataire?.nom_prenom}</p>
+                                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nom complet</p>
+                                    <p className="text-base font-bold text-slate-900">{currentParcel.expedition?.destinataire?.nom_prenom}</p>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Téléphone</p>
-                                        <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.destinataire?.telephone}</p>
+                                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-slate-100">
+                                    <div className="flex items-start gap-2">
+                                        <Phone size={14} className="text-slate-300 mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Téléphone</p>
+                                            <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.destinataire?.telephone}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase mb-0.5">Ville/Pays</p>
-                                        <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.destinataire?.ville}, {currentParcel.expedition?.pays_destination}</p>
+                                    <div className="flex items-start gap-2">
+                                        <MapPin size={14} className="text-slate-300 mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Ville/Pays</p>
+                                            <p className="text-sm font-bold text-slate-700">{currentParcel.expedition?.destinataire?.ville}, {currentParcel.expedition?.pays_destination}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -445,25 +459,25 @@ const ParcelControl = () => {
                 </div>
 
                 {/* Agency Origin */}
-                <div className="lg:col-span-4 bg-white border border-slate-200 rounded-lg shadow-sm p-6">
+                <div className="lg:col-span-4 bg-white border border-slate-200 border-t-4 border-t-purple-400 rounded-lg shadow-sm p-6">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="w-9 h-9 rounded bg-slate-100 text-slate-500 flex items-center justify-center">
+                        <div className="w-9 h-9 rounded bg-purple-100 text-purple-600 flex items-center justify-center border border-purple-200">
                             <Building2 size={18} />
                         </div>
                         <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Provenance Agence</h4>
                     </div>
                     <div className="space-y-5">
-                        <div className="p-4 bg-slate-50 rounded border border-slate-100">
-                            <p className="text-xs font-bold text-slate-400 uppercase mb-1">Agence de départ</p>
+                        <div className="p-4 bg-purple-50/60 rounded border border-purple-100">
+                            <p className="text-xs font-bold text-slate-500 uppercase mb-1">Agence de départ</p>
                             <p className="text-sm font-bold text-slate-900">{currentParcel.expedition?.agence?.nom_agence}</p>
                         </div>
                         <div className="flex items-center justify-between px-1">
                             <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Contact Agence</p>
+                                <p className="text-xs font-bold text-slate-500 uppercase mb-1">Contact Agence</p>
                                 <p className="text-sm font-bold text-slate-800">{currentParcel.expedition?.agence?.telephone || '-'}</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Date d'Envoi</p>
+                                <p className="text-xs font-bold text-slate-500 uppercase mb-1">Date d'Envoi</p>
                                 <p className="text-sm font-bold text-slate-800">
                                     {currentParcel.expedition?.created_at ? new Date(currentParcel.expedition.created_at).toLocaleDateString('fr-FR', {
                                         day: '2-digit', month: '2-digit'
@@ -493,13 +507,13 @@ const ParcelControl = () => {
                         accent: currentParcel.expedition?.statut_paiement_frais === 'paye' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-amber-600 bg-amber-50 border-amber-100'
                     }
                 ].map((pay, i) => (
-                    <div key={i} className={`p-5 rounded-lg border flex items-center justify-between ${pay.isPaid ? 'bg-white border-emerald-100 shadow-sm shadow-emerald-50' : 'bg-white border-amber-100 shadow-sm shadow-amber-50'}`}>
+                    <div key={i} className={`p-5 rounded-lg border flex items-center justify-between ${pay.isPaid ? 'bg-gradient-to-br from-white to-emerald-50/60 border-emerald-200 shadow-sm shadow-emerald-50' : 'bg-gradient-to-br from-white to-amber-50/60 border-amber-200 shadow-sm shadow-amber-50'}`}>
                         <div className="flex items-center gap-4">
                             <div className={`w-10 h-10 rounded flex items-center justify-center border ${pay.accent}`}>
                                 <pay.icon size={20} />
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">{pay.label}</p>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">{pay.label}</p>
                                 <p className="text-sm md:text-base font-bold text-slate-900">{pay.value}</p>
                             </div>
                         </div>
