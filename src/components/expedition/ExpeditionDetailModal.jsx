@@ -40,6 +40,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
             title={`Expédition ${selectedExpedition.reference}`}
             subtitle="Détails complets de l'expédition"
             size="2xl"
+            position="right"
         >
             <div className="space-y-6 pb-4">
                 <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-50/50 rounded-xl border border-slate-300">

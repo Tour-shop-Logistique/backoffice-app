@@ -12,6 +12,7 @@ export const ROUTES = {
     PRODUITS: '/produits',
     BACKOFFICE_SETUP: '/backoffice-setup',
     PROFILE: '/profile',
+    SETTINGS: '/settings',
     PARCEL_CONTROL: '/parcels/control/:code',
     PARCEL_HISTORY: '/parcels-history',
     INCOMING_PARCELS: '/incoming-parcels',

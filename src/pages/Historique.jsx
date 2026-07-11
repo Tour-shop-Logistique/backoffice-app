@@ -216,10 +216,10 @@ const Historique = () => {
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
                 Historique des Expéditions
               </h1>
-              <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
+              <p className="text-sm md:text-base text-slate-600 mt-1 font-medium">
                 Toutes les expéditions où votre backoffice a intervenu
               </p>
             </div>
@@ -358,28 +358,28 @@ const Historique = () => {
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-bold text-slate-600 uppercase tracking-wider">
                     Expédition
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-bold text-slate-600 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-bold text-slate-600 uppercase tracking-wider">
                     Agence
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-bold text-slate-600 uppercase tracking-wider">
                     Destination
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-bold text-slate-600 uppercase tracking-wider">
                     Rôle BO
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-bold text-slate-600 uppercase tracking-wider">
                     Gain
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-bold text-slate-600 uppercase tracking-wider">
                     Statut
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-sm font-bold text-slate-600 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -389,12 +389,12 @@ const Historique = () => {
                   <tr key={exp.id} className={`hover:bg-slate-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-bold text-slate-900 text-sm">{exp.reference}</span>
-                        <span className="text-xs text-slate-500">{exp.expediteur?.nom_prenom || 'N/A'}</span>
+                        <span className="font-bold text-slate-900 text-base">{exp.reference}</span>
+                        <span className="text-sm text-slate-500">{exp.expediteur?.nom_prenom || 'N/A'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-slate-700">
+                      <span className="text-base text-slate-700">
                         {exp.date_expedition_depart
                           ? format(new Date(exp.date_expedition_depart), 'dd MMM yyyy', { locale: fr })
                           : format(new Date(exp.created_at), 'dd MMM yyyy', { locale: fr })
@@ -403,14 +403,14 @@ const Historique = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <Building2 size={14} className="text-slate-400" />
-                        <span className="text-sm text-slate-700">{exp.agence?.nom_agence || 'N/A'}</span>
+                        <Building2 size={15} className="text-slate-400" />
+                        <span className="text-base text-slate-700">{exp.agence?.nom_agence || 'N/A'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-slate-400" />
-                        <span className="text-sm text-slate-700">{exp.pays_destination || 'N/A'}</span>
+                        <MapPin size={15} className="text-slate-400" />
+                        <span className="text-base text-slate-700">{exp.pays_destination || 'N/A'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -430,7 +430,7 @@ const Historique = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-bold text-emerald-600 text-sm">
+                      <span className="font-bold text-emerald-600 text-base">
                         {(exp.backoffice_gain || 0).toLocaleString()} CFA
                       </span>
                     </td>

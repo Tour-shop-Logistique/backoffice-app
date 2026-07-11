@@ -1,5 +1,19 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { X, Building2 } from "lucide-react";
+import {
+  X,
+  LayoutDashboard,
+  ClipboardCheck,
+  ArrowDownToLine,
+  History,
+  Store,
+  Wallet,
+  DollarSign,
+  BarChart3,
+  Globe,
+  Tag,
+  Users,
+  Settings,
+} from "lucide-react";
 import { useSelector } from "react-redux";
 
 import logo from "../../assets/logo_transparent.png";
@@ -9,43 +23,43 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const { isConfigured } = useSelector(state => state.backoffice);
   const location = useLocation(); // Hook inside component
 
-  // Navigation groupée par section, avec un emoji par entrée pour repérer
-  // les options d'un coup d'œil sans avoir à lire chaque libellé.
+  // Navigation groupée par section, avec une icône colorée par entrée pour
+  // repérer les options d'un coup d'œil sans avoir à lire chaque libellé.
   const navigationSections = [
     {
       label: null, // Pas de titre : c'est l'accueil
       items: [
-        { name: "Tableau de bord", href: "/dashboard", emoji: "🏠" },
+        { name: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard, color: "text-indigo-400" },
       ],
     },
     {
       label: "Logistique",
       items: [
-        { name: "Colis à contrôler", href: "/parcels", emoji: "📦" },
-        { name: "Arrivages prévus", href: "/incoming-parcels", emoji: "📥" },
-        { name: "Historique", href: "/historique", emoji: "🕓" },
+        { name: "Colis à contrôler", href: "/parcels", icon: ClipboardCheck, color: "text-blue-400" },
+        { name: "Arrivages prévus", href: "/incoming-parcels", icon: ArrowDownToLine, color: "text-emerald-400" },
+        { name: "Historique", href: "/historique", icon: History, color: "text-slate-400" },
       ],
     },
     {
       label: "Réseau & Finance",
       items: [
-        { name: "Agences partenaires", href: "/agence-partenaire", emoji: "🏢" },
-        { name: "Comptabilité", href: "/comptabilite", emoji: "💰" },
+        { name: "Agences partenaires", href: "/agence-partenaire", icon: Store, color: "text-purple-400" },
+        { name: "Comptabilité", href: "/comptabilite", icon: Wallet, color: "text-amber-400" },
       ],
     },
     {
       label: "Tarification",
       items: [
-        { name: "Tarification simple", href: "/simple-rates", emoji: "💵" },
-        { name: "Tarification groupée", href: "/grouped-rates", emoji: "📊" },
+        { name: "Tarification simple", href: "/simple-rates", icon: DollarSign, color: "text-emerald-400" },
+        { name: "Tarification groupée", href: "/grouped-rates", icon: BarChart3, color: "text-teal-400" },
       ],
     },
     {
       label: "Configuration",
       items: [
-        { name: "Zones d'expéditions", href: "/zone-configuration", emoji: "🌍" },
-        { name: "Produits & Catégories", href: "/produits", emoji: "🏷️" },
-        { name: "Agents Backoffice", href: "/agents", emoji: "👥", adminOnly: true },
+        { name: "Zones d'expéditions", href: "/zone-configuration", icon: Globe, color: "text-sky-400" },
+        { name: "Produits & Catégories", href: "/produits", icon: Tag, color: "text-rose-400" },
+        { name: "Agents Backoffice", href: "/agents", icon: Users, color: "text-indigo-400", adminOnly: true },
       ],
     },
   ]
@@ -59,7 +73,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const setupNavigationSections = [
     {
       label: null,
-      items: [{ name: "Configuration Backoffice", href: "/backoffice-setup", emoji: "⚙️" }],
+      items: [{ name: "Configuration Backoffice", href: "/backoffice-setup", icon: Settings, color: "text-indigo-400" }],
     },
   ];
 
@@ -131,12 +145,12 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                       }`}
                   >
                     <span
-                      className={`flex items-center justify-center w-10 h-10 rounded-xl text-xl shrink-0 transition-colors ${active
+                      className={`flex items-center justify-center w-10 h-10 rounded-xl shrink-0 transition-colors ${active
                         ? "bg-indigo-500 shadow-sm shadow-indigo-500/30"
                         : "bg-slate-800/70 group-hover:bg-slate-700"
                         }`}
                     >
-                      {item.emoji}
+                      <item.icon size={20} className={active ? "text-white" : item.color} />
                     </span>
                     <span className="flex-1 leading-tight">{item.name}</span>
                     {active && <span className="w-2 h-2 rounded-full bg-indigo-400 shrink-0" />}

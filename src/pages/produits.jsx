@@ -17,6 +17,7 @@ import { PlusCircle, Loader2, X, Trash2, AlertTriangle, Edit2, Save, XCircle, Re
 import { showNotification } from "../redux/slices/uiSlice"
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
+import RowActions from '../components/common/RowActions';
 
 export default function Produits() {
   const dispatch = useDispatch();
@@ -527,23 +528,11 @@ export default function Produits() {
                             </div>
                           </button>
                         </td>
-                        <td className="px-6 py-3">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => setEditingProduit(produit)}
-                              className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-                              title="Modifier"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              onClick={() => setProduitToDelete(produit)}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                              title="Supprimer"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+                        <td className="px-6 py-3 text-right">
+                          <RowActions
+                            onEdit={() => setEditingProduit(produit)}
+                            onDelete={() => setProduitToDelete(produit)}
+                          />
                         </td>
                       </tr>
                     );
@@ -834,19 +823,11 @@ export default function Produits() {
                         {cat.is_default ? (
                           <span className="text-xs text-slate-400 italic">Non modifiable</span>
                         ) : (
-                          <div className="flex justify-end gap-2 text-center">
-                            <button
-                              onClick={() => { setEditingCategory(cat); setCategoryForm({ nom: cat.nom }); }}
-                              className="text-slate-600 p-1.5 hover:bg-slate-100 rounded"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              onClick={() => setCategoryToDelete(cat)}
-                              className="text-red-500 p-1.5 hover:bg-red-50 rounded"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                          <div className="flex justify-end items-center gap-3">
+                            <RowActions
+                              onEdit={() => { setEditingCategory(cat); setCategoryForm({ nom: cat.nom }); }}
+                              onDelete={() => setCategoryToDelete(cat)}
+                            />
                             <button
                               onClick={() => handleToggleCategoryStatus(cat)}
                               disabled={updatingStatus[`cat-${cat.id}`]}

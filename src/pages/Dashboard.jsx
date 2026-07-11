@@ -3,11 +3,17 @@ import { motion as Motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardStats, fetchDashboardRecap } from '../redux/slices/parcelSlice';
 import {
-  ClipboardCheck,
   Loader2,
   RefreshCw,
-  Wallet,
   Download,
+  ClipboardCheck,
+  Truck,
+  PackageCheck,
+  TrendingUp,
+  Activity,
+  Wallet,
+  Package,
+  Building2,
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -66,10 +72,10 @@ const Dashboard = () => {
   const log = data?.logistics || {};
 
   const kpiCards = [
-    { emoji: '📦', label: 'Colis à contrôler', value: op.colis_a_controler || 0, bg: 'bg-blue-50' },
-    { emoji: '🚚', label: 'Arrivages prévus', value: op.arrivages_prevus || 0, bg: 'bg-emerald-50' },
-    { emoji: '✅', label: 'Réceptions du jour', value: op.receptions_du_jour || 0, bg: 'bg-purple-50' },
-    { emoji: '📤', label: 'Expéditions du jour', value: op.colis_expedies_du_jour || 0, bg: 'bg-amber-50' },
+    { icon: ClipboardCheck, label: 'Colis à contrôler', value: op.colis_a_controler || 0, bg: 'bg-blue-50', color: 'text-blue-600' },
+    { icon: Truck, label: 'Arrivages prévus', value: op.arrivages_prevus || 0, bg: 'bg-emerald-50', color: 'text-emerald-600' },
+    { icon: PackageCheck, label: 'Réceptions du jour', value: op.receptions_du_jour || 0, bg: 'bg-purple-50', color: 'text-purple-600' },
+    { icon: TrendingUp, label: 'Expéditions du jour', value: op.colis_expedies_du_jour || 0, bg: 'bg-amber-50', color: 'text-amber-600' },
   ];
 
   return (
@@ -78,7 +84,7 @@ const Dashboard = () => {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">👋 Tableau de bord</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Tableau de bord</h1>
           <p className="text-base text-slate-500 font-medium mt-1">Vue d'ensemble de votre activité logistique</p>
         </div>
         <button onClick={() => dispatch(fetchDashboardStats())} disabled={loading} className="p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 text-slate-500 transition-all self-start md:self-auto">
@@ -90,8 +96,8 @@ const Dashboard = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi, i) => (
           <div key={i} className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-2xl ${kpi.bg} flex items-center justify-center text-2xl shrink-0`}>
-              {kpi.emoji}
+            <div className={`w-14 h-14 rounded-2xl ${kpi.bg} flex items-center justify-center shrink-0`}>
+              <kpi.icon size={26} className={kpi.color} />
             </div>
             <div className="min-w-0">
               <p className="text-3xl font-bold text-slate-900 leading-tight">{kpi.value}</p>
@@ -108,7 +114,9 @@ const Dashboard = () => {
         <section className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 tracking-tight">📈 {activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}</h3>
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <Activity size={18} className="text-slate-400" /> {activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}
+              </h3>
               <p className="text-sm text-slate-500 font-medium mt-0.5">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires quotidien'}</p>
             </div>
 
@@ -141,8 +149,8 @@ const Dashboard = () => {
 
           <div className="px-5 pt-4 flex gap-2">
             {[
-              { id: 'Opérations', label: '📋 Opérations', activeClass: 'bg-orange-100 text-orange-700' },
-              { id: 'Finance', label: '💳 Finance', activeClass: 'bg-blue-100 text-blue-700' }
+              { id: 'Opérations', icon: ClipboardCheck, label: 'Opérations', activeClass: 'bg-orange-100 text-orange-700' },
+              { id: 'Finance', icon: Wallet, label: 'Finance', activeClass: 'bg-blue-100 text-blue-700' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -152,7 +160,7 @@ const Dashboard = () => {
                   : 'text-slate-500 hover:text-slate-600 hover:bg-slate-50'
                   }`}
               >
-                {tab.label}
+                <tab.icon size={16} /> {tab.label}
               </button>
             ))}
           </div>
@@ -227,8 +235,8 @@ const Dashboard = () => {
         {/* Sidebar - Volumes par Type */}
         <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 h-fit">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center text-xl shrink-0">
-              📦
+            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+              <Package size={20} className="text-indigo-600" />
             </div>
             <div>
               <h4 className="text-base font-bold text-slate-900 tracking-tight">Volumes par type</h4>
@@ -256,7 +264,9 @@ const Dashboard = () => {
         {/* Agences Actives */}
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">🏢 Agences actives</h3>
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Building2 size={18} className="text-indigo-500" /> Agences actives
+            </h3>
             <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-sm font-bold rounded-full">{(log.activite_agences || []).length} agences</span>
           </div>
 
@@ -285,8 +295,8 @@ const Dashboard = () => {
         {/* Top Destinations */}
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center text-xl shrink-0">
-              🌍
+            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+              <TrendingUp size={20} className="text-amber-600" />
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">Top destinations</h3>

@@ -13,12 +13,10 @@ import {
     Building,
     Phone,
     Mail,
-    ChevronDown,
-    ChevronRight,
-    ChevronLeft,
     Info,
     CheckCircle2,
-    Search
+    Navigation,
+    Lock,
 } from 'lucide-react';
 import SearchableDropdown from '../components/common/SearchableDropdown';
 
@@ -36,7 +34,7 @@ const BackofficeSetup = () => {
     const { user } = useSelector((state) => state.auth);
 
     const isAdmin = user?.role === 'is_backoffice_admin';
-    const [step, setStep] = useState(1);
+    const readOnly = !isAdmin && isConfigured;
     const [isLoading, setIsLoading] = useState(false);
     const [gpsSuccess, setGpsSuccess] = useState(false);
 
@@ -90,22 +88,14 @@ const BackofficeSetup = () => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const nextStep = () => {
-        if (step === 1) {
-            if (!formData.nom_organisation || !formData.telephone) {
-                dispatch(showNotification({ type: 'error', message: "Veuillez remplir tous les champs obligatoires." }));
-                return;
-            }
-        }
-        setStep(step + 1);
-    };
-
-    const prevStep = () => setStep(step - 1);
-
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
 
-        // Validation finale
+        if (!formData.nom_organisation || !formData.telephone) {
+            dispatch(showNotification({ type: 'error', message: "Le nom de l'organisation et le téléphone sont obligatoires." }));
+            return;
+        }
+
         if (!formData.pays || !formData.ville || !formData.adresse) {
             dispatch(showNotification({ type: 'error', message: "Veuillez remplir les informations de localisation obligatoires." }));
             return;
@@ -137,294 +127,223 @@ const BackofficeSetup = () => {
         }
     };
 
-    const inputBase = "w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-sm font-medium text-slate-700 disabled:opacity-70 disabled:cursor-not-allowed";
-    const labelBase = "text-xs font-bold text-slate-700 ml-1 uppercase tracking-wider block mb-1.5";
+    const inputBase = "w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-colors placeholder:text-slate-400 text-sm font-medium text-slate-900 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed";
+    const plainInputBase = "w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-colors placeholder:text-slate-400 text-sm font-medium text-slate-900 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed";
+    const labelBase = "text-sm font-semibold text-slate-700 flex items-center gap-1.5";
 
     return (
-        <div className="min-h-screen py-2 px-4 flex items-start justify-center">
-            <div className="w-full max-w-4xl bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden transition-all duration-300">
-                {/* Header with Premium Gradient */}
-                <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 md:p-10 p-6 pb-16 text-white relative">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
-
-                    <div className="flex flex-col md:flex-row md:items-center gap-4 relative z-10">
-                        <div className="w-16 h-16 bg-white/10 rounded-xl border border-white/20 flex items-center justify-center backdrop-blur-md shrink-0 shadow-xl self-start">
-                            <Building2 size={32} className="text-blue-400" />
-                        </div>
-                        <div className="space-y-1">
-                            <h1 className="md:text-3xl text-2xl font-bold tracking-tight">
-                                {isConfigured ? 'Paramètres' : 'Configuration'}
-                            </h1>
-                            <p className="text-slate-400 md:text-base text-sm font-medium flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                                {isConfigured ? 'Administration de la structure' : 'Finalisation de votre espace'}
-                            </p>
-                        </div>
+        <div className={isConfigured ? '' : 'max-w-3xl mx-auto'}>
+            {!isConfigured && (
+                <div className="mb-6 text-center space-y-2">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto shadow-sm">
+                        <Building2 size={26} />
                     </div>
-
-                    {/* Enhanced Stepper */}
-                    <div className="mt-8 flex items-center gap-4 relative z-10">
-                        <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-700 ease-out"
-                                style={{ width: `${(step / 2) * 100}%` }}
-                            ></div>
-                        </div>
-                        <span className="text-xs font-bold uppercase tracking-widest text-blue-400 bg-blue-400/10 px-2 py-1 rounded-md">
-                            Étape {step}/2
-                        </span>
-                    </div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Bienvenue sur TourShop</h1>
+                    <p className="text-slate-500 text-sm md:text-base max-w-md mx-auto">
+                        Configurons votre backoffice. Ces informations pourront être modifiées plus tard depuis les Paramètres.
+                    </p>
                 </div>
+            )}
 
-                <div className="md:p-10 p-6 -mt-4 bg-white relative z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] space-y-8">
-                    {!isAdmin && isConfigured && (
-                        <div className="bg-amber-50 border border-amber-100 text-amber-700 px-4 py-2 rounded-xl flex items-center gap-4 animate-in fade-in zoom-in-95 duration-500">
-                            <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                                <Info size={20} />
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-wide">Mode Lecture Seule</p>
+            {readOnly && (
+                <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl flex items-center gap-3">
+                    <Lock size={18} className="shrink-0" />
+                    <p className="text-sm font-medium">Lecture seule — seul un administrateur peut modifier ces informations.</p>
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Identité */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                            <Building size={18} />
+                        </div>
+                        <div>
+                            <h2 className="font-semibold text-slate-900">Identité de l'organisation</h2>
+                            <p className="text-xs text-slate-500">Le nom et les coordonnées de contact de votre backoffice</p>
+                        </div>
+                    </div>
+
+                    <div className="p-6 space-y-5">
+                        <div className="space-y-1.5">
+                            <label className={labelBase}>Nom de l'organisation <span className="text-rose-500">*</span></label>
+                            <div className="relative">
+                                <Building className="h-4.5 w-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    required
+                                    name="nom_organisation"
+                                    type="text"
+                                    value={formData.nom_organisation}
+                                    onChange={handleChange}
+                                    placeholder="Ex: Tour Shop Logistics"
+                                    className={inputBase}
+                                    disabled={readOnly}
+                                />
                             </div>
                         </div>
-                    )}
 
-                    {/* STEP 1: IDENTITY */}
-                    {step === 1 && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="space-y-1">
-                                <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-3">
-                                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs">1</span>
-                                    Identité du Backoffice
-                                </h2>
-                                <p className="text-slate-500 text-sm font-medium">Renseignez les informations d'identification de votre structure.</p>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-8">
-                                <div className="space-y-2">
-                                    <label className={labelBase}>Nom de l'organisation <span className="text-blue-500">*</span></label>
-                                    <div className="group relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                                            <Building className="h-5 w-5" />
-                                        </div>
-                                        <input
-                                            required
-                                            name="nom_organisation"
-                                            type="text"
-                                            value={formData.nom_organisation}
-                                            onChange={handleChange}
-                                            placeholder="Ex: Tour Shop Logistics"
-                                            className={`${inputBase} pl-12 h-14 text-base font-semibold shadow-sm`}
-                                            disabled={!isAdmin && isConfigured}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className={labelBase}>Téléphone <span className="text-blue-500">*</span></label>
-                                        <div className="group relative">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                                                <Phone className="h-5 w-5" />
-                                            </div>
-                                            <input
-                                                required
-                                                name="telephone"
-                                                type="text"
-                                                value={formData.telephone}
-                                                onChange={handleChange}
-                                                placeholder="+225 07 XX XX XX XX"
-                                                className={`${inputBase} pl-12 h-14`}
-                                                disabled={!isAdmin && isConfigured}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className={labelBase}>Email (Optionnel)</label>
-                                        <div className="group relative">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                                                <Mail className="h-5 w-5" />
-                                            </div>
-                                            <input
-                                                name="email"
-                                                type="email"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                placeholder="contact@tourshop.com"
-                                                className={`${inputBase} pl-12 h-14`}
-                                                disabled={!isAdmin && isConfigured}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* STEP 2: LOCATION */}
-                    {step === 2 && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="space-y-1">
-                                <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-3">
-                                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs">2</span>
-                                    Localisation Géographique
-                                </h2>
-                                <p className="text-slate-500 text-sm font-medium">Précisez l'emplacement physique de votre bureau central.</p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                                <div className="space-y-2">
-                                    <label className={labelBase}>Pays <span className="text-blue-500">*</span></label>
-                                    <SearchableDropdown
-                                        value={formData.pays}
-                                        onChange={(value) => setFormData(prev => ({ ...prev, pays: value }))}
-                                        options={countryList}
-                                        placeholder="Sélectionner..."
-                                        disabled={!isAdmin && isConfigured}
-                                        themeColor="blue"
-                                        className="h-14"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className={labelBase}>Ville <span className="text-blue-500">*</span></label>
-                                    <div className="relative">
-                                        <input
-                                            required
-                                            name="ville"
-                                            type="text"
-                                            value={formData.ville}
-                                            onChange={handleChange}
-                                            placeholder="Ex: Dakar"
-                                            className={`${inputBase} h-14`}
-                                            disabled={!isAdmin && isConfigured}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className={labelBase}>Commune / Secteur</label>
-                                    <input
-                                        name="commune"
-                                        type="text"
-                                        value={formData.commune}
-                                        onChange={handleChange}
-                                        placeholder="Ex: Plateau"
-                                        className={`${inputBase} h-14`}
-                                        disabled={!isAdmin && isConfigured}
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className={labelBase}>Adresse précise <span className="text-blue-500">*</span></label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div className="space-y-1.5">
+                                <label className={labelBase}>Téléphone <span className="text-rose-500">*</span></label>
+                                <div className="relative">
+                                    <Phone className="h-4.5 w-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <input
                                         required
-                                        name="adresse"
+                                        name="telephone"
                                         type="text"
-                                        value={formData.adresse}
+                                        value={formData.telephone}
                                         onChange={handleChange}
-                                        placeholder="Numéro de porte, Immeuble..."
-                                        className={`${inputBase} h-14`}
-                                        disabled={!isAdmin && isConfigured}
+                                        placeholder="+225 07 XX XX XX XX"
+                                        className={inputBase}
+                                        disabled={readOnly}
                                     />
                                 </div>
+                            </div>
 
-                                <div className="md:col-span-2 space-y-2">
-                                    <div className="flex items-center justify-between px-1">
-                                        <label className={labelBase}>Coordonnées GPS</label>
-                                        {gpsSuccess && (
-                                            <span className="text-xs font-bold text-green-600 uppercase flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full">
-                                                <CheckCircle2 size={12} /> Position Capturée
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col sm:flex-row gap-3">
-                                        <div className="relative flex-1">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                                                <MapPin className="h-5 w-5" />
-                                            </div>
-                                            <input
-                                                name="localisation"
-                                                type="text"
-                                                value={formData.localisation}
-                                                onChange={handleChange}
-                                                placeholder="Latitude, Longitude"
-                                                className={`${inputBase} pl-12 h-14 font-mono text-xs`}
-                                                disabled={!isAdmin && isConfigured}
-                                            />
-                                        </div>
-                                        {isAdmin && (
-                                            <button
-                                                type="button"
-                                                onClick={getLocation}
-                                                className="h-14 sm:px-6 px-4 bg-white border-2 border-slate-900 text-slate-900 text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <Search size={16} />
-                                                Auto-détection
-                                            </button>
-                                        )}
-                                    </div>
+                            <div className="space-y-1.5">
+                                <label className={labelBase}>Email</label>
+                                <div className="relative">
+                                    <Mail className="h-4.5 w-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        name="email"
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder="contact@tourshop.com"
+                                        className={inputBase}
+                                        disabled={readOnly}
+                                    />
                                 </div>
                             </div>
                         </div>
-                    )}
+                    </div>
+                </div>
 
-                    {/* Navigation Actions */}
-                    <div className="pt-8 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
-                        <div className="w-full sm:w-auto">
-                            {step > 1 ? (
-                                <button
-                                    type="button"
-                                    onClick={prevStep}
-                                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-slate-500 font-bold uppercase tracking-widest text-xs hover:text-slate-900 transition-colors"
-                                >
-                                    <ChevronLeft size={18} />
-                                    Retour
-                                </button>
-                            ) : (
-                                isConfigured && (
-                                    <button
-                                        type="button"
-                                        onClick={() => navigate(-1)}
-                                        className="w-full sm:w-auto px-8 py-4 text-slate-500 font-bold uppercase tracking-widest text-xs hover:text-slate-900 transition-colors text-center"
-                                    >
-                                        Fermer
-                                    </button>
-                                )
-                            )}
+                {/* Localisation */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <MapPin size={18} />
+                        </div>
+                        <div>
+                            <h2 className="font-semibold text-slate-900">Localisation</h2>
+                            <p className="text-xs text-slate-500">L'emplacement physique de votre bureau central</p>
+                        </div>
+                    </div>
+
+                    <div className="p-6 space-y-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div className="space-y-1.5">
+                                <label className={labelBase}>Pays <span className="text-rose-500">*</span></label>
+                                <SearchableDropdown
+                                    value={formData.pays}
+                                    onChange={(value) => setFormData(prev => ({ ...prev, pays: value }))}
+                                    options={countryList}
+                                    placeholder="Sélectionner..."
+                                    disabled={readOnly}
+                                    themeColor="emerald"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className={labelBase}>Ville <span className="text-rose-500">*</span></label>
+                                <input
+                                    required
+                                    name="ville"
+                                    type="text"
+                                    value={formData.ville}
+                                    onChange={handleChange}
+                                    placeholder="Ex: Dakar"
+                                    className={plainInputBase}
+                                    disabled={readOnly}
+                                />
+                            </div>
                         </div>
 
-                        <div className="w-full sm:w-auto">
-                            {step < 2 ? (
-                                <button
-                                    type="button"
-                                    onClick={nextStep}
-                                    className="w-full sm:w-auto bg-slate-900 text-white px-5 py-3 rounded-lg font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-slate-800 transition-all active:scale-[0.98]"
-                                >
-                                    Continuer
-                                    <ChevronRight size={18} />
-                                </button>
-                            ) : (
-                                isAdmin && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div className="space-y-1.5">
+                                <label className={labelBase}>Commune / Secteur</label>
+                                <input
+                                    name="commune"
+                                    type="text"
+                                    value={formData.commune}
+                                    onChange={handleChange}
+                                    placeholder="Ex: Plateau"
+                                    className={plainInputBase}
+                                    disabled={readOnly}
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className={labelBase}>Adresse précise <span className="text-rose-500">*</span></label>
+                                <input
+                                    required
+                                    name="adresse"
+                                    type="text"
+                                    value={formData.adresse}
+                                    onChange={handleChange}
+                                    placeholder="Numéro de porte, Immeuble..."
+                                    className={plainInputBase}
+                                    disabled={readOnly}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <label className={labelBase}>Coordonnées GPS</label>
+                                {gpsSuccess && (
+                                    <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full">
+                                        <CheckCircle2 size={12} /> Position capturée
+                                    </span>
+                                )}
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <div className="relative flex-1">
+                                    <Globe className="h-4.5 w-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        name="localisation"
+                                        type="text"
+                                        value={formData.localisation}
+                                        onChange={handleChange}
+                                        placeholder="Latitude, Longitude"
+                                        className={`${inputBase} font-mono text-xs`}
+                                        disabled={readOnly}
+                                    />
+                                </div>
+                                {!readOnly && (
                                     <button
                                         type="button"
-                                        onClick={handleSubmit}
-                                        disabled={isLoading}
-                                        className="w-full sm:w-auto bg-blue-600 text-white px-10 py-5 rounded-lg font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-blue-600/20"
+                                        onClick={getLocation}
+                                        className="px-5 py-3 bg-slate-50 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center gap-2 shrink-0"
                                     >
-                                        {isLoading ? (
-                                            <Loader2 size={20} className="animate-spin" />
-                                        ) : (
-                                            <Save size={20} />
-                                        )}
-                                        {isConfigured ? 'Sauvegarder' : 'Finaliser'}
+                                        <Navigation size={16} />
+                                        Détecter ma position
                                     </button>
-                                )
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+
+                {!readOnly && (
+                    <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4">
+                        <p className="text-xs text-slate-500 flex items-center gap-2">
+                            <Info size={14} className="shrink-0" />
+                            Les champs marqués <span className="text-rose-500 font-semibold">*</span> sont obligatoires
+                        </p>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                        >
+                            {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                            {isConfigured ? 'Enregistrer' : 'Finaliser la configuration'}
+                        </button>
+                    </div>
+                )}
+            </form>
         </div>
     );
 };
