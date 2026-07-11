@@ -5,6 +5,7 @@ import { showNotification } from '../redux/slices/uiSlice';
 import { fetchAgents, addAgent, editAgent, deleteAgent, updateAgentStatus, setAgentStatus } from '../redux/slices/agentSlice';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
+import RowActions from '../components/common/RowActions';
 
 const Agents = () => {
   const dispatch = useDispatch();
@@ -205,10 +206,10 @@ const Agents = () => {
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
                 Gestion des Agents
               </h1>
-              <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
+              <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
                 Gérez les membres de votre équipe
               </p>
             </div>
@@ -350,21 +351,11 @@ const Agents = () => {
                         </button>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => openEditModal(agent)}
-                            className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-                            title="Modifier"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => setAgentToDelete(agent)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                            title="Supprimer"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                        <div className="flex items-center justify-end">
+                          <RowActions
+                            onEdit={() => openEditModal(agent)}
+                            onDelete={() => setAgentToDelete(agent)}
+                          />
                         </div>
                       </td>
                     </tr>

@@ -11,6 +11,7 @@ import {
 import Modal from "../components/common/Modal";
 import DeleteModal from "../components/common/DeleteModal";
 import SimpleTarifForm from "../components/common/SimpleTarifForm";
+import RowActions from "../components/common/RowActions";
 import {
     CheckCircle2,
     MapPin,
@@ -346,21 +347,11 @@ const SimpleRates = () => {
                                                     </button>
                                                 </td>
                                                 <td className="px-6 py-3">
-                                                    <div className="flex justify-end gap-2">
-                                                        <button
-                                                            onClick={() => handleOpenEditModal(tarif)}
-                                                            className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-                                                            title="Modifier"
-                                                        >
-                                                            <Edit2 size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleOpenDeleteModal(tarif)}
-                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                            title="Supprimer"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
+                                                    <div className="flex justify-end">
+                                                        <RowActions
+                                                            onEdit={() => handleOpenEditModal(tarif)}
+                                                            onDelete={() => handleOpenDeleteModal(tarif)}
+                                                        />
                                                     </div>
                                                 </td>
                                             </tr>

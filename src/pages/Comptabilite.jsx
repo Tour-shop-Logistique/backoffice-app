@@ -297,7 +297,7 @@ const Comptabilite = () => {
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
                 Gestion Comptable
               </h1>
-              <p className="text-sm md:text-base text-slate-600 mt-1 font-medium">
+              <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
                 Suivi des revenus, commissions et répartition des gains
               </p>
             </div>

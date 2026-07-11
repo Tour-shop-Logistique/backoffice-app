@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import Modal from '../components/common/Modal';
 import ZoneForm from '../components/common/ZoneForm';
+import RowActions from '../components/common/RowActions';
 import { showNotification } from '../redux/slices/uiSlice';
 import DeleteModal from '../components/common/DeleteModal';
 
@@ -307,21 +308,11 @@ const ZoneConfiguration = () => {
                         </button>
                       </td>
                       <td className="px-6 py-3">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => openEditModal(zone)}
-                            className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-                            title="Modifier"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => setZoneToDelete(zone)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                            title="Supprimer"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                        <div className="flex items-center justify-end">
+                          <RowActions
+                            onEdit={() => openEditModal(zone)}
+                            onDelete={() => setZoneToDelete(zone)}
+                          />
                         </div>
                       </td>
                     </tr>

@@ -6,12 +6,8 @@ import {
     ChevronRight,
     MapPin,
     Smartphone,
-    Box,
-    AlertCircle,
-    Truck,
     Wallet,
     TrendingUp,
-    Package
 } from 'lucide-react';
 import Modal from '../common/Modal';
 import { getExpeditionStatusLabel, getStatusStyles } from '../../utils/statusTranslations';
@@ -31,219 +27,231 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
         }
     };
 
-    const isDepart = selectedExpedition.pays_depart === 'France'; // Simplified logic, should ideally be based on active backoffice country or agency role
-    
+    const acc = selectedExpedition.accounting_details || {};
+    const com = selectedExpedition.commission_details || {};
+    const fmt = (n) => (Number(n) || 0).toLocaleString();
+    const sum = (arr) => arr.reduce((s, v) => s + (Number(v) || 0), 0);
+
+    const roles = Array.isArray(selectedExpedition.backoffice_role) ? selectedExpedition.backoffice_role : [];
+    const isDepart = roles.includes('depart');
+    const isArrivee = roles.includes('arrivee');
+    const roleLabel = isDepart && isArrivee ? 'Départ & Arrivée' : isDepart ? 'Départ' : isArrivee ? 'Arrivée' : null;
+
+    // Détail des lignes qui composent notre gain (backoffice_gain), selon
+    // notre rôle sur cette expédition — départ, arrivée, ou les deux.
+    const gainLines = [];
+    if (isDepart) {
+        gainLines.push(
+            { label: 'Montant expédition (base)', value: selectedExpedition.montant_base },
+            { label: "Frais d'emballage (part)", value: com.emballage?.backoffice },
+            { label: 'Frais annexes', value: selectedExpedition.frais_annexes },
+        );
+    }
+    if (isArrivee) {
+        gainLines.push(
+            { label: 'Frais de retard (part)', value: com.retard?.tourshop },
+        );
+    }
+    const visibleGainLines = gainLines.filter((l) => Number(l.value) > 0);
+    const notreGain = Number(selectedExpedition.backoffice_gain) || sum(visibleGainLines.map((l) => l.value));
+
+    // Ce que touchent les autres acteurs, avec le détail des lignes qui
+    // composent chaque part. Le total retenu est celui de l'API si présent,
+    // sinon la somme des lignes visibles (évite un total à 0 à côté d'un
+    // détail non-nul).
+    const autresActeurs = [
+        {
+            key: 'agence_depart',
+            label: 'Agence de départ',
+            sub: selectedExpedition.agence?.nom_agence,
+            apiTotal: acc.agence_depart,
+            lines: [
+                { label: 'Montant expédition (com.)', value: selectedExpedition.montant_prestation },
+                { label: "Frais d'enlèvement (part)", value: com.enlevement?.agence },
+                { label: "Frais d'emballage (part)", value: com.emballage?.agence },
+            ],
+        },
+        {
+            key: 'agence_arrivee',
+            label: "Agence d'arrivée",
+            apiTotal: acc.agence_arrivee,
+            lines: [
+                { label: 'Frais de livraison (part)', value: com.livraison?.agence },
+                { label: 'Frais de retard (part)', value: com.retard?.agence },
+            ],
+        },
+        {
+            key: 'livreur_depart',
+            label: 'Livreur départ',
+            apiTotal: acc.livreur_depart,
+            lines: [
+                { label: 'Enlèvement', value: com.enlevement?.livreur },
+            ],
+        },
+        {
+            key: 'livreur_arrivee',
+            label: 'Livreur arrivée',
+            apiTotal: acc.livreur_arrivee,
+            lines: [
+                { label: 'Livraison', value: com.livraison?.livreur },
+            ],
+        },
+    ].map((actor) => {
+        const lines = actor.lines.filter((l) => Number(l.value) > 0);
+        const total = Number(actor.apiTotal) > 0 ? Number(actor.apiTotal) : sum(lines.map((l) => l.value));
+        return { ...actor, lines, total };
+    });
+
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={`Expédition ${selectedExpedition.reference}`}
-            subtitle="Détails complets de l'expédition"
+            title={selectedExpedition.reference}
+            subtitle="Détails de l'expédition"
             size="2xl"
             position="right"
         >
-            <div className="space-y-6 pb-4">
-                <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-50/50 rounded-xl border border-slate-300">
-                    <div className="flex items-center gap-4">
-                        <div className="space-y-1">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest text-left">Statut Expédition</p>
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase border ${getStatusStyles(selectedExpedition.statut_expedition)}`}>
-                                {selectedExpedition.statut_expedition === 'accepted' || selectedExpedition.statut_expedition === 'termined' ? <CheckCircle2 size={12} /> : <Clock size={12} />}
-                                {getExpeditionStatusLabel(selectedExpedition.statut_expedition)}
-                            </span>
-                        </div>
-                        <div className="w-px h-10 bg-slate-300 mx-2 hidden sm:block" />
-                    </div>
-                    <div className="flex flex-col text-right">
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Type d'expédition</p>
-                        <span className="text-xs font-bold text-slate-900 uppercase tracking-tight">{getTypeLabel(selectedExpedition.type_expedition)}</span>
-                    </div>
+            <div className="space-y-5 pb-6 bg-slate-100 -m-6 p-6">
+                {/* Statut + type + rôle */}
+                <div className="flex items-center flex-wrap gap-2">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold border ${getStatusStyles(selectedExpedition.statut_expedition)}`}>
+                        {selectedExpedition.statut_expedition === 'accepted' || selectedExpedition.statut_expedition === 'termined' ? <CheckCircle2 size={14} /> : <Clock size={14} />}
+                        {getExpeditionStatusLabel(selectedExpedition.statut_expedition)}
+                    </span>
+                    <span className="text-sm font-bold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg">
+                        {getTypeLabel(selectedExpedition.type_expedition)}
+                    </span>
+                    {roleLabel && (
+                        <span className="text-sm font-bold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg">
+                            Notre rôle : {roleLabel}
+                        </span>
+                    )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white p-4 rounded-xl border border-slate-300 shadow-sm relative overflow-hidden">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center text-white shadow-sm">
-                                <ArrowLeft className="rotate-180" size={16} />
+                {/* Notre gain — la seule chose qui compte vraiment pour nous */}
+                <div className="p-5 bg-slate-900 rounded-lg">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-emerald-500 rounded-lg flex items-center justify-center text-white shrink-0">
+                                <TrendingUp size={19} />
                             </div>
-                            <div>
-                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Expéditeur</h4>
-                                <p className="text-xs font-bold text-slate-900">{selectedExpedition.expediteur?.nom_prenom}</p>
-                            </div>
+                            <p className="text-sm font-bold text-slate-300">Notre gain sur cette expédition</p>
                         </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-slate-600">
-                                <Smartphone size={12} className="text-slate-400" />
-                                <span className="text-xs font-semibold">{selectedExpedition.expediteur?.telephone}</span>
-                            </div>
-                            <div className="flex items-start gap-2 text-slate-600">
-                                <MapPin size={12} className="text-slate-400 mt-0.5" />
-                                <span className="text-xs font-semibold leading-relaxed">
-                                    {selectedExpedition.expediteur?.adresse}, {selectedExpedition.expediteur?.ville}<br />
-                                    <span className="text-slate-500 uppercase text-xs font-bold">{selectedExpedition.pays_depart}</span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-xl border border-slate-300 shadow-sm relative overflow-hidden">
-                        <div className="flex items-center gap-3 mb-4 border-slate-100">
-                            <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-sm">
-                                <ChevronRight size={16} />
-                            </div>
-                            <div>
-                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Destinataire</h4>
-                                <p className="text-xs font-bold text-slate-900">{selectedExpedition.destinataire?.nom_prenom}</p>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-slate-600">
-                                <Smartphone size={12} className="text-slate-400" />
-                                <span className="text-xs font-semibold">{selectedExpedition.destinataire?.telephone}</span>
-                            </div>
-                            <div className="flex items-start gap-2 text-slate-600">
-                                <MapPin size={12} className="text-slate-400 mt-0.5" />
-                                <span className="text-xs font-semibold leading-relaxed">
-                                    {selectedExpedition.destinataire?.adresse}, {selectedExpedition.destinataire?.ville}<br />
-                                    <span className="text-slate-500 uppercase text-xs font-bold">{selectedExpedition.pays_destination}</span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Récapitulatif Financier Simple */}
-                <div className="flex items-center justify-between p-5 bg-slate-50/80 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
-                            <Wallet size={20} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.15em] mb-0.5">Total payé par le client</p>
-                            <h4 className="text-sm font-bold text-slate-900 tracking-tight">Montant Global</h4>
-                        </div>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-2xl font-bold text-slate-950 tracking-tighter">
-                            {selectedExpedition.accounting_details?.total_client_due?.toLocaleString()}
-                            <span className="text-xs font-semibold text-slate-500 ml-2 tracking-normal">CFA</span>
+                        <p className="text-2xl font-bold text-white shrink-0">
+                            {fmt(notreGain)}
+                            <span className="text-sm font-bold text-slate-400 ml-1.5">CFA</span>
                         </p>
                     </div>
+                    {visibleGainLines.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-slate-800 space-y-1.5">
+                            {visibleGainLines.map((line, i) => (
+                                <div key={i} className="flex items-center justify-between">
+                                    <span className="text-sm text-slate-400">{line.label}</span>
+                                    <span className="text-sm font-semibold text-slate-200">{fmt(line.value)} CFA</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
-                {/* Détail des Commissions par Acteur */}
-                <div className="space-y-4">
-                    <p className="text-xs font-bold text-slate-500 uppercase px-1 tracking-widest">Répartition détaillée des gains</p>
-                    
-                    <div className="grid grid-cols-1 gap-4">
-                        {/* 1. Agence de Départ */}
-                        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                            <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
-                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Agence de Départ ({selectedExpedition.agence?.nom_agence || 'N/A'})</span>
-                                <span className="text-xs font-bold text-slate-900">{selectedExpedition.accounting_details?.agence_depart?.toLocaleString()} CFA</span>
-                            </div>
-                            <div className="p-4 space-y-2">
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-slate-500">Montant Expédition (Com.)</span>
-                                    <span className="font-semibold">{Number(selectedExpedition.montant_prestation).toLocaleString()} CFA</span>
+                {/* Montant total payé par le client */}
+                <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200">
+                    <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 shrink-0">
+                            <Wallet size={17} />
+                        </div>
+                        <p className="text-sm font-bold text-slate-600">Total payé par le client</p>
+                    </div>
+                    <p className="text-lg font-bold text-slate-900">
+                        {fmt(acc.total_client_due)}
+                        <span className="text-xs font-bold text-slate-400 ml-1">CFA</span>
+                    </p>
+                </div>
+
+                {/* Détail des autres acteurs sur cette expédition */}
+                <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1 mb-2">
+                        Autres parts sur cette expédition
+                    </p>
+                    <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+                        {autresActeurs.map((actor) => (
+                            <div key={actor.key} className="px-4 py-3">
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-sm font-bold text-slate-800 truncate">
+                                        {actor.label}
+                                        {actor.sub && <span className="font-medium text-slate-400"> · {actor.sub}</span>}
+                                    </p>
+                                    <span className="text-sm font-bold text-slate-900 shrink-0">
+                                        {fmt(actor.total)} CFA
+                                    </span>
                                 </div>
-                                {selectedExpedition.commission_details?.enlevement?.agence > 0 && (
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-slate-500">Frais d'Enlèvement (Part)</span>
-                                        <span className="font-semibold">{selectedExpedition.commission_details.enlevement.agence.toLocaleString()} CFA</span>
+                                {actor.lines.length > 0 ? (
+                                    <div className="mt-1.5 space-y-1">
+                                        {actor.lines.map((line, i) => (
+                                            <div key={i} className="flex items-center justify-between pl-3">
+                                                <span className="text-xs text-slate-500">{line.label}</span>
+                                                <span className="text-xs font-semibold text-slate-600">{fmt(line.value)} CFA</span>
+                                            </div>
+                                        ))}
                                     </div>
+                                ) : (
+                                    <p className="mt-1 pl-3 text-xs italic text-slate-400">Aucun gain sur cette expédition</p>
                                 )}
-                                {selectedExpedition.commission_details?.emballage?.agence > 0 && (
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-slate-500">Frais d'Emballage (Part)</span>
-                                        <span className="font-semibold">{selectedExpedition.commission_details.emballage.agence.toLocaleString()} CFA</span>
-                                    </div>
-                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Expéditeur / Destinataire */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-white p-4 rounded-lg border border-slate-200">
+                        <div className="flex items-center gap-2.5 mb-3">
+                            <div className="h-9 w-9 bg-slate-900 rounded-lg flex items-center justify-center text-white shrink-0">
+                                <ArrowLeft className="rotate-180" size={16} />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Expéditeur</p>
+                                <p className="text-sm font-bold text-slate-900 truncate">{selectedExpedition.expediteur?.nom_prenom}</p>
                             </div>
                         </div>
-
-                        {/* 2. Agence d'Arrivée */}
-                        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                            <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
-                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Agence d'Arrivée</span>
-                                <span className="text-xs font-bold text-slate-900">{selectedExpedition.accounting_details?.agence_arrivee?.toLocaleString()} CFA</span>
+                        <div className="space-y-2 text-sm text-slate-600">
+                            <div className="flex items-center gap-2">
+                                <Smartphone size={14} className="text-slate-400 shrink-0" />
+                                {selectedExpedition.expediteur?.telephone}
                             </div>
-                            <div className="p-4 space-y-2">
-                                {selectedExpedition.commission_details?.livraison?.agence > 0 && (
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-slate-500">Frais de Livraison (Part)</span>
-                                        <span className="font-semibold">{selectedExpedition.commission_details.livraison.agence.toLocaleString()} CFA</span>
-                                    </div>
-                                )}
-                                {selectedExpedition.commission_details?.retard?.agence > 0 && (
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-slate-500">Frais de Retard (Part)</span>
-                                        <span className="font-semibold">{selectedExpedition.commission_details.retard.agence.toLocaleString()} CFA</span>
-                                    </div>
-                                )}
-                                {!selectedExpedition.commission_details?.livraison?.agence && !selectedExpedition.commission_details?.retard?.agence && (
-                                    <p className="text-xs text-slate-500 italic">Aucun gain sur cette expédition</p>
-                                )}
+                            <div className="flex items-start gap-2">
+                                <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                                <span>
+                                    {selectedExpedition.expediteur?.adresse}, {selectedExpedition.expediteur?.ville}
+                                    <br />
+                                    <span className="text-slate-400 font-medium">{selectedExpedition.pays_depart}</span>
+                                </span>
                             </div>
                         </div>
+                    </div>
 
-                        {/* 3. Backoffice */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                            <div className="bg-slate-800/50 px-4 py-2 border-b border-slate-800 flex justify-between items-center">
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Backoffice (Central)</span>
-                                <span className="text-xs font-bold text-white">{(selectedExpedition.accounting_details?.backoffice_depart + selectedExpedition.accounting_details?.backoffice_arrivee)?.toLocaleString()} CFA</span>
+                    <div className="bg-white p-4 rounded-lg border border-slate-200">
+                        <div className="flex items-center gap-2.5 mb-3">
+                            <div className="h-9 w-9 bg-blue-600 rounded-lg flex items-center justify-center text-white shrink-0">
+                                <ChevronRight size={16} />
                             </div>
-                            <div className="p-4 space-y-2">
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-slate-400">Montant Expédition (Base)</span>
-                                    <span className="font-semibold text-white">{Number(selectedExpedition.montant_base).toLocaleString()} CFA</span>
-                                </div>
-                                {selectedExpedition.commission_details?.emballage?.backoffice > 0 && (
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-slate-400">Frais d'Emballage (Part)</span>
-                                        <span className="font-semibold text-white">{selectedExpedition.commission_details.emballage.backoffice.toLocaleString()} CFA</span>
-                                    </div>
-                                )}
-                                {Number(selectedExpedition.frais_annexes) > 0 && (
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-slate-400">Frais Annexes</span>
-                                        <span className="font-semibold text-white">{Number(selectedExpedition.frais_annexes).toLocaleString()} CFA</span>
-                                    </div>
-                                )}
-                                {selectedExpedition.commission_details?.retard?.tourshop > 0 && (
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-slate-400">Frais de Retard (Part)</span>
-                                        <span className="font-semibold text-white">{selectedExpedition.commission_details.retard.tourshop.toLocaleString()} CFA</span>
-                                    </div>
-                                )}
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Destinataire</p>
+                                <p className="text-sm font-bold text-slate-900 truncate">{selectedExpedition.destinataire?.nom_prenom}</p>
                             </div>
                         </div>
-
-                        {/* 4. Livreurs */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                                <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
-                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Livreur Départ</span>
-                                    <span className="text-xs font-bold text-slate-900">{selectedExpedition.accounting_details?.livreur_depart?.toLocaleString()} CFA</span>
-                                </div>
-                                <div className="p-4">
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-slate-500">Enlèvement</span>
-                                        <span className="font-semibold">{selectedExpedition.commission_details?.enlevement?.livreur?.toLocaleString() || 0} CFA</span>
-                                    </div>
-                                </div>
+                        <div className="space-y-2 text-sm text-slate-600">
+                            <div className="flex items-center gap-2">
+                                <Smartphone size={14} className="text-slate-400 shrink-0" />
+                                {selectedExpedition.destinataire?.telephone}
                             </div>
-                            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                                <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
-                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Livreur Arrivée</span>
-                                    <span className="text-xs font-bold text-slate-900">{selectedExpedition.accounting_details?.livreur_arrivee?.toLocaleString()} CFA</span>
-                                </div>
-                                <div className="p-4">
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-slate-500">Livraison</span>
-                                        <span className="font-semibold">{selectedExpedition.commission_details?.livraison?.livreur?.toLocaleString() || 0} CFA</span>
-                                    </div>
-                                </div>
+                            <div className="flex items-start gap-2">
+                                <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                                <span>
+                                    {selectedExpedition.destinataire?.adresse}, {selectedExpedition.destinataire?.ville}
+                                    <br />
+                                    <span className="text-slate-400 font-medium">{selectedExpedition.pays_destination}</span>
+                                </span>
                             </div>
                         </div>
                     </div>

@@ -79,11 +79,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
 
   const currentSections = isConfigured ? navigationSections : setupNavigationSections;
 
-  const getInitials = (name) => {
-    if (!name) return "AD";
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
   const isLinkActive = (href) => {
     const path = location.pathname;
     // Exact match
@@ -161,21 +156,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </div>
         ))}
       </nav>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-slate-800/70">
-        <div className="bg-slate-800/40 rounded-xl p-3.5 border border-slate-800/70">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
-              {getInitials(user?.name || user?.nom + " " + user?.prenoms)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{user?.name || user?.nom + " " + user?.prenoms || 'Administrateur'}</p>
-              <p className="text-sm text-slate-400 truncate lowercase">{user?.email || 'admin@tourshop.com'}</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 

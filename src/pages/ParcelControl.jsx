@@ -260,7 +260,7 @@ const ParcelControl = () => {
                         <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
                     </button>
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Contrôle Logistique</h1>
+                        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">Contrôle Logistique</h1>
                         <div className="flex items-center gap-3 mt-1.5">
                             <span className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Référence Colis</span>
                             <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded border border-indigo-100 tracking-wider uppercase">{currentParcel.code_colis}</span>

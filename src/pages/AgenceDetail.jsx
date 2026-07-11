@@ -382,7 +382,7 @@ const AgenceDetail = () => {
                     </button>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
                                 {currentAgence.nom_agence}
                             </h1>
                         </div>

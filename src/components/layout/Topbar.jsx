@@ -1,15 +1,14 @@
-import React, { useState } from "react";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { performLogout } from "../../redux/slices/authSlice";
-import { LogOut, Menu, Settings, ChevronDown } from "lucide-react";
+import { LogOut, Menu, Settings } from "lucide-react";
 import { ROUTES } from "../../routes";
 
 const Topbar = ({ toggleSidebar }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const handleLogout = () => {
     dispatch(performLogout());
@@ -21,91 +20,56 @@ const Topbar = ({ toggleSidebar }) => {
   };
 
   const handleSettingsClick = () => {
-    setIsProfileOpen(false);
     navigate(ROUTES.SETTINGS);
   };
 
   return (
-    <>
-      <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 flex items-center justify-between px-4 md:px-6">
-        <div className="flex items-center space-x-2">
-          {/* Bouton de menu mobile */}
-          <button
-            onClick={toggleSidebar}
-            className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors md:hidden"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+    <header className="h-16 bg-slate-900 border-b border-slate-800/70 sticky top-0 z-40 flex items-center justify-between px-4 md:px-6">
+      <div className="flex items-center space-x-2">
+        {/* Bouton de menu mobile */}
+        <button
+          onClick={toggleSidebar}
+          className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/70 rounded-lg transition-colors md:hidden"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
 
-          {/* Titre */}
-          <h1 className="text-lg font-bold text-slate-800 hidden md:block tracking-tight">
-            Dashboard
-          </h1>
+        {/* Titre */}
+        <h1 className="text-lg font-bold text-white hidden md:block tracking-tight">
+          Dashboard
+        </h1>
+      </div>
+
+      {/* Section droite */}
+      <div className="flex items-center gap-2 md:gap-3">
+        <button
+          onClick={handleSettingsClick}
+          title="Paramètres"
+          className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/70 rounded-lg transition-colors"
+        >
+          <Settings className="h-5 w-5" />
+        </button>
+
+        <div className="w-px h-7 bg-slate-700"></div>
+
+        <div className="w-8 h-8 rounded bg-indigo-500 flex items-center justify-center text-white font-bold text-xs uppercase shrink-0">
+          {getInitials(user?.name || (user?.nom ? (user.nom + " " + (user.prenoms || "")) : ""))}
         </div>
+        <p className="hidden md:block text-sm font-semibold text-white">
+          {user?.name || (user?.nom ? (user.nom + " " + (user.prenoms || "")) : "Administrateur")}
+        </p>
 
-        {/* Section droite */}
-        <div className="flex items-center space-x-2 md:space-x-4">
-          {/* Séparateur */}
-          <div className="hidden sm:block w-px h-8 bg-slate-200"></div>
+        <div className="w-px h-7 bg-slate-700"></div>
 
-          {/* Menu utilisateur */}
-          <div className="relative">
-            <button
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center space-x-3 p-1 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200"
-            >
-              <div className="w-8 h-8 rounded bg-slate-900 flex items-center justify-center text-white font-bold text-xs uppercase">
-                {getInitials(user?.name || (user?.nom ? (user.nom + " " + (user.prenoms || "")) : ""))}
-              </div>
-              <div className="hidden md:block text-left leading-none">
-                <p className="text-sm font-semibold text-slate-900">
-                  {user?.name || (user?.nom ? (user.nom + " " + (user.prenoms || "")) : "Administrateur")}
-                </p>
-              </div>
-              <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Menu déroulant */}
-            {isProfileOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-30"
-                  onClick={() => setIsProfileOpen(false)}
-                ></div>
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-40">
-                  <div className="px-4 py-3 border-b border-slate-100">
-                    <p className="text-sm font-semibold text-slate-900">
-                      {user?.name || (user?.nom ? (user.nom + " " + (user.prenoms || "")) : "Utilisateur")}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {user?.email || "email@example.com"}
-                    </p>
-                  </div>
-
-                  <div className="py-1">
-                    <button
-                      onClick={handleSettingsClick}
-                      className="w-full flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                    >
-                      <Settings className="h-5 w-5 mr-3 text-slate-400" />
-                      Paramètres
-                    </button>
-
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <LogOut className="h-5 w-5 mr-3" />
-                      Déconnexion
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-    </>
+        <button
+          onClick={handleLogout}
+          title="Déconnexion"
+          className="p-2 text-rose-400 hover:text-rose-300 hover:bg-slate-800/70 rounded-lg transition-colors"
+        >
+          <LogOut className="h-5 w-5" />
+        </button>
+      </div>
+    </header>
   );
 };
 

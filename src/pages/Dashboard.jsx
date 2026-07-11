@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { motion as Motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { fetchDashboardStats, fetchDashboardRecap } from '../redux/slices/parcelSlice';
+import { ROUTES } from '../routes';
 import {
   Loader2,
   RefreshCw,
   Download,
   ClipboardCheck,
-  Truck,
-  PackageCheck,
-  TrendingUp,
-  Activity,
   Wallet,
-  Package,
-  Building2,
+  ChevronRight,
 } from "lucide-react";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { dashboard } = useSelector(state => state.parcels);
-  const { data, loading } = dashboard;
+  const { data, loading, recapLoading } = dashboard;
   const [activeTab, setActiveTab] = useState('Opérations');
 
   // State pour le filtre de date du recap (Mois/Année)
@@ -59,6 +57,13 @@ const Dashboard = () => {
     }));
   }, [dispatch, selectedDate.month, selectedDate.year]);
 
+  const refreshRecap = () => {
+    dispatch(fetchDashboardRecap({
+      month: selectedDate.month,
+      year: selectedDate.year
+    }));
+  };
+
   if (loading && !data?.operational) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-3">
@@ -72,10 +77,10 @@ const Dashboard = () => {
   const log = data?.logistics || {};
 
   const kpiCards = [
-    { icon: ClipboardCheck, label: 'Colis à contrôler', value: op.colis_a_controler || 0, bg: 'bg-blue-50', color: 'text-blue-600' },
-    { icon: Truck, label: 'Arrivages prévus', value: op.arrivages_prevus || 0, bg: 'bg-emerald-50', color: 'text-emerald-600' },
-    { icon: PackageCheck, label: 'Réceptions du jour', value: op.receptions_du_jour || 0, bg: 'bg-purple-50', color: 'text-purple-600' },
-    { icon: TrendingUp, label: 'Expéditions du jour', value: op.colis_expedies_du_jour || 0, bg: 'bg-amber-50', color: 'text-amber-600' },
+    { emoji: '📋', label: 'Colis à contrôler', value: op.colis_a_controler || 0, bg: 'bg-blue-50', ring: 'hover:ring-blue-200', border: 'group-hover:border-blue-300', href: ROUTES.PARCELS },
+    { emoji: '🚚', label: 'Arrivages prévus', value: op.arrivages_prevus || 0, bg: 'bg-emerald-50', ring: 'hover:ring-emerald-200', border: 'group-hover:border-emerald-300', href: ROUTES.INCOMING_PARCELS },
+    { emoji: '📦', label: 'Réceptions du jour', value: op.receptions_du_jour || 0, bg: 'bg-purple-50', ring: 'hover:ring-purple-200', border: 'group-hover:border-purple-300', href: ROUTES.HISTORIQUE },
+    { emoji: '📈', label: 'Expéditions du jour', value: op.colis_expedies_du_jour || 0, bg: 'bg-amber-50', ring: 'hover:ring-amber-200', border: 'group-hover:border-amber-300', href: ROUTES.HISTORIQUE },
   ];
 
   return (
@@ -84,26 +89,34 @@ const Dashboard = () => {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Tableau de bord</h1>
-          <p className="text-base text-slate-500 font-medium mt-1">Vue d'ensemble de votre activité logistique</p>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">Tableau de bord</h1>
+          <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">Vue d'ensemble de votre activité logistique</p>
         </div>
         <button onClick={() => dispatch(fetchDashboardStats())} disabled={loading} className="p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 text-slate-500 transition-all self-start md:self-auto">
           <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
 
-      {/* KPI CARDS — design simple et doux, sans dégradés ni ombres lourdes */}
+      {/* KPI CARDS — chaque carte est un bouton qui mène vers son menu */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-2xl ${kpi.bg} flex items-center justify-center shrink-0`}>
-              <kpi.icon size={26} className={kpi.color} />
+          <button
+            key={i}
+            type="button"
+            onClick={() => navigate(kpi.href)}
+            className={`bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4 text-left transition-all group cursor-pointer hover:shadow-md hover:ring-4 hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm ${kpi.ring} ${kpi.border}`}
+          >
+            <div className={`w-14 h-14 rounded-2xl ${kpi.bg} flex items-center justify-center shrink-0 text-2xl transition-transform group-hover:scale-105`}>
+              <span aria-hidden="true">{kpi.emoji}</span>
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-3xl font-bold text-slate-900 leading-tight">{kpi.value}</p>
               <p className="text-sm font-semibold text-slate-500 leading-snug">{kpi.label}</p>
             </div>
-          </div>
+            <div className={`w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center shrink-0 transition-all group-hover:${kpi.bg}`}>
+              <ChevronRight size={16} className="text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all" />
+            </div>
+          </button>
         ))}
       </div>
 
@@ -115,7 +128,7 @@ const Dashboard = () => {
           <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
             <div>
               <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                <Activity size={18} className="text-slate-400" /> {activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}
+                <span aria-hidden="true">📊</span> {activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}
               </h3>
               <p className="text-sm text-slate-500 font-medium mt-0.5">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires quotidien'}</p>
             </div>
@@ -141,6 +154,15 @@ const Dashboard = () => {
                   ))}
                 </select>
               </div>
+              <button
+                type="button"
+                onClick={refreshRecap}
+                disabled={recapLoading}
+                title="Actualiser"
+                className="flex items-center gap-2 px-3 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-100 transition-all disabled:opacity-50"
+              >
+                <RefreshCw size={16} className={recapLoading ? 'animate-spin' : ''} />
+              </button>
               <button className="flex items-center gap-2 px-3 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-100 transition-all">
                 <Download size={16} /> Exporter
               </button>
@@ -165,7 +187,12 @@ const Dashboard = () => {
             ))}
           </div>
 
-          <div className="p-5 pt-4">
+          <div className="p-5 pt-4 relative">
+            {recapLoading && (
+              <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] z-20 flex items-center justify-center rounded-b-2xl">
+                <Loader2 className="animate-spin text-slate-400" size={28} />
+              </div>
+            )}
             <div className="flex h-48 gap-4 pt-4">
               <div className="flex flex-col justify-between text-sm font-semibold text-slate-500 h-full pb-6 w-12 text-right">
                 {activeTab === 'Opérations'
@@ -235,8 +262,8 @@ const Dashboard = () => {
         {/* Sidebar - Volumes par Type */}
         <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 h-fit">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
-              <Package size={20} className="text-indigo-600" />
+            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 text-xl">
+              <span aria-hidden="true">📦</span>
             </div>
             <div>
               <h4 className="text-base font-bold text-slate-900 tracking-tight">Volumes par type</h4>
@@ -244,16 +271,29 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="space-y-3 pt-1">
-            {(log.volume_par_type || []).map((vol, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-2.5 h-2.5 rounded-full ${vol.total > 0 ? 'bg-indigo-500' : 'bg-slate-300'}`} />
-                  <span className={`text-sm font-medium ${vol.total > 0 ? 'text-slate-700' : 'text-slate-500'}`}>{vol.type.replace('Type ', '')}</span>
-                </div>
-                <span className={`text-sm font-bold ${vol.total > 0 ? 'text-slate-900' : 'text-slate-500'}`}>{vol.total}</span>
-              </div>
-            ))}
+          <div className="space-y-4 pt-1">
+            {(() => {
+              const volumeColors = ['bg-indigo-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-purple-500'];
+              const volumes = log.volume_par_type || [];
+              const maxVal = Math.max(1, ...volumes.map((v) => v.total || 0));
+              return volumes.map((vol, i) => {
+                const percentage = ((vol.total || 0) / maxVal) * 100;
+                const color = vol.total > 0 ? volumeColors[i % volumeColors.length] : 'bg-slate-200';
+                return (
+                  <div key={i}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`text-sm font-semibold ${vol.total > 0 ? 'text-slate-700' : 'text-slate-400'}`}>
+                        {vol.type.replace('Type ', '')}
+                      </span>
+                      <span className={`text-sm font-bold ${vol.total > 0 ? 'text-slate-900' : 'text-slate-400'}`}>{vol.total}</span>
+                    </div>
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${percentage}%` }} />
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </section>
       </div>
@@ -265,7 +305,7 @@ const Dashboard = () => {
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Building2 size={18} className="text-indigo-500" /> Agences actives
+              <span aria-hidden="true">🏢</span> Agences actives
             </h3>
             <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-sm font-bold rounded-full">{(log.activite_agences || []).length} agences</span>
           </div>
@@ -295,8 +335,8 @@ const Dashboard = () => {
         {/* Top Destinations */}
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-              <TrendingUp size={20} className="text-amber-600" />
+            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center shrink-0 text-xl">
+              <span aria-hidden="true">🌍</span>
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">Top destinations</h3>
