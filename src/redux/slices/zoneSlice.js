@@ -9,15 +9,25 @@ const initialState = {
 };
 
 // Thunk pour récupérer les zones
-export const fetchZones = createAsyncThunk('zones/fetchZones', async (_, { rejectWithValue }) => {
-  try {
-    const zones = await zoneService.getZones();
-    return zones;
-  } catch (error) {
-    console.error(error);
-    return rejectWithValue(error.response.data);
+export const fetchZones = createAsyncThunk(
+  'zones/fetchZones',
+  async (_, { rejectWithValue }) => {
+    try {
+      const zones = await zoneService.getZones();
+      return zones;
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  },
+  {
+    // Évite le double-appel causé par le double-montage de React StrictMode en dev
+    condition: (_, { getState }) => {
+      const { zones } = getState();
+      if (zones.isLoading || zones.hasLoaded) return false;
+    },
   }
-});
+);
 
 // Thunk pour ajouter une zone
 export const addZone = createAsyncThunk('zones/addZone', async (zoneData, { rejectWithValue }) => {

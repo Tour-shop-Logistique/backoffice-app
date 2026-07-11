@@ -21,6 +21,15 @@ export const fetchTarifs = createAsyncThunk(
       console.error(error);
       return rejectWithValue(error.response.data);
     }
+  },
+  {
+    // Évite le double-appel causé par le double-montage de React StrictMode
+    // en dev : lit l'état Redux à jour au moment du dispatch, contrairement
+    // au composant qui peut encore avoir un état "loading" obsolète.
+    condition: (_, { getState }) => {
+      const { tarification } = getState();
+      if (tarification.isLoading || tarification.hasLoaded) return false;
+    },
   }
 );
 
@@ -84,6 +93,12 @@ export const fetchGroupedTarifs = createAsyncThunk(
       console.error(error);
       return rejectWithValue(error.response.data);
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { tarification } = getState();
+      if (tarification.isLoading || tarification.groupedHasLoaded) return false;
+    },
   }
 );
 

@@ -25,6 +25,13 @@ export const fetchProduits = createAsyncThunk(
             console.error(error);
             return rejectWithValue(error.response?.data || "Erreur serveur");
         }
+    },
+    {
+        // Évite le double-appel causé par le double-montage de React StrictMode en dev
+        condition: (_, { getState }) => {
+            const { produits } = getState();
+            if (produits.isLoading || produits.hasLoadedProduits) return false;
+        },
     }
 );
 

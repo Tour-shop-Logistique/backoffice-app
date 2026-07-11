@@ -15,6 +15,13 @@ export const fetchAgences = createAsyncThunk(
             console.error(error);
             return rejectWithValue(error.message || "Erreur lors de la récupération des agences");
         }
+    },
+    {
+        // Évite le double-appel causé par le double-montage de React StrictMode en dev
+        condition: (_, { getState }) => {
+            const { agences } = getState();
+            if (agences.isLoading || agences.hasLoaded) return false;
+        },
     }
 );
 
