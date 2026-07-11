@@ -13,7 +13,7 @@ import {
   updateProduitStatus,
 } from "../redux/slices/produitSlice"
 
-import { PlusCircle, Loader2, X, Trash2, AlertTriangle, Edit2, Save, XCircle, RefreshCw, CheckCircle2, Search, Package, Tag, Edit3, ChevronLeft, ChevronRight, Filter, ChevronDown, Check } from 'lucide-react';
+import { PlusCircle, Loader2, X, Trash2, AlertTriangle, Edit2, Save, XCircle, RefreshCw, CheckCircle2, Search, Package, Tag, Edit3, ChevronLeft, ChevronRight, Filter, ChevronDown, Check, Lock } from 'lucide-react';
 import { showNotification } from "../redux/slices/uiSlice"
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
@@ -326,10 +326,10 @@ export default function Produits() {
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
                 Produits et Catégories
               </h1>
-              <p className="text-xs md:text-sm text-slate-500 mt-0.5 font-medium">
+              <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
                 Gérez vos produits et catégories en toute simplicité
               </p>
             </div>
@@ -633,7 +633,7 @@ export default function Produits() {
       >
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Catégorie <span className="text-red-500">*</span></label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Catégorie <span className="text-red-500">*</span></label>
             <select
               value={produitForm.category_id}
               onChange={(e) => setProduitForm({ ...produitForm, category_id: e.target.value })}
@@ -647,7 +647,7 @@ export default function Produits() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Désignation <span className="text-red-500">*</span></label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Désignation <span className="text-red-500">*</span></label>
             <input
               type="text"
               placeholder="Ex: Carton standard 60x40x40"
@@ -658,7 +658,7 @@ export default function Produits() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Référence <span className="text-red-500">*</span></label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Référence <span className="text-red-500">*</span></label>
             <input
               type="text"
               placeholder="REF-001"
@@ -698,7 +698,7 @@ export default function Produits() {
         {editingProduit && (
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Catégorie <span className="text-red-500">*</span></label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Catégorie <span className="text-red-500">*</span></label>
               <select
                 value={editingProduit.category_id}
                 onChange={(e) => setEditingProduit({ ...editingProduit, category_id: e.target.value })}
@@ -709,7 +709,7 @@ export default function Produits() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Désignation <span className="text-red-500">*</span></label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Désignation <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={editingProduit.designation}
@@ -719,7 +719,7 @@ export default function Produits() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Référence <span className="text-red-500">*</span></label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Référence <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={editingProduit.reference}
@@ -759,6 +759,7 @@ export default function Produits() {
         }}
         title="Gestion des catégories"
         size="xl"
+        position="right"
       >
         <div className="space-y-6">
           {/* Formulaire ajout/édition */}
@@ -811,39 +812,53 @@ export default function Produits() {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b">
                   <tr>
-                    <th className="p-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nom de la catégorie</th>
-                    <th className="p-3 text-right text-[10px] font-bold text-slate-500 uppercase tracking-widest">Actions</th>
+                    <th className="p-3 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Nom de la catégorie</th>
+                    <th className="p-3 text-right text-xs font-bold text-slate-500 uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {categories.map((cat) => (
                     <tr key={cat.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="p-3 font-medium">{cat.nom}</td>
-                      <td className="p-3 text-right">
-                        <div className="flex justify-end gap-2 text-center">
-                          <button
-                            onClick={() => { setEditingCategory(cat); setCategoryForm({ nom: cat.nom }); }}
-                            className="text-slate-600 p-1.5 hover:bg-slate-100 rounded"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => setCategoryToDelete(cat)}
-                            className="text-red-500 p-1.5 hover:bg-red-50 rounded"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleToggleCategoryStatus(cat)}
-                            disabled={updatingStatus[`cat-${cat.id}`]}
-                            className="group relative flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
-                            title={`Cliquez pour ${cat.actif ? 'désactiver' : 'activer'}`}
-                          >
-                            <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${cat.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                              <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${cat.actif ? 'translate-x-4' : 'translate-x-0'}`} />
-                            </div>
-                          </button>
+                      <td className="p-3 font-medium">
+                        <div className="flex items-center gap-2">
+                          {cat.nom}
+                          {cat.is_default && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">
+                              <Lock size={10} />
+                              Système
+                            </span>
+                          )}
                         </div>
+                      </td>
+                      <td className="p-3 text-right">
+                        {cat.is_default ? (
+                          <span className="text-xs text-slate-400 italic">Non modifiable</span>
+                        ) : (
+                          <div className="flex justify-end gap-2 text-center">
+                            <button
+                              onClick={() => { setEditingCategory(cat); setCategoryForm({ nom: cat.nom }); }}
+                              className="text-slate-600 p-1.5 hover:bg-slate-100 rounded"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => setCategoryToDelete(cat)}
+                              className="text-red-500 p-1.5 hover:bg-red-50 rounded"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleToggleCategoryStatus(cat)}
+                              disabled={updatingStatus[`cat-${cat.id}`]}
+                              className="group relative flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+                              title={`Cliquez pour ${cat.actif ? 'désactiver' : 'activer'}`}
+                            >
+                              <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${cat.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${cat.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                              </div>
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}

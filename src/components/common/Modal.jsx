@@ -17,7 +17,11 @@ const Modal = ({
   confirmVariant = 'primary',
   confirmFormId,
   showCloseButton = true,
-  confirmDisabled = false
+  confirmDisabled = false,
+  // 'center' (par défaut) = dialogue centré classique.
+  // 'right' = tiroir plein hauteur collé au bord droit (desktop uniquement,
+  // repasse en dialogue centré sur mobile pour rester utilisable).
+  position = 'center'
 }) => {
   if (!isOpen) return null;
 
@@ -65,18 +69,23 @@ const Modal = ({
   };
 
   const finalFooter = renderFooter();
+  const isRight = position === 'right';
 
   const modalContent = (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div className={`fixed inset-0 z-[9999] flex p-4 ${isRight ? 'md:p-0 md:items-stretch md:justify-end' : 'items-center justify-center'}`}>
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300"
         onClick={onClose}
       />
 
-      {/* Modal Card */}
+      {/* Modal Card / Drawer */}
       <div
-        className={`relative w-full ${sizeClasses[size] || sizeClasses['lg']} bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[95vh] animate-in zoom-in-95 fade-in duration-300`}
+        className={
+          isRight
+            ? `relative w-full ${sizeClasses[size] || sizeClasses['lg']} bg-white shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[95vh] rounded-xl animate-in zoom-in-95 fade-in duration-300 md:max-h-none md:h-full md:rounded-none md:border-y-0 md:border-r-0 md:animate-slide-in-right`
+            : `relative w-full ${sizeClasses[size] || sizeClasses['lg']} bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[95vh] animate-in zoom-in-95 fade-in duration-300`
+        }
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -85,7 +94,7 @@ const Modal = ({
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               {title}
             </h2>
-            {subtitle && <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">{subtitle}</p>}
+            {subtitle && <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">{subtitle}</p>}
           </div>
           {showCloseButton && (
             <button
