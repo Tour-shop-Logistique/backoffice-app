@@ -100,12 +100,12 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const sidebarContent = (
     <div className="flex flex-col h-full bg-slate-900 text-slate-300">
       {/* Header */}
-      <div className="h-20 flex items-center justify-between px-5 border-b border-slate-800/70">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center shadow-sm p-1.5 shrink-0">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/70">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center shadow-sm p-1 shrink-0">
             <img src={logo} alt="Tour Shop" className="w-full h-full object-contain" />
           </div>
-          <span className="text-xl font-bold text-white tracking-tight">
+          <span className="text-base font-bold text-white tracking-tight">
             Tour Shop
           </span>
         </div>
@@ -113,20 +113,20 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           onClick={toggleSidebar}
           className="md:hidden p-2 rounded-lg hover:bg-slate-800 transition-colors"
         >
-          <X className="h-6 w-6 text-slate-400" />
+          <X className="h-5 w-5 text-slate-400" />
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-5 space-y-6 overflow-y-auto">
+      <nav className="flex-1 px-2.5 py-4 space-y-5 overflow-y-auto">
         {currentSections.map((section, sectionIdx) => (
           <div key={section.label || `section-${sectionIdx}`}>
             {section.label && (
-              <p className="px-3 mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">
+              <p className="px-2.5 mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
                 {section.label}
               </p>
             )}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {section.items.map((item) => {
                 const active = isLinkActive(item.href);
                 return (
@@ -134,21 +134,21 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                     key={item.name}
                     to={item.href}
                     onClick={toggleSidebar}
-                    className={`group flex items-center gap-3 px-3 py-3 text-base font-semibold rounded-xl transition-all ${active
+                    className={`group flex items-center gap-2.5 px-2.5 py-2 text-sm font-semibold rounded-lg transition-all ${active
                       ? "bg-indigo-500/15 text-white"
                       : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
                       }`}
                   >
                     <span
-                      className={`flex items-center justify-center w-10 h-10 rounded-xl shrink-0 transition-colors ${active
+                      className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-colors ${active
                         ? "bg-indigo-500 shadow-sm shadow-indigo-500/30"
                         : "bg-slate-800/70 group-hover:bg-slate-700"
                         }`}
                     >
-                      <item.icon size={20} className={active ? "text-white" : item.color} />
+                      <item.icon size={16} className={active ? "text-white" : item.color} />
                     </span>
                     <span className="flex-1 leading-tight">{item.name}</span>
-                    {active && <span className="w-2 h-2 rounded-full bg-indigo-400 shrink-0" />}
+                    {active && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />}
                   </NavLink>
                 );
               })}
@@ -171,7 +171,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
 
       {/* Mobile Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-[22rem] transform transition-transform duration-200 ease-in-out md:hidden ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 ease-in-out md:hidden ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
       >
         <div className="h-full shadow-xl">
@@ -180,7 +180,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:w-[22rem] md:flex-col md:fixed md:inset-y-0 md:z-50">
+      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 md:z-50">
         <div className="flex-1 flex flex-col min-h-0 border-r border-slate-800">
           {sidebarContent}
         </div>

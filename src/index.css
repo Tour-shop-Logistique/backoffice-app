@@ -11,19 +11,6 @@
     font-size: 16px;
   }
 
-  /* Toutes les tailles Tailwind (text-*, padding, gap, rounded...) sont en rem,
-     donc elles suivent cette échelle : sur grand écran le contenu reste lisible
-     et dense au lieu de s'étaler en gardant des tailles fixes en px. */
-  @media (min-width: 1536px) {
-    html { font-size: 17px; }
-  }
-  @media (min-width: 1920px) {
-    html { font-size: 18px; }
-  }
-  @media (min-width: 2560px) {
-    html { font-size: 20px; }
-  }
-
   body {
     @apply bg-slate-100 text-slate-900;
     font-weight: 450; /* Geist Variable : un poids par défaut légèrement plus dense que 400, évite le rendu "fin" */
@@ -128,7 +115,7 @@
   .ts-panel { @apply bg-slate-50 border border-slate-200 rounded-xl; }
 
   /* --- Typography --- */
-  .ts-page-title    { @apply text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight; }
+  .ts-page-title    { @apply text-xl md:text-2xl font-bold text-slate-900 tracking-tight; }
   .ts-page-subtitle { @apply text-sm md:text-base text-slate-600 font-medium mt-1; }
   .ts-section-title { @apply text-xs font-bold text-slate-500 uppercase tracking-widest; }
 

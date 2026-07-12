@@ -89,32 +89,32 @@ const Dashboard = () => {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">Tableau de bord</h1>
-          <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">Vue d'ensemble de votre activité logistique</p>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Tableau de bord</h1>
+          <p className="text-sm text-slate-500 mt-0.5 font-medium">Vue d'ensemble de votre activité logistique</p>
         </div>
-        <button onClick={() => dispatch(fetchDashboardStats())} disabled={loading} className="p-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 text-slate-500 transition-all self-start md:self-auto">
-          <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+        <button onClick={() => dispatch(fetchDashboardStats())} disabled={loading} className="p-2.5 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 text-slate-500 transition-all self-start md:self-auto">
+          <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
 
       {/* KPI CARDS — chaque carte est un bouton qui mène vers son menu */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {kpiCards.map((kpi, i) => (
           <button
             key={i}
             type="button"
             onClick={() => navigate(kpi.href)}
-            className={`bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4 text-left transition-all group cursor-pointer hover:shadow-md hover:ring-4 hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm ${kpi.ring} ${kpi.border}`}
+            className={`bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3 text-left transition-all group cursor-pointer hover:shadow-md hover:ring-4 hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm ${kpi.ring} ${kpi.border}`}
           >
-            <div className={`w-14 h-14 rounded-2xl ${kpi.bg} flex items-center justify-center shrink-0 text-2xl transition-transform group-hover:scale-105`}>
+            <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center shrink-0 text-lg transition-transform group-hover:scale-105`}>
               <span aria-hidden="true">{kpi.emoji}</span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-3xl font-bold text-slate-900 leading-tight">{kpi.value}</p>
-              <p className="text-sm font-semibold text-slate-500 leading-snug">{kpi.label}</p>
+              <p className="text-2xl font-bold text-slate-900 leading-tight">{kpi.value}</p>
+              <p className="text-xs font-semibold text-slate-500 leading-snug">{kpi.label}</p>
             </div>
-            <div className={`w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center shrink-0 transition-all group-hover:${kpi.bg}`}>
-              <ChevronRight size={16} className="text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all" />
+            <div className={`w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center shrink-0 transition-all group-hover:${kpi.bg}`}>
+              <ChevronRight size={14} className="text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all" />
             </div>
           </button>
         ))}
@@ -124,10 +124,10 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
         {/* Chart */}
-        <section className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
+        <section className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 <span aria-hidden="true">📊</span> {activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}
               </h3>
               <p className="text-sm text-slate-500 font-medium mt-0.5">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires quotidien'}</p>
@@ -260,14 +260,14 @@ const Dashboard = () => {
         </section>
 
         {/* Sidebar - Volumes par Type */}
-        <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 h-fit">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 text-xl">
+        <section className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4 h-fit">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 text-base">
               <span aria-hidden="true">📦</span>
             </div>
             <div>
-              <h4 className="text-base font-bold text-slate-900 tracking-tight">Volumes par type</h4>
-              <p className="text-sm text-slate-500 font-medium">Répartition des expéditions</p>
+              <h4 className="text-sm font-bold text-slate-900 tracking-tight">Volumes par type</h4>
+              <p className="text-xs text-slate-500 font-medium">Répartition des expéditions</p>
             </div>
           </div>
 
@@ -302,29 +302,29 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* Agences Actives */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+        <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <span aria-hidden="true">🏢</span> Agences actives
             </h3>
-            <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-sm font-bold rounded-full">{(log.activite_agences || []).length} agences</span>
+            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full">{(log.activite_agences || []).length} agences</span>
           </div>
 
           <div className="divide-y divide-slate-100">
             {(log.activite_agences || []).slice(0, 5).map((ag, i) => (
-              <div key={i} className="p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors">
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-white text-sm shrink-0 ${i === 0 ? 'bg-indigo-400' : i === 1 ? 'bg-purple-400' : i === 2 ? 'bg-pink-400' : i === 3 ? 'bg-emerald-400' : 'bg-amber-400'}`}>
+              <div key={i} className="p-3 flex items-center gap-3 hover:bg-slate-50 transition-colors">
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white text-xs shrink-0 ${i === 0 ? 'bg-indigo-400' : i === 1 ? 'bg-purple-400' : i === 2 ? 'bg-pink-400' : i === 3 ? 'bg-emerald-400' : 'bg-amber-400'}`}>
                   {ag.nom_agence.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h5 className="text-base font-bold text-slate-900 truncate">{ag.nom_agence}</h5>
+                  <h5 className="text-sm font-bold text-slate-900 truncate">{ag.nom_agence}</h5>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-sm text-slate-500">{ag.ville}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span className="text-xs text-slate-500">{ag.ville}</span>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-base font-bold text-slate-900">{ag.total || 0}</p>
+                  <p className="text-sm font-bold text-slate-900">{ag.total || 0}</p>
                   <p className="text-xs text-slate-500">expéditions</p>
                 </div>
               </div>
@@ -333,14 +333,14 @@ const Dashboard = () => {
         </section>
 
         {/* Top Destinations */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center shrink-0 text-xl">
+        <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 text-base">
               <span aria-hidden="true">🌍</span>
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Top destinations</h3>
-              <p className="text-sm text-slate-500 font-medium">Les pays les plus actifs</p>
+              <h3 className="text-sm font-bold text-slate-900">Top destinations</h3>
+              <p className="text-xs text-slate-500 font-medium">Les pays les plus actifs</p>
             </div>
           </div>
 

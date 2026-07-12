@@ -156,7 +156,7 @@ const ParcelHistory = () => {
             <header className="space-y-3 md:space-y-0">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                        <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             Historique des Contrôles
                         </h1>
                         <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">

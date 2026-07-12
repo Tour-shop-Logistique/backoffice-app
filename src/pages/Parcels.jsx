@@ -6,6 +6,7 @@ import { showNotification } from "../redux/slices/uiSlice";
 import { ROUTES } from '../routes';
 import Modal from '../components/common/Modal';
 import QRScanner from '../components/common/QRScanner';
+import ViewDetailsButton from '../components/common/ViewDetailsButton';
 import {
   Package,
   Search,
@@ -307,7 +308,7 @@ const Parcels = () => {
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
                 Colis à contrôler
               </h1>
               <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
@@ -595,13 +596,7 @@ const Parcels = () => {
                             </td>
                             <td className="px-6 py-3 text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <button
-                                  onClick={() => handleViewParcel(parcel)}
-                                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200"
-                                  title="Détails"
-                                >
-                                  <Eye size={22} />
-                                </button>
+                                <ViewDetailsButton onClick={() => handleViewParcel(parcel)} />
                                 {parcel.is_blocked ? (
                                   <button
                                     onClick={() => handleSingleValidate(parcel.code_colis)}

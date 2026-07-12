@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchAgences, toggleAgenceStatus } from "../redux/slices/agenceSlice";
 import { showNotification } from "../redux/slices/uiSlice";
 import { ROUTES } from "../routes";
+import ViewDetailsButton from '../components/common/ViewDetailsButton';
 import {
   Phone,
   Building2,
@@ -11,7 +12,6 @@ import {
   Search,
   Loader2,
   RefreshCw,
-  Eye,
   MapPinned,
   ChevronRight
 } from "lucide-react";
@@ -101,7 +101,7 @@ const AgencePartenaire = () => {
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">Agences Partenaires</h1>
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Agences Partenaires</h1>
               <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">Consultez et gérez le réseau d'agences physiques</p>
             </div>
             <button
@@ -213,15 +213,12 @@ const AgencePartenaire = () => {
                         </button>
                       </td>
                       <td className="px-6 py-3 text-right">
-                        <button
+                        <ViewDetailsButton
                           onClick={(e) => {
                             e.stopPropagation();
                             goToDetail(e, agence.id);
                           }}
-                          className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"
-                        >
-                          <Eye size={18} />
-                        </button>
+                        />
                       </td>
                     </tr>
                   ))}

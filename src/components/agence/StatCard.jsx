@@ -26,35 +26,35 @@ const StatCard = ({ label, value, unit = "CFA", icon: Icon, variant = "white", c
     };
 
     return (
-        <div className={`rounded-xl shadow-sm border border-slate-200 p-6 lg:p-7 transition-all duration-300 hover:shadow-md ${
+        <div className={`rounded-xl shadow-sm border border-slate-200 p-4 transition-all duration-300 hover:shadow-md ${
             isDark
                 ? 'bg-slate-900 border-slate-800 text-white'
                 : 'bg-white border-slate-200 text-slate-900'
         }`}>
             <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                    <p className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                         {label}
                     </p>
-                    <div className="flex items-baseline gap-1.5 mt-1.5">
-                        <p className={`text-3xl lg:text-4xl font-bold tracking-tight ${isDark ? 'text-white' : colorClass}`}>
+                    <div className="flex items-baseline gap-1.5 mt-1">
+                        <p className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : colorClass}`}>
                             {(value || 0).toLocaleString()}
                         </p>
                         {unit && (
-                            <span className={`text-sm font-semibold ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
+                            <span className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
                                 {unit}
                             </span>
                         )}
                     </div>
                     {subtitle && (
-                        <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-2`}>
+                        <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-1.5`}>
                             {subtitle}
                         </p>
                     )}
                 </div>
                 {Icon && (
-                    <div className={`p-3.5 rounded-xl ${getIconBgColor()} ml-4 shrink-0`}>
-                        <Icon className={getIconColor()} size={24} />
+                    <div className={`p-2.5 rounded-lg ${getIconBgColor()} ml-3 shrink-0`}>
+                        <Icon className={getIconColor()} size={18} />
                     </div>
                 )}
             </div>

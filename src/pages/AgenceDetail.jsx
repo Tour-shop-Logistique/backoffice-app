@@ -34,7 +34,6 @@ import {
     CreditCard,
     ChevronLeft,
     Search,
-    Eye,
     AlertCircle,
     CheckCircle2,
     Mail,
@@ -52,6 +51,7 @@ import {
     FileDown
 } from "lucide-react";
 import Modal from "../components/common/Modal";
+import ViewDetailsButton from "../components/common/ViewDetailsButton";
 import StatCard from "../components/agence/StatCard";
 import ExpeditionDetailModal from "../components/expedition/ExpeditionDetailModal";
 import AgencyTariffTable from "../components/agence/AgencyTariffTable";
@@ -382,7 +382,7 @@ const AgenceDetail = () => {
                     </button>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
+                            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
                                 {currentAgence.nom_agence}
                             </h1>
                         </div>
@@ -706,13 +706,7 @@ const AgenceDetail = () => {
                                                                     </div>
                                                                 </td>
                                                                 <td className="px-6 py-4 text-right">
-                                                                    <button
-                                                                        onClick={() => setSelectedExpedition(expo)}
-                                                                        className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all active:scale-90"
-                                                                        title="Voir les détails"
-                                                                    >
-                                                                        <Eye size={24} />
-                                                                    </button>
+                                                                    <ViewDetailsButton onClick={() => setSelectedExpedition(expo)} />
                                                                 </td>
                                                             </tr>
                                                         ))}
@@ -1002,12 +996,7 @@ const AgenceDetail = () => {
                                                                 </div>
                                                             </td>
                                                             <td className="px-6 py-4 text-right">
-                                                                <button 
-                                                                    onClick={() => setSelectedExpedition(item)}
-                                                                    className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-                                                                >
-                                                                    <Eye size={16} />
-                                                                </button>
+                                                                <ViewDetailsButton onClick={() => setSelectedExpedition(item)} />
                                                             </td>
                                                         </tr>
                                                     );

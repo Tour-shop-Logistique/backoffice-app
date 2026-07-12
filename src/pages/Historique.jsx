@@ -13,7 +13,6 @@ import {
   Package,
   DollarSign,
   TrendingUp,
-  Eye,
   Clock,
   CheckCircle,
   XCircle,
@@ -21,6 +20,7 @@ import {
   FileDown
 } from 'lucide-react';
 import Modal from '../components/common/Modal';
+import ViewDetailsButton from '../components/common/ViewDetailsButton';
 import ExpeditionDetailModal from '../components/expedition/ExpeditionDetailModal';
 import StatCard from '../components/agence/StatCard';
 import { getExpeditionStatusLabel, getStatusStyles } from '../utils/statusTranslations';
@@ -215,7 +215,7 @@ const Historique = () => {
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
                 Historique des Expéditions
               </h1>
               <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
@@ -427,13 +427,7 @@ const Historique = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => setSelectedExpedition(exp)}
-                        className="w-10 h-10 inline-flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
-                        title="Voir détails"
-                      >
-                        <Eye size={20} />
-                      </button>
+                      <ViewDetailsButton onClick={() => setSelectedExpedition(exp)} />
                     </td>
                   </tr>
                 ))}

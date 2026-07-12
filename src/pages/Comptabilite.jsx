@@ -17,7 +17,6 @@ import {
   Briefcase,
   PieChart,
   History,
-  Eye,
   CheckCircle2,
   Clock,
   ArrowLeft,
@@ -33,6 +32,7 @@ import {
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Modal from '../components/common/Modal';
+import ViewDetailsButton from '../components/common/ViewDetailsButton';
 import ExpeditionDetailModal from '../components/expedition/ExpeditionDetailModal';
 import StatCard from '../components/agence/StatCard';
 import { getExpeditionStatusLabel, getStatusStyles } from '../utils/statusTranslations';
@@ -294,7 +294,7 @@ const Comptabilite = () => {
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
                 Gestion Comptable
               </h1>
               <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
@@ -519,13 +519,7 @@ const Comptabilite = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() => setSelectedExpedition(exp)}
-                          className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-                          title="Voir détails"
-                        >
-                          <Eye size={18} />
-                        </button>
+                        <ViewDetailsButton onClick={() => setSelectedExpedition(exp)} />
                       </td>
                     </tr>
                   );

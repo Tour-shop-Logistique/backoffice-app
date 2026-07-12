@@ -50,20 +50,6 @@ export default {
       fontFamily: {
         sans: ['Geist Variable', 'system-ui', '-apple-system', 'sans-serif'],
       },
-      // Échelle de police relevée globalement (~+15-20% par palier) : toute
-      // l'app utilise text-xs/sm/base/... partout, donc plutôt que de corriger
-      // fichier par fichier, on agrandit la source une fois pour toutes.
-      fontSize: {
-        'xs': ['0.875rem', { lineHeight: '1.25rem' }],   // 14px (était 12px)
-        'sm': ['1rem', { lineHeight: '1.5rem' }],        // 16px (était 14px)
-        'base': ['1.125rem', { lineHeight: '1.75rem' }], // 18px (était 16px)
-        'lg': ['1.25rem', { lineHeight: '1.875rem' }],   // 20px (était 18px)
-        'xl': ['1.375rem', { lineHeight: '2rem' }],      // 22px (était 20px)
-        '2xl': ['1.625rem', { lineHeight: '2.125rem' }], // 26px (était 24px)
-        '3xl': ['2rem', { lineHeight: '2.375rem' }],     // 32px (était 30px)
-        '4xl': ['2.375rem', { lineHeight: '2.625rem' }], // 38px (était 36px)
-        '5xl': ['3.25rem', { lineHeight: '1' }],         // 52px (était 48px)
-      },
       spacing: {
         'sidebar': '18rem',
       },
