@@ -23,12 +23,11 @@ export const fetchTarifs = createAsyncThunk(
     }
   },
   {
-    // Évite le double-appel causé par le double-montage de React StrictMode
-    // en dev : lit l'état Redux à jour au moment du dispatch, contrairement
-    // au composant qui peut encore avoir un état "loading" obsolète.
+    // Évite seulement un appel concurrent (double-montage StrictMode en dev) ;
+    // ne doit pas empêcher un rafraîchissement manuel une fois déjà chargé.
     condition: (_, { getState }) => {
       const { tarification } = getState();
-      if (tarification.isLoading || tarification.hasLoaded) return false;
+      if (tarification.isLoading) return false;
     },
   }
 );
@@ -97,7 +96,7 @@ export const fetchGroupedTarifs = createAsyncThunk(
   {
     condition: (_, { getState }) => {
       const { tarification } = getState();
-      if (tarification.isLoading || tarification.groupedHasLoaded) return false;
+      if (tarification.isLoading) return false;
     },
   }
 );

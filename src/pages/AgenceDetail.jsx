@@ -253,7 +253,7 @@ const AgenceDetail = () => {
         createSummaryCards(doc, [
           { title: "POTENTIEL (DÛ)", value: `${formatPDFNumber(summary.potential?.total_client_due || 0)} CFA`, colorClass: "text-slate-900" },
           { title: "PART BACKOFFICE", value: `${formatPDFNumber(summary.potential?.total_backoffice || 0)} CFA`, colorClass: "text-emerald-600" },
-          { title: "PART AGENCE", value: `${formatPDFNumber((summary.potential?.total_agence_depart || 0) + (summary.potential?.total_agence_arrivee || 0))} CFA`, colorClass: "text-orange-600" },
+          { title: "PART AGENCE", value: `${formatPDFNumber(summary.potential?.total_agence || 0)} CFA`, colorClass: "text-orange-600" },
           { title: "VOL. EXPEDITIONS", value: (summary.count || 0).toString(), colorClass: "text-purple-600" }
         ]);
 
@@ -913,8 +913,8 @@ const AgenceDetail = () => {
                                     colorClass="text-emerald-600"
                                 />
                                 <StatCard
-                                    label="Part Agence (Net)"
-                                    value={(currentAgencyAccounting.summary?.potential?.total_agence_depart || 0) + (currentAgencyAccounting.summary?.potential?.total_agence_arrivee || 0)}
+                                    label="Part Agence"
+                                    value={currentAgencyAccounting.summary?.potential?.total_agence}
                                     icon={BadgeCheck}
                                     unit="CFA"
                                     colorClass="text-orange-600"

@@ -114,15 +114,15 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
             <div className="space-y-5 pb-6 bg-slate-100 -m-6 p-6">
                 {/* Statut + type + rôle */}
                 <div className="flex items-center flex-wrap gap-2">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold border ${getStatusStyles(selectedExpedition.statut_expedition)}`}>
-                        {selectedExpedition.statut_expedition === 'accepted' || selectedExpedition.statut_expedition === 'termined' ? <CheckCircle2 size={14} /> : <Clock size={14} />}
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-base font-bold border ${getStatusStyles(selectedExpedition.statut_expedition)}`}>
+                        {selectedExpedition.statut_expedition === 'accepted' || selectedExpedition.statut_expedition === 'termined' ? <CheckCircle2 size={16} /> : <Clock size={16} />}
                         {getExpeditionStatusLabel(selectedExpedition.statut_expedition)}
                     </span>
-                    <span className="text-sm font-bold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg">
+                    <span className="text-base font-bold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg">
                         {getTypeLabel(selectedExpedition.type_expedition)}
                     </span>
                     {roleLabel && (
-                        <span className="text-sm font-bold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg">
+                        <span className="text-base font-bold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg">
                             Notre rôle : {roleLabel}
                         </span>
                     )}
@@ -132,22 +132,22 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                 <div className="p-5 bg-slate-900 rounded-lg">
                     <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-emerald-500 rounded-lg flex items-center justify-center text-white shrink-0">
-                                <TrendingUp size={19} />
+                            <div className="h-11 w-11 bg-emerald-500 rounded-lg flex items-center justify-center text-white shrink-0">
+                                <TrendingUp size={21} />
                             </div>
-                            <p className="text-sm font-bold text-slate-300">Notre gain sur cette expédition</p>
+                            <p className="text-base font-bold text-slate-300">Notre gain sur cette expédition</p>
                         </div>
-                        <p className="text-2xl font-bold text-white shrink-0">
+                        <p className="text-3xl font-bold text-white shrink-0">
                             {fmt(notreGain)}
-                            <span className="text-sm font-bold text-slate-400 ml-1.5">CFA</span>
+                            <span className="text-base font-bold text-slate-400 ml-1.5">CFA</span>
                         </p>
                     </div>
                     {visibleGainLines.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-slate-800 space-y-1.5">
+                        <div className="mt-3 pt-3 border-t border-slate-800 space-y-2">
                             {visibleGainLines.map((line, i) => (
                                 <div key={i} className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-400">{line.label}</span>
-                                    <span className="text-sm font-semibold text-slate-200">{fmt(line.value)} CFA</span>
+                                    <span className="text-base text-slate-400">{line.label}</span>
+                                    <span className="text-base font-semibold text-slate-200">{fmt(line.value)} CFA</span>
                                 </div>
                             ))}
                         </div>
@@ -157,31 +157,31 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                 {/* Montant total payé par le client */}
                 <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200">
                     <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 shrink-0">
-                            <Wallet size={17} />
+                        <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 shrink-0">
+                            <Wallet size={19} />
                         </div>
-                        <p className="text-sm font-bold text-slate-600">Total payé par le client</p>
+                        <p className="text-base font-bold text-slate-600">Total payé par le client</p>
                     </div>
-                    <p className="text-lg font-bold text-slate-900">
+                    <p className="text-xl font-bold text-slate-900">
                         {fmt(acc.total_client_due)}
-                        <span className="text-xs font-bold text-slate-400 ml-1">CFA</span>
+                        <span className="text-sm font-bold text-slate-400 ml-1">CFA</span>
                     </p>
                 </div>
 
                 {/* Détail des autres acteurs sur cette expédition */}
                 <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1 mb-2">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-wide px-1 mb-2">
                         Autres parts sur cette expédition
                     </p>
                     <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100 overflow-hidden">
                         {autresActeurs.map((actor) => (
                             <div key={actor.key} className="px-4 py-3">
                                 <div className="flex items-center justify-between gap-3">
-                                    <p className="text-sm font-bold text-slate-800 truncate">
+                                    <p className="text-base font-bold text-slate-800 truncate">
                                         {actor.label}
                                         {actor.sub && <span className="font-medium text-slate-400"> · {actor.sub}</span>}
                                     </p>
-                                    <span className="text-sm font-bold text-slate-900 shrink-0">
+                                    <span className="text-base font-bold text-slate-900 shrink-0">
                                         {fmt(actor.total)} CFA
                                     </span>
                                 </div>
@@ -189,13 +189,13 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                                     <div className="mt-1.5 space-y-1">
                                         {actor.lines.map((line, i) => (
                                             <div key={i} className="flex items-center justify-between pl-3">
-                                                <span className="text-xs text-slate-500">{line.label}</span>
-                                                <span className="text-xs font-semibold text-slate-600">{fmt(line.value)} CFA</span>
+                                                <span className="text-sm text-slate-500">{line.label}</span>
+                                                <span className="text-sm font-semibold text-slate-600">{fmt(line.value)} CFA</span>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="mt-1 pl-3 text-xs italic text-slate-400">Aucun gain sur cette expédition</p>
+                                    <p className="mt-1 pl-3 text-sm italic text-slate-400">Aucun gain sur cette expédition</p>
                                 )}
                             </div>
                         ))}
@@ -206,21 +206,21 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-white p-4 rounded-lg border border-slate-200">
                         <div className="flex items-center gap-2.5 mb-3">
-                            <div className="h-9 w-9 bg-slate-900 rounded-lg flex items-center justify-center text-white shrink-0">
-                                <ArrowLeft className="rotate-180" size={16} />
+                            <div className="h-10 w-10 bg-slate-900 rounded-lg flex items-center justify-center text-white shrink-0">
+                                <ArrowLeft className="rotate-180" size={18} />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Expéditeur</p>
-                                <p className="text-sm font-bold text-slate-900 truncate">{selectedExpedition.expediteur?.nom_prenom}</p>
+                                <p className="text-sm font-bold text-slate-400 uppercase tracking-wide">Expéditeur</p>
+                                <p className="text-base font-bold text-slate-900 truncate">{selectedExpedition.expediteur?.nom_prenom}</p>
                             </div>
                         </div>
-                        <div className="space-y-2 text-sm text-slate-600">
+                        <div className="space-y-2 text-base text-slate-600">
                             <div className="flex items-center gap-2">
-                                <Smartphone size={14} className="text-slate-400 shrink-0" />
+                                <Smartphone size={16} className="text-slate-400 shrink-0" />
                                 {selectedExpedition.expediteur?.telephone}
                             </div>
                             <div className="flex items-start gap-2">
-                                <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                                <MapPin size={16} className="text-slate-400 shrink-0 mt-0.5" />
                                 <span>
                                     {selectedExpedition.expediteur?.adresse}, {selectedExpedition.expediteur?.ville}
                                     <br />
@@ -232,21 +232,21 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
 
                     <div className="bg-white p-4 rounded-lg border border-slate-200">
                         <div className="flex items-center gap-2.5 mb-3">
-                            <div className="h-9 w-9 bg-blue-600 rounded-lg flex items-center justify-center text-white shrink-0">
-                                <ChevronRight size={16} />
+                            <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shrink-0">
+                                <ChevronRight size={18} />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Destinataire</p>
-                                <p className="text-sm font-bold text-slate-900 truncate">{selectedExpedition.destinataire?.nom_prenom}</p>
+                                <p className="text-sm font-bold text-slate-400 uppercase tracking-wide">Destinataire</p>
+                                <p className="text-base font-bold text-slate-900 truncate">{selectedExpedition.destinataire?.nom_prenom}</p>
                             </div>
                         </div>
-                        <div className="space-y-2 text-sm text-slate-600">
+                        <div className="space-y-2 text-base text-slate-600">
                             <div className="flex items-center gap-2">
-                                <Smartphone size={14} className="text-slate-400 shrink-0" />
+                                <Smartphone size={16} className="text-slate-400 shrink-0" />
                                 {selectedExpedition.destinataire?.telephone}
                             </div>
                             <div className="flex items-start gap-2">
-                                <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                                <MapPin size={16} className="text-slate-400 shrink-0 mt-0.5" />
                                 <span>
                                     {selectedExpedition.destinataire?.adresse}, {selectedExpedition.destinataire?.ville}
                                     <br />

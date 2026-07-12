@@ -283,8 +283,9 @@ const ParcelControl = () => {
                     {!(currentParcel.is_controlled && !isFromIncoming && !currentParcel.is_blocked) && (
                         <button
                             onClick={handleValidate}
-                            disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling}
-                            className={`flex items-center gap-2 px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all shadow-sm active:scale-95 ${currentParcel.is_blocked ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-200' :
+                            disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling || (isFromIncoming && !selectedAgencyId)}
+                            title={isFromIncoming && !selectedAgencyId ? "Sélectionnez d'abord l'agence de réception" : ""}
+                            className={`flex items-center gap-2 px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all shadow-sm active:scale-95 disabled:opacity-50 ${currentParcel.is_blocked ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-200' :
                                     currentParcel.is_controlled ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200' :
                                         'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200'
                                 }`}
@@ -485,6 +486,30 @@ const ParcelControl = () => {
                                 </p>
                             </div>
                         </div>
+
+                        {isFromIncoming && !currentParcel.is_received_by_backoffice && (
+                            <div className="pt-1">
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
+                                    Agence de réception
+                                </label>
+                                <select
+                                    value={selectedAgencyId}
+                                    onChange={(e) => setSelectedAgencyId(e.target.value)}
+                                    className={`w-full px-4 py-3 rounded border text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-slate-900/5 ${
+                                        selectedAgencyId
+                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-900 focus:border-emerald-900'
+                                            : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-slate-900'
+                                    }`}
+                                >
+                                    <option value="">Sélectionner une agence...</option>
+                                    {agences.map(agency => (
+                                        <option key={agency.id} value={agency.id}>
+                                            {agency.nom_agence} ({agency.ville})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -530,6 +555,7 @@ const ParcelControl = () => {
                 subtitle="Confirmation de l'entrée en entrepôt central"
                 size="md"
                 onConfirm={confirmReceive}
+                confirmDisabled={!selectedAgencyId}
                 isLoading={isBulkReceiving || isValidating}
                 confirmLabel="Confirmer la Réception"
             >

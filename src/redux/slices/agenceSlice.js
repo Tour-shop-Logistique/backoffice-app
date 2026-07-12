@@ -17,10 +17,11 @@ export const fetchAgences = createAsyncThunk(
         }
     },
     {
-        // Évite le double-appel causé par le double-montage de React StrictMode en dev
+        // Évite seulement un appel concurrent (double-montage StrictMode en dev) ;
+        // ne doit pas empêcher un rafraîchissement manuel une fois déjà chargé.
         condition: (_, { getState }) => {
             const { agences } = getState();
-            if (agences.isLoading || agences.hasLoaded) return false;
+            if (agences.isLoading) return false;
         },
     }
 );

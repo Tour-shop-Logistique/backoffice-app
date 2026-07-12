@@ -27,10 +27,11 @@ export const fetchProduits = createAsyncThunk(
         }
     },
     {
-        // Évite le double-appel causé par le double-montage de React StrictMode en dev
+        // Évite seulement un appel concurrent (double-montage StrictMode en dev) ;
+        // ne doit pas empêcher un rafraîchissement manuel une fois déjà chargé.
         condition: (_, { getState }) => {
             const { produits } = getState();
-            if (produits.isLoading || produits.hasLoadedProduits) return false;
+            if (produits.isLoading) return false;
         },
     }
 );
