@@ -53,7 +53,11 @@ export const fetchIncomingParcels = createAsyncThunk(
     'parcels/fetchIncomingParcels',
     async ({ date_debut = null, date_fin = null } = {}, { rejectWithValue }) => {
         try {
-            let url = `/backoffice/list-expedition?mode=arrivee&status=depart_expedition_succes`;
+            // Pas de filtre de statut : on veut voir les expéditions dès leur création
+            // pour pouvoir anticiper (assigner l'agence de réception) avant même que
+            // le backoffice de départ ait confirmé le départ effectif. Le bouton
+            // Réceptionner reste bloqué côté UI/API tant que ce n'est pas le cas.
+            let url = `/backoffice/list-expedition?mode=arrivee`;
             if (date_debut) url += `&date_debut=${date_debut}`;
             if (date_fin) url += `&date_fin=${date_fin}`;
 
