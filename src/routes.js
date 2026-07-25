@@ -18,4 +18,5 @@ export const ROUTES = {
     INCOMING_PARCELS: '/incoming-parcels',
     COMPTABILITE: '/comptabilite',
     HISTORIQUE: '/historique',
+    ANNOUNCEMENTS: '/annonces',
 };

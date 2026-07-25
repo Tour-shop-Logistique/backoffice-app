@@ -8,6 +8,7 @@ import agentReducer from './slices/agentSlice';
 import agenceReducer from './slices/agenceSlice';
 import uiReducer from './slices/uiSlice';
 import parcelReducer from './slices/parcelSlice';
+import announcementReducer from './slices/announcementSlice';
 
 export const store = configureStore({
   reducer: {
@@ -20,5 +21,6 @@ export const store = configureStore({
     agences: agenceReducer,
     ui: uiReducer,
     parcels: parcelReducer,
+    announcements: announcementReducer,
   },
 });
