@@ -46,6 +46,21 @@ export const deleteAnnouncement = createAsyncThunk(
     }
 );
 
+export const bulkDeleteAnnouncements = createAsyncThunk(
+    'announcements/bulkDelete',
+    async (ids, { rejectWithValue }) => {
+        try {
+            const response = await api.delete('/backoffice/announcements/bulk-delete', { data: { ids } });
+            if (response.data.success) {
+                return ids;
+            }
+            return rejectWithValue("Impossible de supprimer les annonces");
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || error.message || "Erreur lors de la suppression des annonces");
+        }
+    }
+);
+
 const announcementSlice = createSlice({
     name: 'announcements',
     initialState: {
@@ -85,6 +100,10 @@ const announcementSlice = createSlice({
             })
             .addCase(deleteAnnouncement.fulfilled, (state, action) => {
                 state.items = state.items.filter((a) => a.id !== action.payload);
+            })
+            .addCase(bulkDeleteAnnouncements.fulfilled, (state, action) => {
+                const deletedIds = new Set(action.payload);
+                state.items = state.items.filter((a) => !deletedIds.has(a.id));
             });
     }
 });

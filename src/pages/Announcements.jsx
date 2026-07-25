@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Megaphone, Plus, Trash2, Loader2, Users, Building2 } from 'lucide-react';
 import { showNotification } from '../redux/slices/uiSlice';
-import { fetchAnnouncements, createAnnouncement, deleteAnnouncement } from '../redux/slices/announcementSlice';
+import { fetchAnnouncements, createAnnouncement, deleteAnnouncement, bulkDeleteAnnouncements } from '../redux/slices/announcementSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
@@ -18,6 +18,9 @@ const Announcements = () => {
   const [toDelete, setToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [form, setForm] = useState({ titre: '', message: '', agence_id: '' });
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   useEffect(() => {
     if (!hasLoaded && !isLoading) {
@@ -68,6 +71,35 @@ const Announcements = () => {
     }
   };
 
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === items.length && items.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(items.map((a) => a.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setIsBulkDeleting(true);
+    try {
+      await dispatch(bulkDeleteAnnouncements(selectedIds)).unwrap();
+      dispatch(showNotification({ type: 'success', message: `${selectedIds.length} annonce(s) supprimée(s).` }));
+      setSelectedIds([]);
+      setIsBulkDeleteModalOpen(false);
+    } catch (err) {
+      dispatch(showNotification({ type: 'error', message: err || 'Erreur lors de la suppression' }));
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
       <header className="flex items-center justify-between">
@@ -86,6 +118,29 @@ const Announcements = () => {
         </button>
       </header>
 
+      {selectedIds.length > 0 && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 bg-slate-900 rounded-lg shadow-md">
+          <span className="text-sm font-semibold text-white">
+            {selectedIds.length} annonce{selectedIds.length > 1 ? 's' : ''} sélectionnée{selectedIds.length > 1 ? 's' : ''}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedIds([])}
+              className="px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white uppercase tracking-widest transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={() => setIsBulkDeleteModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-all active:scale-95"
+            >
+              <Trash2 size={14} />
+              Supprimer
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 px-6">
@@ -99,31 +154,69 @@ const Announcements = () => {
             <p className="text-xs text-slate-500 mt-2">Créez votre première annonce pour informer les agences partenaires.</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {items.map((a) => (
-              <div key={a.id} className="px-6 py-4 flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-bold text-slate-900 text-base">{a.titre}</p>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold ${a.agence ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                      {a.agence ? <Building2 size={12} /> : <Users size={12} />}
-                      {a.agence ? a.agence.nom_agence : 'Toutes les agences'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-600 mt-1">{a.message}</p>
-                  <p className="text-xs text-slate-400 mt-2">
-                    {format(new Date(a.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
-                    {' · '}{a.nb_lectures} lecture{a.nb_lectures > 1 ? 's' : ''}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setToDelete(a)}
-                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-widest">
+                  <th className="px-6 py-4 w-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === items.length && items.length > 0}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
+                    />
+                  </th>
+                  <th className="px-6 py-4">Annonce</th>
+                  <th className="px-6 py-4">Destinataire</th>
+                  <th className="px-6 py-4 text-center">Lectures</th>
+                  <th className="px-6 py-4">Envoyée le</th>
+                  <th className="px-6 py-4 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {items.map((a) => (
+                  <tr
+                    key={a.id}
+                    className={`transition-colors ${selectedIds.includes(a.id) ? 'bg-indigo-50/30' : 'hover:bg-slate-50/50'}`}
+                  >
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(a.id)}
+                        onChange={() => toggleSelect(a.id)}
+                        className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
+                      />
+                    </td>
+                    <td className="px-6 py-4 max-w-md">
+                      <p className="font-bold text-slate-900 text-sm">{a.titre}</p>
+                      <p className="text-sm text-slate-500 mt-0.5 truncate">{a.message}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap ${a.agence ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                        {a.agence ? <Building2 size={12} /> : <Users size={12} />}
+                        {a.agence ? a.agence.nom_agence : 'Toutes les agences'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-sm font-semibold text-slate-700">{a.nb_lectures}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-xs text-slate-500 whitespace-nowrap">
+                        {format(new Date(a.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => setToDelete(a)}
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -181,6 +274,15 @@ const Announcements = () => {
         isLoading={isDeleting}
         title="Supprimer l'annonce"
         message={`L'annonce "${toDelete?.titre}" sera définitivement supprimée.`}
+      />
+
+      <DeleteModal
+        isOpen={isBulkDeleteModalOpen}
+        onClose={() => setIsBulkDeleteModalOpen(false)}
+        onConfirm={handleBulkDelete}
+        isLoading={isBulkDeleting}
+        title="Supprimer les annonces"
+        message={`${selectedIds.length} annonce(s) seront définitivement supprimée(s).`}
       />
     </div>
   );
