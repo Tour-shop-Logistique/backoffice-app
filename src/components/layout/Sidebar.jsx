@@ -14,6 +14,7 @@ import {
   Users,
   Settings,
   Megaphone,
+  AlertOctagon,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
@@ -39,6 +40,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         { name: "Colis à contrôler", href: "/parcels", icon: ClipboardCheck, color: "text-blue-400" },
         { name: "Arrivages prévus", href: "/incoming-parcels", icon: ArrowDownToLine, color: "text-emerald-400" },
         { name: "Historique", href: "/historique", icon: History, color: "text-slate-400" },
+        { name: "Litiges", href: "/litiges", icon: AlertOctagon, color: "text-red-400" },
       ],
     },
     {

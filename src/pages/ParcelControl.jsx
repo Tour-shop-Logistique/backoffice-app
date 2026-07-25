@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchParcelByCode, clearCurrentParcel, setCurrentParcel, controlParcels, receiveParcels, blockParcels } from '../redux/slices/parcelSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
+import { createLitige } from '../redux/slices/litigeSlice';
 import { showNotification } from '../redux/slices/uiSlice';
 import Modal from '../components/common/Modal';
 import {
@@ -54,6 +55,35 @@ const ParcelControl = () => {
     // Block State
     const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
     const [blockReason, setBlockReason] = useState('');
+
+    // Litige State
+    const [isLitigeModalOpen, setIsLitigeModalOpen] = useState(false);
+    const [litigeMotif, setLitigeMotif] = useState('');
+    const [litigeDescription, setLitigeDescription] = useState('');
+    const [isSendingLitige, setIsSendingLitige] = useState(false);
+
+    const handleOpenLitige = async () => {
+        if (!litigeMotif.trim()) {
+            dispatch(showNotification({ type: 'error', message: 'Le motif du litige est obligatoire.' }));
+            return;
+        }
+        setIsSendingLitige(true);
+        try {
+            await dispatch(createLitige({
+                code_colis: currentParcel.code_colis,
+                motif: litigeMotif.trim(),
+                description: litigeDescription.trim() || null,
+            })).unwrap();
+            dispatch(showNotification({ type: 'success', message: 'Litige ouvert avec succès.' }));
+            setIsLitigeModalOpen(false);
+            setLitigeMotif('');
+            setLitigeDescription('');
+        } catch (err) {
+            dispatch(showNotification({ type: 'error', message: err || "Erreur lors de l'ouverture du litige" }));
+        } finally {
+            setIsSendingLitige(false);
+        }
+    };
 
     const isFromIncoming = location.state?.from === 'incoming';
 
@@ -269,6 +299,15 @@ const ParcelControl = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsLitigeModalOpen(true)}
+                        disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-amber-600 bg-white border border-amber-100 hover:bg-amber-50 transition-all active:scale-95 shadow-sm"
+                    >
+                        <Info size={14} />
+                        Signaler un litige
+                    </button>
+
                     {!currentParcel.is_controlled && !currentParcel.is_blocked && (
                         <button
                             onClick={() => setIsBlockModalOpen(true)}
@@ -595,6 +634,39 @@ const ParcelControl = () => {
                     placeholder="Précisez le motif du blocage (poids, non-conformité...)"
                     className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-rose-500/5 focus:border-rose-500 transition-all outline-none min-h-[150px] resize-none"
                 />
+            </Modal>
+
+            <Modal
+                isOpen={isLitigeModalOpen}
+                onClose={() => setIsLitigeModalOpen(false)}
+                title="Signaler un litige"
+                subtitle={`Colis : ${currentParcel.code_colis}`}
+                size="sm"
+                onConfirm={handleOpenLitige}
+                isLoading={isSendingLitige}
+                confirmLabel="Ouvrir le litige"
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Motif</label>
+                        <input
+                            type="text"
+                            value={litigeMotif}
+                            onChange={(e) => setLitigeMotif(e.target.value)}
+                            placeholder="Ex: Colis endommagé, contesté par le client..."
+                            className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-amber-500/5 focus:border-amber-500 transition-all outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Description (optionnel)</label>
+                        <textarea
+                            value={litigeDescription}
+                            onChange={(e) => setLitigeDescription(e.target.value)}
+                            placeholder="Détails supplémentaires..."
+                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-amber-500/5 focus:border-amber-500 transition-all outline-none min-h-[100px] resize-none"
+                        />
+                    </div>
+                </div>
             </Modal>
         </div>
     );

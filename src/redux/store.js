@@ -9,6 +9,7 @@ import agenceReducer from './slices/agenceSlice';
 import uiReducer from './slices/uiSlice';
 import parcelReducer from './slices/parcelSlice';
 import announcementReducer from './slices/announcementSlice';
+import litigeReducer from './slices/litigeSlice';
 
 export const store = configureStore({
   reducer: {
@@ -22,5 +23,6 @@ export const store = configureStore({
     ui: uiReducer,
     parcels: parcelReducer,
     announcements: announcementReducer,
+    litiges: litigeReducer,
   },
 });
