@@ -327,8 +327,29 @@ const parcelSlice = createSlice({
         // les listes locales, sans re-fetch. Étendre avec un bloc "if (model === ...)"
         // pour réagir à un nouveau type d'entité.
         realtimeModelUpdated: (state, action) => {
-            const { model, data } = action.payload || {};
+            const { model, action: verb, data, currentBackofficeCountry } = action.payload || {};
             if (!model || !Array.isArray(data) || data.length === 0) return;
+
+            // Nouvelle expédition créée : on aplatit ses colis (même format que
+            // fetchIncomingParcels) et on les insère dans les arrivages prévus,
+            // sans attendre un rafraîchissement manuel. Seul le backoffice du
+            // pays de destination doit voir apparaître le colis ici (celui de
+            // départ reçoit aussi l'event, mais pour d'autres besoins).
+            if (model === 'Expedition' && verb === 'created') {
+                const norm = (s) => (s || '').trim().toLowerCase();
+                data.forEach((expedition) => {
+                    const { colis, ...expeditionInfo } = expedition;
+                    if (!Array.isArray(colis)) return;
+                    if (norm(expeditionInfo.pays_destination) !== norm(currentBackofficeCountry)) return;
+
+                    colis.forEach((c) => {
+                        const alreadyThere = state.incomingList.items.some((p) => p.id === c.id);
+                        if (alreadyThere) return;
+                        state.incomingList.items.unshift({ ...c, expedition: expeditionInfo });
+                    });
+                });
+                return;
+            }
 
             if (model === 'Colis') {
                 const patch = (list) => {

@@ -147,7 +147,7 @@ const Comptabilite = () => {
         // - Backoffice d'arrivé : ne gagne RIEN sauf frais de retard
         // - Agence d'arrivée : gagne sur les frais de livraison à domicile
         // - Livreur d'arrivé : gagne sur les frais de livraison à domicile
-        result.backoffice += (acct.frais_retard || 0); // Le backoffice d'arrivé gagne uniquement sur les frais de retard
+        result.backoffice += (acct.backoffice_arrivee || 0); // Le backoffice d'arrivé gagne uniquement sur les frais de retard
         result.agence_arrivee += (acct.agence_arrivee || 0); // Frais de livraison
         result.livreur_arrivee += (acct.livreur_arrivee || 0); // Frais de livraison
       } else if (filterMode === 'departure') {
@@ -170,7 +170,7 @@ const Comptabilite = () => {
       if (dateSource && format(new Date(dateSource), 'yyyy-MM-dd') === todayStr) {
         result.today += (acct.total_client_due || 0);
         if (filterMode === 'reception') {
-          result.todayBackoffice += (acct.frais_retard || 0); // Le backoffice d'arrivé gagne uniquement sur les frais de retard aujourd'hui
+          result.todayBackoffice += (acct.backoffice_arrivee || 0); // Le backoffice d'arrivé gagne uniquement sur les frais de retard aujourd'hui
         } else if (filterMode === 'departure') {
           result.todayBackoffice += (acct.backoffice_depart || 0);
         } else {
@@ -292,7 +292,7 @@ const Comptabilite = () => {
       <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
         {/* HEADER SECTION */}
         <header className="space-y-3 md:space-y-0 text-black">
-          <div className="flex items-center justify-between">
+          <div className="md:flex md:items-center md:justify-between">
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
                 Gestion Comptable
@@ -302,29 +302,29 @@ const Comptabilite = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm shrink-0">
-                <div className="flex items-center px-3 gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-3 md:mt-0">
+              <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
+                <div className="flex items-center flex-1 px-2 sm:px-3 gap-2">
                   {/* Date de début - champ direct */}
                   <input
                     type="date"
                     value={dateDebut}
                     onChange={(e) => setDateDebut(e.target.value)}
-                    className="text-xs font-bold text-slate-700 bg-transparent border-none focus:outline-none cursor-pointer"
+                    className="min-w-0 flex-1 sm:flex-none text-xs font-bold text-slate-700 bg-transparent border-none focus:outline-none cursor-pointer"
                   />
-                  <ArrowRight size={14} className="text-slate-300" />
+                  <ArrowRight size={14} className="text-slate-300 shrink-0" />
                   {/* Date de fin - champ direct */}
                   <input
                     type="date"
                     value={dateFin}
                     onChange={(e) => setDateFin(e.target.value)}
-                    className="text-xs font-bold text-slate-700 bg-transparent border-none focus:outline-none cursor-pointer"
+                    className="min-w-0 flex-1 sm:flex-none text-xs font-bold text-slate-700 bg-transparent border-none focus:outline-none cursor-pointer"
                   />
                 </div>
                 <button
                   onClick={handleLoadData}
                   disabled={isLoading || isRefreshing}
-                  className="p-2 bg-white text-slate-600 border-l border-slate-200 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
+                  className="p-2 bg-white text-slate-600 border-l border-slate-200 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50 shrink-0"
                 >
                   {isLoading || isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                 </button>
@@ -333,7 +333,7 @@ const Comptabilite = () => {
               <button
                 onClick={handleDownloadPDF}
                 disabled={filteredItems.length === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10 disabled:opacity-50"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10 disabled:opacity-50 shrink-0"
               >
                 <FileDown size={14} />
                 Exporter PDF
@@ -379,7 +379,7 @@ const Comptabilite = () => {
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <StatCard 
           label="CA Attendu"
           value={totals.total}
@@ -449,14 +449,14 @@ const Comptabilite = () => {
                 </tr>
               ) : (
                 filteredItems.map((exp, index) => {
-                  const acc = exp.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0, frais_retard: 0 };
+                  const acc = exp.accounting_details || { backoffice_depart: 0, backoffice_arrivee: 0, agence_depart: 0, agence_arrivee: 0, total_client_due: 0 };
                   const clientTotal = acc.total_client_due;
-                  
+
                   // Calcul du backoffice selon le filtre
                   let boNet;
                   if (filterMode === 'reception') {
                     // Pour les arrivés, le backoffice d'arrivé perçoit uniquement les frais de retard
-                    boNet = acc.frais_retard || 0;
+                    boNet = acc.backoffice_arrivee || 0;
                   } else if (filterMode === 'departure') {
                     // Pour les départs, le backoffice de départ perçoit sa part
                     boNet = acc.backoffice_depart || 0;

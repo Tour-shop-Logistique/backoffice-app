@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../routes';
 import { fetchBackofficeExpeditions } from '../redux/slices/backofficeSlice';
 import { format, subDays, isWithinInterval, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -10,6 +12,7 @@ import {
   RefreshCw,
   Download,
   ChevronDown,
+  ChevronRight,
   Package,
   DollarSign,
   TrendingUp,
@@ -28,6 +31,7 @@ import { createPDFHeader, createPDFFooter, createSummaryCards, formatPDFNumber, 
 
 const Historique = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { expeditions, isLoadingExpeditions, expeditionsError, hasLoadedExpeditions } = useSelector((state) => state.backoffice);
   
   console.log('Expeditions from Redux:', expeditions);
@@ -79,11 +83,13 @@ const Historique = () => {
       // Filtre par recherche texte
       if (!searchTerm) return true;
       const searchLower = searchTerm.toLowerCase();
+      const colisList = Array.isArray(exp.colis) ? exp.colis : [];
       return (
         exp.reference?.toLowerCase().includes(searchLower) ||
         exp.agence?.nom_agence?.toLowerCase().includes(searchLower) ||
         exp.pays_destination?.toLowerCase().includes(searchLower) ||
-        exp.expediteur?.nom_prenom?.toLowerCase().includes(searchLower)
+        exp.expediteur?.nom_prenom?.toLowerCase().includes(searchLower) ||
+        colisList.some((c) => c.code_colis?.toLowerCase().includes(searchLower))
       );
     });
   }, [expeditions, searchTerm, filterMode]);
@@ -213,7 +219,7 @@ const Historique = () => {
       <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
         {/* HEADER SECTION */}
         <header className="space-y-3 md:space-y-0 text-black">
-          <div className="flex items-center justify-between">
+          <div className="md:flex md:items-center md:justify-between">
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
                 Historique des Expéditions
@@ -223,12 +229,12 @@ const Historique = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm shrink-0">
-                <div className="flex items-center px-3 gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-3 md:mt-0">
+              <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
+                <div className="flex items-center flex-1 px-1 sm:px-3 gap-1 sm:gap-2">
                   <button
                     onClick={() => setFilterMode("all")}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    className={`flex-1 sm:flex-none px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
                       filterMode === "all"
                         ? "bg-slate-900 text-white"
                         : "text-slate-600 hover:text-slate-900"
@@ -238,7 +244,7 @@ const Historique = () => {
                   </button>
                   <button
                     onClick={() => setFilterMode("depart")}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    className={`flex-1 sm:flex-none px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
                       filterMode === "depart"
                         ? "bg-orange-600 text-white"
                         : "text-slate-600 hover:text-slate-900"
@@ -248,7 +254,7 @@ const Historique = () => {
                   </button>
                   <button
                     onClick={() => setFilterMode("arrivee")}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    className={`flex-1 sm:flex-none px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
                       filterMode === "arrivee"
                         ? "bg-purple-600 text-white"
                         : "text-slate-600 hover:text-slate-900"
@@ -260,7 +266,7 @@ const Historique = () => {
                 <button
                   onClick={() => loadExpeditions()}
                   disabled={isLoadingExpeditions || isRefreshing}
-                  className="p-2 bg-white text-slate-600 border-l border-slate-200 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
+                  className="p-2 bg-white text-slate-600 border-l border-slate-200 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50 shrink-0"
                 >
                   {isLoadingExpeditions || isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                 </button>
@@ -269,7 +275,7 @@ const Historique = () => {
               <button
                 onClick={exportToPDF}
                 disabled={filteredExpeditions.length === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10 disabled:opacity-50"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10 disabled:opacity-50 shrink-0"
               >
                 <FileDown size={14} />
                 Exporter PDF
@@ -280,7 +286,7 @@ const Historique = () => {
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <StatCard 
           label="Total expéditions"
           value={totals.count}
@@ -330,7 +336,7 @@ const Historique = () => {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   type="text"
-                  placeholder="Rechercher..."
+                  placeholder="Réf. expédition ou code colis..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-11 pr-4 py-2.5 border border-slate-200 rounded-lg text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
@@ -378,11 +384,16 @@ const Historique = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredExpeditions.map((exp) => (
-                  <tr key={exp.id} className="hover:bg-slate-50 transition-colors">
+                {filteredExpeditions.map((exp) => {
+                  const searchLower = searchTerm.toLowerCase();
+                  const colisList = Array.isArray(exp.colis) ? exp.colis : [];
+
+                  return (
+                  <React.Fragment key={exp.id}>
+                  <tr className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
-                        <span className="font-bold text-slate-900 text-base">{exp.reference}</span>
+                        <span className="font-bold text-slate-900 text-base">📦 {exp.reference}</span>
                         <span className="text-sm text-slate-500">
                           {exp.agence?.nom_agence || 'N/A'} · {
                             format(
@@ -430,7 +441,56 @@ const Historique = () => {
                       <ViewDetailsButton onClick={() => setSelectedExpedition(exp)} />
                     </td>
                   </tr>
-                ))}
+                  {colisList.map((c) => {
+                    const isMatch = !!searchTerm && c.code_colis?.toLowerCase().includes(searchLower);
+                    const goToColis = () =>
+                      navigate(ROUTES.PARCEL_CONTROL.replace(':code', c.code_colis), { state: { from: 'history' } });
+                    return (
+                    <tr
+                      key={c.id}
+                      onClick={goToColis}
+                      className={`group cursor-pointer border-l-4 transition-colors ${
+                        isMatch
+                          ? 'border-l-blue-500 bg-blue-100/80 hover:bg-blue-200/60'
+                          : 'border-l-slate-400 bg-slate-200/70 hover:bg-slate-300/60'
+                      }`}
+                    >
+                      <td className="pl-10 pr-6 py-2" colSpan={4}>
+                        <div
+                          className={`flex items-center gap-2 text-xs group-hover:underline underline-offset-2 ${
+                            isMatch ? 'text-blue-700' : 'text-slate-600'
+                          }`}
+                        >
+                          <span className={isMatch ? 'text-blue-300' : 'text-slate-400'}>↳</span>
+                          <Package size={12} className="shrink-0" />
+                          <span className="font-semibold">{c.code_colis}</span>
+                          {c.designation && <span className="font-normal">· {c.designation}</span>}
+                        </div>
+                      </td>
+                      <td className="px-6 py-2" colSpan={1}>
+                        {c.is_blocked ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-red-100 text-red-700">
+                            Bloqué
+                          </span>
+                        ) : c.is_received_by_backoffice ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-100 text-emerald-700">
+                            Reçu backoffice
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-200 text-slate-600">
+                            En attente
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-2 text-right" colSpan={1}>
+                        <ChevronRight size={14} className={`inline-block ${isMatch ? 'text-blue-400' : 'text-slate-400'} group-hover:translate-x-0.5 transition-transform`} />
+                      </td>
+                    </tr>
+                    );
+                  })}
+                  </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

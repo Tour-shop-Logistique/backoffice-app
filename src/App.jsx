@@ -18,8 +18,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Agents = lazy(() => import('./pages/Agents'));
 const Parcels = lazy(() => import('./pages/Parcels'));
 const ParcelHistory = lazy(() => import('./pages/ParcelHistory'));
-const SimpleRates = lazy(() => import('./pages/SimpleRates'));
-const GroupedRates = lazy(() => import('./pages/GroupedRates'));
+const Tarification = lazy(() => import('./pages/Tarification'));
 const ZoneConfiguration = lazy(() => import('./pages/ZoneConfiguration'));
 const AgencePartenaire = lazy(() => import('./pages/AgencePartenaire'));
 const AgenceDetail = lazy(() => import('./pages/AgenceDetail'));
@@ -32,7 +31,6 @@ const Comptabilite = lazy(() => import('./pages/Comptabilite'));
 const Historique = lazy(() => import('./pages/Historique'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Announcements = lazy(() => import('./pages/Announcements'));
-const Litiges = lazy(() => import('./pages/Litiges'));
 
 // Composant de chargement
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -74,8 +72,7 @@ function App() {
             } />
             <Route path={ROUTES.PARCELS} element={<Parcels />} />
             <Route path={ROUTES.PARCEL_HISTORY} element={<ParcelHistory />} />
-            <Route path={ROUTES.SIMPLE_RATES} element={<SimpleRates />} />
-            <Route path={ROUTES.GROUPED_RATES} element={<GroupedRates />} />
+            <Route path={ROUTES.TARIFICATION} element={<Tarification />} />
             <Route path={ROUTES.ZONE_CONFIGURATION} element={<ZoneConfiguration />} />
             <Route path={ROUTES.AGENCE_PARTENAIRE} element={<AgencePartenaire />} />
             <Route path={ROUTES.AGENCE_DETAIL} element={<AgenceDetail />} />
@@ -88,7 +85,6 @@ function App() {
             <Route path={ROUTES.HISTORIQUE} element={<Historique />} />
             <Route path={ROUTES.SETTINGS} element={<Settings />} />
             <Route path={ROUTES.ANNOUNCEMENTS} element={<Announcements />} />
-            <Route path={ROUTES.LITIGES} element={<Litiges />} />
           </Route>
 
           {/* Redirection par défaut (catch-all) */}

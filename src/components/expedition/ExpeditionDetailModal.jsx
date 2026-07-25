@@ -7,7 +7,6 @@ import {
     MapPin,
     Smartphone,
     Wallet,
-    TrendingUp,
 } from 'lucide-react';
 import Modal from '../common/Modal';
 import { getExpeditionStatusLabel, getStatusStyles } from '../../utils/statusTranslations';
@@ -37,70 +36,101 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
     const isArrivee = roles.includes('arrivee');
     const roleLabel = isDepart && isArrivee ? 'Départ & Arrivée' : isDepart ? 'Départ' : isArrivee ? 'Arrivée' : null;
 
-    // Détail des lignes qui composent notre gain (backoffice_gain), selon
-    // notre rôle sur cette expédition — départ, arrivée, ou les deux.
-    const gainLines = [];
-    if (isDepart) {
-        gainLines.push(
-            { label: 'Montant expédition (base)', value: selectedExpedition.montant_base },
-            { label: "Frais d'emballage (part)", value: com.emballage?.backoffice },
-            { label: 'Frais annexes', value: selectedExpedition.frais_annexes },
-        );
-    }
-    if (isArrivee) {
-        gainLines.push(
-            { label: 'Frais de retard (part)', value: com.retard?.tourshop },
-        );
-    }
-    const visibleGainLines = gainLines.filter((l) => Number(l.value) > 0);
-    const notreGain = Number(selectedExpedition.backoffice_gain) || sum(visibleGainLines.map((l) => l.value));
-
-    // Ce que touchent les autres acteurs, avec le détail des lignes qui
-    // composent chaque part. Le total retenu est celui de l'API si présent,
-    // sinon la somme des lignes visibles (évite un total à 0 à côté d'un
-    // détail non-nul).
-    const autresActeurs = [
-        {
-            key: 'agence_depart',
-            label: 'Agence de départ',
-            sub: selectedExpedition.agence?.nom_agence,
-            apiTotal: acc.agence_depart,
-            lines: [
-                { label: 'Montant expédition (com.)', value: selectedExpedition.montant_prestation },
-                { label: "Frais d'enlèvement (part)", value: com.enlevement?.agence },
-                { label: "Frais d'emballage (part)", value: com.emballage?.agence },
-            ],
-        },
-        {
-            key: 'agence_arrivee',
-            label: "Agence d'arrivée",
-            apiTotal: acc.agence_arrivee,
-            lines: [
-                { label: 'Frais de livraison (part)', value: com.livraison?.agence },
-                { label: 'Frais de retard (part)', value: com.retard?.agence },
-            ],
-        },
-        {
-            key: 'livreur_depart',
-            label: 'Livreur départ',
-            apiTotal: acc.livreur_depart,
-            lines: [
-                { label: 'Enlèvement', value: com.enlevement?.livreur },
-            ],
-        },
-        {
-            key: 'livreur_arrivee',
-            label: 'Livreur arrivée',
-            apiTotal: acc.livreur_arrivee,
-            lines: [
-                { label: 'Livraison', value: com.livraison?.livreur },
-            ],
-        },
-    ].map((actor) => {
+    // Ce que touchent les acteurs sur cette expédition, avec le détail des
+    // lignes qui composent chaque part. Le total retenu est celui de l'API
+    // si présent, sinon la somme des lignes visibles (évite un total à 0 à
+    // côté d'un détail non-nul). Regroupé par Départ / Arrivée pour montrer
+    // toute la chaîne de chaque côté. Seul le backoffice qui correspond à
+    // notre rôle réel sur l'expédition est mis en évidence (fond noir).
+    const buildActeur = (actor) => {
         const lines = actor.lines.filter((l) => Number(l.value) > 0);
         const total = Number(actor.apiTotal) > 0 ? Number(actor.apiTotal) : sum(lines.map((l) => l.value));
         return { ...actor, lines, total };
-    });
+    };
+
+    const groupesActeurs = [
+        {
+            key: 'depart',
+            title: 'Départ',
+            acteurs: [
+                {
+                    key: 'backoffice_depart',
+                    label: 'Backoffice (Départ)',
+                    highlight: isDepart,
+                    apiTotal: acc.backoffice_depart,
+                    lines: [
+                        { label: 'Montant expédition (base)', value: selectedExpedition.montant_base },
+                        { label: "Frais d'emballage (part)", value: com.emballage?.backoffice },
+                        { label: 'Frais annexes', value: selectedExpedition.frais_annexes },
+                    ],
+                },
+                {
+                    key: 'agence_depart',
+                    label: 'Agence de départ',
+                    sub: selectedExpedition.agence?.nom_agence,
+                    apiTotal: acc.agence_depart,
+                    lines: [
+                        { label: 'Montant expédition (com.)', value: selectedExpedition.montant_prestation },
+                        { label: "Frais d'enlèvement (part)", value: com.enlevement?.agence },
+                        { label: "Frais d'emballage (part)", value: com.emballage?.agence },
+                    ],
+                },
+                {
+                    key: 'livreur_depart',
+                    label: 'Livreur départ',
+                    apiTotal: acc.livreur_depart,
+                    lines: [
+                        { label: 'Enlèvement', value: com.enlevement?.livreur },
+                    ],
+                },
+            ].map(buildActeur),
+        },
+        {
+            key: 'arrivee',
+            title: 'Arrivée',
+            acteurs: [
+                {
+                    key: 'backoffice_arrivee',
+                    label: 'Backoffice (Arrivée)',
+                    highlight: isArrivee,
+                    apiTotal: acc.backoffice_arrivee,
+                    lines: [
+                        { label: 'Frais de retard (part)', value: com.retard?.tourshop },
+                    ],
+                },
+                {
+                    key: 'agence_arrivee',
+                    label: "Agence d'arrivée",
+                    apiTotal: acc.agence_arrivee,
+                    lines: [
+                        { label: 'Frais de livraison (part)', value: com.livraison?.agence },
+                        { label: 'Frais de retard (part)', value: com.retard?.agence },
+                    ],
+                },
+                {
+                    key: 'livreur_arrivee',
+                    label: 'Livreur arrivée',
+                    apiTotal: acc.livreur_arrivee,
+                    lines: [
+                        { label: 'Livraison', value: com.livraison?.livreur },
+                    ],
+                },
+            ].map(buildActeur),
+        },
+    ];
+
+    // Composition du montant total facturé au client, avant répartition par
+    // acteur — répond à "d'où vient ce total ?" (base + prestation + frais
+    // annexes/emballage/enlèvement/livraison/retard selon ce qui s'applique).
+    const totalLines = [
+        { label: 'Montant de base', value: selectedExpedition.montant_base },
+        { label: 'Prestation', value: selectedExpedition.montant_prestation },
+        { label: "Frais d'emballage", value: selectedExpedition.frais_emballage },
+        { label: "Frais d'enlèvement à domicile", value: selectedExpedition.frais_enlevement_domicile },
+        { label: 'Frais de livraison à domicile', value: selectedExpedition.frais_livraison_domicile },
+        { label: 'Frais de retard de retrait', value: selectedExpedition.frais_retard_retrait },
+        { label: 'Frais annexes', value: selectedExpedition.frais_annexes },
+    ].filter((l) => Number(l.value) > 0);
 
     return (
         <Modal
@@ -128,78 +158,68 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                     )}
                 </div>
 
-                {/* Notre gain — la seule chose qui compte vraiment pour nous */}
-                <div className="p-5 bg-slate-900 rounded-lg">
-                    <div className="flex items-center justify-between gap-3">
+                {/* Montant total payé par le client, avec sa composition */}
+                <div className="bg-rose-50/60 rounded-lg border border-rose-100 overflow-hidden">
+                    <div className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-3">
-                            <div className="h-11 w-11 bg-emerald-500 rounded-lg flex items-center justify-center text-white shrink-0">
-                                <TrendingUp size={21} />
+                            <div className="h-10 w-10 bg-rose-100 rounded-lg flex items-center justify-center text-rose-600 shrink-0">
+                                <Wallet size={19} />
                             </div>
-                            <p className="text-base font-bold text-slate-300">Notre gain sur cette expédition</p>
+                            <p className="text-base font-bold text-rose-900">Total payé par le client</p>
                         </div>
-                        <p className="text-3xl font-bold text-white shrink-0">
-                            {fmt(notreGain)}
-                            <span className="text-base font-bold text-slate-400 ml-1.5">CFA</span>
+                        <p className="text-xl font-bold text-rose-700">
+                            {fmt(acc.total_client_due)}
+                            <span className="text-sm font-bold text-rose-400 ml-1">CFA</span>
                         </p>
                     </div>
-                    {visibleGainLines.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-slate-800 space-y-2">
-                            {visibleGainLines.map((line, i) => (
+                    {totalLines.length > 0 && (
+                        <div className="px-4 pb-4 pt-3 border-t border-rose-100 space-y-1.5">
+                            {totalLines.map((line, i) => (
                                 <div key={i} className="flex items-center justify-between">
-                                    <span className="text-base text-slate-400">{line.label}</span>
-                                    <span className="text-base font-semibold text-slate-200">{fmt(line.value)} CFA</span>
+                                    <span className="text-sm text-rose-700/70">{line.label}</span>
+                                    <span className="text-sm font-semibold text-rose-800">{fmt(line.value)} CFA</span>
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
 
-                {/* Montant total payé par le client */}
-                <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 shrink-0">
-                            <Wallet size={19} />
-                        </div>
-                        <p className="text-base font-bold text-slate-600">Total payé par le client</p>
-                    </div>
-                    <p className="text-xl font-bold text-slate-900">
-                        {fmt(acc.total_client_due)}
-                        <span className="text-sm font-bold text-slate-400 ml-1">CFA</span>
-                    </p>
-                </div>
-
-                {/* Détail des autres acteurs sur cette expédition */}
-                <div>
-                    <p className="text-sm font-bold text-slate-400 uppercase tracking-wide px-1 mb-2">
-                        Autres parts sur cette expédition
-                    </p>
-                    <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100 overflow-hidden">
-                        {autresActeurs.map((actor) => (
-                            <div key={actor.key} className="px-4 py-3">
-                                <div className="flex items-center justify-between gap-3">
-                                    <p className="text-base font-bold text-slate-800 truncate">
-                                        {actor.label}
-                                        {actor.sub && <span className="font-medium text-slate-400"> · {actor.sub}</span>}
-                                    </p>
-                                    <span className="text-base font-bold text-slate-900 shrink-0">
-                                        {fmt(actor.total)} CFA
-                                    </span>
-                                </div>
-                                {actor.lines.length > 0 ? (
-                                    <div className="mt-1.5 space-y-1">
-                                        {actor.lines.map((line, i) => (
-                                            <div key={i} className="flex items-center justify-between pl-3">
-                                                <span className="text-sm text-slate-500">{line.label}</span>
-                                                <span className="text-sm font-semibold text-slate-600">{fmt(line.value)} CFA</span>
+                {/* Détail des parts de chaque acteur, groupé par Départ / Arrivée */}
+                <div className="space-y-4">
+                    {groupesActeurs.map((groupe) => (
+                        <div key={groupe.key}>
+                            <p className="text-sm font-bold text-slate-400 uppercase tracking-wide px-1 mb-2">
+                                Répartition — {groupe.title}
+                            </p>
+                            <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+                                {groupe.acteurs.map((actor) => (
+                                    <div key={actor.key} className={`px-4 py-3 ${actor.highlight ? 'bg-slate-900' : ''}`}>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className={`text-base font-bold truncate ${actor.highlight ? 'text-white' : 'text-slate-800'}`}>
+                                                {actor.label}
+                                                {actor.sub && <span className="font-medium text-slate-400"> · {actor.sub}</span>}
+                                            </p>
+                                            <span className={`text-base font-bold shrink-0 ${actor.highlight ? 'text-white' : 'text-slate-900'}`}>
+                                                {fmt(actor.total)} CFA
+                                            </span>
+                                        </div>
+                                        {actor.lines.length > 0 ? (
+                                            <div className="mt-1.5 space-y-1">
+                                                {actor.lines.map((line, i) => (
+                                                    <div key={i} className="flex items-center justify-between pl-3">
+                                                        <span className={`text-sm ${actor.highlight ? 'text-slate-400' : 'text-slate-500'}`}>{line.label}</span>
+                                                        <span className={`text-sm font-semibold ${actor.highlight ? 'text-slate-200' : 'text-slate-600'}`}>{fmt(line.value)} CFA</span>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
+                                        ) : (
+                                            <p className={`mt-1 pl-3 text-sm italic ${actor.highlight ? 'text-slate-500' : 'text-slate-400'}`}>Aucun gain sur cette expédition</p>
+                                        )}
                                     </div>
-                                ) : (
-                                    <p className="mt-1 pl-3 text-sm italic text-slate-400">Aucun gain sur cette expédition</p>
-                                )}
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    ))}
                 </div>
 
                 {/* Expéditeur / Destinataire */}

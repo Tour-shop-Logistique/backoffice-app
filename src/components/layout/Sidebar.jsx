@@ -8,13 +8,11 @@ import {
   Store,
   Wallet,
   DollarSign,
-  BarChart3,
   Globe,
   Tag,
   Users,
   Settings,
   Megaphone,
-  AlertOctagon,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
@@ -40,7 +38,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         { name: "Colis à contrôler", href: "/parcels", icon: ClipboardCheck, color: "text-blue-400" },
         { name: "Arrivages prévus", href: "/incoming-parcels", icon: ArrowDownToLine, color: "text-emerald-400" },
         { name: "Historique", href: "/historique", icon: History, color: "text-slate-400" },
-        { name: "Litiges", href: "/litiges", icon: AlertOctagon, color: "text-red-400" },
       ],
     },
     {
@@ -52,15 +49,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       ],
     },
     {
-      label: "Tarification",
-      items: [
-        { name: "Tarification simple", href: "/simple-rates", icon: DollarSign, color: "text-emerald-400" },
-        { name: "Tarification groupée", href: "/grouped-rates", icon: BarChart3, color: "text-teal-400" },
-      ],
-    },
-    {
       label: "Configuration",
       items: [
+        { name: "Tarification", href: "/tarification", icon: DollarSign, color: "text-emerald-400" },
         { name: "Zones d'expéditions", href: "/zone-configuration", icon: Globe, color: "text-sky-400" },
         { name: "Produits & Catégories", href: "/produits", icon: Tag, color: "text-rose-400" },
         { name: "Agents Backoffice", href: "/agents", icon: Users, color: "text-indigo-400", adminOnly: true },

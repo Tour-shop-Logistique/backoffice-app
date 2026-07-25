@@ -4,8 +4,7 @@ export const ROUTES = {
     DASHBOARD: '/dashboard',
     AGENTS: '/agents',
     PARCELS: '/parcels',
-    SIMPLE_RATES: '/simple-rates',
-    GROUPED_RATES: '/grouped-rates',
+    TARIFICATION: '/tarification',
     ZONE_CONFIGURATION: '/zone-configuration',
     AGENCE_PARTENAIRE: '/agence-partenaire',
     AGENCE_DETAIL: '/agence-partenaire/:id',
@@ -19,5 +18,4 @@ export const ROUTES = {
     COMPTABILITE: '/comptabilite',
     HISTORIQUE: '/historique',
     ANNOUNCEMENTS: '/annonces',
-    LITIGES: '/litiges',
 };
