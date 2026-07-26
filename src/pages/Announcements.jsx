@@ -163,26 +163,7 @@ const Announcements = () => {
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
-      <div className="flex items-center justify-end gap-2">
-        <button
-          onClick={refresh}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
-          title="Actualiser"
-        >
-          <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-          Actualiser
-        </button>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10"
-        >
-          <Plus size={16} />
-          Nouvelle annonce
-        </button>
-      </div>
-
-      {/* Filtres */}
+      {/* Filtres + actions */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-wrap items-end gap-3">
         <div className="flex-1 min-w-[180px]">
           <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Recherche</label>
@@ -226,6 +207,24 @@ const Announcements = () => {
               <option key={a.id} value={a.id}>{a.nom_agence}</option>
             ))}
           </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={refresh}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
+            title="Actualiser"
+          >
+            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+            Actualiser
+          </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10"
+          >
+            <Plus size={16} />
+            Nouvelle annonce
+          </button>
         </div>
       </div>
 
