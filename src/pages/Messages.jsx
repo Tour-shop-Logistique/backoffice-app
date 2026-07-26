@@ -150,16 +150,7 @@ const Messages = () => {
 
   return (
     <div className="pb-6 md:pb-12 font-sans">
-      <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 md:-mx-8 md:px-8 pt-4 lg:pt-2 pb-3">
-        <header>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Messages</h1>
-          <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
-            Échanges directs avec les agences partenaires
-          </p>
-        </header>
-      </div>
-
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex mt-1 md:mt-3" style={{ height: 'calc(100vh - 220px)', minHeight: 480 }}>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex" style={{ height: 'calc(100vh - 220px)', minHeight: 480 }}>
         {/* Liste des conversations */}
         <div className="w-72 shrink-0 bg-slate-50 border-r border-slate-200 overflow-y-auto">
           {agenceOptions.length === 0 ? (

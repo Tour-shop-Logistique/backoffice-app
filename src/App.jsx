@@ -30,8 +30,7 @@ const IncomingParcels = lazy(() => import('./pages/IncomingParcels'));
 const Comptabilite = lazy(() => import('./pages/Comptabilite'));
 const Historique = lazy(() => import('./pages/Historique'));
 const Settings = lazy(() => import('./pages/Settings'));
-const Announcements = lazy(() => import('./pages/Announcements'));
-const Messages = lazy(() => import('./pages/Messages'));
+const Communication = lazy(() => import('./pages/Communication'));
 
 // Composant de chargement
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -85,8 +84,8 @@ function App() {
             <Route path={ROUTES.COMPTABILITE} element={<Comptabilite />} />
             <Route path={ROUTES.HISTORIQUE} element={<Historique />} />
             <Route path={ROUTES.SETTINGS} element={<Settings />} />
-            <Route path={ROUTES.ANNOUNCEMENTS} element={<Announcements />} />
-            <Route path={ROUTES.MESSAGES} element={<Messages />} />
+            <Route path={ROUTES.ANNOUNCEMENTS} element={<Communication />} />
+            <Route path={ROUTES.MESSAGES} element={<Communication />} />
           </Route>
 
           {/* Redirection par défaut (catch-all) */}

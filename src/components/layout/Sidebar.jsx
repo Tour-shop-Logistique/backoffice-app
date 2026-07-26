@@ -12,7 +12,6 @@ import {
   Tag,
   Users,
   Settings,
-  Megaphone,
   MessageSquare,
 } from "lucide-react";
 import { useSelector } from "react-redux";
@@ -48,8 +47,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       items: [
         { name: "Agences partenaires", href: "/agence-partenaire", icon: Store, color: "text-purple-400" },
         { name: "Comptabilité", href: "/comptabilite", icon: Wallet, color: "text-amber-400" },
-        { name: "Annonces", href: "/annonces", icon: Megaphone, color: "text-pink-400" },
-        { name: "Messages", href: "/messages", icon: MessageSquare, color: "text-cyan-400" },
+        { name: "Communication", href: "/messages", icon: MessageSquare, color: "text-cyan-400" },
       ],
     },
     {
@@ -82,6 +80,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     const path = location.pathname;
     // Exact match
     if (href === path) return true;
+    // La page Communication couvre /messages et /annonces (onglets internes)
+    if (href === '/messages' && path === '/annonces') return true;
     // Detail page handling
     if (path.startsWith('/parcels/control/')) {
       const from = location.state?.from;
