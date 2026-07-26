@@ -37,6 +37,7 @@ import ExpeditionDetailModal from '../components/expedition/ExpeditionDetailModa
 import StatCard from '../components/agence/StatCard';
 import { getExpeditionStatusLabel, getStatusStyles } from '../utils/statusTranslations';
 import { createPDFHeader, createPDFFooter, createSummaryCards, formatPDFNumber, cleanPDFText } from '../utils/pdfHelper';
+import api from '../services/api';
 
 const Comptabilite = () => {
   const dispatch = useDispatch();
@@ -200,6 +201,25 @@ const Comptabilite = () => {
 
   // Plus besoin de fonctions pour le modal - les dates sont gérées directement
 
+  const handleDownloadCSV = async () => {
+    try {
+      const response = await api.get('/backoffice/accounting/export', {
+        params: { date_debut: dateDebut, date_fin: dateFin, mode: filterMode },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `bilan-${dateDebut}-${dateFin}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      // Le bouton reste utilisable, pas de blocage de l'UI si l'export échoue
+      console.error('Erreur export CSV bilan', err);
+    }
+  };
+
   const handleDownloadPDF = async () => {
     const { jsPDF } = await import('jspdf');
     const { default: autoTable } = await import('jspdf-autotable');
@@ -329,6 +349,15 @@ const Comptabilite = () => {
                   {isLoading || isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                 </button>
               </div>
+
+              <button
+                onClick={handleDownloadCSV}
+                disabled={filteredItems.length === 0}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50 shrink-0"
+              >
+                <FileDown size={14} />
+                Bilan CSV
+              </button>
 
               <button
                 onClick={handleDownloadPDF}
