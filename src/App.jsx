@@ -31,6 +31,7 @@ const Comptabilite = lazy(() => import('./pages/Comptabilite'));
 const Historique = lazy(() => import('./pages/Historique'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Announcements = lazy(() => import('./pages/Announcements'));
+const Messages = lazy(() => import('./pages/Messages'));
 
 // Composant de chargement
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -85,6 +86,7 @@ function App() {
             <Route path={ROUTES.HISTORIQUE} element={<Historique />} />
             <Route path={ROUTES.SETTINGS} element={<Settings />} />
             <Route path={ROUTES.ANNOUNCEMENTS} element={<Announcements />} />
+            <Route path={ROUTES.MESSAGES} element={<Messages />} />
           </Route>
 
           {/* Redirection par défaut (catch-all) */}

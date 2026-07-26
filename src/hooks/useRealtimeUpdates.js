@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getEcho } from '../services/echo';
 import { realtimeModelUpdated, fetchDashboardRecap } from '../redux/slices/parcelSlice';
+import { appendMessageToConversation } from '../redux/slices/messageSlice';
 
 /**
  * S'abonne au canal privé du backoffice et écoute l'event universel unique
@@ -25,6 +26,14 @@ export default function useRealtimeUpdates(backofficeId) {
     const channel = echo.private(`backoffice.${backofficeId}`);
 
     channel.listen('.model.updated', (payload) => {
+      if (payload.model === 'Message') {
+        const message = payload.data?.[0];
+        if (message?.agence_id) {
+          dispatch(appendMessageToConversation({ agenceId: message.agence_id, message }));
+        }
+        return;
+      }
+
       dispatch(realtimeModelUpdated({ ...payload, currentBackofficeCountry: backofficeCountry }));
       // Rafraîchit les compteurs du dashboard à chaque changement, peu coûteux.
       dispatch(fetchDashboardRecap());

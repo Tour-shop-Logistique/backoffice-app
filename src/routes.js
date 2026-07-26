@@ -18,4 +18,5 @@ export const ROUTES = {
     COMPTABILITE: '/comptabilite',
     HISTORIQUE: '/historique',
     ANNOUNCEMENTS: '/annonces',
+    MESSAGES: '/messages',
 };

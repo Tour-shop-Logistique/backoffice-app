@@ -13,6 +13,7 @@ import {
   Users,
   Settings,
   Megaphone,
+  MessageSquare,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
@@ -46,6 +47,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         { name: "Agences partenaires", href: "/agence-partenaire", icon: Store, color: "text-purple-400" },
         { name: "Comptabilité", href: "/comptabilite", icon: Wallet, color: "text-amber-400" },
         { name: "Annonces", href: "/annonces", icon: Megaphone, color: "text-pink-400" },
+        { name: "Messages", href: "/messages", icon: MessageSquare, color: "text-cyan-400" },
       ],
     },
     {
