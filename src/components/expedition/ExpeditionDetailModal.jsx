@@ -76,9 +76,20 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
         }
     };
 
-    const handleDownloadFacture = () => {
+    const handleDownloadFacture = async () => {
         if (!facture) return;
-        window.open(`${API_URL}/api/backoffice/factures/${facture.id}/download`, '_blank');
+        try {
+            const response = await api.get(`/backoffice/factures/${facture.id}/download`, { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${facture.numero}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            dispatch(showNotification({ type: 'error', message: 'Erreur lors du téléchargement de la facture' }));
+        }
     };
 
     const handleSendEmail = async () => {
