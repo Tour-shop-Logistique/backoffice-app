@@ -99,30 +99,38 @@ const Messages = () => {
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex" style={{ height: 'calc(100vh - 220px)', minHeight: 480 }}>
         {/* Liste des conversations */}
-        <div className="w-72 shrink-0 border-r border-slate-200 overflow-y-auto">
+        <div className="w-72 shrink-0 bg-slate-50 border-r border-slate-200 overflow-y-auto">
           {agenceOptions.length === 0 ? (
             <div className="p-6 text-center text-sm text-slate-500">Aucune agence disponible</div>
           ) : (
-            agenceOptions.map((c) => (
-              <button
-                key={c.agence.id}
-                onClick={() => setSelectedAgenceId(c.agence.id)}
-                className={`w-full text-left px-4 py-3 border-b border-slate-100 transition-colors ${selectedAgenceId === c.agence.id ? 'bg-slate-100' : 'hover:bg-slate-50'}`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-sm text-slate-900 truncate">{c.agence.nom_agence}</span>
-                  {c.non_lu && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />}
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5 truncate">
-                  {c.last_message?.body || (c.last_message ? 'Pièce jointe' : 'Aucun message')}
-                </p>
-              </button>
-            ))
+            agenceOptions.map((c) => {
+              const active = selectedAgenceId === c.agence.id;
+              return (
+                <button
+                  key={c.agence.id}
+                  onClick={() => setSelectedAgenceId(c.agence.id)}
+                  className={`w-full text-left px-4 py-3 border-b border-slate-200/70 transition-colors flex items-center gap-3 ${active ? 'bg-white border-l-4 border-l-slate-900 shadow-sm' : 'border-l-4 border-l-transparent hover:bg-white/70'}`}
+                >
+                  <div className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-xs font-bold text-white ${active ? 'bg-slate-900' : 'bg-slate-400'}`}>
+                    {c.agence.nom_agence?.charAt(0)?.toUpperCase() || '?'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-sm truncate ${active ? 'font-bold text-slate-900' : 'font-semibold text-slate-700'}`}>{c.agence.nom_agence}</span>
+                      {c.non_lu && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                      {c.last_message?.body || (c.last_message ? 'Pièce jointe' : 'Aucun message')}
+                    </p>
+                  </div>
+                </button>
+              );
+            })
           )}
         </div>
 
         {/* Fil de discussion */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 bg-slate-50/40">
           {!selectedAgenceId ? (
             <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
               <MessageSquare size={48} strokeWidth={1.5} className="mb-3" />
@@ -130,7 +138,10 @@ const Messages = () => {
             </div>
           ) : (
             <>
-              <div className="px-5 py-3 border-b border-slate-200">
+              <div className="px-5 py-3 border-b border-slate-200 bg-white flex items-center gap-3">
+                <div className="w-8 h-8 shrink-0 rounded-full bg-slate-900 flex items-center justify-center text-xs font-bold text-white">
+                  {selectedAgence?.nom_agence?.charAt(0)?.toUpperCase() || '?'}
+                </div>
                 <p className="font-bold text-sm text-slate-900">{selectedAgence?.nom_agence}</p>
               </div>
 
@@ -146,7 +157,7 @@ const Messages = () => {
                     const isMine = m.sender?.type !== 'agence';
                     return (
                       <div key={m.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${isMine ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-900'}`}>
+                        <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${isMine ? 'bg-slate-900 text-white' : 'bg-white text-slate-900 border border-slate-200'}`}>
                           {m.body && <p className="text-sm whitespace-pre-wrap break-words">{m.body}</p>}
                           {m.attachments?.length > 0 && (
                             <div className="mt-1.5 space-y-1.5">
@@ -156,7 +167,7 @@ const Messages = () => {
                                   href={a.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg ${isMine ? 'bg-white/10 hover:bg-white/20' : 'bg-white hover:bg-slate-50'}`}
+                                  className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg ${isMine ? 'bg-white/10 hover:bg-white/20' : 'bg-slate-100 hover:bg-slate-200'}`}
                                 >
                                   <FileText size={14} />
                                   <span className="truncate">{a.original_name}</span>
@@ -190,7 +201,7 @@ const Messages = () => {
                 </div>
               )}
 
-              <div className="px-5 py-3 border-t border-slate-200 flex items-end gap-2">
+              <div className="px-5 py-3 border-t border-slate-200 bg-white flex items-end gap-2">
                 <input
                   ref={fileInputRef}
                   type="file"
