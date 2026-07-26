@@ -457,12 +457,15 @@ const AgenceDetail = () => {
                                                         </div>
                                                     )}
                                                     <img
+                                                        key={currentAgence.logo}
                                                         src={currentAgence.logo?.startsWith('http')
                                                             ? currentAgence.logo
                                                             : `${import.meta.env.VITE_API_URL}/storage/${currentAgence.logo}`}
                                                         alt="Logo"
                                                         className="max-h-full max-w-full object-contain"
-                                                        loading="lazy"
+                                                        ref={(node) => {
+                                                            if (node && node.complete) setIsLogoLoading(false);
+                                                        }}
                                                         onLoad={() => setIsLogoLoading(false)}
                                                         onError={() => setIsLogoLoading(false)}
                                                     />
