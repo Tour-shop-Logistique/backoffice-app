@@ -63,7 +63,14 @@ const Communication = () => {
         </div>
       </div>
 
-      {activeTab === 'annonces' ? <Announcements /> : <Messages />}
+      {/* Les deux pages restent montees en permanence (juste masquees) pour ne
+          pas relancer leur chargement initial a chaque changement d'onglet. */}
+      <div className={activeTab === 'annonces' ? '' : 'hidden'}>
+        <Announcements />
+      </div>
+      <div className={activeTab === 'messages' ? '' : 'hidden'}>
+        <Messages />
+      </div>
     </div>
   );
 };
