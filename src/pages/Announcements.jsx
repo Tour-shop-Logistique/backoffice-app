@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Megaphone, Plus, Trash2, Loader2, Users, Building2, Globe, MapPin, Search, Clock, ChevronLeft, ChevronRight, CalendarClock, RefreshCw } from 'lucide-react';
+import { Megaphone, Plus, Trash2, Loader2, Users, Building2, Globe, MapPin, Search, Clock, ChevronLeft, ChevronRight, CalendarClock, RefreshCw, Eye, CheckCircle2 } from 'lucide-react';
 import { showNotification } from '../redux/slices/uiSlice';
 import { fetchAnnouncements, createAnnouncement, deleteAnnouncement, bulkDeleteAnnouncements } from '../redux/slices/announcementSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
@@ -32,6 +32,7 @@ const Announcements = () => {
   const { agences, hasLoaded: agencesLoaded } = useSelector((state) => state.agences);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [toDelete, setToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -295,9 +296,10 @@ const Announcements = () => {
                 {items.map((a) => (
                   <tr
                     key={a.id}
-                    className={`transition-colors ${selectedIds.includes(a.id) ? 'bg-indigo-50/30' : 'hover:bg-slate-50/50'}`}
+                    onClick={() => setSelectedAnnouncement(a)}
+                    className={`cursor-pointer transition-colors ${selectedIds.includes(a.id) ? 'bg-indigo-50/30' : 'hover:bg-slate-50/50'}`}
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(a.id)}
@@ -323,7 +325,14 @@ const Announcements = () => {
                         {format(new Date(a.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => setSelectedAnnouncement(a)}
+                        className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                        title="Voir les détails"
+                      >
+                        <Eye size={16} />
+                      </button>
                       <button
                         onClick={() => setToDelete(a)}
                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -490,6 +499,68 @@ const Announcements = () => {
             )}
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        isOpen={!!selectedAnnouncement}
+        onClose={() => setSelectedAnnouncement(null)}
+        title="Détails de l'annonce"
+        size="md"
+        position="right"
+        footer={
+          <button
+            onClick={() => {
+              setToDelete(selectedAnnouncement);
+              setSelectedAnnouncement(null);
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 text-red-600 text-xs font-bold uppercase tracking-widest hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <Trash2 size={14} />
+            Supprimer cette annonce
+          </button>
+        }
+      >
+        {selectedAnnouncement && (
+          <div className="space-y-6">
+            <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 p-5 shadow-lg shadow-slate-900/10">
+              <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur flex items-center justify-center mb-3 ring-1 ring-white/10">
+                <Megaphone className="text-white" size={20} />
+              </div>
+              <h3 className="text-lg font-bold text-white tracking-tight">{selectedAnnouncement.titre}</h3>
+              <p className="text-sm text-slate-300 mt-2 whitespace-pre-wrap leading-relaxed">{selectedAnnouncement.message}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-blue-50 to-white p-4">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center mb-2.5">
+                  {selectedAnnouncement.agence ? <Building2 size={15} className="text-blue-600" /> : <Users size={15} className="text-blue-600" />}
+                </div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Destinataire</p>
+                <p className="text-sm font-bold text-slate-900 leading-snug">{selectedAnnouncement.cible}</p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-emerald-50 to-white p-4">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-2.5">
+                  <CheckCircle2 size={15} className="text-emerald-600" />
+                </div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Lectures</p>
+                <p className="text-2xl font-black text-slate-900 tabular-nums leading-none">{selectedAnnouncement.nb_lectures}</p>
+              </div>
+
+              <div className="col-span-2 rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <Clock size={15} className="text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Envoyée le</p>
+                  <p className="text-sm font-bold text-slate-900">
+                    {format(new Date(selectedAnnouncement.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
 
       <DeleteModal
