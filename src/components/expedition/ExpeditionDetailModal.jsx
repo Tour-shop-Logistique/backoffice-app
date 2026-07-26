@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
     CheckCircle2,
     Clock,
@@ -7,12 +8,145 @@ import {
     MapPin,
     Smartphone,
     Wallet,
+    Receipt,
+    Download,
+    Mail,
+    Link as LinkIcon,
+    MessageCircle,
+    Loader2,
+    Plus,
+    Trash2,
 } from 'lucide-react';
 import Modal from '../common/Modal';
 import { getExpeditionStatusLabel, getStatusStyles } from '../../utils/statusTranslations';
+import { showNotification } from '../../redux/slices/uiSlice';
+import { fetchFactureForExpedition, generateFacture, updateFactureStatut, sendFactureEmail } from '../../redux/slices/factureSlice';
+import api from '../../services/api';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const FACTURE_STATUT_STYLES = {
+    emise: 'bg-blue-50 text-blue-700 border-blue-200',
+    payee: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    annulee: 'bg-rose-50 text-rose-700 border-rose-200',
+};
 
 const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
+    const dispatch = useDispatch();
+    const expeditionId = selectedExpedition?.id;
+    const facture = useSelector((state) => state.factures.byExpedition[expeditionId]);
+    const isGenerating = useSelector((state) => state.factures.isGenerating);
+    const isSending = useSelector((state) => state.factures.isSending);
+
+    const [fraisList, setFraisList] = useState([]);
+    const [isLoadingFrais, setIsLoadingFrais] = useState(false);
+    const [showFraisForm, setShowFraisForm] = useState(false);
+    const [fraisForm, setFraisForm] = useState({ libelle: '', montant: '', motif: '' });
+    const [isSavingFrais, setIsSavingFrais] = useState(false);
+
+    const loadFrais = async () => {
+        if (!expeditionId) return;
+        setIsLoadingFrais(true);
+        try {
+            const { data } = await api.get(`/backoffice/expeditions/${expeditionId}/frais-additionnels`);
+            setFraisList(data.frais || []);
+        } catch {
+            // silencieux : la section reste vide, pas bloquant pour le reste du modal
+        } finally {
+            setIsLoadingFrais(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isOpen && expeditionId) {
+            dispatch(fetchFactureForExpedition(expeditionId));
+            loadFrais();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, expeditionId]);
+
     if (!selectedExpedition) return null;
+
+    const handleGenerateFacture = async () => {
+        try {
+            await dispatch(generateFacture(expeditionId)).unwrap();
+            dispatch(showNotification({ type: 'success', message: 'Facture générée avec succès.' }));
+        } catch (err) {
+            dispatch(showNotification({ type: 'error', message: err || 'Erreur lors de la génération de la facture' }));
+        }
+    };
+
+    const handleDownloadFacture = () => {
+        if (!facture) return;
+        window.open(`${API_URL}/api/backoffice/factures/${facture.id}/download`, '_blank');
+    };
+
+    const handleSendEmail = async () => {
+        if (!facture) return;
+        try {
+            const message = await dispatch(sendFactureEmail({ id: facture.id })).unwrap();
+            dispatch(showNotification({ type: 'success', message }));
+        } catch (err) {
+            dispatch(showNotification({ type: 'error', message: err || "Erreur lors de l'envoi de la facture" }));
+        }
+    };
+
+    const handleShareWhatsApp = () => {
+        if (!facture) return;
+        const publicUrl = `${API_URL}/api/factures/${facture.public_token}`;
+        const text = encodeURIComponent(`Voici votre facture ${facture.numero} : ${publicUrl}`);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+    };
+
+    const handleCopyLink = async () => {
+        if (!facture) return;
+        const publicUrl = `${API_URL}/api/factures/${facture.public_token}`;
+        try {
+            await navigator.clipboard.writeText(publicUrl);
+            dispatch(showNotification({ type: 'success', message: 'Lien copié dans le presse-papiers.' }));
+        } catch {
+            dispatch(showNotification({ type: 'error', message: 'Impossible de copier le lien.' }));
+        }
+    };
+
+    const handleStatutChange = async (statut) => {
+        if (!facture) return;
+        try {
+            await dispatch(updateFactureStatut({ id: facture.id, statut })).unwrap();
+        } catch (err) {
+            dispatch(showNotification({ type: 'error', message: err || 'Erreur lors de la mise à jour du statut' }));
+        }
+    };
+
+    const handleAddFrais = async (e) => {
+        e.preventDefault();
+        if (!fraisForm.libelle.trim() || !fraisForm.montant) return;
+        setIsSavingFrais(true);
+        try {
+            await api.post(`/backoffice/expeditions/${expeditionId}/frais-additionnels`, {
+                libelle: fraisForm.libelle.trim(),
+                montant: parseFloat(fraisForm.montant),
+                motif: fraisForm.motif.trim() || null,
+            });
+            setFraisForm({ libelle: '', montant: '', motif: '' });
+            setShowFraisForm(false);
+            await loadFrais();
+            dispatch(showNotification({ type: 'success', message: 'Frais additionnel ajouté.' }));
+        } catch (err) {
+            dispatch(showNotification({ type: 'error', message: err.response?.data?.message || "Erreur lors de l'ajout du frais" }));
+        } finally {
+            setIsSavingFrais(false);
+        }
+    };
+
+    const handleDeleteFrais = async (id) => {
+        try {
+            await api.delete(`/backoffice/frais-additionnels/${id}`);
+            await loadFrais();
+        } catch (err) {
+            dispatch(showNotification({ type: 'error', message: 'Erreur lors de la suppression du frais' }));
+        }
+    };
 
     const getTypeLabel = (type) => {
         if (!type) return 'N/A';
@@ -220,6 +354,159 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                             </div>
                         </div>
                     ))}
+                </div>
+
+                {/* Facturation */}
+                <div className="bg-white rounded-lg border border-slate-200 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2.5">
+                            <div className="h-9 w-9 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 shrink-0">
+                                <Receipt size={17} />
+                            </div>
+                            <p className="text-base font-bold text-slate-900">Facturation</p>
+                        </div>
+                        {facture && (
+                            <select
+                                value={facture.statut}
+                                onChange={(e) => handleStatutChange(e.target.value)}
+                                className={`text-xs font-bold uppercase tracking-wide px-2.5 py-1.5 rounded-lg border cursor-pointer ${FACTURE_STATUT_STYLES[facture.statut] || 'bg-slate-50 text-slate-600 border-slate-200'}`}
+                            >
+                                <option value="emise">Émise</option>
+                                <option value="payee">Payée</option>
+                                <option value="annulee">Annulée</option>
+                            </select>
+                        )}
+                    </div>
+
+                    {!facture ? (
+                        <button
+                            onClick={handleGenerateFacture}
+                            disabled={isGenerating}
+                            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50"
+                        >
+                            {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Receipt size={16} />}
+                            {isGenerating ? 'Génération…' : 'Générer la facture'}
+                        </button>
+                    ) : (
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-bold text-slate-700">{facture.numero}</p>
+                                <p className="text-sm font-bold text-slate-900">{fmt(facture.montant_total)} CFA</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                    onClick={handleDownloadFacture}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors"
+                                >
+                                    <Download size={13} /> PDF
+                                </button>
+                                <button
+                                    onClick={handleSendEmail}
+                                    disabled={isSending}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors disabled:opacity-50"
+                                >
+                                    {isSending ? <Loader2 size={13} className="animate-spin" /> : <Mail size={13} />} Email
+                                </button>
+                                <button
+                                    onClick={handleShareWhatsApp}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors"
+                                >
+                                    <MessageCircle size={13} /> WhatsApp
+                                </button>
+                                <button
+                                    onClick={handleCopyLink}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors"
+                                >
+                                    <LinkIcon size={13} /> Copier le lien
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Frais additionnels */}
+                <div className="bg-white rounded-lg border border-slate-200 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <p className="text-base font-bold text-slate-900">Frais additionnels</p>
+                        <button
+                            onClick={() => setShowFraisForm((v) => !v)}
+                            className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+                        >
+                            <Plus size={14} /> Ajouter
+                        </button>
+                    </div>
+
+                    {showFraisForm && (
+                        <form onSubmit={handleAddFrais} className="mb-3 p-3 bg-slate-50 rounded-lg space-y-2">
+                            <input
+                                type="text"
+                                placeholder="Libellé (ex: Frais de douane)"
+                                value={fraisForm.libelle}
+                                onChange={(e) => setFraisForm((p) => ({ ...p, libelle: e.target.value }))}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                            />
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="Montant (FCFA)"
+                                value={fraisForm.montant}
+                                onChange={(e) => setFraisForm((p) => ({ ...p, montant: e.target.value }))}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                            />
+                            <input
+                                type="text"
+                                placeholder="Motif (optionnel)"
+                                value={fraisForm.motif}
+                                onChange={(e) => setFraisForm((p) => ({ ...p, motif: e.target.value }))}
+                                className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                            />
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="submit"
+                                    disabled={isSavingFrais}
+                                    className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold disabled:opacity-50"
+                                >
+                                    {isSavingFrais ? 'Ajout…' : 'Enregistrer'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowFraisForm(false)}
+                                    className="px-3 py-1.5 text-slate-500 text-xs font-bold"
+                                >
+                                    Annuler
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    {isLoadingFrais ? (
+                        <div className="flex justify-center py-3">
+                            <Loader2 size={16} className="animate-spin text-slate-400" />
+                        </div>
+                    ) : fraisList.length === 0 ? (
+                        <p className="text-sm text-slate-400 italic">Aucun frais additionnel.</p>
+                    ) : (
+                        <div className="space-y-1.5">
+                            {fraisList.map((f) => (
+                                <div key={f.id} className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-slate-700 truncate">{f.libelle}</p>
+                                        {f.motif && <p className="text-xs text-slate-400 truncate">{f.motif}</p>}
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-sm font-bold text-slate-900">{fmt(f.montant)} CFA</span>
+                                        <button
+                                            onClick={() => handleDeleteFrais(f.id)}
+                                            className="p-1 text-slate-400 hover:text-red-600 transition-colors"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Expéditeur / Destinataire */}
