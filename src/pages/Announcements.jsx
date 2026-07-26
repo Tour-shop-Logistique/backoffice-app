@@ -2,11 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Megaphone, Plus, Trash2, Loader2, Users, Building2, Globe, MapPin, Search, Download, Clock, ChevronLeft, ChevronRight, CalendarClock } from 'lucide-react';
+import { Megaphone, Plus, Trash2, Loader2, Users, Building2, Globe, MapPin, Search, Clock, ChevronLeft, ChevronRight, CalendarClock, RefreshCw } from 'lucide-react';
 import { showNotification } from '../redux/slices/uiSlice';
 import { fetchAnnouncements, createAnnouncement, deleteAnnouncement, bulkDeleteAnnouncements } from '../redux/slices/announcementSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
-import api from '../services/api';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 
@@ -39,11 +38,10 @@ const Announcements = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
 
   const [filters, setFilters] = useState({ from: '', to: '', agence_id: '', q: '', page: 1 });
 
-  useEffect(() => {
+  const refresh = () => {
     dispatch(fetchAnnouncements({
       from: filters.from || undefined,
       to: filters.to || undefined,
@@ -51,6 +49,11 @@ const Announcements = () => {
       q: filters.q || undefined,
       page: filters.page,
     }));
+  };
+
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, filters]);
 
   useEffect(() => {
@@ -157,32 +160,6 @@ const Announcements = () => {
     }
   };
 
-  const handleExport = async () => {
-    setIsExporting(true);
-    try {
-      const response = await api.get('/backoffice/announcements/export', {
-        params: {
-          from: filters.from || undefined,
-          to: filters.to || undefined,
-          agence_id: filters.agence_id || undefined,
-          q: filters.q || undefined,
-        },
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `annonces-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (err) {
-      dispatch(showNotification({ type: 'error', message: "Erreur lors de l'export" }));
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
       <header className="flex items-center justify-between">
@@ -194,12 +171,13 @@ const Announcements = () => {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={handleExport}
-            disabled={isExporting}
+            onClick={refresh}
+            disabled={isLoading}
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
+            title="Actualiser"
           >
-            {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            Exporter
+            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+            Actualiser
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
