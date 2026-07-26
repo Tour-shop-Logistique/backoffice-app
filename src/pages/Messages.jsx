@@ -238,9 +238,22 @@ const Messages = () => {
                   displayedMessages.map((m) => {
                     const isMine = m.sender?.type !== 'agence';
                     const isEditing = editingId === m.id;
+                    const initial = isMine ? 'B' : (selectedAgence?.nom_agence?.charAt(0)?.toUpperCase() || 'A');
                     return (
-                      <div key={m.id} className={`group flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`relative max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${isMine ? 'bg-slate-900 text-white' : 'bg-white text-slate-900 border border-slate-200'}`}>
+                      <div key={m.id} className={`group flex items-end gap-2 ${isMine ? 'flex-row-reverse' : ''}`}>
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 ${
+                            isMine ? 'bg-gradient-to-br from-indigo-600 to-indigo-500' : 'bg-slate-400'
+                          }`}
+                        >
+                          {initial}
+                        </div>
+
+                        <div className={`relative max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                          isMine
+                            ? 'bg-gradient-to-br from-indigo-600 to-indigo-500 text-white rounded-br-md'
+                            : 'bg-white text-slate-900 border border-slate-200 rounded-bl-md'
+                        }`}>
                           {isMine && !isEditing && (
                             <div className="absolute -top-2 -left-2">
                               <button
@@ -309,15 +322,15 @@ const Messages = () => {
                               )}
                               <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : ''}`}>
                                 {m.edited_at && (
-                                  <span className={`text-[10px] italic ${isMine ? 'text-slate-300' : 'text-slate-400'}`}>modifié</span>
+                                  <span className={`text-[10px] italic ${isMine ? 'text-indigo-100' : 'text-slate-400'}`}>modifié</span>
                                 )}
-                                <p className={`text-[10px] ${isMine ? 'text-slate-300' : 'text-slate-400'}`}>
+                                <p className={`text-[10px] ${isMine ? 'text-indigo-100' : 'text-slate-400'}`}>
                                   {format(new Date(m.created_at), 'HH:mm', { locale: fr })}
                                 </p>
                                 {isMine && (
                                   m.read_at
                                     ? <CheckCheck size={13} className="text-sky-300" />
-                                    : <Check size={13} className="text-slate-400" />
+                                    : <Check size={13} className="text-indigo-200" />
                                 )}
                               </div>
                             </>
