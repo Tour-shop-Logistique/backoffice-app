@@ -11,6 +11,7 @@ import useRealtimeUpdates from '../../hooks/useRealtimeUpdates';
 import { ROUTES } from '../../routes';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import PushNotificationPrompt from '../common/PushNotificationPrompt';
 import { Building2 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -66,6 +67,7 @@ const Layout = ({ children }) => {
         <Topbar toggleSidebar={toggleSidebar} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-surface-100 p-6 md:p-8">
           <div className="max-w-[100rem] mx-auto">
+          {isConfigured && <PushNotificationPrompt />}
           {loading === 'pending' && <LoadingSpinner fullScreen={false} />}
 
           {loading === 'failed' && !isConfigured && (
