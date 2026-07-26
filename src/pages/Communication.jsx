@@ -27,14 +27,14 @@ const Communication = () => {
 
   return (
     <div className="space-y-4 md:space-y-6 font-sans">
-      <header>
-        <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Communication</h1>
-        <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
-          Annonces et messagerie avec les agences partenaires
-        </p>
-      </header>
+      <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 md:-mx-8 md:px-8 pt-4 lg:pt-2 pb-3 flex flex-wrap items-center justify-between gap-3">
+        <header>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Communication</h1>
+          <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
+            Annonces et messagerie avec les agences partenaires
+          </p>
+        </header>
 
-      <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 md:-mx-8 md:px-8 pt-2 pb-3">
         <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1.5 w-fit shadow-sm">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.key;
