@@ -48,7 +48,8 @@ import {
     ArrowDownLeft,
     TrendingUp,
     BarChart3,
-    FileDown
+    FileDown,
+    Image as ImageIcon
 } from "lucide-react";
 import Modal from "../components/common/Modal";
 import ViewDetailsButton from "../components/common/ViewDetailsButton";
@@ -483,6 +484,13 @@ const AgenceDetail = () => {
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
+                                                <p className="text-xs font-bold text-slate-500 uppercase">Email</p>
+                                                <p className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                                                    <Mail size={20} className="text-slate-400" />
+                                                    {currentAgence.email || <span className="text-slate-300 italic font-normal">Non renseigné</span>}
+                                                </p>
+                                            </div>
+                                            <div className="space-y-1">
                                                 <p className="text-xs font-bold text-slate-500 uppercase">Localisation</p>
                                                 <p className="text-sm font-semibold text-slate-900 flex items-start gap-2 leading-snug">
                                                     <MapPin size={20} className="text-slate-400 mt-0.5" />
@@ -496,6 +504,20 @@ const AgenceDetail = () => {
                                                     <span>{currentAgence.adresse}</span>
                                                 </p>
                                             </div>
+                                            {currentAgence.latitude != null && currentAgence.longitude != null && (
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-bold text-slate-500 uppercase">Position GPS</p>
+                                                    <a
+                                                        href={`https://www.openstreetmap.org/?mlat=${currentAgence.latitude}&mlon=${currentAgence.longitude}#map=15/${currentAgence.latitude}/${currentAgence.longitude}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-2 leading-snug"
+                                                    >
+                                                        <MapPinned size={20} className="text-indigo-400 mt-0.5 shrink-0" />
+                                                        <span className="underline underline-offset-2">Voir sur la carte</span>
+                                                    </a>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -547,6 +569,40 @@ const AgenceDetail = () => {
                                                 </div>
                                             ))}
                                         </div>
+                                    </div>
+
+                                    <div className="p-4">
+                                        <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+                                            <ImageIcon size={22} className="text-slate-400" />
+                                            <h3 className="text-sm font-bold text-slate-900">Photos de l'agence</h3>
+                                        </div>
+                                        {Array.isArray(currentAgence.photos) && currentAgence.photos.length > 0 ? (
+                                            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                                                {currentAgence.photos.map((url, idx) => (
+                                                    <a
+                                                        key={idx}
+                                                        href={url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50 block group"
+                                                    >
+                                                        <img
+                                                            src={url}
+                                                            alt={`Photo agence ${idx + 1}`}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                            loading="lazy"
+                                                        />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border border-dashed border-slate-200 bg-slate-50/60">
+                                                <div className="h-11 w-11 rounded-full bg-slate-100 flex items-center justify-center">
+                                                    <ImageIcon size={20} className="text-slate-300" />
+                                                </div>
+                                                <p className="text-sm text-slate-400 italic">Aucune photo enregistrée par cette agence.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
