@@ -1,32 +1,57 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Megaphone, Plus, Trash2, Loader2, Users, Building2 } from 'lucide-react';
+import { Megaphone, Plus, Trash2, Loader2, Users, Building2, Globe, MapPin, Search, Download, Clock, ChevronLeft, ChevronRight, CalendarClock } from 'lucide-react';
 import { showNotification } from '../redux/slices/uiSlice';
 import { fetchAnnouncements, createAnnouncement, deleteAnnouncement, bulkDeleteAnnouncements } from '../redux/slices/announcementSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
+import api from '../services/api';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 
+const TARGET_MODES = {
+  ALL: 'all',
+  AGENCE: 'agence',
+  PAYS: 'pays',
+  VILLES: 'villes',
+};
+
+const emptyForm = {
+  titre: '',
+  message: '',
+  targetMode: TARGET_MODES.ALL,
+  agence_id: '',
+  pays_cible: [],
+  villes_cible: [],
+  scheduled_at: '',
+};
+
 const Announcements = () => {
   const dispatch = useDispatch();
-  const { items, isLoading, isSending, hasLoaded } = useSelector((state) => state.announcements);
+  const { items, pagination, isLoading, isSending, hasLoaded } = useSelector((state) => state.announcements);
   const { agences, hasLoaded: agencesLoaded } = useSelector((state) => state.agences);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toDelete, setToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [form, setForm] = useState({ titre: '', message: '', agence_id: '' });
+  const [form, setForm] = useState(emptyForm);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const [filters, setFilters] = useState({ from: '', to: '', agence_id: '', q: '', page: 1 });
 
   useEffect(() => {
-    if (!hasLoaded && !isLoading) {
-      dispatch(fetchAnnouncements());
-    }
-  }, [dispatch, hasLoaded, isLoading]);
+    dispatch(fetchAnnouncements({
+      from: filters.from || undefined,
+      to: filters.to || undefined,
+      agence_id: filters.agence_id || undefined,
+      q: filters.q || undefined,
+      page: filters.page,
+    }));
+  }, [dispatch, filters]);
 
   useEffect(() => {
     if (!agencesLoaded) {
@@ -34,9 +59,33 @@ const Announcements = () => {
     }
   }, [dispatch, agencesLoaded]);
 
+  const paysDisponibles = useMemo(() => {
+    const set = new Set((agences || []).map((a) => a.pays).filter(Boolean));
+    return Array.from(set);
+  }, [agences]);
+
+  const villesDisponibles = useMemo(() => {
+    const set = new Set((agences || []).map((a) => a.ville).filter(Boolean));
+    return Array.from(set);
+  }, [agences]);
+
   const closeModal = () => {
     setIsModalOpen(false);
-    setForm({ titre: '', message: '', agence_id: '' });
+    setForm(emptyForm);
+  };
+
+  const togglePays = (pays) => {
+    setForm((p) => ({
+      ...p,
+      pays_cible: p.pays_cible.includes(pays) ? p.pays_cible.filter((x) => x !== pays) : [...p.pays_cible, pays],
+    }));
+  };
+
+  const toggleVille = (ville) => {
+    setForm((p) => ({
+      ...p,
+      villes_cible: p.villes_cible.includes(ville) ? p.villes_cible.filter((x) => x !== ville) : [...p.villes_cible, ville],
+    }));
   };
 
   const handleSubmit = async () => {
@@ -44,13 +93,21 @@ const Announcements = () => {
       dispatch(showNotification({ type: 'error', message: 'Le titre et le message sont obligatoires.' }));
       return;
     }
+
+    const payload = { titre: form.titre.trim(), message: form.message.trim() };
+    if (form.targetMode === TARGET_MODES.AGENCE) payload.agence_id = form.agence_id || null;
+    if (form.targetMode === TARGET_MODES.PAYS) payload.pays_cible = form.pays_cible;
+    if (form.targetMode === TARGET_MODES.VILLES) payload.villes_cible = form.villes_cible;
+    if (form.scheduled_at) payload.scheduled_at = new Date(form.scheduled_at).toISOString();
+
     try {
-      await dispatch(createAnnouncement({
-        titre: form.titre.trim(),
-        message: form.message.trim(),
-        agence_id: form.agence_id || null,
-      })).unwrap();
-      dispatch(showNotification({ type: 'success', message: 'Annonce envoyée avec succès.' }));
+      const result = await dispatch(createAnnouncement(payload)).unwrap();
+      dispatch(showNotification({
+        type: 'success',
+        message: form.scheduled_at
+          ? 'Annonce programmée avec succès.'
+          : `Annonce envoyée à ${result.nbDestinataires ?? '?'} agence(s).`,
+      }));
       closeModal();
     } catch (err) {
       dispatch(showNotification({ type: 'error', message: err || "Erreur lors de l'envoi de l'annonce" }));
@@ -100,6 +157,32 @@ const Announcements = () => {
     }
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await api.get('/backoffice/announcements/export', {
+        params: {
+          from: filters.from || undefined,
+          to: filters.to || undefined,
+          agence_id: filters.agence_id || undefined,
+          q: filters.q || undefined,
+        },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `annonces-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      dispatch(showNotification({ type: 'error', message: "Erreur lors de l'export" }));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
       <header className="flex items-center justify-between">
@@ -109,14 +192,71 @@ const Announcements = () => {
             Communications envoyées aux agences partenaires
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10"
-        >
-          <Plus size={16} />
-          Nouvelle annonce
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            Exporter
+          </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10"
+          >
+            <Plus size={16} />
+            Nouvelle annonce
+          </button>
+        </div>
       </header>
+
+      {/* Filtres */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-wrap items-end gap-3">
+        <div className="flex-1 min-w-[180px]">
+          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Recherche</label>
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={filters.q}
+              onChange={(e) => setFilters((p) => ({ ...p, q: e.target.value, page: 1 }))}
+              placeholder="Titre ou message..."
+              className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Du</label>
+          <input
+            type="date"
+            value={filters.from}
+            onChange={(e) => setFilters((p) => ({ ...p, from: e.target.value, page: 1 }))}
+            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Au</label>
+          <input
+            type="date"
+            value={filters.to}
+            onChange={(e) => setFilters((p) => ({ ...p, to: e.target.value, page: 1 }))}
+            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900"
+          />
+        </div>
+        <div className="min-w-[180px]">
+          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Agence</label>
+          <select
+            value={filters.agence_id}
+            onChange={(e) => setFilters((p) => ({ ...p, agence_id: e.target.value, page: 1 }))}
+            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900"
+          >
+            <option value="">Toutes</option>
+            {(agences || []).map((a) => (
+              <option key={a.id} value={a.id}>{a.nom_agence}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {selectedIds.length > 0 && (
         <div className="flex items-center justify-between gap-3 px-4 py-3 bg-slate-900 rounded-lg shadow-md">
@@ -150,8 +290,8 @@ const Announcements = () => {
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 px-6">
             <Megaphone className="text-slate-300 mb-4" size={48} strokeWidth={1.5} />
-            <p className="text-sm text-slate-600 font-medium">Aucune annonce envoyée</p>
-            <p className="text-xs text-slate-500 mt-2">Créez votre première annonce pour informer les agences partenaires.</p>
+            <p className="text-sm text-slate-600 font-medium">Aucune annonce trouvée</p>
+            <p className="text-xs text-slate-500 mt-2">Ajustez les filtres ou créez une nouvelle annonce.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -194,7 +334,7 @@ const Announcements = () => {
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap ${a.agence ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'}`}>
                         {a.agence ? <Building2 size={12} /> : <Users size={12} />}
-                        {a.agence ? a.agence.nom_agence : 'Toutes les agences'}
+                        {a.cible}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -219,17 +359,41 @@ const Announcements = () => {
             </table>
           </div>
         )}
+
+        {pagination && pagination.last_page > 1 && (
+          <div className="flex items-center justify-between px-6 py-3 border-t border-slate-200">
+            <span className="text-xs text-slate-500">
+              Page {pagination.current_page} sur {pagination.last_page} ({pagination.total} annonce{pagination.total > 1 ? 's' : ''})
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setFilters((p) => ({ ...p, page: p.page - 1 }))}
+                disabled={pagination.current_page <= 1}
+                className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button
+                onClick={() => setFilters((p) => ({ ...p, page: p.page + 1 }))}
+                disabled={pagination.current_page >= pagination.last_page}
+                className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
         title="Nouvelle annonce"
-        subtitle="Envoyée en temps réel aux agences concernées"
+        subtitle="Diffusée aux agences concernées"
         size="md"
         onConfirm={handleSubmit}
         isLoading={isSending}
-        confirmLabel="Envoyer"
+        confirmLabel={form.scheduled_at ? 'Programmer' : 'Envoyer'}
       >
         <div className="space-y-4">
           <div>
@@ -251,18 +415,101 @@ const Announcements = () => {
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all min-h-[100px] resize-none"
             />
           </div>
+
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Destinataire</label>
-            <select
-              value={form.agence_id}
-              onChange={(e) => setForm((p) => ({ ...p, agence_id: e.target.value }))}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all"
-            >
-              <option value="">Toutes les agences actives</option>
-              {(agences || []).filter((a) => a.actif).map((a) => (
-                <option key={a.id} value={a.id}>{a.nom_agence}</option>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Destinataires</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { mode: TARGET_MODES.ALL, label: 'Toutes les agences', icon: Users },
+                { mode: TARGET_MODES.AGENCE, label: 'Une agence', icon: Building2 },
+                { mode: TARGET_MODES.PAYS, label: 'Par pays', icon: Globe },
+                { mode: TARGET_MODES.VILLES, label: 'Par ville', icon: MapPin },
+              ].map(({ mode, label, icon: Icon }) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, targetMode: mode }))}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border transition-all ${
+                    form.targetMode === mode
+                      ? 'bg-slate-900 text-white border-slate-900'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  <Icon size={14} />
+                  {label}
+                </button>
               ))}
-            </select>
+            </div>
+
+            {form.targetMode === TARGET_MODES.AGENCE && (
+              <select
+                value={form.agence_id}
+                onChange={(e) => setForm((p) => ({ ...p, agence_id: e.target.value }))}
+                className="w-full mt-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all"
+              >
+                <option value="">Sélectionner une agence</option>
+                {(agences || []).filter((a) => a.actif).map((a) => (
+                  <option key={a.id} value={a.id}>{a.nom_agence}</option>
+                ))}
+              </select>
+            )}
+
+            {form.targetMode === TARGET_MODES.PAYS && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {paysDisponibles.map((pays) => (
+                  <button
+                    key={pays}
+                    type="button"
+                    onClick={() => togglePays(pays)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                      form.pays_cible.includes(pays)
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {pays}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {form.targetMode === TARGET_MODES.VILLES && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {villesDisponibles.map((ville) => (
+                  <button
+                    key={ville}
+                    type="button"
+                    onClick={() => toggleVille(ville)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                      form.villes_cible.includes(ville)
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {ville}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+              <CalendarClock size={14} />
+              Programmer l'envoi (optionnel)
+            </label>
+            <input
+              type="datetime-local"
+              value={form.scheduled_at}
+              onChange={(e) => setForm((p) => ({ ...p, scheduled_at: e.target.value }))}
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all"
+            />
+            {form.scheduled_at && (
+              <p className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-1.5">
+                <Clock size={12} />
+                Envoi différé à la date/heure choisie, au lieu d'un envoi immédiat.
+              </p>
+            )}
           </div>
         </div>
       </Modal>

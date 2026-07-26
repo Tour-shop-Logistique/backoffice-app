@@ -3,11 +3,11 @@ import api from '../../services/api';
 
 export const fetchAnnouncements = createAsyncThunk(
     'announcements/fetchAll',
-    async (_, { rejectWithValue }) => {
+    async (filters = {}, { rejectWithValue }) => {
         try {
-            const response = await api.get('/backoffice/announcements');
+            const response = await api.get('/backoffice/announcements', { params: filters });
             if (response.data.success) {
-                return response.data.data;
+                return { data: response.data.data, pagination: response.data.pagination };
             }
             return rejectWithValue("Impossible de charger les annonces");
         } catch (error) {
@@ -18,11 +18,11 @@ export const fetchAnnouncements = createAsyncThunk(
 
 export const createAnnouncement = createAsyncThunk(
     'announcements/create',
-    async ({ titre, message, agence_id }, { rejectWithValue }) => {
+    async (payload, { rejectWithValue }) => {
         try {
-            const response = await api.post('/backoffice/announcements', { titre, message, agence_id });
+            const response = await api.post('/backoffice/announcements', payload);
             if (response.data.success) {
-                return response.data.data;
+                return { announcement: response.data.data, nbDestinataires: response.data.nb_destinataires };
             }
             return rejectWithValue("Impossible d'envoyer l'annonce");
         } catch (error) {
@@ -65,6 +65,7 @@ const announcementSlice = createSlice({
     name: 'announcements',
     initialState: {
         items: [],
+        pagination: null,
         isLoading: false,
         isSending: false,
         error: null,
@@ -79,7 +80,8 @@ const announcementSlice = createSlice({
             })
             .addCase(fetchAnnouncements.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.items = action.payload;
+                state.items = action.payload.data;
+                state.pagination = action.payload.pagination;
                 state.hasLoaded = true;
             })
             .addCase(fetchAnnouncements.rejected, (state, action) => {
@@ -92,7 +94,7 @@ const announcementSlice = createSlice({
             })
             .addCase(createAnnouncement.fulfilled, (state, action) => {
                 state.isSending = false;
-                state.items.unshift(action.payload);
+                state.items.unshift(action.payload.announcement);
             })
             .addCase(createAnnouncement.rejected, (state, action) => {
                 state.isSending = false;
