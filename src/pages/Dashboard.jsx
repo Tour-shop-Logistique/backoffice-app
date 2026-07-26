@@ -17,7 +17,7 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { dashboard } = useSelector(state => state.parcels);
-  const { data, loading, recapLoading } = dashboard;
+  const { data, loading, recapLoading, recapLoadedFor } = dashboard;
   const [activeTab, setActiveTab] = useState('Opérations');
 
   // State pour le filtre de date du recap (Mois/Année)
@@ -49,12 +49,17 @@ const Dashboard = () => {
     dispatch(fetchDashboardStats());
   }, [dispatch]);
 
-  // Chargement du récapitulatif au montage et quand le mois/année change
+  // Chargement du récapitulatif quand le mois/année change (ou au tout
+  // premier montage si ce mois n'est pas déjà en cache), pas à chaque fois
+  // qu'on revient sur le Dashboard avec le même mois déjà chargé.
   useEffect(() => {
+    const alreadyLoaded = recapLoadedFor?.month === selectedDate.month && recapLoadedFor?.year === selectedDate.year;
+    if (alreadyLoaded) return;
     dispatch(fetchDashboardRecap({
       month: selectedDate.month,
       year: selectedDate.year
     }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, selectedDate.month, selectedDate.year]);
 
   const refreshRecap = () => {

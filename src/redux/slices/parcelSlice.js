@@ -275,6 +275,7 @@ const initialState = {
         error: null,
         lastUpdated: null,
         recapLoading: false,
+        recapLoadedFor: null, // { month, year } du dernier recap charge avec succes
     },
     // Accounting state
     accounting: {
@@ -420,6 +421,10 @@ const parcelSlice = createSlice({
                     ...(state.dashboard.data || {}),
                     daily_operations: action.payload.daily_operations,
                     daily_finance: action.payload.daily_finance
+                };
+                state.dashboard.recapLoadedFor = {
+                    month: action.meta.arg?.month,
+                    year: action.meta.arg?.year,
                 };
             })
             .addCase(fetchDashboardRecap.rejected, (state, action) => {
