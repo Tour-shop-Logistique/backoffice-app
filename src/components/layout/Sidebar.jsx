@@ -16,12 +16,14 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useSelector } from "react-redux";
+import { selectUnreadConversationsCount } from "../../redux/slices/messageSlice";
 
 import logo from "../../assets/logo_transparent.png";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const { user } = useSelector(state => state.auth);
   const { isConfigured } = useSelector(state => state.backoffice);
+  const unreadConversationsCount = useSelector(selectUnreadConversationsCount);
   const location = useLocation(); // Hook inside component
 
   // Navigation groupée par section, avec une icône colorée par entrée pour
@@ -126,6 +128,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             <div className="space-y-1">
               {section.items.map((item) => {
                 const active = isLinkActive(item.href);
+                const showBadge = item.href === "/messages" && unreadConversationsCount > 0;
                 return (
                   <NavLink
                     key={item.name}
@@ -145,7 +148,12 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                       <item.icon size={16} className={active ? "text-white" : item.color} />
                     </span>
                     <span className="flex-1 leading-tight">{item.name}</span>
-                    {active && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />}
+                    {showBadge && (
+                      <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-[10px] font-bold rounded-full shadow-sm shadow-red-500/40 ring-1 ring-red-400/20 shrink-0">
+                        {unreadConversationsCount > 99 ? "99+" : unreadConversationsCount}
+                      </span>
+                    )}
+                    {active && !showBadge && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />}
                   </NavLink>
                 );
               })}

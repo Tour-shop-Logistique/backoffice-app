@@ -220,4 +220,8 @@ const messageSlice = createSlice({
 });
 
 export const { appendMessageToConversation, updateMessageInConversation, removeMessageFromConversation, clearSearch } = messageSlice.actions;
+
+export const selectUnreadConversationsCount = (state) =>
+    state.messages.conversations.filter((c) => c.non_lu).length;
+
 export default messageSlice.reducer;

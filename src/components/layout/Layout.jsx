@@ -7,6 +7,7 @@ import { fetchTarifs, fetchGroupedTarifs } from '../../redux/slices/tarification
 import { fetchZones } from '../../redux/slices/zoneSlice';
 import { fetchAgences } from '../../redux/slices/agenceSlice';
 import { fetchProduits } from '../../redux/slices/produitSlice';
+import { fetchConversations } from '../../redux/slices/messageSlice';
 import useRealtimeUpdates from '../../hooks/useRealtimeUpdates';
 import { ROUTES } from '../../routes';
 import Sidebar from './Sidebar';
@@ -24,6 +25,7 @@ const Layout = ({ children }) => {
   const { hasLoaded: zonesLoaded, isLoading: isLoadingZones } = useSelector((state) => state.zones);
   const { hasLoaded: agencesLoaded, isLoading: isLoadingAgences } = useSelector((state) => state.agences);
   const { hasLoadedProduits: produitsLoaded, isLoading: isLoadingProduits } = useSelector((state) => state.produits);
+  const { conversationsLoaded, isLoadingConversations } = useSelector((state) => state.messages);
 
   useEffect(() => {
     // Ne charger que si pas de config en cache et pas déjà en cours de chargement
@@ -53,8 +55,9 @@ const Layout = ({ children }) => {
       if (!zonesLoaded && !isLoadingZones) dispatch(fetchZones());
       if (!agencesLoaded && !isLoadingAgences) dispatch(fetchAgences());
       if (!produitsLoaded && !isLoadingProduits) dispatch(fetchProduits());
+      if (!conversationsLoaded && !isLoadingConversations) dispatch(fetchConversations());
     }
-  }, [dispatch, isConfigured, tarifsLoaded, loadingTarifs, zonesLoaded, isLoadingZones, agencesLoaded, isLoadingAgences, produitsLoaded, isLoadingProduits]);
+  }, [dispatch, isConfigured, tarifsLoaded, loadingTarifs, zonesLoaded, isLoadingZones, agencesLoaded, isLoadingAgences, produitsLoaded, isLoadingProduits, conversationsLoaded, isLoadingConversations]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen);
