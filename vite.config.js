@@ -13,10 +13,12 @@ export default defineConfig(({ mode }) => {
       open: true,
       allowedHosts: true,
       proxy: {
+        // VITE_API_URL est l'URL racine du backend (sans /api) ; le préfixe
+        // /api appelé par le front est transmis tel quel, car les routes
+        // Laravel vivent déjà sous /api côté serveur.
         '/api': {
           target: env.VITE_API_URL,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
           headers: {
             'ngrok-skip-browser-warning': 'true'
           }

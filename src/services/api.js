@@ -1,10 +1,13 @@
 import axios from 'axios';
 
+// URL racine du backend, SANS suffixe /api (ex: https://api.tourshop-express.com)
 export const API_URL = import.meta.env.VITE_API_URL;
 
-// En développement : utilise le proxy Vite (/api)
-// En production : utilise l'URL directe de l'API
-const baseURL = import.meta.env.DEV ? '/api' : API_URL;
+// En développement : utilise le proxy Vite (/api, voir vite.config.js)
+// En production : appelle directement l'API, en ajoutant le préfixe /api ici
+// plutôt que de l'exiger dans VITE_API_URL (source d'erreurs silencieuses si
+// oublié).
+const baseURL = import.meta.env.DEV ? '/api' : `${API_URL}/api`;
 
 const api = axios.create({
   baseURL,

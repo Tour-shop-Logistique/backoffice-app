@@ -458,7 +458,7 @@ const AgenceDetail = () => {
                                                     <img
                                                         src={currentAgence.logo?.startsWith('http')
                                                             ? currentAgence.logo
-                                                            : `${import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')}/storage/${currentAgence.logo}`}
+                                                            : `${import.meta.env.VITE_API_URL}/storage/${currentAgence.logo}`}
                                                         alt="Logo"
                                                         className="max-h-full max-w-full object-contain"
                                                         loading="lazy"
