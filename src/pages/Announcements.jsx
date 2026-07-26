@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -41,6 +41,7 @@ const Announcements = () => {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const [filters, setFilters] = useState({ from: '', to: '', agence_id: '', q: '', page: 1 });
+  const isFirstRun = useRef(true);
 
   const refresh = () => {
     dispatch(fetchAnnouncements({
@@ -53,6 +54,13 @@ const Announcements = () => {
   };
 
   useEffect(() => {
+    // Au tout premier montage, ne recharge que si rien n'est deja en cache
+    // (evite un fetch inutile a chaque retour sur la page/l'onglet).
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      if (!hasLoaded) refresh();
+      return;
+    }
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, filters]);

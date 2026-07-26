@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Megaphone, MessageSquare } from 'lucide-react';
 import { selectUnreadConversationsCount } from '../redux/slices/messageSlice';
 import Announcements from './Announcements';
@@ -13,12 +13,12 @@ const TABS = [
 ];
 
 const Communication = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const unreadConversationsCount = useSelector(selectUnreadConversationsCount);
 
-  const initialTab = location.pathname === ROUTES.MESSAGES ? 'messages' : 'annonces';
-  const [activeTab, setActiveTab] = useState(initialTab);
+  // Toujours revenir sur l'onglet Annonces par defaut en revisitant la page,
+  // meme si "Messages" etait actif la derniere fois qu'on l'a quittee.
+  const [activeTab, setActiveTab] = useState('annonces');
 
   const handleTabChange = (tab) => {
     setActiveTab(tab.key);
