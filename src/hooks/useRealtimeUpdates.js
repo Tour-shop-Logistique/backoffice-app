@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getEcho } from '../services/echo';
 import { realtimeModelUpdated, fetchDashboardRecap } from '../redux/slices/parcelSlice';
-import { appendMessageToConversation } from '../redux/slices/messageSlice';
+import { appendMessageToConversation, updateMessageInConversation, removeMessageFromConversation } from '../redux/slices/messageSlice';
 
 /**
  * S'abonne au canal privé du backoffice et écoute l'event universel unique
@@ -27,9 +27,15 @@ export default function useRealtimeUpdates(backofficeId) {
 
     channel.listen('.model.updated', (payload) => {
       if (payload.model === 'Message') {
-        const message = payload.data?.[0];
-        if (message?.agence_id) {
-          dispatch(appendMessageToConversation({ agenceId: message.agence_id, message }));
+        const item = payload.data?.[0];
+        if (!item?.agence_id) return;
+
+        if (payload.action === 'created') {
+          dispatch(appendMessageToConversation({ agenceId: item.agence_id, message: item }));
+        } else if (payload.action === 'updated') {
+          dispatch(updateMessageInConversation({ agenceId: item.agence_id, message: item }));
+        } else if (payload.action === 'deleted') {
+          dispatch(removeMessageFromConversation({ agenceId: item.agence_id, messageId: item.id }));
         }
         return;
       }

@@ -52,6 +52,51 @@ export const sendMessage = createAsyncThunk(
     }
 );
 
+export const searchMessages = createAsyncThunk(
+    'messages/search',
+    async ({ agenceId, q }, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/backoffice/messages/${agenceId}/search`, { params: { q } });
+            if (response.data.success) {
+                return response.data.messages;
+            }
+            return rejectWithValue('Recherche impossible');
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || error.message || 'Erreur lors de la recherche');
+        }
+    }
+);
+
+export const updateMessage = createAsyncThunk(
+    'messages/update',
+    async ({ agenceId, messageId, body }, { rejectWithValue }) => {
+        try {
+            const response = await api.put(`/backoffice/messages/${agenceId}/${messageId}`, { body });
+            if (response.data.success) {
+                return { agenceId, message: response.data.message };
+            }
+            return rejectWithValue('Impossible de modifier le message');
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || error.message || 'Erreur lors de la modification');
+        }
+    }
+);
+
+export const deleteMessage = createAsyncThunk(
+    'messages/delete',
+    async ({ agenceId, messageId }, { rejectWithValue }) => {
+        try {
+            const response = await api.delete(`/backoffice/messages/${agenceId}/${messageId}`);
+            if (response.data.success) {
+                return { agenceId, messageId };
+            }
+            return rejectWithValue('Impossible de supprimer le message');
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || error.message || 'Erreur lors de la suppression');
+        }
+    }
+);
+
 const messageSlice = createSlice({
     name: 'messages',
     initialState: {
@@ -62,6 +107,8 @@ const messageSlice = createSlice({
         byAgence: {},
         isLoadingConversation: false,
         isSending: false,
+        searchResults: null,
+        isSearching: false,
         error: null,
     },
     reducers: {
@@ -82,6 +129,24 @@ const messageSlice = createSlice({
                 conv.last_message = { body: message.body, created_at: message.created_at };
                 conv.non_lu = true;
             }
+        },
+        // Reçu en temps réel : message modifié par l'autre partie (event Message/updated)
+        updateMessageInConversation: (state, action) => {
+            const { agenceId, message } = action.payload;
+            const list = state.byAgence[agenceId];
+            if (!list) return;
+            const idx = list.findIndex((m) => m.id === message.id);
+            if (idx !== -1) list[idx] = message;
+        },
+        // Reçu en temps réel : message supprimé par l'autre partie (event Message/deleted)
+        removeMessageFromConversation: (state, action) => {
+            const { agenceId, messageId } = action.payload;
+            const list = state.byAgence[agenceId];
+            if (!list) return;
+            state.byAgence[agenceId] = list.filter((m) => m.id !== messageId);
+        },
+        clearSearch: (state) => {
+            state.searchResults = null;
         },
     },
     extraReducers: (builder) => {
@@ -126,9 +191,33 @@ const messageSlice = createSlice({
             .addCase(sendMessage.rejected, (state, action) => {
                 state.isSending = false;
                 state.error = action.payload;
+            })
+            .addCase(searchMessages.pending, (state) => {
+                state.isSearching = true;
+            })
+            .addCase(searchMessages.fulfilled, (state, action) => {
+                state.isSearching = false;
+                state.searchResults = action.payload;
+            })
+            .addCase(searchMessages.rejected, (state, action) => {
+                state.isSearching = false;
+                state.error = action.payload;
+            })
+            .addCase(updateMessage.fulfilled, (state, action) => {
+                const { agenceId, message } = action.payload;
+                const list = state.byAgence[agenceId];
+                if (!list) return;
+                const idx = list.findIndex((m) => m.id === message.id);
+                if (idx !== -1) list[idx] = message;
+            })
+            .addCase(deleteMessage.fulfilled, (state, action) => {
+                const { agenceId, messageId } = action.payload;
+                const list = state.byAgence[agenceId];
+                if (!list) return;
+                state.byAgence[agenceId] = list.filter((m) => m.id !== messageId);
             });
     }
 });
 
-export const { appendMessageToConversation } = messageSlice.actions;
+export const { appendMessageToConversation, updateMessageInConversation, removeMessageFromConversation, clearSearch } = messageSlice.actions;
 export default messageSlice.reducer;

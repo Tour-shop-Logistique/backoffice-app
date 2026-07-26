@@ -2,9 +2,17 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MessageSquare, Send, Paperclip, X, FileText, Loader2 } from 'lucide-react';
+import { MessageSquare, Send, Paperclip, X, FileText, Loader2, Search, MoreVertical, Pencil, Trash2, Check, CheckCheck } from 'lucide-react';
 import { showNotification } from '../redux/slices/uiSlice';
-import { fetchConversations, fetchConversation, sendMessage } from '../redux/slices/messageSlice';
+import {
+  fetchConversations,
+  fetchConversation,
+  sendMessage,
+  searchMessages,
+  updateMessage,
+  deleteMessage,
+  clearSearch,
+} from '../redux/slices/messageSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
 
 const formatSize = (bytes) => {
@@ -13,14 +21,21 @@ const formatSize = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 };
 
+const isImage = (mimeType) => mimeType?.startsWith('image/');
+
 const Messages = () => {
   const dispatch = useDispatch();
-  const { conversations, conversationsLoaded, isLoadingConversation, byAgence, isSending } = useSelector((state) => state.messages);
+  const { conversations, conversationsLoaded, isLoadingConversation, byAgence, isSending, searchResults, isSearching } = useSelector((state) => state.messages);
   const { agences, hasLoaded: agencesLoaded } = useSelector((state) => state.agences);
 
   const [selectedAgenceId, setSelectedAgenceId] = useState(null);
   const [body, setBody] = useState('');
   const [attachments, setAttachments] = useState([]);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editBody, setEditBody] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef(null);
   const bottomRef = useRef(null);
 
@@ -34,13 +49,17 @@ const Messages = () => {
 
   useEffect(() => {
     if (selectedAgenceId) dispatch(fetchConversation(selectedAgenceId));
+    setSearchOpen(false);
+    setSearchQuery('');
+    dispatch(clearSearch());
   }, [dispatch, selectedAgenceId]);
 
   const messages = byAgence[selectedAgenceId] || [];
+  const displayedMessages = searchOpen && searchResults ? searchResults : messages;
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+    if (!searchOpen) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages.length, searchOpen]);
 
   // Fusionne les agences actives (pour démarrer une nouvelle conversation) avec
   // les conversations déjà existantes, sans doublon.
@@ -86,6 +105,47 @@ const Messages = () => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const startEdit = (m) => {
+    setEditingId(m.id);
+    setEditBody(m.body || '');
+    setOpenMenuId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditBody('');
+  };
+
+  const saveEdit = async (messageId) => {
+    if (!editBody.trim()) return;
+    try {
+      await dispatch(updateMessage({ agenceId: selectedAgenceId, messageId, body: editBody.trim() })).unwrap();
+      cancelEdit();
+    } catch (err) {
+      dispatch(showNotification({ type: 'error', message: err || 'Erreur lors de la modification' }));
+    }
+  };
+
+  const handleDelete = async (messageId) => {
+    setOpenMenuId(null);
+    try {
+      await dispatch(deleteMessage({ agenceId: selectedAgenceId, messageId })).unwrap();
+    } catch (err) {
+      dispatch(showNotification({ type: 'error', message: err || 'Erreur lors de la suppression' }));
+    }
+  };
+
+  const handleSearch = () => {
+    if (!searchQuery.trim() || !selectedAgenceId) return;
+    dispatch(searchMessages({ agenceId: selectedAgenceId, q: searchQuery.trim() }));
+  };
+
+  const toggleSearch = () => {
+    setSearchOpen((prev) => !prev);
+    setSearchQuery('');
+    dispatch(clearSearch());
   };
 
   return (
@@ -142,42 +202,133 @@ const Messages = () => {
                 <div className="w-8 h-8 shrink-0 rounded-full bg-slate-900 flex items-center justify-center text-xs font-bold text-white">
                   {selectedAgence?.nom_agence?.charAt(0)?.toUpperCase() || '?'}
                 </div>
-                <p className="font-bold text-sm text-slate-900">{selectedAgence?.nom_agence}</p>
+                <p className="font-bold text-sm text-slate-900 flex-1">{selectedAgence?.nom_agence}</p>
+                <button
+                  onClick={toggleSearch}
+                  className={`p-2 rounded-lg transition-colors ${searchOpen ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
+                  title="Rechercher dans la conversation"
+                >
+                  <Search size={16} />
+                </button>
               </div>
+
+              {searchOpen && (
+                <div className="px-5 py-2.5 border-b border-slate-200 bg-white flex items-center gap-2">
+                  <input
+                    autoFocus
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    placeholder="Rechercher un mot..."
+                    className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900"
+                  />
+                  <button
+                    onClick={handleSearch}
+                    disabled={!searchQuery.trim() || isSearching}
+                    className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold disabled:opacity-40"
+                  >
+                    {isSearching ? <Loader2 size={14} className="animate-spin" /> : 'Chercher'}
+                  </button>
+                </div>
+              )}
 
               <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
                 {isLoadingConversation && messages.length === 0 ? (
                   <div className="flex justify-center py-8">
                     <Loader2 className="animate-spin text-slate-400" size={28} />
                   </div>
-                ) : messages.length === 0 ? (
-                  <p className="text-center text-sm text-slate-400 py-8">Aucun message pour l'instant</p>
+                ) : displayedMessages.length === 0 ? (
+                  <p className="text-center text-sm text-slate-400 py-8">
+                    {searchOpen && searchResults ? 'Aucun résultat' : "Aucun message pour l'instant"}
+                  </p>
                 ) : (
-                  messages.map((m) => {
+                  displayedMessages.map((m) => {
                     const isMine = m.sender?.type !== 'agence';
+                    const isEditing = editingId === m.id;
                     return (
-                      <div key={m.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${isMine ? 'bg-slate-900 text-white' : 'bg-white text-slate-900 border border-slate-200'}`}>
-                          {m.body && <p className="text-sm whitespace-pre-wrap break-words">{m.body}</p>}
-                          {m.attachments?.length > 0 && (
-                            <div className="mt-1.5 space-y-1.5">
-                              {m.attachments.map((a) => (
-                                <a
-                                  key={a.id}
-                                  href={a.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg ${isMine ? 'bg-white/10 hover:bg-white/20' : 'bg-slate-100 hover:bg-slate-200'}`}
-                                >
-                                  <FileText size={14} />
-                                  <span className="truncate">{a.original_name}</span>
-                                </a>
-                              ))}
+                      <div key={m.id} className={`group flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`relative max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${isMine ? 'bg-slate-900 text-white' : 'bg-white text-slate-900 border border-slate-200'}`}>
+                          {isMine && !isEditing && (
+                            <div className="absolute -top-2 -left-2">
+                              <button
+                                onClick={() => setOpenMenuId(openMenuId === m.id ? null : m.id)}
+                                className="opacity-0 group-hover:opacity-100 p-1 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-slate-900 transition-opacity"
+                              >
+                                <MoreVertical size={12} />
+                              </button>
+                              {openMenuId === m.id && (
+                                <div className="absolute top-6 left-0 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 w-32">
+                                  {m.body && (
+                                    <button
+                                      onClick={() => startEdit(m)}
+                                      className="w-full text-left px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                    >
+                                      <Pencil size={12} /> Modifier
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => handleDelete(m.id)}
+                                    className="w-full text-left px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                  >
+                                    <Trash2 size={12} /> Supprimer
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           )}
-                          <p className={`text-[10px] mt-1 ${isMine ? 'text-slate-300' : 'text-slate-400'}`}>
-                            {format(new Date(m.created_at), 'HH:mm', { locale: fr })}
-                          </p>
+
+                          {isEditing ? (
+                            <div className="space-y-2">
+                              <textarea
+                                autoFocus
+                                value={editBody}
+                                onChange={(e) => setEditBody(e.target.value)}
+                                rows={2}
+                                className="w-full px-2 py-1.5 rounded-lg text-sm bg-white/10 text-white placeholder-slate-300 border border-white/20 focus:outline-none resize-none"
+                              />
+                              <div className="flex gap-2 justify-end">
+                                <button onClick={cancelEdit} className="text-xs font-bold text-slate-300 hover:text-white">Annuler</button>
+                                <button onClick={() => saveEdit(m.id)} className="text-xs font-bold text-white bg-white/20 px-2 py-0.5 rounded">Enregistrer</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              {m.body && <p className="text-sm whitespace-pre-wrap break-words">{m.body}</p>}
+                              {m.attachments?.length > 0 && (
+                                <div className="mt-1.5 space-y-1.5">
+                                  {m.attachments.map((a) => isImage(a.mime_type) ? (
+                                    <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer" className="block">
+                                      <img src={a.url} alt={a.original_name} className="max-w-full max-h-48 rounded-lg object-cover" />
+                                    </a>
+                                  ) : (
+                                    <a
+                                      key={a.id}
+                                      href={a.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg ${isMine ? 'bg-white/10 hover:bg-white/20' : 'bg-slate-100 hover:bg-slate-200'}`}
+                                    >
+                                      <FileText size={14} />
+                                      <span className="truncate">{a.original_name}</span>
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                              <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : ''}`}>
+                                {m.edited_at && (
+                                  <span className={`text-[10px] italic ${isMine ? 'text-slate-300' : 'text-slate-400'}`}>modifié</span>
+                                )}
+                                <p className={`text-[10px] ${isMine ? 'text-slate-300' : 'text-slate-400'}`}>
+                                  {format(new Date(m.created_at), 'HH:mm', { locale: fr })}
+                                </p>
+                                {isMine && (
+                                  m.read_at
+                                    ? <CheckCheck size={13} className="text-sky-300" />
+                                    : <Check size={13} className="text-slate-400" />
+                                )}
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     );
