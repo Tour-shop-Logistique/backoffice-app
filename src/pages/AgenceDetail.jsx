@@ -463,6 +463,8 @@ const AgenceDetail = () => {
                                                         alt="Logo"
                                                         className="max-h-full max-w-full object-contain"
                                                         loading="lazy"
+                                                        onLoad={() => setIsLogoLoading(false)}
+                                                        onError={() => setIsLogoLoading(false)}
                                                     />
                                                 </div>
                                             ) : (
