@@ -20,7 +20,7 @@ const AVAILABLE_PAGES = [
   { key: 'tarification', label: 'Tarification' },
   { key: 'zone_configuration', label: "Zones d'expéditions" },
   { key: 'produits', label: 'Produits & Catégories' },
-  { key: 'agents', label: 'Agents Backoffice' },
+  { key: 'agents', label: 'Équipe & Accès' },
 ];
 
 const Agents = () => {
@@ -230,6 +230,7 @@ const Agents = () => {
           dispatch(showNotification({ type: 'success', message: 'Agent modifié avec succès.' }));
           closeModal();
           dispatch(fetchAgents({ silent: true }));
+          dispatch(fetchRoles());
         } else {
           dispatch(showNotification({ type: 'error', message: 'Erreur lors de la modification' }));
         }
@@ -243,6 +244,7 @@ const Agents = () => {
           dispatch(showNotification({ type: 'success', message: 'Agent créé avec succès.' }));
           closeModal();
           dispatch(fetchAgents({ silent: true }));
+          dispatch(fetchRoles());
         } else {
           dispatch(showNotification({ type: 'error', message: "Erreur lors de l'ajout" }));
         }
