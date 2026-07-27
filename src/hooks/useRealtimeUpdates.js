@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getEcho } from '../services/echo';
 import { realtimeModelUpdated, fetchDashboardRecap } from '../redux/slices/parcelSlice';
 import { appendMessageToConversation, updateMessageInConversation, removeMessageFromConversation } from '../redux/slices/messageSlice';
+import { performLogout } from '../redux/slices/authSlice';
+import { showNotification } from '../redux/slices/uiSlice';
 
 /**
  * S'abonne au canal privé du backoffice et écoute l'event universel unique
@@ -16,6 +18,7 @@ export default function useRealtimeUpdates(backofficeId) {
   // prévus si ce backoffice est celui de départ (il reçoit aussi l'event, mais
   // seul le backoffice du pays de destination doit voir apparaître le colis).
   const backofficeCountry = useSelector((state) => state.backoffice?.config?.pays);
+  const currentUserId = useSelector((state) => state.auth?.user?.id);
 
   useEffect(() => {
     if (!backofficeId) return;
@@ -40,6 +43,18 @@ export default function useRealtimeUpdates(backofficeId) {
         return;
       }
 
+      // Rôle (donc permissions d'accès aux pages) modifié pour cet agent
+      // précis pendant qu'il est connecté : déconnexion immédiate pour
+      // qu'il ne garde jamais l'accès aux pages de son ancien rôle.
+      if (payload.model === 'User' && payload.action === 'role_changed') {
+        const item = payload.data?.[0];
+        if (item?.id && item.id === currentUserId) {
+          dispatch(showNotification({ type: 'info', message: 'Vos permissions ont été modifiées. Merci de vous reconnecter.' }));
+          dispatch(performLogout());
+        }
+        return;
+      }
+
       dispatch(realtimeModelUpdated({ ...payload, currentBackofficeCountry: backofficeCountry }));
       // Rafraîchit les compteurs du dashboard à chaque changement, peu coûteux.
       dispatch(fetchDashboardRecap());
@@ -48,5 +63,5 @@ export default function useRealtimeUpdates(backofficeId) {
     return () => {
       echo.leave(`backoffice.${backofficeId}`);
     };
-  }, [backofficeId, dispatch, backofficeCountry]);
+  }, [backofficeId, dispatch, backofficeCountry, currentUserId]);
 }
