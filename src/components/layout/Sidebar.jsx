@@ -80,7 +80,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         { name: "Tarification", href: "/tarification", icon: DollarSign, color: "text-emerald-400" },
         { name: "Zones d'expéditions", href: "/zone-configuration", icon: Globe, color: "text-sky-400" },
         { name: "Produits & Catégories", href: "/produits", icon: Tag, color: "text-rose-400" },
-        { name: "Agents Backoffice", href: "/agents", icon: Users, color: "text-indigo-400", adminOnly: true },
+        { name: "Équipe & Accès", href: "/agents", icon: Users, color: "text-indigo-400", adminOnly: true },
       ],
     },
   ]
