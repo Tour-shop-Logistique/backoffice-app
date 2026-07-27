@@ -64,28 +64,84 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
+            <Route path={ROUTES.DASHBOARD} element={
+              <ProtectedRoute pageKey="dashboard">
+                <Dashboard />
+              </ProtectedRoute>
+            } />
             <Route path={ROUTES.AGENTS} element={
               <ProtectedRoute adminOnly={true}>
                 <Agents />
               </ProtectedRoute>
             } />
-            <Route path={ROUTES.PARCELS} element={<Parcels />} />
-            <Route path={ROUTES.PARCEL_HISTORY} element={<ParcelHistory />} />
-            <Route path={ROUTES.TARIFICATION} element={<Tarification />} />
-            <Route path={ROUTES.ZONE_CONFIGURATION} element={<ZoneConfiguration />} />
-            <Route path={ROUTES.AGENCE_PARTENAIRE} element={<AgencePartenaire />} />
-            <Route path={ROUTES.AGENCE_DETAIL} element={<AgenceDetail />} />
-            <Route path={ROUTES.PRODUITS} element={<Produits />} />
+            <Route path={ROUTES.PARCELS} element={
+              <ProtectedRoute pageKey="parcels">
+                <Parcels />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.PARCEL_HISTORY} element={
+              <ProtectedRoute pageKey="parcels">
+                <ParcelHistory />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.TARIFICATION} element={
+              <ProtectedRoute pageKey="tarification">
+                <Tarification />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.ZONE_CONFIGURATION} element={
+              <ProtectedRoute pageKey="zone_configuration">
+                <ZoneConfiguration />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.AGENCE_PARTENAIRE} element={
+              <ProtectedRoute pageKey="agence_partenaire">
+                <AgencePartenaire />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.AGENCE_DETAIL} element={
+              <ProtectedRoute pageKey="agence_partenaire">
+                <AgenceDetail />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.PRODUITS} element={
+              <ProtectedRoute pageKey="produits">
+                <Produits />
+              </ProtectedRoute>
+            } />
             <Route path={ROUTES.BACKOFFICE_SETUP} element={<BackofficeSetup />} />
             <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
-            <Route path={ROUTES.PARCEL_CONTROL} element={<ParcelControl />} />
-            <Route path={ROUTES.INCOMING_PARCELS} element={<IncomingParcels />} />
-            <Route path={ROUTES.COMPTABILITE} element={<Comptabilite />} />
-            <Route path={ROUTES.HISTORIQUE} element={<Historique />} />
+            <Route path={ROUTES.PARCEL_CONTROL} element={
+              <ProtectedRoute pageKey="parcels">
+                <ParcelControl />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.INCOMING_PARCELS} element={
+              <ProtectedRoute pageKey="incoming_parcels">
+                <IncomingParcels />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.COMPTABILITE} element={
+              <ProtectedRoute pageKey="comptabilite">
+                <Comptabilite />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.HISTORIQUE} element={
+              <ProtectedRoute pageKey="historique">
+                <Historique />
+              </ProtectedRoute>
+            } />
             <Route path={ROUTES.SETTINGS} element={<Settings />} />
-            <Route path={ROUTES.ANNOUNCEMENTS} element={<Communication />} />
-            <Route path={ROUTES.MESSAGES} element={<Communication />} />
+            <Route path={ROUTES.ANNOUNCEMENTS} element={
+              <ProtectedRoute pageKey="communication">
+                <Communication />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.MESSAGES} element={
+              <ProtectedRoute pageKey="communication">
+                <Communication />
+              </ProtectedRoute>
+            } />
           </Route>
 
           {/* Redirection par défaut (catch-all) */}

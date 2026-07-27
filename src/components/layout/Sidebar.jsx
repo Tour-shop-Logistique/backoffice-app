@@ -19,11 +19,35 @@ import { selectUnreadConversationsCount } from "../../redux/slices/messageSlice"
 
 import logo from "../../assets/logo_transparent.png";
 
+// Doit rester synchronisé avec BackofficeRoleController::AVAILABLE_PAGES côté backend.
+const PAGE_KEY_BY_HREF = {
+  "/dashboard": "dashboard",
+  "/parcels": "parcels",
+  "/incoming-parcels": "incoming_parcels",
+  "/historique": "historique",
+  "/agence-partenaire": "agence_partenaire",
+  "/comptabilite": "comptabilite",
+  "/messages": "communication",
+  "/tarification": "tarification",
+  "/zone-configuration": "zone_configuration",
+  "/produits": "produits",
+  "/agents": "agents",
+};
+
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const { user } = useSelector(state => state.auth);
   const { isConfigured } = useSelector(state => state.backoffice);
   const unreadConversationsCount = useSelector(selectUnreadConversationsCount);
   const location = useLocation(); // Hook inside component
+
+  const isAdmin = user?.role === 'is_backoffice_admin';
+  // Un agent sans rôle assigné garde un accès complet (cohérent avec
+  // User::canAccessPage() côté backend) ; seul un rôle explicitement
+  // assigné restreint aux pages qu'il liste.
+  const canAccessPage = (pageKey) => {
+    if (isAdmin || !user?.role_id) return true;
+    return (user?.role_details?.pages || []).includes(pageKey);
+  };
 
   // Navigation groupée par section, avec une icône colorée par entrée pour
   // repérer les options d'un coup d'œil sans avoir à lire chaque libellé.
@@ -62,7 +86,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   ]
     .map(section => ({
       ...section,
-      items: section.items.filter(item => !item.adminOnly || user?.role === 'is_backoffice_admin'),
+      items: section.items.filter(item => {
+        if (item.adminOnly && !isAdmin) return false;
+        const pageKey = PAGE_KEY_BY_HREF[item.href];
+        return !pageKey || canAccessPage(pageKey);
+      }),
     }))
     .filter(section => section.items.length > 0);
 

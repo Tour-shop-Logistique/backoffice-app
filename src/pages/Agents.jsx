@@ -1,15 +1,34 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { PlusCircle, Loader2, X, Trash2, AlertTriangle, User, Edit, Phone, Mail, Shield, RefreshCw, ChevronDown as LucideChevronDown, CheckCircle2, XCircle, Search, Edit2, Edit3, Mail as MailIcon, Phone as PhoneIcon, UserCircle2, Eye, EyeOff } from 'lucide-react';
+import { PlusCircle, Loader2, X, Trash2, AlertTriangle, User, Edit, Phone, Mail, Shield, RefreshCw, ChevronDown as LucideChevronDown, CheckCircle2, XCircle, Search, Edit2, Edit3, Mail as MailIcon, Phone as PhoneIcon, UserCircle2, Eye, EyeOff, KeyRound, Users } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { showNotification } from '../redux/slices/uiSlice';
 import { fetchAgents, addAgent, editAgent, deleteAgent, updateAgentStatus, setAgentStatus } from '../redux/slices/agentSlice';
+import { fetchRoles, addRole, editRole, deleteRole } from '../redux/slices/roleSlice';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 import RowActions from '../components/common/RowActions';
 
+// Doit rester synchronisé avec BackofficeRoleController::AVAILABLE_PAGES côté backend.
+const AVAILABLE_PAGES = [
+  { key: 'dashboard', label: 'Tableau de bord' },
+  { key: 'parcels', label: 'Colis à contrôler' },
+  { key: 'incoming_parcels', label: 'Arrivages prévus' },
+  { key: 'historique', label: 'Historique' },
+  { key: 'agence_partenaire', label: 'Agences partenaires' },
+  { key: 'comptabilite', label: 'Comptabilité' },
+  { key: 'communication', label: 'Communication' },
+  { key: 'tarification', label: 'Tarification' },
+  { key: 'zone_configuration', label: "Zones d'expéditions" },
+  { key: 'produits', label: 'Produits & Catégories' },
+  { key: 'agents', label: 'Agents Backoffice' },
+];
+
 const Agents = () => {
   const dispatch = useDispatch();
   const { agents, isLoading, error, hasLoaded } = useSelector((state) => state.agents);
+  const { roles, isLoading: isLoadingRoles, hasLoaded: rolesLoaded } = useSelector((state) => state.roles);
+
+  const [activeTab, setActiveTab] = useState('agents');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState(null);
@@ -30,13 +49,27 @@ const Agents = () => {
     password: '',
     password_confirmation: '',
     type: 'backoffice',
+    role_id: '',
   });
+
+  // Gestion des rôles
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState(null);
+  const [roleToDelete, setRoleToDelete] = useState(null);
+  const [isSubmittingRole, setIsSubmittingRole] = useState(false);
+  const [roleForm, setRoleForm] = useState({ nom: '', description: '', pages: [] });
 
   useEffect(() => {
     if (!hasLoaded && !isLoading) {
       dispatch(fetchAgents());
     }
   }, [dispatch, hasLoaded, isLoading]);
+
+  useEffect(() => {
+    if (!rolesLoaded && !isLoadingRoles) {
+      dispatch(fetchRoles());
+    }
+  }, [dispatch, rolesLoaded, isLoadingRoles]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -65,7 +98,8 @@ const Agents = () => {
       email: agent.email || '',
       type: agent.type || 'backoffice',
       password: '',
-      password_confirmation: ''
+      password_confirmation: '',
+      role_id: agent.role_id || '',
     });
     setIsModalOpen(true);
   };
@@ -81,7 +115,78 @@ const Agents = () => {
       password: '',
       password_confirmation: '',
       type: 'backoffice',
+      role_id: '',
     });
+  };
+
+  // ── Gestion des rôles ──
+  const openRoleModal = (role) => {
+    if (role) {
+      setEditingRole(role);
+      setRoleForm({ id: role.id, nom: role.nom || '', description: role.description || '', pages: role.pages || [] });
+    } else {
+      setEditingRole(null);
+      setRoleForm({ nom: '', description: '', pages: [] });
+    }
+    setIsRoleModalOpen(true);
+  };
+
+  const closeRoleModal = () => {
+    setIsRoleModalOpen(false);
+    setEditingRole(null);
+    setRoleForm({ nom: '', description: '', pages: [] });
+  };
+
+  const toggleRolePage = (pageKey) => {
+    setRoleForm((prev) => ({
+      ...prev,
+      pages: prev.pages.includes(pageKey)
+        ? prev.pages.filter((p) => p !== pageKey)
+        : [...prev.pages, pageKey],
+    }));
+  };
+
+  const handleSubmitRole = async (e) => {
+    e.preventDefault();
+    if (isSubmittingRole) return;
+
+    if (!roleForm.nom.trim()) {
+      return dispatch(showNotification({ type: 'error', message: 'Le nom du rôle est requis.' }));
+    }
+    if (roleForm.pages.length === 0) {
+      return dispatch(showNotification({ type: 'error', message: 'Sélectionnez au moins une page accessible.' }));
+    }
+
+    setIsSubmittingRole(true);
+    try {
+      if (editingRole) {
+        const { id, ...roleData } = roleForm;
+        await dispatch(editRole({ roleId: id, roleData })).unwrap();
+        dispatch(showNotification({ type: 'success', message: 'Rôle mis à jour avec succès.' }));
+      } else {
+        await dispatch(addRole(roleForm)).unwrap();
+        dispatch(showNotification({ type: 'success', message: 'Rôle créé avec succès.' }));
+      }
+      closeRoleModal();
+    } catch (err) {
+      dispatch(showNotification({ type: 'error', message: err?.message || 'Erreur lors de la soumission du rôle.' }));
+    } finally {
+      setIsSubmittingRole(false);
+    }
+  };
+
+  const handleDeleteRole = async () => {
+    if (!roleToDelete) return;
+    setIsSubmittingRole(true);
+    try {
+      await dispatch(deleteRole(roleToDelete.id)).unwrap();
+      dispatch(showNotification({ type: 'success', message: `Le rôle ${roleToDelete.nom} a été supprimé.` }));
+      setRoleToDelete(null);
+    } catch (err) {
+      dispatch(showNotification({ type: 'error', message: err?.message || 'Erreur lors de la suppression du rôle.' }));
+    } finally {
+      setIsSubmittingRole(false);
+    }
   };
 
   const handleDeleteAgent = async () => {
@@ -119,6 +224,7 @@ const Agents = () => {
           delete updateData.password;
           delete updateData.password_confirmation;
         }
+        updateData.role_id = updateData.role_id || null;
         const result = await dispatch(editAgent({ agentId: id, agentData: updateData })).unwrap();
         if (result.success || result) {
           dispatch(showNotification({ type: 'success', message: 'Agent modifié avec succès.' }));
@@ -132,7 +238,7 @@ const Agents = () => {
           setIsSubmitting(false);
           return dispatch(showNotification({ type: 'error', message: 'Le mot de passe est requis pour un nouvel agent.' }));
         }
-        const result = await dispatch(addAgent(agentForm)).unwrap();
+        const result = await dispatch(addAgent({ ...agentForm, role_id: agentForm.role_id || null })).unwrap();
         if (result.success || result) {
           dispatch(showNotification({ type: 'success', message: 'Agent créé avec succès.' }));
           closeModal();
@@ -207,49 +313,120 @@ const Agents = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-                Gestion des Agents
+                {activeTab === 'agents' ? 'Gestion des Agents' : 'Rôles & Permissions'}
               </h1>
               <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
-                Gérez les membres de votre équipe
+                {activeTab === 'agents' ? 'Gérez les membres de votre équipe' : "Définissez les pages accessibles pour chaque rôle"}
               </p>
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
-                title="Rafraîchir"
-              >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span className="hidden md:inline md:ml-2">Rafraîchir</span>
-              </button>
+              {activeTab === 'agents' && (
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
+                  title="Rafraîchir"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span className="hidden md:inline md:ml-2">Rafraîchir</span>
+                </button>
+              )}
 
               <button
-                onClick={() => { setIsModalOpen(true); }}
+                onClick={() => (activeTab === 'agents' ? setIsModalOpen(true) : openRoleModal(null))}
                 className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
                 title="Ajouter"
               >
                 <PlusCircle className="h-4 w-4" />
-                <span className="hidden md:inline md:ml-2">Ajouter</span>
+                <span className="hidden md:inline md:ml-2">{activeTab === 'agents' ? 'Ajouter un agent' : 'Nouveau rôle'}</span>
               </button>
             </div>
           </div>
         </header>
 
-        {/* SEARCH BAR */}
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
-          <input
-            type="text"
-            placeholder="Rechercher par nom, téléphone, email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
-          />
+        {/* MAIN TABS: Agents / Roles */}
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1.5 w-fit shadow-sm">
+          <button
+            type="button"
+            onClick={() => setActiveTab('agents')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors ${
+              activeTab === 'agents' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+            }`}
+          >
+            <Users size={14} />
+            Agents
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('roles')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors ${
+              activeTab === 'roles' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+            }`}
+          >
+            <KeyRound size={14} />
+            Rôles
+          </button>
         </div>
+
+        {/* SEARCH BAR */}
+        {activeTab === 'agents' && (
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+            <input
+              type="text"
+              placeholder="Rechercher par nom, téléphone, email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
+            />
+          </div>
+        )}
       </div>
 
+      {activeTab === 'roles' ? (
+        <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          {isLoadingRoles && roles.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 px-6">
+              <Loader2 className="animate-spin text-slate-900 mb-4" size={48} strokeWidth={1.5} />
+              <p className="text-slate-500 font-medium text-sm">Chargement des rôles...</p>
+            </div>
+          ) : roles.length === 0 ? (
+            <div className="py-20 text-center px-6">
+              <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <KeyRound className="text-slate-400" size={32} />
+              </div>
+              <h3 className="font-bold text-slate-900 text-lg">Aucun rôle créé</h3>
+              <p className="text-slate-500 text-sm mt-2">Créez un rôle pour restreindre l'accès de certains agents à des pages précises.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {roles.map((role) => (
+                <div key={role.id} className="p-4 md:p-5 flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-slate-900">{role.nom}</p>
+                      <span className="text-xs font-bold text-slate-400">
+                        {role.users_count || 0} agent{(role.users_count || 0) > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    {role.description && <p className="text-sm text-slate-500 mt-0.5">{role.description}</p>}
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {(role.pages || []).map((pageKey) => (
+                        <span key={pageKey} className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600">
+                          {AVAILABLE_PAGES.find((p) => p.key === pageKey)?.label || pageKey}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <RowActions onEdit={() => openRoleModal(role)} onDelete={() => setRoleToDelete(role)} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+      <>
       {/* TABS + TABLE - Mobile Optimized */}
       <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {/* Tabs */}
@@ -308,6 +485,7 @@ const Agents = () => {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Membre</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Rôle</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
                     <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -337,6 +515,16 @@ const Agents = () => {
                             <span className="text-xs font-medium">{agent.email}</span>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {agent.role?.nom ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700">
+                            <KeyRound size={12} />
+                            {agent.role.nom}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">Accès complet</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <button
@@ -396,6 +584,15 @@ const Agents = () => {
                     <span className="text-xs text-slate-500 font-bold uppercase">{agent.type || 'Agent'}</span>
                   </div>
 
+                  {agent.role?.nom && (
+                    <div className="px-1">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700">
+                        <KeyRound size={12} />
+                        {agent.role.nom}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex gap-2 pt-1">
                     <button
                       onClick={() => openEditModal(agent)}
@@ -417,6 +614,8 @@ const Agents = () => {
           </>
         )}
       </div>
+      </>
+      )}
 
       {/* MODALS */}
       {/* Ajout / Edition Modal */}
@@ -487,6 +686,22 @@ const Agents = () => {
               <p>Laissez vide pour conserver le mot de passe actuel.</p>
             </div>
           )}
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Rôle</label>
+            <select
+              name="role_id"
+              value={agentForm.role_id || ''}
+              onChange={handleInputChange}
+              className={inputStyle}
+            >
+              <option value="">Accès complet (aucun rôle)</option>
+              {roles.map((role) => (
+                <option key={role.id} value={role.id}>{role.nom}</option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-400 ml-1">Sans rôle, l'agent a accès à toutes les pages.</p>
+          </div>
         </form>
       </Modal>
 
@@ -496,6 +711,81 @@ const Agents = () => {
         onConfirm={handleDeleteAgent}
         itemName={`${agentToDelete?.nom} ${agentToDelete?.prenoms}`}
         isLoading={isSubmitting}
+      />
+
+      {/* Ajout / Edition Rôle Modal */}
+      <Modal
+        isOpen={isRoleModalOpen}
+        onClose={closeRoleModal}
+        title={editingRole ? 'Modifier le rôle' : 'Nouveau rôle'}
+        subtitle="Définissez les pages accessibles pour ce rôle"
+        size="lg"
+        confirmFormId="role-form"
+        isLoading={isSubmittingRole}
+        confirmLabel={editingRole ? 'Mettre à jour' : 'Enregistrer'}
+      >
+        <form id="role-form" onSubmit={handleSubmitRole} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nom du rôle <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              value={roleForm.nom}
+              onChange={(e) => setRoleForm((p) => ({ ...p, nom: e.target.value }))}
+              placeholder="Ex: Comptable"
+              className={inputStyle}
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Description</label>
+            <textarea
+              value={roleForm.description}
+              onChange={(e) => setRoleForm((p) => ({ ...p, description: e.target.value }))}
+              placeholder="Description facultative du rôle..."
+              rows={2}
+              className={`${inputStyle} resize-none`}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
+              Pages accessibles <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+              {AVAILABLE_PAGES.map((page) => {
+                const checked = roleForm.pages.includes(page.key);
+                return (
+                  <label
+                    key={page.key}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-all ${
+                      checked ? 'bg-slate-900 border-slate-900 text-white' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleRolePage(page.key)}
+                      className="sr-only"
+                    />
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${checked ? 'bg-white border-white' : 'border-slate-300'}`}>
+                      {checked && <CheckCircle2 size={12} className="text-slate-900" />}
+                    </div>
+                    <span className="text-sm font-medium">{page.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </form>
+      </Modal>
+
+      <DeleteModal
+        isOpen={!!roleToDelete}
+        onClose={() => setRoleToDelete(null)}
+        onConfirm={handleDeleteRole}
+        itemName={roleToDelete?.nom}
+        isLoading={isSubmittingRole}
       />
     </div>
   );
