@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getEcho } from '../services/echo';
 import { realtimeModelUpdated, fetchDashboardRecap } from '../redux/slices/parcelSlice';
 import { appendMessageToConversation, updateMessageInConversation, removeMessageFromConversation } from '../redux/slices/messageSlice';
-import { performLogout } from '../redux/slices/authSlice';
+import { updateUserRole } from '../redux/slices/authSlice';
 import { showNotification } from '../redux/slices/uiSlice';
 
 /**
@@ -44,13 +44,13 @@ export default function useRealtimeUpdates(backofficeId) {
       }
 
       // Rôle (donc permissions d'accès aux pages) modifié pour cet agent
-      // précis pendant qu'il est connecté : déconnexion immédiate pour
-      // qu'il ne garde jamais l'accès aux pages de son ancien rôle.
+      // précis pendant qu'il est connecté : resynchronise en direct sans le
+      // déconnecter, le menu et les routes se recalculent immédiatement.
       if (payload.model === 'User' && payload.action === 'role_changed') {
         const item = payload.data?.[0];
         if (item?.id && item.id === currentUserId) {
-          dispatch(showNotification({ type: 'info', message: 'Vos permissions ont été modifiées. Merci de vous reconnecter.' }));
-          dispatch(performLogout());
+          dispatch(updateUserRole({ role_id: item.role_id, role_details: item.role_details }));
+          dispatch(showNotification({ type: 'info', message: 'Vos permissions d\'accès ont été mises à jour.' }));
         }
         return;
       }

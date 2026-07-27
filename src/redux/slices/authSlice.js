@@ -114,6 +114,14 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
     },
+    // Resynchronise le rôle de l'utilisateur connecté (reçu en temps réel
+    // quand l'admin le modifie) sans le déconnecter : le menu et les routes
+    // se recalculent immédiatement avec les nouvelles pages autorisées.
+    updateUserRole: (state, action) => {
+      if (!state.user) return;
+      state.user = { ...state.user, role_id: action.payload.role_id, role_details: action.payload.role_details };
+      localStorage.setItem('user', JSON.stringify(state.user));
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -180,6 +188,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, updateUserRole } = authSlice.actions;
 
 export default authSlice.reducer;
