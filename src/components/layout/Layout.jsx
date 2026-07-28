@@ -8,6 +8,7 @@ import { fetchZones } from '../../redux/slices/zoneSlice';
 import { fetchAgences } from '../../redux/slices/agenceSlice';
 import { fetchProduits } from '../../redux/slices/produitSlice';
 import { fetchConversations } from '../../redux/slices/messageSlice';
+import { fetchProfile } from '../../redux/slices/authSlice';
 import useRealtimeUpdates from '../../hooks/useRealtimeUpdates';
 import { ROUTES } from '../../routes';
 import Sidebar from './Sidebar';
@@ -33,6 +34,14 @@ const Layout = ({ children }) => {
       dispatch(fetchBackofficeConfig());
     }
   }, [dispatch, loading, config]);
+
+  // Resynchronise l'utilisateur (role_id/role_details notamment) depuis le
+  // backend une fois par montage : le localStorage persisté au login ne se
+  // met sinon jamais à jour tout seul, même après un rechargement de page.
+  useEffect(() => {
+    dispatch(fetchProfile());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]);
 
   useRealtimeUpdates(config?.id);
 

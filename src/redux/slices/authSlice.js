@@ -65,6 +65,19 @@ export const performLogout = createAsyncThunk('auth/performLogout', async (_, { 
   window.location.href = '/';
 });
 
+// Thunk pour resynchroniser l'utilisateur connecté depuis le backend (role_id/
+// role_details notamment) : le login initial persiste le user en localStorage
+// mais rien ne le revalide ensuite, donc un simple F5 servait des données
+// figées au moment du login — appelé au montage de Layout pour corriger ça.
+export const fetchProfile = createAsyncThunk('auth/fetchProfile', async (_, { rejectWithValue }) => {
+  try {
+    const data = await profileService.getProfile();
+    return data.user;
+  } catch (error) {
+    return rejectWithValue(error.response?.data || error.message);
+  }
+});
+
 // Thunk pour mettre à jour le profil de l'utilisateur
 export const updateUserProfile = createAsyncThunk('auth/updateUserProfile', async (profileData, { dispatch, rejectWithValue }) => {
   try {
@@ -142,6 +155,12 @@ const authSlice = createSlice({
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      })
+      // Fetch Profile (resync silencieuse, pas de spinner global)
+      .addCase(fetchProfile.fulfilled, (state, action) => {
+        if (!action.payload) return;
+        state.user = action.payload;
+        localStorage.setItem('user', JSON.stringify(action.payload));
       })
       // Register
       .addCase(register.pending, (state) => {
