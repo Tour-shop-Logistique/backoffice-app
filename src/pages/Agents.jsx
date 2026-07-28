@@ -519,10 +519,10 @@ const Agents = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        {agent.role?.nom ? (
+                        {agent.custom_role?.nom ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700">
                             <KeyRound size={12} />
-                            {agent.role.nom}
+                            {agent.custom_role.nom}
                           </span>
                         ) : (
                           <span className="text-xs text-slate-400 italic">Accès complet</span>
@@ -586,11 +586,11 @@ const Agents = () => {
                     <span className="text-xs text-slate-500 font-bold uppercase">{agent.type || 'Agent'}</span>
                   </div>
 
-                  {agent.role?.nom && (
+                  {agent.custom_role?.nom && (
                     <div className="px-1">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700">
                         <KeyRound size={12} />
-                        {agent.role.nom}
+                        {agent.custom_role.nom}
                       </span>
                     </div>
                   )}
