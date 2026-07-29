@@ -12,6 +12,7 @@ import Modal from "../components/common/Modal";
 import DeleteModal from "../components/common/DeleteModal";
 import SimpleTarifForm from "../components/common/SimpleTarifForm";
 import RowActions from "../components/common/RowActions";
+import useHasPermission from "../hooks/useHasPermission";
 import {
     CheckCircle2,
     MapPin,
@@ -29,6 +30,7 @@ import { showNotification } from '../redux/slices/uiSlice';
 
 const SimpleRates = () => {
     const dispatch = useDispatch();
+    const canCreate = useHasPermission('tarification_simple.create');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -207,6 +209,7 @@ const SimpleRates = () => {
                                 <span className="hidden md:inline md:ml-2">Rafraîchir</span>
                             </button>
 
+                            {canCreate && (
                             <button
                                 onClick={handleOpenAddModal}
                                 className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
@@ -215,6 +218,7 @@ const SimpleRates = () => {
                                 <PlusCircle className="h-4 w-4" />
                                 <span className="hidden md:inline md:ml-2">Ajouter</span>
                             </button>
+                            )}
                         </div>
                     </div>
                 </header>

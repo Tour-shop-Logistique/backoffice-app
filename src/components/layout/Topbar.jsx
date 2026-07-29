@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { performLogout } from "../../redux/slices/authSlice";
 import { LogOut, Menu, Settings } from "lucide-react";
 import { ROUTES } from "../../routes";
+import NotificationBell from "../widget/NotificationBell";
 
 const Topbar = ({ toggleSidebar }) => {
   const dispatch = useDispatch();
@@ -42,6 +43,8 @@ const Topbar = ({ toggleSidebar }) => {
 
       {/* Section droite */}
       <div className="flex items-center gap-2 md:gap-3">
+        <NotificationBell />
+
         <button
           onClick={handleSettingsClick}
           title="Paramètres"

@@ -5,6 +5,7 @@ import { fetchParcelByCode, clearCurrentParcel, setCurrentParcel, controlParcels
 import { fetchAgences } from '../redux/slices/agenceSlice';
 import { showNotification } from '../redux/slices/uiSlice';
 import Modal from '../components/common/Modal';
+import useHasPermission from '../hooks/useHasPermission';
 import {
     ArrowLeft,
     Loader2,
@@ -41,6 +42,7 @@ const ParcelControl = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
+    const canBlock = useHasPermission('colis.block');
     const {
         todoList, historyList, incomingList, currentParcel,
         isLoadingDetail, detailError,
@@ -269,7 +271,7 @@ const ParcelControl = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {!currentParcel.is_controlled && !currentParcel.is_blocked && (
+                    {!currentParcel.is_controlled && !currentParcel.is_blocked && canBlock && (
                         <button
                             onClick={() => setIsBlockModalOpen(true)}
                             disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling}

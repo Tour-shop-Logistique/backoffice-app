@@ -1,32 +1,20 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { PlusCircle, Loader2, X, Trash2, AlertTriangle, User, Edit, Phone, Mail, Shield, RefreshCw, ChevronDown as LucideChevronDown, CheckCircle2, XCircle, Search, Edit2, Edit3, Mail as MailIcon, Phone as PhoneIcon, UserCircle2, Eye, EyeOff, KeyRound, Users } from 'lucide-react';
+import { PlusCircle, Loader2, X, Trash2, AlertTriangle, User, Edit, Phone, Mail, Shield, RefreshCw, ChevronDown as LucideChevronDown, XCircle, Search, Edit2, Edit3, Mail as MailIcon, Phone as PhoneIcon, UserCircle2, Eye, EyeOff, KeyRound, Users } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { showNotification } from '../redux/slices/uiSlice';
 import { fetchAgents, addAgent, editAgent, deleteAgent, updateAgentStatus, setAgentStatus } from '../redux/slices/agentSlice';
 import { fetchRoles, addRole, editRole, deleteRole } from '../redux/slices/roleSlice';
+import { fetchAvailablePermissions } from '../redux/slices/permissionsSlice';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 import RowActions from '../components/common/RowActions';
-
-// Doit rester synchronisé avec BackofficeRoleController::AVAILABLE_PAGES côté backend.
-const AVAILABLE_PAGES = [
-  { key: 'dashboard', label: 'Tableau de bord' },
-  { key: 'parcels', label: 'Colis à contrôler' },
-  { key: 'incoming_parcels', label: 'Arrivages prévus' },
-  { key: 'historique', label: 'Historique' },
-  { key: 'agence_partenaire', label: 'Agences partenaires' },
-  { key: 'comptabilite', label: 'Comptabilité' },
-  { key: 'communication', label: 'Communication' },
-  { key: 'tarification', label: 'Tarification' },
-  { key: 'zone_configuration', label: "Zones d'expéditions" },
-  { key: 'produits', label: 'Produits & Catégories' },
-  { key: 'agents', label: 'Équipe & Accès' },
-];
+import PermissionMatrix from '../components/roles/PermissionMatrix';
 
 const Agents = () => {
   const dispatch = useDispatch();
   const { agents, isLoading, error, hasLoaded } = useSelector((state) => state.agents);
   const { roles, isLoading: isLoadingRoles, hasLoaded: rolesLoaded } = useSelector((state) => state.roles);
+  const { resources: availablePermissions, hasLoaded: permissionsHasLoaded } = useSelector((state) => state.permissions);
 
   const [activeTab, setActiveTab] = useState('agents');
 
@@ -57,7 +45,7 @@ const Agents = () => {
   const [editingRole, setEditingRole] = useState(null);
   const [roleToDelete, setRoleToDelete] = useState(null);
   const [isSubmittingRole, setIsSubmittingRole] = useState(false);
-  const [roleForm, setRoleForm] = useState({ nom: '', description: '', pages: [] });
+  const [roleForm, setRoleForm] = useState({ nom: '', description: '', permissions: [] });
 
   useEffect(() => {
     if (!hasLoaded && !isLoading) {
@@ -70,6 +58,12 @@ const Agents = () => {
       dispatch(fetchRoles());
     }
   }, [dispatch, rolesLoaded, isLoadingRoles]);
+
+  useEffect(() => {
+    if (!permissionsHasLoaded) {
+      dispatch(fetchAvailablePermissions());
+    }
+  }, [dispatch, permissionsHasLoaded]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -123,10 +117,10 @@ const Agents = () => {
   const openRoleModal = (role) => {
     if (role) {
       setEditingRole(role);
-      setRoleForm({ id: role.id, nom: role.nom || '', description: role.description || '', pages: role.pages || [] });
+      setRoleForm({ id: role.id, nom: role.nom || '', description: role.description || '', permissions: role.permissions || [] });
     } else {
       setEditingRole(null);
-      setRoleForm({ nom: '', description: '', pages: [] });
+      setRoleForm({ nom: '', description: '', permissions: [] });
     }
     setIsRoleModalOpen(true);
   };
@@ -134,16 +128,7 @@ const Agents = () => {
   const closeRoleModal = () => {
     setIsRoleModalOpen(false);
     setEditingRole(null);
-    setRoleForm({ nom: '', description: '', pages: [] });
-  };
-
-  const toggleRolePage = (pageKey) => {
-    setRoleForm((prev) => ({
-      ...prev,
-      pages: prev.pages.includes(pageKey)
-        ? prev.pages.filter((p) => p !== pageKey)
-        : [...prev.pages, pageKey],
-    }));
+    setRoleForm({ nom: '', description: '', permissions: [] });
   };
 
   const handleSubmitRole = async (e) => {
@@ -153,8 +138,8 @@ const Agents = () => {
     if (!roleForm.nom.trim()) {
       return dispatch(showNotification({ type: 'error', message: 'Le nom du rôle est requis.' }));
     }
-    if (roleForm.pages.length === 0) {
-      return dispatch(showNotification({ type: 'error', message: 'Sélectionnez au moins une page accessible.' }));
+    if (roleForm.permissions.length === 0) {
+      return dispatch(showNotification({ type: 'error', message: 'Sélectionnez au moins une permission.' }));
     }
 
     setIsSubmittingRole(true);
@@ -318,7 +303,7 @@ const Agents = () => {
                 {activeTab === 'agents' ? 'Gestion des Agents' : 'Rôles & Permissions'}
               </h1>
               <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
-                {activeTab === 'agents' ? 'Gérez les membres de votre équipe' : "Définissez les pages accessibles pour chaque rôle"}
+                {activeTab === 'agents' ? 'Gérez les membres de votre équipe' : "Définissez les permissions accessibles pour chaque rôle"}
               </p>
             </div>
 
@@ -414,9 +399,17 @@ const Agents = () => {
                     </div>
                     {role.description && <p className="text-sm text-slate-500 mt-0.5">{role.description}</p>}
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      {(role.pages || []).map((pageKey) => (
-                        <span key={pageKey} className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600">
-                          {AVAILABLE_PAGES.find((p) => p.key === pageKey)?.label || pageKey}
+                      {Object.entries(
+                        (role.permissions || []).reduce((acc, key) => {
+                          const [resourceKey] = key.split('.');
+                          const resource = availablePermissions.find((r) => r.key === resourceKey);
+                          const label = resource?.label || resourceKey;
+                          acc[label] = (acc[label] || 0) + 1;
+                          return acc;
+                        }, {})
+                      ).map(([label, count]) => (
+                        <span key={label} className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600">
+                          {label} ({count})
                         </span>
                       ))}
                     </div>
@@ -626,7 +619,8 @@ const Agents = () => {
         onClose={closeModal}
         title={editingAgent ? "Modifier l'Agent" : 'Nouvel Agent'}
         subtitle={editingAgent ? 'Mettez à jour les informations de connexion' : 'Créez un nouvel accès au backoffice'}
-        size="lg"
+        size="xl"
+        position="right"
         confirmFormId="agent-form"
         isLoading={isSubmitting}
         confirmLabel={editingAgent ? 'Mettre à jour' : 'Enregistrer'}
@@ -720,8 +714,9 @@ const Agents = () => {
         isOpen={isRoleModalOpen}
         onClose={closeRoleModal}
         title={editingRole ? 'Modifier le rôle' : 'Nouveau rôle'}
-        subtitle="Définissez les pages accessibles pour ce rôle"
-        size="lg"
+        subtitle="Définissez les permissions accessibles pour ce rôle"
+        size="2xl"
+        position="right"
         confirmFormId="role-form"
         isLoading={isSubmittingRole}
         confirmLabel={editingRole ? 'Mettre à jour' : 'Enregistrer'}
@@ -752,32 +747,13 @@ const Agents = () => {
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
-              Pages accessibles <span className="text-red-500">*</span>
+              Permissions <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
-              {AVAILABLE_PAGES.map((page) => {
-                const checked = roleForm.pages.includes(page.key);
-                return (
-                  <label
-                    key={page.key}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-all ${
-                      checked ? 'bg-slate-900 border-slate-900 text-white' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggleRolePage(page.key)}
-                      className="sr-only"
-                    />
-                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${checked ? 'bg-white border-white' : 'border-slate-300'}`}>
-                      {checked && <CheckCircle2 size={12} className="text-slate-900" />}
-                    </div>
-                    <span className="text-sm font-medium">{page.label}</span>
-                  </label>
-                );
-              })}
-            </div>
+            <PermissionMatrix
+              resources={availablePermissions}
+              value={roleForm.permissions}
+              onChange={(next) => setRoleForm((p) => ({ ...p, permissions: next }))}
+            />
           </div>
         </form>
       </Modal>

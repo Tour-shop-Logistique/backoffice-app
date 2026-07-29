@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectUnreadConversationsCount } from "../../redux/slices/messageSlice";
+import { canAccessPage as checkCanAccessPage } from "../../utils/permissions";
 
 import logo from "../../assets/logo_transparent.png";
 
@@ -41,13 +42,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const location = useLocation(); // Hook inside component
 
   const isAdmin = user?.role === 'is_backoffice_admin';
-  // Un agent sans rôle assigné garde un accès complet (cohérent avec
-  // User::canAccessPage() côté backend) ; seul un rôle explicitement
-  // assigné restreint aux pages qu'il liste.
-  const canAccessPage = (pageKey) => {
-    if (isAdmin || !user?.role_id) return true;
-    return (user?.role_details?.pages || []).includes(pageKey);
-  };
+  const canAccessPage = (pageKey) => checkCanAccessPage(user, isAdmin, pageKey);
 
   // Navigation groupée par section, avec une icône colorée par entrée pour
   // repérer les options d'un coup d'œil sans avoir à lire chaque libellé.

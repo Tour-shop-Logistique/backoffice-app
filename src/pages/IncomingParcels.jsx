@@ -7,6 +7,7 @@ import { showNotification } from '../redux/slices/uiSlice';
 import { ROUTES } from '../routes';
 import Modal from '../components/common/Modal';
 import QRScanner from '../components/common/QRScanner';
+import useHasPermission from '../hooks/useHasPermission';
 import {
     Package,
     Search,
@@ -44,6 +45,9 @@ const hasDepartedOrigin = (statut) => DEPARTED_STATUSES.includes(statut);
 const IncomingParcels = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const canReceive = useHasPermission('colis.receive');
+    const canAssign = useHasPermission('colis.assign');
+    const canBlock = useHasPermission('colis.block');
 
     const { items, isLoading, hasLoaded } = useSelector(
         (state) => state.parcels.incomingList
@@ -465,7 +469,8 @@ const IncomingParcels = () => {
                                 </span>
                                 <button
                                     onClick={handleBulkReceive}
-                                    disabled={isBulkReceiving || isBulkBlocking}
+                                    disabled={isBulkReceiving || isBulkBlocking || !canAssign}
+                                    title={!canAssign ? "Permission requise" : undefined}
                                     className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm shadow-indigo-200 active:scale-95 disabled:opacity-50"
                                 >
                                     {isBulkReceiving ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
@@ -473,7 +478,8 @@ const IncomingParcels = () => {
                                 </button>
                                 <button
                                     onClick={handleMarkArrived}
-                                    disabled={isBulkReceiving || isBulkBlocking}
+                                    disabled={isBulkReceiving || isBulkBlocking || !canReceive}
+                                    title={!canReceive ? "Permission requise" : undefined}
                                     className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-slate-700 hover:bg-slate-800 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 disabled:opacity-50"
                                 >
                                     <PackageCheck size={12} />
@@ -481,7 +487,8 @@ const IncomingParcels = () => {
                                 </button>
                                 <button
                                     onClick={handleBulkBlock}
-                                    disabled={isBulkReceiving || isBulkBlocking}
+                                    disabled={isBulkReceiving || isBulkBlocking || !canBlock}
+                                    title={!canBlock ? "Permission requise" : undefined}
                                     className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm shadow-rose-200 active:scale-95 disabled:opacity-50"
                                 >
                                     {isBulkBlocking ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}

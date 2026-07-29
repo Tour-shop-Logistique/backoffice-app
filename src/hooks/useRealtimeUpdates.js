@@ -5,6 +5,8 @@ import { realtimeModelUpdated, fetchDashboardRecap } from '../redux/slices/parce
 import { appendMessageToConversation, updateMessageInConversation, removeMessageFromConversation } from '../redux/slices/messageSlice';
 import { updateUserRole } from '../redux/slices/authSlice';
 import { showNotification } from '../redux/slices/uiSlice';
+import { notificationAdded } from '../redux/slices/inAppNotificationsSlice';
+import { classifyNotification } from '../utils/notificationClassifier';
 
 /**
  * S'abonne au canal privé du backoffice et écoute l'event universel unique
@@ -53,6 +55,13 @@ export default function useRealtimeUpdates(backofficeId) {
           dispatch(showNotification({ type: 'info', message: 'Vos permissions d\'accès ont été mises à jour.' }));
         }
         return;
+      }
+
+      if (payload.model === 'Expedition' && payload.action === 'payment_confirmed') {
+        const entry = classifyNotification(payload.model, payload.action, payload.data);
+        if (entry) dispatch(notificationAdded(entry));
+        // Pas de return : realtimeModelUpdated doit quand même s'exécuter
+        // ci-dessous pour garder son comportement de synchro existant.
       }
 
       dispatch(realtimeModelUpdated({ ...payload, currentBackofficeCountry: backofficeCountry }));
