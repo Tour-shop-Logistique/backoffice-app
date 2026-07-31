@@ -470,7 +470,7 @@ const Historique = () => {
                       <td className="px-6 py-2" colSpan={1}>
                         {c.is_blocked ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-red-100 text-red-700">
-                            Bloqué
+                            Écarté
                           </span>
                         ) : c.is_received_by_backoffice ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-100 text-emerald-700">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchParcelByCode, clearCurrentParcel, setCurrentParcel, controlParcels, receiveParcels, blockParcels } from '../redux/slices/parcelSlice';
+import { fetchParcelByCode, clearCurrentParcel, setCurrentParcel, controlParcels, receiveParcels, assignParcels, blockParcels } from '../redux/slices/parcelSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
 import { showNotification } from '../redux/slices/uiSlice';
 import Modal from '../components/common/Modal';
@@ -37,6 +37,20 @@ import {
     Layers
 } from 'lucide-react';
 
+// Statuts à partir desquels l'expédition a effectivement quitté son pays de
+// départ (confirmé par le backoffice de départ) — miroir de
+// ExpeditionStatus::hasDepartedOrigin() côté backend et de la même liste
+// dans IncomingParcels.jsx. Avant ces statuts, l'agence peut être assignée
+// par anticipation mais la réception reste bloquée.
+const DEPARTED_STATUSES = [
+    'depart_expedition_succes',
+    'arrivee_expedition_succes',
+    'recu_agence_destination',
+    'en_cours_livraison',
+    'termined',
+];
+const hasDepartedOrigin = (statut) => DEPARTED_STATUSES.includes(statut);
+
 const ParcelControl = () => {
     const { code } = useParams();
     const navigate = useNavigate();
@@ -51,7 +65,32 @@ const ParcelControl = () => {
     const { agences, hasLoaded: agencesLoaded, isLoading: isLoadingAgences } = useSelector(state => state.agences);
     const [isValidating, setIsValidating] = useState(false);
     const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
-    const [selectedAgencyId, setSelectedAgencyId] = useState('');
+    const [isAssigningAgency, setIsAssigningAgency] = useState(false);
+
+    // L'agence de réception assignée à ce colis (source de vérité serveur,
+    // synchronisée immédiatement au choix — cohérent avec le comportement
+    // du tableau "Arrivages prévus" et de ses modales).
+    const selectedAgencyId = currentParcel?.agence_destination_id || '';
+
+    const handleAssignAgency = async (agenceId) => {
+        if (!agenceId || !currentParcel?.code_colis) return;
+
+        setIsAssigningAgency(true);
+        try {
+            // currentParcel.agence_destination_id se met à jour automatiquement
+            // via le reducer assignParcels.fulfilled (parcelSlice.js).
+            await dispatch(assignParcels({
+                colis_assignments: { [currentParcel.code_colis]: agenceId }
+            })).unwrap();
+        } catch (err) {
+            dispatch(showNotification({
+                type: 'error',
+                message: err?.message || "Erreur lors de l'assignation de l'agence."
+            }));
+        } finally {
+            setIsAssigningAgency(false);
+        }
+    };
 
     // Block State
     const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -64,16 +103,6 @@ const ParcelControl = () => {
 
         if (isFromIncoming) {
             setIsAgencyModalOpen(true);
-            return;
-        }
-
-        // Sécurité Financière : Le Backoffice ne valide que si les frais annexes sont payés
-        const feesNotPaid = currentParcel.expedition?.statut_paiement_frais !== 'paye';
-        if (feesNotPaid) {
-            dispatch(showNotification({
-                type: 'error',
-                message: "Blocage de sécurité : Les frais annexes (Douane/Assurance) n'ont pas encore été encaissés par l'agence de départ. Expédition suspendue."
-            }));
             return;
         }
 
@@ -101,8 +130,7 @@ const ParcelControl = () => {
         setIsValidating(true);
         try {
             await dispatch(receiveParcels({
-                codes: [currentParcel.code_colis],
-                agence_id: selectedAgencyId
+                colis_assignments: { [currentParcel.code_colis]: selectedAgencyId }
             })).unwrap();
 
             dispatch(showNotification({
@@ -111,7 +139,6 @@ const ParcelControl = () => {
             }));
 
             setIsAgencyModalOpen(false);
-            setSelectedAgencyId('');
         } catch (err) {
             dispatch(showNotification({
                 type: 'error',
@@ -126,7 +153,7 @@ const ParcelControl = () => {
         if (!blockReason.trim() || !currentParcel?.code_colis) {
             dispatch(showNotification({
                 type: 'error',
-                message: "Veuillez renseigner un motif pour bloquer ce colis."
+                message: "Veuillez renseigner un motif pour écarter ce colis."
             }));
             return;
         }
@@ -285,8 +312,10 @@ const ParcelControl = () => {
                     {!(currentParcel.is_controlled && !isFromIncoming && !currentParcel.is_blocked) && (
                         <button
                             onClick={handleValidate}
-                            disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling || (isFromIncoming && !selectedAgencyId)}
-                            title={isFromIncoming && !selectedAgencyId ? "Sélectionnez d'abord l'agence de réception" : ""}
+                            disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling || (isFromIncoming && (!selectedAgencyId || !hasDepartedOrigin(currentParcel.expedition?.statut_expedition)))}
+                            title={isFromIncoming && !hasDepartedOrigin(currentParcel.expedition?.statut_expedition)
+                                ? "L'expédition n'a pas encore été confirmée en transit par le backoffice de départ"
+                                : (isFromIncoming && !selectedAgencyId ? "Sélectionnez d'abord l'agence de réception" : "")}
                             className={`flex items-center gap-2 px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all shadow-sm active:scale-95 disabled:opacity-50 ${currentParcel.is_blocked ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-200' :
                                     currentParcel.is_controlled ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200' :
                                         'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200'
@@ -494,22 +523,30 @@ const ParcelControl = () => {
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
                                     Agence de réception
                                 </label>
-                                <select
-                                    value={selectedAgencyId}
-                                    onChange={(e) => setSelectedAgencyId(e.target.value)}
-                                    className={`w-full px-4 py-3 rounded border text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-slate-900/5 ${
-                                        selectedAgencyId
-                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-900 focus:border-emerald-900'
-                                            : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-slate-900'
-                                    }`}
-                                >
-                                    <option value="">Sélectionner une agence...</option>
-                                    {agences.map(agency => (
-                                        <option key={agency.id} value={agency.id}>
-                                            {agency.nom_agence} ({agency.ville})
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="relative">
+                                    {isAssigningAgency && (
+                                        <Loader2 size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 animate-spin pointer-events-none" />
+                                    )}
+                                    <select
+                                        value={selectedAgencyId}
+                                        onChange={(e) => handleAssignAgency(e.target.value)}
+                                        disabled={isAssigningAgency}
+                                        className={`w-full px-4 py-3 rounded border text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-slate-900/5 disabled:opacity-70 ${
+                                            isAssigningAgency ? 'pl-10' : ''
+                                        } ${
+                                            selectedAgencyId
+                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-900 focus:border-emerald-900'
+                                                : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-slate-900'
+                                        }`}
+                                    >
+                                        <option value="">Sélectionner une agence...</option>
+                                        {agences.map(agency => (
+                                            <option key={agency.id} value={agency.id}>
+                                                {agency.nom_agence} ({agency.ville})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -567,10 +604,13 @@ const ParcelControl = () => {
                     </div>
                     <select
                         value={selectedAgencyId}
-                        onChange={(e) => setSelectedAgencyId(e.target.value)}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all outline-none"
+                        onChange={(e) => handleAssignAgency(e.target.value)}
+                        disabled={isAssigningAgency}
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all outline-none disabled:opacity-70"
                     >
-                        <option value="">Sélectionner une agence...</option>
+                        <option value="">
+                            {isAssigningAgency ? 'Assignation en cours...' : 'Sélectionner une agence...'}
+                        </option>
                         {agences.map(agency => (
                             <option key={agency.id} value={agency.id}>
                                 {agency.nom_agence} ({agency.ville})

@@ -18,6 +18,7 @@ import ZoneForm from '../components/common/ZoneForm';
 import RowActions from '../components/common/RowActions';
 import { showNotification } from '../redux/slices/uiSlice';
 import DeleteModal from '../components/common/DeleteModal';
+import { getCountryName } from '../utils/countries';
 
 const ZoneConfiguration = () => {
   const dispatch = useDispatch();
@@ -381,7 +382,7 @@ const ZoneConfiguration = () => {
         }}
         title="Nouvelle Zone"
         subtitle="Créez une nouvelle zone géographique de livraison"
-        size="xl"
+        size="3xl"
         confirmFormId="add-zone-form"
         isLoading={isSubmitting}
         confirmLabel="Créer la zone"
@@ -407,7 +408,7 @@ const ZoneConfiguration = () => {
         }}
         title="Modifier la Zone"
         subtitle="Mettez à jour les informations de la zone"
-        size="xl"
+        size="3xl"
         confirmFormId="edit-zone-form"
         isLoading={isSubmitting}
         confirmLabel="Enregistrer"
@@ -432,18 +433,21 @@ const ZoneConfiguration = () => {
         isOpen={!!viewCountries}
         onClose={() => setViewCountries(null)}
         title={`Pays de la zone: ${viewCountries?.nom}`}
-        size="md"
+        size="2xl"
       >
-        <div className="space-y-2">
-          {viewCountries?.pays.map((pays, index) => (
-            <div
-              key={index}
-              className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100"
-            >
-              <Globe2 className="h-4 w-4 text-slate-400" />
-              <span className="text-sm font-medium text-slate-700">{pays}</span>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 gap-2">
+          {viewCountries?.pays.map((pays, index) => {
+            const code = Array.isArray(viewCountries?.pays_codes) ? viewCountries.pays_codes[index] : null;
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100"
+              >
+                <Globe2 className="h-4 w-4 text-slate-400 shrink-0" />
+                <span className="text-sm font-medium text-slate-700">{code ? getCountryName(code) : pays}</span>
+              </div>
+            );
+          })}
         </div>
       </Modal>
 

@@ -24,5 +24,17 @@ export function classifyNotification(model, action, data, ctx = {}) {
     };
   }
 
+  if (model === 'Expedition' && action === 'frais_decision_agence') {
+    const paye = first.decision === 'paye_maintenant';
+    return {
+      ...base,
+      title: paye ? 'Frais annexes payés' : 'Frais annexes à percevoir à l\'arrivée',
+      message: paye
+        ? `L'agence a enregistré le paiement des frais annexes pour l'expédition ${first.reference || ''}.`
+        : `L'agence a indiqué que les frais annexes de l'expédition ${first.reference || ''} seront perçus à l'arrivée.`,
+      link: '/parcels',
+    };
+  }
+
   return null;
 }

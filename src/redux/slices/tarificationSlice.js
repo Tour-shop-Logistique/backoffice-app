@@ -4,7 +4,12 @@ import tarificationService from '../../services/tarificationService';
 const initialState = {
   tarifs: [],
   groupedTarifs: [],
-  isLoading: false,
+  // Flags séparés (et non un isLoading partagé) : fetchTarifs et
+  // fetchGroupedTarifs sont dispatchés en parallèle au montage du Layout, et
+  // un flag commun faisait échouer silencieusement le second thunk via son
+  // `condition` guard (il voyait isLoading déjà à true à cause du premier).
+  isLoadingSimple: false,
+  isLoadingGrouped: false,
   error: null,
   hasLoaded: false,
   groupedHasLoaded: false,
@@ -27,7 +32,7 @@ export const fetchTarifs = createAsyncThunk(
     // ne doit pas empêcher un rafraîchissement manuel une fois déjà chargé.
     condition: (_, { getState }) => {
       const { tarification } = getState();
-      if (tarification.isLoading) return false;
+      if (tarification.isLoadingSimple) return false;
     },
   }
 );
@@ -96,7 +101,7 @@ export const fetchGroupedTarifs = createAsyncThunk(
   {
     condition: (_, { getState }) => {
       const { tarification } = getState();
-      if (tarification.isLoading) return false;
+      if (tarification.isLoadingGrouped) return false;
     },
   }
 );
@@ -163,12 +168,12 @@ const tarificationSlice = createSlice({
     builder
       .addCase(fetchTarifs.pending, (state, action) => {
         if (!action.meta.arg?.silent) {
-          state.isLoading = true;
+          state.isLoadingSimple = true;
         }
         state.error = null;
       })
       .addCase(fetchTarifs.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingSimple = false;
         const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
         state.tarifs = data.map(t => ({
           ...t,
@@ -177,7 +182,7 @@ const tarificationSlice = createSlice({
         state.hasLoaded = true;
       })
       .addCase(fetchTarifs.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingSimple = false;
         state.error = action.payload;
       })
 
@@ -234,12 +239,12 @@ const tarificationSlice = createSlice({
     builder
       .addCase(fetchGroupedTarifs.pending, (state, action) => {
         if (!action.meta.arg?.silent) {
-          state.isLoading = true;
+          state.isLoadingGrouped = true;
         }
         state.error = null;
       })
       .addCase(fetchGroupedTarifs.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingGrouped = false;
         const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
         state.groupedTarifs = data.map(t => ({
           ...t,
@@ -248,7 +253,7 @@ const tarificationSlice = createSlice({
         state.groupedHasLoaded = true;
       })
       .addCase(fetchGroupedTarifs.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingGrouped = false;
         state.error = action.payload;
       })
 

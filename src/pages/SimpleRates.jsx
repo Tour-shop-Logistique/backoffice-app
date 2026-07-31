@@ -34,7 +34,7 @@ const SimpleRates = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const { tarifs, isLoading, error, hasLoaded: hasLoadedTarifs } = useSelector((state) => state.tarification);
+    const { tarifs, isLoadingSimple: isLoading, error, hasLoaded: hasLoadedTarifs } = useSelector((state) => state.tarification);
     const { zones } = useSelector((state) => state.zones); // utilisé uniquement dans les formulaires
 
     const [isModalOpen, setIsModalOpen] = useState(false);

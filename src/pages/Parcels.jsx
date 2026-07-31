@@ -25,7 +25,6 @@ import {
   Tag,
   Info,
   Building2,
-  Edit2,
 } from "lucide-react";
 
 /**
@@ -178,10 +177,33 @@ const Parcels = () => {
     navigate(ROUTES.PARCEL_CONTROL.replace(':code', parcel.code_colis), { state: { from: 'todo' } });
   };
 
-  const handleEditExpedition = (expedition) => {
-    setSelectedExpedition(expedition);
-    setFraisExpedition(expedition.frais_annexes || '');
-    setLienTracking(expedition.code_suivi_expedition || '');
+  // Bouton "Départ" fusionné : ouvre d'abord le formulaire frais/tracking si
+  // rien n'a encore été renseigné, sinon va directement à la confirmation.
+  const handleDepartClick = (expedition, colisCount) => {
+    const target = { ...expedition, colis_count: colisCount };
+    setSelectedExpedition(target);
+    const fraisDejaRenseignes = Number(expedition.frais_annexes || 0) > 0;
+    if (!fraisDejaRenseignes) {
+      setFraisExpedition('');
+      setLienTracking(expedition.code_suivi_expedition || '');
+      setIsExpeditionModalOpen(true);
+    } else {
+      setIsConfirmModalOpen(true);
+    }
+  };
+
+  // Rouvre le formulaire de saisie des frais depuis le modal de confirmation,
+  // pré-rempli avec les valeurs actuelles - permet de corriger le montant tant
+  // que les frais annexes n'ont pas encore été payés.
+  const handleOpenEditFrais = () => {
+    if (!liveSelectedExpedition) return;
+    setFraisExpedition(
+      Number(liveSelectedExpedition.frais_annexes || 0) > 0
+        ? String(liveSelectedExpedition.frais_annexes)
+        : ''
+    );
+    setLienTracking(liveSelectedExpedition.code_suivi_expedition || '');
+    setIsConfirmModalOpen(false);
     setIsExpeditionModalOpen(true);
   };
 
@@ -189,7 +211,7 @@ const Parcels = () => {
     if (!selectedExpedition) return;
 
     try {
-      await dispatch(updateExpeditionInfo({
+      const result = await dispatch(updateExpeditionInfo({
         id: selectedExpedition.id,
         frais_annexes: fraisExpedition,
         code_suivi_expedition: lienTracking
@@ -200,6 +222,11 @@ const Parcels = () => {
         message: `Informations de l'expédition ${selectedExpedition.reference} mises à jour.`
       }));
       setIsExpeditionModalOpen(false);
+      // Enchaîne automatiquement sur la confirmation du départ.
+      if (result?.expedition) {
+        setSelectedExpedition(prev => ({ ...prev, ...result.expedition }));
+      }
+      setIsConfirmModalOpen(true);
     } catch (error) {
       dispatch(showNotification({
         type: 'error',
@@ -299,6 +326,21 @@ const Parcels = () => {
     });
   }, [filteredParcels]);
 
+  // Toujours lire l'expédition à jour depuis le state (synchronisée en temps
+  // réel via realtimeModelUpdated) plutôt que la copie figée au clic - pour
+  // que l'état de la décision agence se mette à jour live pendant que le
+  // modal de confirmation est ouvert.
+  const liveSelectedExpedition = useMemo(() => {
+    if (!selectedExpedition) return null;
+    const group = groupedParcels.find(g => g.expedition?.id === selectedExpedition.id);
+    return group ? { ...group.expedition, colis_count: group.parcels.length } : selectedExpedition;
+  }, [selectedExpedition, groupedParcels]);
+
+  const fraisAnnexesMontant = Number(liveSelectedExpedition?.frais_annexes || 0);
+  const decisionAgenceRequise = fraisAnnexesMontant > 0 && !liveSelectedExpedition?.frais_decision_agence_prise;
+  // Les frais restent modifiables tant qu'ils n'ont pas été effectivement payés.
+  const fraisModifiables = liveSelectedExpedition?.statut_paiement_frais !== 'paye';
+
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
 
@@ -381,7 +423,7 @@ const Parcels = () => {
                   className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm shadow-rose-200 active:scale-95 disabled:opacity-50"
                 >
                   {isBulkBlocking ? <Loader2 size={16} className="animate-spin" /> : <AlertCircle size={16} />}
-                  Bloquer la sélection
+                  Écarter la sélection
                 </button>
                 <button
                   onClick={() => setSelectedCodes([])}
@@ -475,11 +517,15 @@ const Parcels = () => {
                                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Frais Annexes</span>
                                 <div className="flex items-center gap-2">
                                   <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded border leading-none
-                                    ${group.expedition?.statut_paiement_frais === 'paye'
-                                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                      : 'bg-amber-50 text-amber-600 border-amber-100'
+                                    ${Number(group.expedition?.frais_annexes || 0) <= 0
+                                      ? 'bg-slate-50 text-slate-400 border-slate-100'
+                                      : group.expedition?.statut_paiement_frais === 'paye'
+                                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                        : 'bg-amber-50 text-amber-600 border-amber-100'
                                     }`}>
-                                    {group.expedition?.statut_paiement_frais === 'paye' ? 'Réglé' : 'À payer'}
+                                    {Number(group.expedition?.frais_annexes || 0) <= 0
+                                      ? 'Aucun frais'
+                                      : group.expedition?.statut_paiement_frais === 'paye' ? 'Réglé' : 'À payer'}
                                   </span>
                                   <div className="flex items-baseline gap-1">
                                     <span className="text-sm font-bold text-slate-800 tracking-tight">
@@ -501,38 +547,13 @@ const Parcels = () => {
                               </div>
                               <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => {
-                                    setSelectedExpedition({
-                                      ...group.expedition,
-                                      colis_count: group.parcels.length
-                                    });
-                                    setFraisExpedition(group.expedition.frais_annexes || '');
-                                    setLienTracking(group.expedition.code_suivi_expedition || '');
-                                    setIsExpeditionModalOpen(true);
-                                  }}
-                                  disabled={!group.parcels.every(p => p.is_controlled && !p.is_blocked)}
-                                  className={`p-1.5 rounded-md transition-all group
-                                    ${group.parcels.every(p => p.is_controlled && !p.is_blocked)
-                                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700'
-                                      : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}
-                                  title={group.parcels.every(p => p.is_controlled && !p.is_blocked) ? "Modifier les infos" : "Tout doit être contrôlé et non bloqué"}
-                                >
-                                  <Edit2 size={16} className={group.parcels.every(p => p.is_controlled && !p.is_blocked) ? "group-hover:scale-110 transition-transform" : ""} />
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSelectedExpedition({
-                                      ...group.expedition,
-                                      colis_count: group.parcels.length
-                                    });
-                                    setIsConfirmModalOpen(true);
-                                  }}
+                                  onClick={() => handleDepartClick(group.expedition, group.parcels.length)}
                                   disabled={!group.parcels.every(p => p.is_controlled && !p.is_blocked) || isUpdatingExpedition}
                                   className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-2
                                     ${group.parcels.every(p => p.is_controlled && !p.is_blocked)
                                       ? 'bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98] shadow-sm shadow-slate-900/10'
                                       : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
-                                  title={group.parcels.every(p => p.is_controlled && !p.is_blocked) ? "Confirmer le départ" : "Tout doit être contrôlé et non bloqué"}
+                                  title={group.parcels.every(p => p.is_controlled && !p.is_blocked) ? "Départ" : "Tout doit être contrôlé et non écarté"}
                                 >
                                   <Truck size={16} />
                                   <span className="text-xs font-bold uppercase tracking-tight">Départ</span>
@@ -661,28 +682,13 @@ const Parcels = () => {
                         {group.parcels.filter(p => p.is_controlled && !p.is_blocked).length} / {group.parcels.length}
                       </span>
                       <button
-                        onClick={() => handleEditExpedition(group.expedition)}
-                        disabled={!group.parcels.every(p => p.is_controlled && !p.is_blocked)}
-                        className={`p-2 border rounded-md transition-all
-                          ${group.parcels.every(p => p.is_controlled && !p.is_blocked)
-                            ? 'bg-white border-slate-200 text-slate-400 active:bg-slate-50'
-                            : 'bg-slate-50 border-slate-100 text-slate-300 opacity-50'}`}
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedExpedition({
-                            ...group.expedition,
-                            colis_count: group.parcels.length
-                          });
-                          setIsConfirmModalOpen(true);
-                        }}
+                        onClick={() => handleDepartClick(group.expedition, group.parcels.length)}
                         disabled={!group.parcels.every(p => p.is_controlled && !p.is_blocked) || isUpdatingExpedition}
                         className={`p-2 border rounded-md transition-all
                           ${group.parcels.every(p => p.is_controlled && !p.is_blocked)
                             ? 'bg-slate-900 border-slate-900 text-white active:bg-slate-800'
                             : 'bg-slate-100 border-slate-100 text-slate-300 opacity-50'}`}
+                        title="Départ"
                       >
                         <Truck size={16} />
                       </button>
@@ -716,7 +722,7 @@ const Parcels = () => {
                                 <div className="flex items-center gap-2">
                                   <p className="font-bold text-slate-800 text-sm truncate">{parcel.code_colis}</p>
                                   {parcel.is_blocked && (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs border border-rose-100 uppercase font-bold shrink-0">Bloqué</span>
+                                    <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs border border-rose-100 uppercase font-bold shrink-0">Écarté</span>
                                   )}
                                 </div>
                                 <p className="text-xs font-bold text-slate-500 uppercase mt-0.5 truncate">{parcel.expedition?.pays_destination}</p>
@@ -824,24 +830,31 @@ const Parcels = () => {
                   value={fraisExpedition}
                   onChange={(e) => setFraisExpedition(e.target.value)}
                   placeholder="0"
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-bold text-slate-900 transition-all"
+                  className="w-full pl-10 pr-16 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-bold text-slate-900 transition-all"
                 />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 uppercase tracking-wider pointer-events-none">
+                  FCFA
+                </span>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Code de suivi / Tracking</label>
-              <div className="relative group">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors" size={22} />
-                <input
-                  type="text"
-                  value={lienTracking}
-                  onChange={(e) => setLienTracking(e.target.value)}
-                  placeholder="EX: TRACK-123456"
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-bold text-slate-900 transition-all placeholder:font-normal"
-                />
+            {/* Code de suivi : uniquement pour les expéditions simples (LD) -
+                les expéditions groupage/DHD n'ont pas de code individuel. */}
+            {selectedExpedition?.type_expedition === 'simple' && (
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Code de suivi / Tracking</label>
+                <div className="relative group">
+                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors" size={22} />
+                  <input
+                    type="text"
+                    value={lienTracking}
+                    onChange={(e) => setLienTracking(e.target.value)}
+                    placeholder="EX: TRACK-123456"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-bold text-slate-900 transition-all placeholder:font-normal"
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </Modal>
@@ -851,12 +864,42 @@ const Parcels = () => {
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
         title="Confirmer le départ"
-        subtitle={`Réf: ${selectedExpedition?.reference || ''}`}
-        size="sm"
-        onConfirm={handleConfirmDepartAction}
+        subtitle={`Réf: ${liveSelectedExpedition?.reference || ''}`}
+        size="lg"
         isLoading={isUpdatingExpedition}
-        confirmLabel="Confirmer"
-        confirmVariant="primary"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setIsConfirmModalOpen(false)}
+              disabled={isUpdatingExpedition}
+              className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest disabled:opacity-50"
+            >
+              Annuler
+            </button>
+            <div className="flex items-center gap-2">
+              {fraisModifiables && (
+                <button
+                  type="button"
+                  onClick={handleOpenEditFrais}
+                  disabled={isUpdatingExpedition}
+                  className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Wallet size={14} />
+                  Modifier les frais
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleConfirmDepartAction}
+                disabled={isUpdatingExpedition || decisionAgenceRequise}
+                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 shadow-slate-900/10 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg disabled:opacity-50"
+              >
+                {isUpdatingExpedition ? <Loader2 className="animate-spin h-5 w-5" /> : 'Confirmer'}
+              </button>
+            </div>
+          </>
+        }
       >
         <div className="space-y-4">
           <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex gap-3 text-amber-800">
@@ -869,12 +912,24 @@ const Parcels = () => {
             </div>
           </div>
 
+          {decisionAgenceRequise && (
+            <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex gap-3 text-rose-800">
+              <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={24} />
+              <div className="space-y-1">
+                <p className="text-xs font-bold uppercase tracking-tight">En attente de l'agence</p>
+                <p className="text-xs leading-relaxed font-medium">
+                  L'agence de départ n'a pas encore confirmé le règlement des frais annexes. Le départ ne peut pas être validé tant qu'elle n'a pas choisi entre "payé maintenant" et "à percevoir à l'arrivée".
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-4">
             {/* Infos de base */}
             <div className="flex justify-between items-center text-xs">
               <span className="text-slate-500 font-bold uppercase">Nombre de colis</span>
               <span className="text-slate-900 font-bold bg-white px-2 py-1 rounded border border-slate-100 shadow-sm">
-                {selectedExpedition?.colis_count || '-'} Colis
+                {liveSelectedExpedition?.colis_count || '-'} Colis
               </span>
             </div>
 
@@ -885,19 +940,35 @@ const Parcels = () => {
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 font-bold uppercase">Frais Annexes</span>
                 <span className="text-slate-900 font-bold">
-                  {Number(selectedExpedition?.frais_annexes || 0).toLocaleString()} <span className="text-xs text-slate-500">CFA</span>
+                  {fraisAnnexesMontant.toLocaleString()} <span className="text-xs text-slate-500">CFA</span>
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-slate-500 uppercase">Paiement Frais</span>
                 <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider border shadow-sm
-                  ${selectedExpedition?.statut_paiement_frais === 'paye'
-                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                    : 'bg-amber-50 text-amber-600 border-amber-100'
+                  ${fraisAnnexesMontant <= 0
+                    ? 'bg-slate-50 text-slate-400 border-slate-100'
+                    : liveSelectedExpedition?.statut_paiement_frais === 'paye'
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                      : 'bg-amber-50 text-amber-600 border-amber-100'
                   }`}>
-                  {selectedExpedition?.statut_paiement_frais === 'paye' ? 'Réglé' : 'En attente'}
+                  {fraisAnnexesMontant <= 0
+                    ? 'Aucun frais'
+                    : liveSelectedExpedition?.statut_paiement_frais === 'paye' ? 'Réglé' : 'En attente'}
                 </span>
               </div>
+              {fraisAnnexesMontant > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-500 uppercase">Décision agence</span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider border shadow-sm
+                    ${liveSelectedExpedition?.frais_decision_agence_prise
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                      : 'bg-rose-50 text-rose-600 border-rose-100'
+                    }`}>
+                    {liveSelectedExpedition?.frais_decision_agence_prise ? 'Confirmée' : 'En attente'}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="h-px bg-slate-200/60" />
@@ -907,17 +978,17 @@ const Parcels = () => {
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 font-bold uppercase">Montant Expédition</span>
                 <span className="text-indigo-600 font-bold">
-                  {Number(selectedExpedition?.montant_expedition || 0).toLocaleString()} <span className="text-xs text-slate-500">CFA</span>
+                  {Number(liveSelectedExpedition?.montant_expedition || 0).toLocaleString()} <span className="text-xs text-slate-500">CFA</span>
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-slate-500 uppercase">Paiement Expédition</span>
                 <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider border shadow-sm
-                  ${selectedExpedition?.statut_paiement_expedition === 'paye'
+                  ${liveSelectedExpedition?.statut_paiement_expedition === 'paye'
                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                     : 'bg-amber-50 text-amber-600 border-amber-100'
                   }`}>
-                  {selectedExpedition?.statut_paiement_expedition === 'paye' ? 'Réglé' : 'Non Réglé'}
+                  {liveSelectedExpedition?.statut_paiement_expedition === 'paye' ? 'Réglé' : 'Non Réglé'}
                 </span>
               </div>
             </div>
@@ -933,7 +1004,7 @@ const Parcels = () => {
           setBlockingCode(null);
         }}
         size="sm"
-        title={blockingCode ? "Écarter un colis" : "Bloquer la sélection"}
+        title={blockingCode ? "Écarter un colis" : "Écarter la sélection"}
         subtitle={blockingCode ? `Colis : ${blockingCode}` : `${selectedCodes.length} colis sélectionnés`}
         onConfirm={handleConfirmBlock}
         confirmDisabled={!blockReason.trim()}
@@ -950,7 +1021,7 @@ const Parcels = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Motif de l'écartement</label>
             <textarea
               value={blockReason}
               onChange={(e) => setBlockReason(e.target.value)}

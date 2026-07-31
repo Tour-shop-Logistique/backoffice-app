@@ -22,7 +22,10 @@ const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isConfigured, loading, config } = useSelector((state) => state.backoffice);
-  const { hasLoaded: tarifsLoaded, isLoading: loadingTarifs } = useSelector((state) => state.tarification);
+  const {
+    hasLoaded: tarifsLoaded, isLoadingSimple: loadingTarifs,
+    groupedHasLoaded: groupedTarifsLoaded, isLoadingGrouped: loadingGroupedTarifs,
+  } = useSelector((state) => state.tarification);
   const { hasLoaded: zonesLoaded, isLoading: isLoadingZones } = useSelector((state) => state.zones);
   const { hasLoaded: agencesLoaded, isLoading: isLoadingAgences } = useSelector((state) => state.agences);
   const { hasLoadedProduits: produitsLoaded, isLoading: isLoadingProduits } = useSelector((state) => state.produits);
@@ -43,7 +46,7 @@ const Layout = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
-  useRealtimeUpdates(config?.id);
+  useRealtimeUpdates(config?.id, navigate);
 
   // Redirection forcée vers le setup si non configuré
   useEffect(() => {
@@ -57,16 +60,14 @@ const Layout = ({ children }) => {
   // Chargement des données globales au démarrage
   useEffect(() => {
     if (isConfigured) {
-      if (!tarifsLoaded && !loadingTarifs) {
-        dispatch(fetchTarifs());
-        dispatch(fetchGroupedTarifs());
-      }
+      if (!tarifsLoaded && !loadingTarifs) dispatch(fetchTarifs());
+      if (!groupedTarifsLoaded && !loadingGroupedTarifs) dispatch(fetchGroupedTarifs());
       if (!zonesLoaded && !isLoadingZones) dispatch(fetchZones());
       if (!agencesLoaded && !isLoadingAgences) dispatch(fetchAgences());
       if (!produitsLoaded && !isLoadingProduits) dispatch(fetchProduits());
       if (!conversationsLoaded && !isLoadingConversations) dispatch(fetchConversations());
     }
-  }, [dispatch, isConfigured, tarifsLoaded, loadingTarifs, zonesLoaded, isLoadingZones, agencesLoaded, isLoadingAgences, produitsLoaded, isLoadingProduits, conversationsLoaded, isLoadingConversations]);
+  }, [dispatch, isConfigured, tarifsLoaded, loadingTarifs, groupedTarifsLoaded, loadingGroupedTarifs, zonesLoaded, isLoadingZones, agencesLoaded, isLoadingAgences, produitsLoaded, isLoadingProduits, conversationsLoaded, isLoadingConversations]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen);

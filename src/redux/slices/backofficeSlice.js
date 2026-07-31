@@ -100,7 +100,37 @@ const backofficeSlice = createSlice({
       state.pays = null;
       state.error = null;
       clearBackofficeCache();
-    }
+    },
+    // Reçu via WebSocket (event universel "model.updated", voir useRealtimeUpdates.js).
+    // state.expeditions est une liste d'expéditions PLATES avec exp.colis[] imbriqué
+    // (contrairement à parcelSlice.js où c'est l'inverse : des colis avec .expedition) -
+    // sans ce reducer, la page Historique (qui lit ce state) ne reflétait jamais les
+    // changements de statut temps réel, obligeant à un rafraîchissement manuel.
+    realtimeExpeditionUpdated: (state, action) => {
+      const { model, data } = action.payload || {};
+      if (!Array.isArray(data) || data.length === 0) return;
+
+      if (model === 'Expedition') {
+        data.forEach((updated) => {
+          const idx = state.expeditions.findIndex((exp) => exp.id === updated.id);
+          if (idx !== -1) {
+            state.expeditions[idx] = { ...state.expeditions[idx], ...updated };
+          }
+        });
+      }
+
+      if (model === 'Colis') {
+        data.forEach((updatedColis) => {
+          state.expeditions.forEach((exp) => {
+            if (!Array.isArray(exp.colis)) return;
+            const idx = exp.colis.findIndex((c) => c.id === updatedColis.id);
+            if (idx !== -1) {
+              exp.colis[idx] = { ...exp.colis[idx], ...updatedColis };
+            }
+          });
+        });
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -156,7 +186,7 @@ const backofficeSlice = createSlice({
   },
 });
 
-export const { setConfigured, resetBackoffice } = backofficeSlice.actions;
+export const { setConfigured, resetBackoffice, realtimeExpeditionUpdated } = backofficeSlice.actions;
 
 export default backofficeSlice.reducer;
 

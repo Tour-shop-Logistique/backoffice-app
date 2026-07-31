@@ -104,7 +104,12 @@ export const updateExpeditionInfo = createAsyncThunk(
                 frais_annexes: frais_annexes || 0,
                 code_suivi_expedition
             });
-            return { id, frais_annexes, code_suivi_expedition, data: response.data };
+            // On repart de l'expédition renvoyée par le backend (source de
+            // vérité) plutôt que des valeurs brutes envoyées : le backend
+            // peut ignorer code_suivi_expedition (type ≠ LD) ou réinitialiser
+            // frais_decision_agence_prise/statut_paiement_frais si le montant
+            // a changé.
+            return { id, expedition: response.data?.expedition, data: response.data };
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
         }
@@ -489,16 +494,20 @@ const parcelSlice = createSlice({
             })
             .addCase(updateExpeditionInfo.fulfilled, (state, action) => {
                 state.isUpdatingExpedition = false;
-                const { id, frais_annexes, code_suivi_expedition } = action.payload;
+                const { id, expedition } = action.payload;
+                if (!expedition) return;
+
+                const patch = {
+                    frais_annexes: Number(expedition.frais_annexes || 0),
+                    code_suivi_expedition: expedition.code_suivi_expedition,
+                    frais_decision_agence_prise: !!expedition.frais_decision_agence_prise,
+                    statut_paiement_frais: expedition.statut_paiement_frais,
+                };
 
                 const updateInList = (list) => {
                     list.items.forEach(parcel => {
                         if (parcel.expedition?.id === id) {
-                            parcel.expedition = {
-                                ...parcel.expedition,
-                                frais_annexes: Number(frais_annexes || 0),
-                                code_suivi_expedition
-                            };
+                            parcel.expedition = { ...parcel.expedition, ...patch };
                         }
                     });
                 };
@@ -508,11 +517,7 @@ const parcelSlice = createSlice({
                 updateInList(state.incomingList);
 
                 if (state.currentParcel?.expedition?.id === id) {
-                    state.currentParcel.expedition = {
-                        ...state.currentParcel.expedition,
-                        frais_annexes: Number(frais_annexes || 0),
-                        code_suivi_expedition
-                    };
+                    state.currentParcel.expedition = { ...state.currentParcel.expedition, ...patch };
                 }
             })
             .addCase(updateExpeditionInfo.rejected, (state) => {
@@ -574,6 +579,34 @@ const parcelSlice = createSlice({
             })
             .addCase(controlParcels.rejected, (state) => {
                 state.isBulkControlling = false;
+            })
+
+            // Assign Parcels (assignation d'agence seule, sans réception)
+            .addCase(assignParcels.fulfilled, (state, action) => {
+                const updatedParcels = action.payload?.data || [];
+
+                updatedParcels.forEach((updated) => {
+                    // Met à jour l'item correspondant dans la liste des arrivages,
+                    // pour que agence_destination_id soit visible immédiatement
+                    // sans dépendre d'un state local au composant.
+                    const idx = state.incomingList.items.findIndex(
+                        (p) => p.code_colis === updated.code_colis
+                    );
+                    if (idx !== -1) {
+                        state.incomingList.items[idx] = {
+                            ...state.incomingList.items[idx],
+                            agence_destination_id: updated.agence_destination_id,
+                        };
+                    }
+
+                    // Idem pour le colis actuellement affiché sur la page Détails.
+                    if (state.currentParcel?.code_colis === updated.code_colis) {
+                        state.currentParcel = {
+                            ...state.currentParcel,
+                            agence_destination_id: updated.agence_destination_id,
+                        };
+                    }
+                });
             })
 
             // Receive Parcels (Bulk)

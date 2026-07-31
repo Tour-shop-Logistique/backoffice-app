@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import SearchableDropdown from '../common/SearchableDropdown';
+import { COUNTRY_OPTIONS } from '../../utils/countries';
 
 
 
@@ -15,7 +16,7 @@ const Addtarifgroupe = ({
   const [formData, setFormData] = useState({
     type_expedition: 'GROUPAGE_DHD_AERIEN',
     category_id: '',
-    pays: '',
+    code_pays: '',
     mode: 'avion',
     ville_depart: '',
     ville_arrivee: '',
@@ -23,62 +24,6 @@ const Addtarifgroupe = ({
     pourcentage_prestation: ''
   });
   const [errors, setErrors] = useState({});
-
-  const paysAfrique = [
-    "AFRIQUE DU SUD PRETORIA",
-    "ALGERIE ALGER",
-    "ANGOLA LUANDA",
-    "BENIN COTONOU",
-    "BOTSWANA GABORONE",
-    "BURKINA FASO OUAGADOUGOU",
-    "BURUNDI GITEGA",
-    "CAMEROUN YAOUNDE",
-    "CAP-VERT PRAIA",
-    "COMORES MORONI",
-    "COTE D'IVOIRE YAMOUSSOUKRO",
-    "DJIBOUTI DJIBOUTI",
-    "EGYPTE LE CAIRE",
-    "ERYTHREE ASMARA",
-    "ESWATINI MBABANE",
-    "ETHIOPIE ADDIS-ABEBA",
-    "GABON LIBREVILLE",
-    "GAMBIE BANJUL",
-    "GHANA ACCRA",
-    "GUINEE CONAKRY",
-    "GUINEE-BISSAU BISSAU",
-    "GUINEE EQUATORIALE MALABO",
-    "KENYA NAIROBI",
-    "LESOTHO MASERU",
-    "LIBERIA MONROVIA",
-    "LIBYE TRIPOLI",
-    "MADAGASCAR ANTANANARIVO",
-    "MALAWI LILONGWE",
-    "MALI BAMAKO",
-    "MAROC RABAT",
-    "MAURICE PORT-LOUIS",
-    "MAURITANIE NOUAKCHOTT",
-    "MOZAMBIQUE MAPUTO",
-    "NAMIBIE WINDHOEK",
-    "NIGER NIAMEY",
-    "NIGERIA ABUJA",
-    "OUGANDA KAMPALA",
-    "RD CONGO KINSHASA",
-    "REPUBLIQUE DU CONGO BRAZZAVILLE",
-    "RWANDA KIGALI",
-    "SAO TOME-ET-PRINCIPE SAO TOME",
-    "SENEGAL DAKAR",
-    "SEYCHELLES VICTORIA",
-    "SIERRA LEONE FREETOWN",
-    "SOMALIE MOGADISCIO",
-    "SOUDAN KHARTOUM",
-    "SOUDAN DU SUD Djouba",
-    "TANZANIE DODOMA",
-    "TCHAD N'DJAMENA",
-    "TOGO LOME",
-    "TUNISIE TUNIS",
-    "ZAMBIE LUSAKA",
-    "ZIMBABWE HARARE"
-  ];
 
   useEffect(() => {
     if (tarifToEdit) {
@@ -93,7 +38,7 @@ const Addtarifgroupe = ({
       setFormData({
         type_expedition: type,
         category_id: tarifToEdit.category_id || '',
-        pays: tarifToEdit.pays || '',
+        code_pays: tarifToEdit.code_pays || '',
         mode: tarifToEdit.mode || getModeForType(type),
         ville_depart: ville_depart,
         ville_arrivee: ville_arrivee,
@@ -122,7 +67,7 @@ const Addtarifgroupe = ({
       type_expedition: newType,
       mode: newMode,
       category_id: '',
-      pays: '',
+      code_pays: '',
       ville_depart: '',
       ville_arrivee: '',
       montant_base: '',
@@ -159,7 +104,7 @@ const Addtarifgroupe = ({
     }
 
     if (type_expedition === 'GROUPAGE_AFRIQUE') {
-      if (!formData.pays) newErrors.pays = 'Pays requis';
+      if (!formData.code_pays) newErrors.code_pays = 'Pays requis';
     }
 
     if (!formData.montant_base) newErrors.montant_base = 'Montant base requis';
@@ -187,7 +132,7 @@ const Addtarifgroupe = ({
       dataToSubmit.category_id = formData.category_id;
       dataToSubmit.ligne = `${formData.ville_depart.trim().toLowerCase()}-${formData.ville_arrivee.trim().toLowerCase()}`;
     } else if (type_expedition === 'GROUPAGE_AFRIQUE') {
-      dataToSubmit.pays = formData.pays;
+      dataToSubmit.code_pays = formData.code_pays;
     }
 
     handleFormSubmit(dataToSubmit);
@@ -335,21 +280,21 @@ const Addtarifgroupe = ({
           <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-orange-200 shadow-sm">
             <label className="block text-sm font-semibold text-slate-700 mb-2">
               <span className="inline-flex items-center gap-2">
-                Pays et capitale <span className="text-red-500">*</span>
+                Pays <span className="text-red-500">*</span>
               </span>
             </label>
 
             <SearchableDropdown
-              value={formData.pays}
-              onChange={(value) => handleInputChange('pays', value)}
-              options={paysAfrique}
+              value={formData.code_pays}
+              onChange={(code) => handleInputChange('code_pays', code)}
+              options={COUNTRY_OPTIONS.map((c) => ({ label: c.label, value: c.id }))}
               placeholder="Rechercher un pays..."
-              error={errors.pays}
+              error={errors.code_pays}
             />
 
-            {errors.pays && (
+            {errors.code_pays && (
               <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
-                <span>⚠️</span> {errors.pays}
+                <span>⚠️</span> {errors.code_pays}
               </p>
             )}
           </div>

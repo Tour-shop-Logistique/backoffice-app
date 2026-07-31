@@ -39,7 +39,7 @@ const GroupedRates = () => {
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const typeDropdownRef = useRef(null);
 
-  const { groupedTarifs, isLoading, error, groupedHasLoaded } = useSelector(
+  const { groupedTarifs, isLoadingGrouped: isLoading, error, groupedHasLoaded } = useSelector(
     (state) => state.tarification
   );
   const { categories, hasLoadedCategories } = useSelector(state => state.produits);

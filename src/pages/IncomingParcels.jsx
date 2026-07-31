@@ -67,22 +67,21 @@ const IncomingParcels = () => {
     // Selection state
     const [selectedCodes, setSelectedCodes] = useState([]);
     const [validatingCode, setValidatingCode] = useState(null);
-    
-    // Agency assignment state - maps code_colis to agence_id
-    const [agencyAssignments, setAgencyAssignments] = useState({}); // { code_colis: agence_id, ... }
-    
+
     const [assigningCodes, setAssigningCodes] = useState({});
 
-    const setAgencyForColis = async (code, agenceId) => {
-        // Optimistic UI update
-        setAgencyAssignments(prev => ({
-            ...prev,
-            [code]: agenceId
-        }));
+    // Source de vérité = donnée serveur (agence_destination_id sur le colis),
+    // synchronisée dans Redux dès que l'assignation réussit (voir
+    // assignParcels.fulfilled dans parcelSlice.js) — plus de state local
+    // séparé qui pouvait se désynchroniser ou se perdre à la navigation.
+    const getAgencyForColis = (code) => {
+        const parcel = items.find((p) => p.code_colis === code);
+        return parcel?.agence_destination_id || '';
+    };
 
+    const setAgencyForColis = async (code, agenceId) => {
         if (!agenceId) return;
 
-        // mark as assigning
         setAssigningCodes(prev => ({ ...prev, [code]: true }));
 
         try {
@@ -90,12 +89,6 @@ const IncomingParcels = () => {
             await dispatch(assignParcels(payload)).unwrap();
             dispatch(showNotification({ type: 'success', message: `Colis ${code} assigné à l'agence.` }));
         } catch (err) {
-            // revert optimistic update on error
-            setAgencyAssignments(prev => {
-                const copy = { ...prev };
-                delete copy[code];
-                return copy;
-            });
             dispatch(showNotification({ type: 'error', message: err?.message || 'Erreur lors de l\'assignation.' }));
         } finally {
             setAssigningCodes(prev => {
@@ -106,12 +99,8 @@ const IncomingParcels = () => {
         }
     };
 
-    const getAgencyForColis = (code) => {
-        return agencyAssignments[code] || '';
-    };
-
     const areAllSelectedColisAssigned = () => {
-        return selectedCodes.every(code => agencyAssignments[code]);
+        return selectedCodes.every(code => getAgencyForColis(code));
     };
 
     const areAllPendingColisDeparted = () => {
@@ -128,13 +117,6 @@ const IncomingParcels = () => {
     const assignAgencyToAll = async (codes, agenceId) => {
         if (!agenceId || codes.length === 0) return;
 
-        const previousAssignments = { ...agencyAssignments };
-        setAgencyAssignments(prev => {
-            const next = { ...prev };
-            codes.forEach(code => { next[code] = agenceId; });
-            return next;
-        });
-
         setIsBulkAssigning(true);
         try {
             const colisAssignments = {};
@@ -142,7 +124,6 @@ const IncomingParcels = () => {
             await dispatch(assignParcels({ colis_assignments: colisAssignments })).unwrap();
             dispatch(showNotification({ type: 'success', message: `${codes.length} colis assignés à l'agence.` }));
         } catch (err) {
-            setAgencyAssignments(previousAssignments);
             dispatch(showNotification({ type: 'error', message: err?.message || "Erreur lors de l'assignation groupée." }));
         } finally {
             setIsBulkAssigning(false);
@@ -179,39 +160,6 @@ const IncomingParcels = () => {
         setIsAgencyModalOpen(true);
     };
 
-    // New: mark selected parcels as arrived (backoffice) and optionally set agence_id per parcel
-    const handleMarkArrived = async () => {
-        if (selectedCodes.length === 0) return;
-
-        // On ne peut réceptionner que les colis dont l'expédition a effectivement
-        // quitté le pays de départ — sinon l'API le refuserait de toute façon.
-        const notDeparted = selectedCodes.filter((code) => {
-            const parcel = filteredParcels.find((p) => p.code_colis === code);
-            return !hasDepartedOrigin(parcel?.expedition?.statut_expedition);
-        });
-        if (notDeparted.length > 0) {
-            dispatch(showNotification({
-                type: 'error',
-                message: `${notDeparted.length} colis sélectionné(s) ne peuvent pas encore être réceptionnés : leur expédition n'est pas encore en transit.`
-            }));
-            return;
-        }
-
-        // Build assignments map using selected agencyAssignments or existing agence_destination_id
-        const colisAssignments = {};
-        selectedCodes.forEach(code => {
-            colisAssignments[code] = agencyAssignments[code] || null;
-        });
-
-        try {
-            await dispatch(receiveParcels({ colis_assignments: colisAssignments })).unwrap();
-            dispatch(showNotification({ type: 'success', message: `${selectedCodes.length} colis marqués comme arrivés.` }));
-            setSelectedCodes([]);
-        } catch (error) {
-            dispatch(showNotification({ type: 'error', message: error.message || 'Erreur lors du marquage.' }));
-        }
-    }
-
     const handleSingleReceive = (code) => {
         // Open agency modal to select for this single parcel
         setPendingAction({ type: 'single', codes: [code] });
@@ -244,7 +192,7 @@ const IncomingParcels = () => {
         } catch (error) {
             dispatch(showNotification({
                 type: 'error',
-                message: error.message || "Erreur lors du blocage des colis."
+                message: error.message || "Erreur lors de l'écartement des colis."
             }));
         }
     };
@@ -257,7 +205,7 @@ const IncomingParcels = () => {
         // Build the colis_assignments mapping
         const colisAssignments = {};
         codes.forEach(code => {
-            colisAssignments[code] = agencyAssignments[code];
+            colisAssignments[code] = getAgencyForColis(code);
         });
 
         // For single receive, we need to validate that an agency was selected
@@ -287,12 +235,6 @@ const IncomingParcels = () => {
             if (type === 'bulk') setSelectedCodes([]);
             setIsAgencyModalOpen(false);
             setPendingAction(null);
-            // Reset agency assignments for received parcels
-            const newAssignments = { ...agencyAssignments };
-            codes.forEach(code => {
-                delete newAssignments[code];
-            });
-            setAgencyAssignments(newAssignments);
         } catch (error) {
             dispatch(showNotification({
                 type: 'error',
@@ -469,21 +411,12 @@ const IncomingParcels = () => {
                                 </span>
                                 <button
                                     onClick={handleBulkReceive}
-                                    disabled={isBulkReceiving || isBulkBlocking || !canAssign}
-                                    title={!canAssign ? "Permission requise" : undefined}
+                                    disabled={isBulkReceiving || isBulkBlocking || !canReceive}
+                                    title={!canReceive ? "Permission requise" : undefined}
                                     className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm shadow-indigo-200 active:scale-95 disabled:opacity-50"
                                 >
                                     {isBulkReceiving ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
-                                    Assigner la sélection
-                                </button>
-                                <button
-                                    onClick={handleMarkArrived}
-                                    disabled={isBulkReceiving || isBulkBlocking || !canReceive}
-                                    title={!canReceive ? "Permission requise" : undefined}
-                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-slate-700 hover:bg-slate-800 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 disabled:opacity-50"
-                                >
-                                    <PackageCheck size={12} />
-                                    Marquer arrivés
+                                    Réceptionner
                                 </button>
                                 <button
                                     onClick={handleBulkBlock}
@@ -492,7 +425,7 @@ const IncomingParcels = () => {
                                     className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm shadow-rose-200 active:scale-95 disabled:opacity-50"
                                 >
                                     {isBulkBlocking ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
-                                    Bloquer la sélection
+                                    Écarter la sélection
                                 </button>
                                 <button
                                     onClick={() => setSelectedCodes([])}
@@ -601,7 +534,7 @@ const IncomingParcels = () => {
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="block font-semibold text-slate-900 text-sm">{parcel.code_colis}</span>
                                                                     {parcel.is_blocked && (
-                                                                        <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs border border-rose-100 uppercase font-bold">Bloqué</span>
+                                                                        <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs border border-rose-100 uppercase font-bold">Écarté</span>
                                                                     )}
                                                                 </div>
                                                                 <span className="text-xs font-bold text-slate-500 uppercase">{parcel.designation || 'Sans désignation'}</span>
@@ -753,7 +686,7 @@ const IncomingParcels = () => {
                                                                     <div className="flex items-center gap-2">
                                                                         <p className="font-bold text-slate-800 text-sm truncate">{parcel.code_colis}</p>
                                                                         {parcel.is_blocked && (
-                                                                            <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs border border-rose-100 uppercase font-bold shrink-0">Bloqué</span>
+                                                                            <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs border border-rose-100 uppercase font-bold shrink-0">Écarté</span>
                                                                         )}
                                                                     </div>
                                                                     <p className="text-xs font-bold text-slate-500 uppercase mt-0.5 truncate">
@@ -888,7 +821,7 @@ const IncomingParcels = () => {
                     ? "Choisissez l'agence qui recevra ce colis"
                     : `Choisissez les agences pour ces ${pendingAction?.codes.length} colis`
                 }
-                size={pendingAction?.codes.length === 1 ? "sm" : "lg"}
+                size={pendingAction?.codes.length === 1 ? "md" : "lg"}
                 onConfirm={confirmReceive}
                 confirmDisabled={!areAllSelectedColisAssigned() || !areAllPendingColisDeparted()}
                 isLoading={isBulkReceiving}
@@ -1015,25 +948,25 @@ const IncomingParcels = () => {
             <Modal
                 isOpen={isBlockModalOpen}
                 onClose={() => setIsBlockModalOpen(false)}
-                title="Écarter / Bloquer les colis"
+                title="Écarter les colis"
                 subtitle={`${selectedCodes.length} colis sélectionnés`}
                 size="sm"
                 onConfirm={confirmBlockParcels}
                 confirmDisabled={!blockReason.trim()}
                 isLoading={isBulkBlocking}
                 confirmVariant="danger"
-                confirmLabel="Confirmer le blocage"
+                confirmLabel="Confirmer l'écartement"
             >
                 <div className="space-y-4">
                     <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3">
                         <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={18} />
                         <p className="text-xs font-medium text-rose-800 leading-relaxed">
-                            Vous allez bloquer <strong>{selectedCodes.length} colis</strong>. Veuillez préciser le motif qui sera appliqué à l'ensemble de la sélection.
+                            Vous allez écarter <strong>{selectedCodes.length} colis</strong>. Veuillez préciser le motif qui sera appliqué à l'ensemble de la sélection.
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Motif du blocage</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">Motif de l'écartement</label>
                         <textarea
                             value={blockReason}
                             onChange={(e) => setBlockReason(e.target.value)}

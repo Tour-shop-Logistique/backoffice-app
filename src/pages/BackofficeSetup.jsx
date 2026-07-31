@@ -19,13 +19,7 @@ import {
     Lock,
 } from 'lucide-react';
 import SearchableDropdown from '../components/common/SearchableDropdown';
-
-const countryList = [
-    "Côte d'Ivoire", "Guinée", "Guinée Bissau", "France", "Belgique", "Suisse",
-    "Sénégal", "Mali", "Burkina Faso", "Nigeria", "Ghana", "Togo", "Bénin",
-    "Guinée Équatoriale", "Cameroun", "Gabon", "Congo", "Zambie", "Zaire",
-    "Zimbabwe", "Maroc", "Tunisie", "Algérie", "Canada", "États-Unis",
-];
+import { COUNTRY_OPTIONS } from '../utils/countries';
 
 const BackofficeSetup = () => {
     const dispatch = useDispatch();
@@ -45,7 +39,7 @@ const BackofficeSetup = () => {
         adresse: '',
         ville: '',
         commune: '',
-        pays: 'Sénégal',
+        code_pays: 'SN',
         email: '',
     });
 
@@ -58,7 +52,7 @@ const BackofficeSetup = () => {
                 adresse: config.adresse || '',
                 ville: config.ville || '',
                 commune: config.commune || '',
-                pays: config.pays || 'Sénégal',
+                code_pays: config.code_pays || 'SN',
                 email: config.email || '',
             });
         }
@@ -96,7 +90,7 @@ const BackofficeSetup = () => {
             return;
         }
 
-        if (!formData.pays || !formData.ville || !formData.adresse) {
+        if (!formData.code_pays || !formData.ville || !formData.adresse) {
             dispatch(showNotification({ type: 'error', message: "Veuillez remplir les informations de localisation obligatoires." }));
             return;
         }
@@ -237,9 +231,9 @@ const BackofficeSetup = () => {
                             <div className="space-y-1.5">
                                 <label className={labelBase}>Pays <span className="text-rose-500">*</span></label>
                                 <SearchableDropdown
-                                    value={formData.pays}
-                                    onChange={(value) => setFormData(prev => ({ ...prev, pays: value }))}
-                                    options={countryList}
+                                    value={formData.code_pays}
+                                    onChange={(code) => setFormData(prev => ({ ...prev, code_pays: code }))}
+                                    options={COUNTRY_OPTIONS.map((c) => ({ label: c.label, value: c.id }))}
                                     placeholder="Sélectionner..."
                                     disabled={readOnly}
                                     themeColor="emerald"
