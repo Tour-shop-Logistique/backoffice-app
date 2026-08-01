@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+// Retire les accents pour que "suede" trouve "Suède" - NFD decompose les
+// caracteres accentues en (lettre de base + marque diacritique), qu'on
+// supprime ensuite via la plage Unicode des marques combinantes.
+const stripAccents = (value) => value.normalize('NFD').replace(/[̀-ͯ]/g, '');
+
 /**
  * Composant Dropdown avec recherche intégrée
  * 
@@ -87,9 +92,10 @@ const SearchableDropdown = ({
         typeof opt === 'string' ? { label: opt, value: opt } : opt
     );
 
-    // Filtrer les options selon le terme de recherche
+    // Filtrer les options selon le terme de recherche, insensible aux
+    // accents (ex: "suede" doit trouver "Suède").
     const filteredOptions = normalizedOptions.filter(option =>
-        option.label.toLowerCase().includes(searchTerm.toLowerCase())
+        stripAccents(option.label.toLowerCase()).includes(stripAccents(searchTerm.toLowerCase()))
     );
 
     // Trouver le label de la valeur sélectionnée
