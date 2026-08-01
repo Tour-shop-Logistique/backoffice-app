@@ -99,20 +99,13 @@ const zoneSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(addZone.fulfilled, (state, action) => {
+      .addCase(addZone.fulfilled, (state) => {
+        // Pas d'insertion optimiste ici : ZoneConfiguration.handleAddZone
+        // enchaîne systématiquement sur fetchZones({ silent: true }), qui
+        // remplace state.zones par la vraie liste serveur. Insérer ici en
+        // plus causait une zone dupliquée (id provisoire vs id réel) le
+        // temps que ce fetch résolve.
         state.isLoading = false;
-        const newZone = action.payload?.data || action.payload;
-        if (newZone) {
-          // Ensure pays exists and actif is true by default
-          // Merge with form data (meta.arg) to ensure all display fields are present
-          const zoneToAdd = {
-            pays: [],
-            actif: true,
-            ...action.meta.arg,
-            ...newZone
-          };
-          state.zones.unshift(zoneToAdd);
-        }
       })
       .addCase(addZone.rejected, (state, action) => {
         state.isLoading = false;

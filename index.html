@@ -26,8 +26,13 @@
   <div id="root" class="h-full"></div>
 
   <!-- Portals for Modals & Notifications -->
-  <div id="modal-root" class="relative z-50"></div>
-  <div id="notification-root" class="relative z-50"></div>
+  <div id="modal-root"></div>
+  <!-- Pas de "relative z-50" ici : ce div doit rester neutre pour que le
+       z-[10000] du toast (notification.jsx) s'applique par rapport à la
+       racine du document, pas à un stacking context local qui le piègerait
+       derrière tout élément ayant un z-index plus élevé (ex. Modal.jsx,
+       z-index:9999 posé directement sur <body>). -->
+  <div id="notification-root"></div>
 
   <script type="module" src="/src/main.jsx"></script>
 </body>

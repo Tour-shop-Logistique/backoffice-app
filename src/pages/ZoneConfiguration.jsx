@@ -64,7 +64,7 @@ const ZoneConfiguration = () => {
         dispatch(fetchZones({ silent: true }));
       }
     } catch (error) {
-      dispatch(showNotification({ type: 'error', message: "Erreur lors de l'ajout de la zone." }));
+      dispatch(showNotification({ type: 'error', message: error?.message || "Erreur lors de l'ajout de la zone." }));
     } finally {
       setIsSubmitting(false);
     }
@@ -81,7 +81,7 @@ const ZoneConfiguration = () => {
         dispatch(fetchZones({ silent: true }));
       }
     } catch (error) {
-      dispatch(showNotification({ type: 'error', message: 'Erreur lors de la modification de la zone.' }));
+      dispatch(showNotification({ type: 'error', message: error?.message || 'Erreur lors de la modification de la zone.' }));
     } finally {
       setIsSubmitting(false);
     }
@@ -131,10 +131,16 @@ const ZoneConfiguration = () => {
     return (zones || []).filter(zone => {
       const nom = zone.nom || '';
       const pays = Array.isArray(zone.pays) ? zone.pays : [];
+      const codes = Array.isArray(zone.pays_codes) ? zone.pays_codes : [];
       const search = searchTerm.toLowerCase();
 
+      // zone.pays garde parfois l'ancien nom brut historique (ex.
+      // "South Africa(ZA)" au lieu de "Afrique du Sud") - on cherche aussi
+      // sur le nom français dérivé du code ISO pour que la recherche
+      // fonctionne peu importe l'écriture d'origine stockée.
       return nom.toLowerCase().includes(search) ||
-        pays.some(p => p.toLowerCase().includes(search));
+        pays.some(p => p.toLowerCase().includes(search)) ||
+        codes.some(code => getCountryName(code).toLowerCase().includes(search));
     });
   }, [zones, searchTerm]);
 
