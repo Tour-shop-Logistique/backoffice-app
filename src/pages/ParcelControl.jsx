@@ -276,6 +276,7 @@ const ParcelControl = () => {
     if (!currentParcel) return null;
 
     const status = getStatusInfo(currentParcel.expedition?.statut_expedition);
+    const isLD = currentParcel.expedition?.type_expedition === 'simple';
     const isAir = currentParcel.code_colis?.includes('AERIEN');
 
     return (
@@ -371,8 +372,17 @@ const ParcelControl = () => {
                         <div className="text-right">
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Transport</p>
                             <div className="flex items-center gap-2 justify-end text-slate-700">
-                                {isAir ? <Plane size={18} className="text-blue-500" /> : <Ship size={18} className="text-slate-500" />}
-                                <span className="text-sm font-bold uppercase">{isAir ? 'Aérien' : 'Maritime'}</span>
+                                {isLD ? (
+                                    <>
+                                        <Truck size={18} className="text-indigo-500" />
+                                        <span className="text-sm font-bold uppercase">Livraison directe</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        {isAir ? <Plane size={18} className="text-blue-500" /> : <Ship size={18} className="text-slate-500" />}
+                                        <span className="text-sm font-bold uppercase">{isAir ? 'Aérien' : 'Maritime'}</span>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
