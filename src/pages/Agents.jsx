@@ -444,14 +444,14 @@ const Agents = () => {
       </div>
 
       {activeTab === 'roles' ? (
-        <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <>
           {isLoadingRoles && roles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 px-6">
+            <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center py-20 px-6">
               <Loader2 className="animate-spin text-slate-900 mb-4" size={48} strokeWidth={1.5} />
               <p className="text-slate-500 font-medium text-sm">Chargement des rôles...</p>
             </div>
           ) : roles.length === 0 ? (
-            <div className="py-20 text-center px-6">
+            <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm py-20 text-center px-6">
               <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <KeyRound className="text-slate-400" size={32} />
               </div>
@@ -459,7 +459,7 @@ const Agents = () => {
               <p className="text-slate-500 text-sm mt-2">Créez un rôle pour restreindre l'accès de certains agents à des pages précises.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               {roles.map((role) => {
                 const isExpanded = expandedRoleId === role.id;
                 const roleAgents = agents.filter((a) => a.role_id === role.id);
@@ -470,7 +470,7 @@ const Agents = () => {
                 });
 
                 return (
-                  <div key={role.id}>
+                  <div key={role.id} className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden self-start">
                     <div className="p-4 md:p-5 flex items-start justify-between gap-4">
                       <button
                         type="button"
@@ -513,7 +513,7 @@ const Agents = () => {
                     </div>
 
                     {isExpanded && (
-                      <div className="px-4 md:px-5 pb-5 pl-11 space-y-3">
+                      <div className="px-4 md:px-5 pb-5 pl-11 space-y-3 border-t border-slate-100 pt-4">
                         <div className="flex items-center gap-2">
                           <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
@@ -577,7 +577,7 @@ const Agents = () => {
               })}
             </div>
           )}
-        </div>
+        </>
       ) : (
       <>
       {/* TABS + TABLE - Mobile Optimized */}
