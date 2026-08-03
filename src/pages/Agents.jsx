@@ -50,11 +50,14 @@ const Agents = () => {
   const [editingRole, setEditingRole] = useState(null);
   const [roleToDelete, setRoleToDelete] = useState(null);
   const [isSubmittingRole, setIsSubmittingRole] = useState(false);
-  const [roleForm, setRoleForm] = useState({ nom: '', description: '', permissions: [], agentIds: [] });
-  const [roleAgentSearch, setRoleAgentSearch] = useState('');
+  const [roleForm, setRoleForm] = useState({ nom: '', description: '', permissions: [] });
   const [expandedRoleId, setExpandedRoleId] = useState(null);
   const [expandedRoleSearch, setExpandedRoleSearch] = useState('');
   const [updatingRoleAgent, setUpdatingRoleAgent] = useState({});
+  const [addAgentsRole, setAddAgentsRole] = useState(null);
+  const [addAgentsSelection, setAddAgentsSelection] = useState([]);
+  const [addAgentsSearch, setAddAgentsSearch] = useState('');
+  const [isSubmittingAddAgents, setIsSubmittingAddAgents] = useState(false);
 
   useEffect(() => {
     if (!hasLoaded && !isLoading) {
@@ -124,14 +127,12 @@ const Agents = () => {
 
   // ── Gestion des rôles ──
   const openRoleModal = (role) => {
-    setRoleAgentSearch('');
     if (role) {
       setEditingRole(role);
-      const assignedAgentIds = agents.filter((a) => a.role_id === role.id).map((a) => a.id);
-      setRoleForm({ id: role.id, nom: role.nom || '', description: role.description || '', permissions: role.permissions || [], agentIds: assignedAgentIds });
+      setRoleForm({ id: role.id, nom: role.nom || '', description: role.description || '', permissions: role.permissions || [] });
     } else {
       setEditingRole(null);
-      setRoleForm({ nom: '', description: '', permissions: [], agentIds: [] });
+      setRoleForm({ nom: '', description: '', permissions: [] });
     }
     setIsRoleModalOpen(true);
   };
@@ -139,17 +140,7 @@ const Agents = () => {
   const closeRoleModal = () => {
     setIsRoleModalOpen(false);
     setEditingRole(null);
-    setRoleAgentSearch('');
-    setRoleForm({ nom: '', description: '', permissions: [], agentIds: [] });
-  };
-
-  const toggleRoleAgent = (agentId) => {
-    setRoleForm((prev) => ({
-      ...prev,
-      agentIds: prev.agentIds.includes(agentId)
-        ? prev.agentIds.filter((id) => id !== agentId)
-        : [...prev.agentIds, agentId],
-    }));
+    setRoleForm({ nom: '', description: '', permissions: [] });
   };
 
   const handleSubmitRole = async (e) => {
@@ -165,34 +156,12 @@ const Agents = () => {
 
     setIsSubmittingRole(true);
     try {
-      const { id, agentIds, ...roleData } = roleForm;
-      let roleId = id;
+      const { id, ...roleData } = roleForm;
 
       if (editingRole) {
         await dispatch(editRole({ roleId: id, roleData })).unwrap();
       } else {
-        const created = await dispatch(addRole(roleData)).unwrap();
-        roleId = created?.id;
-      }
-
-      // Synchronise les agents assignés/retirés de ce rôle (diff avec l'état
-      // initial du modal) - le backend n'a pas de relation many-to-many
-      // dédiée, chaque agent porte simplement un role_id unique.
-      if (roleId) {
-        const initiallyAssigned = editingRole
-          ? agents.filter((a) => a.role_id === editingRole.id).map((a) => a.id)
-          : [];
-        const toAssign = agentIds.filter((agentId) => !initiallyAssigned.includes(agentId));
-        const toUnassign = initiallyAssigned.filter((agentId) => !agentIds.includes(agentId));
-
-        await Promise.all([
-          ...toAssign.map((agentId) => dispatch(editAgent({ agentId, agentData: { role_id: roleId } })).unwrap()),
-          ...toUnassign.map((agentId) => dispatch(editAgent({ agentId, agentData: { role_id: null } })).unwrap()),
-        ]);
-
-        if (toAssign.length > 0 || toUnassign.length > 0) {
-          dispatch(fetchRoles());
-        }
+        await dispatch(addRole(roleData)).unwrap();
       }
 
       dispatch(showNotification({ type: 'success', message: editingRole ? 'Rôle mis à jour avec succès.' : 'Rôle créé avec succès.' }));
@@ -204,26 +173,60 @@ const Agents = () => {
     }
   };
 
-  // Bascule immédiate (depuis la carte dépliée d'un rôle, sans passer par le
-  // modal) : assigne le rôle si l'agent ne l'a pas, le retire si l'agent
-  // l'a déjà - un agent ne pouvant porter qu'un seul rôle à la fois.
-  const toggleAgentRoleAssignment = async (agent, role) => {
+  // Retrait immédiat depuis la carte dépliée d'un rôle (décocher un agent
+  // déjà assigné le remet sans rôle - accès complet par défaut).
+  const removeAgentFromRole = async (agent, role) => {
     if (!canEditAgent) return;
-    const hasRole = agent.role_id === role.id;
     setUpdatingRoleAgent((prev) => ({ ...prev, [agent.id]: true }));
     try {
-      await dispatch(editAgent({ agentId: agent.id, agentData: { role_id: hasRole ? null : role.id } })).unwrap();
+      await dispatch(editAgent({ agentId: agent.id, agentData: { role_id: null } })).unwrap();
       dispatch(fetchRoles());
-      dispatch(showNotification({
-        type: 'success',
-        message: hasRole
-          ? `${agent.nom} ${agent.prenoms} retiré du rôle ${role.nom}.`
-          : `${agent.nom} ${agent.prenoms} assigné au rôle ${role.nom}.`,
-      }));
+      dispatch(showNotification({ type: 'success', message: `${agent.nom} ${agent.prenoms} retiré du rôle ${role.nom}.` }));
     } catch (err) {
       dispatch(showNotification({ type: 'error', message: err?.message || "Erreur lors de la mise à jour de l'agent." }));
     } finally {
       setUpdatingRoleAgent((prev) => ({ ...prev, [agent.id]: false }));
+    }
+  };
+
+  // ── Modal "Ajouter des agents" à un rôle ──
+  const openAddAgentsModal = (role) => {
+    setAddAgentsRole(role);
+    setAddAgentsSelection([]);
+    setAddAgentsSearch('');
+  };
+
+  const closeAddAgentsModal = () => {
+    setAddAgentsRole(null);
+    setAddAgentsSelection([]);
+    setAddAgentsSearch('');
+  };
+
+  const toggleAddAgentsSelection = (agentId) => {
+    setAddAgentsSelection((prev) =>
+      prev.includes(agentId) ? prev.filter((id) => id !== agentId) : [...prev, agentId]
+    );
+  };
+
+  const handleConfirmAddAgents = async () => {
+    if (!addAgentsRole || addAgentsSelection.length === 0) return;
+    setIsSubmittingAddAgents(true);
+    try {
+      await Promise.all(
+        addAgentsSelection.map((agentId) =>
+          dispatch(editAgent({ agentId, agentData: { role_id: addAgentsRole.id } })).unwrap()
+        )
+      );
+      dispatch(fetchRoles());
+      dispatch(showNotification({
+        type: 'success',
+        message: `${addAgentsSelection.length} agent${addAgentsSelection.length > 1 ? 's' : ''} assigné${addAgentsSelection.length > 1 ? 's' : ''} au rôle ${addAgentsRole.nom}.`,
+      }));
+      closeAddAgentsModal();
+    } catch (err) {
+      dispatch(showNotification({ type: 'error', message: err?.message || "Erreur lors de l'assignation des agents." }));
+    } finally {
+      setIsSubmittingAddAgents(false);
     }
   };
 
@@ -460,7 +463,7 @@ const Agents = () => {
               {roles.map((role) => {
                 const isExpanded = expandedRoleId === role.id;
                 const roleAgents = agents.filter((a) => a.role_id === role.id);
-                const visibleAgents = agents.filter((a) => {
+                const visibleRoleAgents = roleAgents.filter((a) => {
                   const term = expandedRoleSearch.trim().toLowerCase();
                   if (!term) return true;
                   return `${a.nom} ${a.prenoms} ${a.email}`.toLowerCase().includes(term);
@@ -511,23 +514,35 @@ const Agents = () => {
 
                     {isExpanded && (
                       <div className="px-4 md:px-5 pb-5 pl-11 space-y-3">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-                          <input
-                            type="text"
-                            value={expandedRoleSearch}
-                            onChange={(e) => setExpandedRoleSearch(e.target.value)}
-                            placeholder="Rechercher un agent à assigner/retirer..."
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all"
-                          />
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+                            <input
+                              type="text"
+                              value={expandedRoleSearch}
+                              onChange={(e) => setExpandedRoleSearch(e.target.value)}
+                              placeholder="Rechercher parmi les agents de ce rôle..."
+                              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all"
+                            />
+                          </div>
+                          {canEditAgent && (
+                            <button
+                              type="button"
+                              onClick={() => openAddAgentsModal(role)}
+                              className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold uppercase tracking-wide transition-colors"
+                            >
+                              <PlusCircle size={14} />
+                              Ajouter
+                            </button>
+                          )}
                         </div>
                         <div className="border border-slate-200 rounded-lg max-h-72 overflow-y-auto divide-y divide-slate-100 bg-white">
-                          {visibleAgents.length === 0 && (
-                            <p className="text-xs text-slate-400 text-center py-4">Aucun agent trouvé.</p>
+                          {visibleRoleAgents.length === 0 && (
+                            <p className="text-xs text-slate-400 text-center py-4">
+                              {roleAgents.length === 0 ? 'Aucun agent assigné à ce rôle.' : 'Aucun agent trouvé.'}
+                            </p>
                           )}
-                          {visibleAgents.map((agent) => {
-                            const hasRole = agent.role_id === role.id;
-                            const belongsToOtherRole = agent.role_id && !hasRole;
+                          {visibleRoleAgents.map((agent) => {
                             const isUpdating = !!updatingRoleAgent[agent.id];
                             return (
                               <label
@@ -540,9 +555,9 @@ const Agents = () => {
                                   ) : (
                                     <input
                                       type="checkbox"
-                                      checked={hasRole}
+                                      checked
                                       disabled={!canEditAgent}
-                                      onChange={() => toggleAgentRoleAssignment(agent, role)}
+                                      onChange={() => removeAgentFromRole(agent, role)}
                                       className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer disabled:cursor-not-allowed"
                                     />
                                   )}
@@ -551,11 +566,6 @@ const Agents = () => {
                                     <p className="text-xs text-slate-500 truncate">{agent.email}</p>
                                   </div>
                                 </div>
-                                {belongsToOtherRole && (
-                                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded whitespace-nowrap">
-                                    {agent.custom_role?.nom || 'Autre rôle'}
-                                  </span>
-                                )}
                               </label>
                             );
                           })}
@@ -921,61 +931,6 @@ const Agents = () => {
               onChange={(next) => setRoleForm((p) => ({ ...p, permissions: next }))}
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
-              Agents assignés à ce rôle ({roleForm.agentIds.length})
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-              <input
-                type="text"
-                value={roleAgentSearch}
-                onChange={(e) => setRoleAgentSearch(e.target.value)}
-                placeholder="Rechercher un agent..."
-                className={`${inputStyle} pl-9`}
-              />
-            </div>
-            <div className="border border-slate-200 rounded-lg max-h-64 overflow-y-auto divide-y divide-slate-100">
-              {agents
-                .filter((a) => {
-                  const term = roleAgentSearch.trim().toLowerCase();
-                  if (!term) return true;
-                  return `${a.nom} ${a.prenoms} ${a.email}`.toLowerCase().includes(term);
-                })
-                .map((agent) => {
-                  const checked = roleForm.agentIds.includes(agent.id);
-                  const belongsToOtherRole = agent.role_id && agent.role_id !== editingRole?.id && !checked;
-                  return (
-                    <label
-                      key={agent.id}
-                      className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleRoleAgent(agent.id)}
-                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-900 truncate">{agent.nom} {agent.prenoms}</p>
-                          <p className="text-xs text-slate-500 truncate">{agent.email}</p>
-                        </div>
-                      </div>
-                      {belongsToOtherRole && (
-                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded whitespace-nowrap">
-                          {agent.custom_role?.nom || 'Autre rôle'}
-                        </span>
-                      )}
-                    </label>
-                  );
-                })}
-              {agents.length === 0 && (
-                <p className="text-xs text-slate-400 text-center py-4">Aucun agent disponible.</p>
-              )}
-            </div>
-          </div>
         </form>
       </Modal>
 
@@ -986,6 +941,70 @@ const Agents = () => {
         itemName={roleToDelete?.nom}
         isLoading={isSubmittingRole}
       />
+
+      {/* Ajouter des agents à un rôle */}
+      <Modal
+        isOpen={!!addAgentsRole}
+        onClose={closeAddAgentsModal}
+        title={`Ajouter des agents au rôle ${addAgentsRole?.nom || ''}`}
+        subtitle="Cochez les agents à assigner à ce rôle"
+        size="md"
+        onConfirm={handleConfirmAddAgents}
+        isLoading={isSubmittingAddAgents}
+        confirmLabel={`Assigner${addAgentsSelection.length > 0 ? ` (${addAgentsSelection.length})` : ''}`}
+      >
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+            <input
+              type="text"
+              value={addAgentsSearch}
+              onChange={(e) => setAddAgentsSearch(e.target.value)}
+              placeholder="Rechercher un agent..."
+              className={`${inputStyle} pl-9`}
+            />
+          </div>
+          <div className="border border-slate-200 rounded-lg max-h-72 overflow-y-auto divide-y divide-slate-100">
+            {agents
+              .filter((a) => a.role_id !== addAgentsRole?.id)
+              .filter((a) => {
+                const term = addAgentsSearch.trim().toLowerCase();
+                if (!term) return true;
+                return `${a.nom} ${a.prenoms} ${a.email}`.toLowerCase().includes(term);
+              })
+              .map((agent) => {
+                const checked = addAgentsSelection.includes(agent.id);
+                return (
+                  <label
+                    key={agent.id}
+                    className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleAddAgentsSelection(agent.id)}
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-900 truncate">{agent.nom} {agent.prenoms}</p>
+                        <p className="text-xs text-slate-500 truncate">{agent.email}</p>
+                      </div>
+                    </div>
+                    {agent.role_id && (
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded whitespace-nowrap">
+                        {agent.custom_role?.nom || 'Autre rôle'}
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            {agents.filter((a) => a.role_id !== addAgentsRole?.id).length === 0 && (
+              <p className="text-xs text-slate-400 text-center py-4">Tous les agents sont déjà assignés à ce rôle.</p>
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
