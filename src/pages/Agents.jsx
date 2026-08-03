@@ -30,6 +30,7 @@ const Agents = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRefreshingRoles, setIsRefreshingRoles] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -86,6 +87,18 @@ const Agents = () => {
       dispatch(showNotification({ type: 'error', message: 'Erreur lors du rafraîchissement.' }));
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const handleRefreshRoles = async () => {
+    setIsRefreshingRoles(true);
+    try {
+      await dispatch(fetchRoles()).unwrap();
+      dispatch(showNotification({ type: 'success', message: 'Liste des rôles mise à jour.' }));
+    } catch (err) {
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors du rafraîchissement.' }));
+    } finally {
+      setIsRefreshingRoles(false);
     }
   };
 
@@ -378,7 +391,7 @@ const Agents = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              {activeTab === 'agents' && (
+              {activeTab === 'agents' ? (
                 <button
                   onClick={handleRefresh}
                   disabled={isRefreshing}
@@ -386,6 +399,16 @@ const Agents = () => {
                   title="Rafraîchir"
                 >
                   <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span className="hidden md:inline md:ml-2">Rafraîchir</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleRefreshRoles}
+                  disabled={isRefreshingRoles}
+                  className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
+                  title="Rafraîchir"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshingRoles ? 'animate-spin' : ''}`} />
                   <span className="hidden md:inline md:ml-2">Rafraîchir</span>
                 </button>
               )}
