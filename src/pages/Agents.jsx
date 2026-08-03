@@ -52,6 +52,9 @@ const Agents = () => {
   const [isSubmittingRole, setIsSubmittingRole] = useState(false);
   const [roleForm, setRoleForm] = useState({ nom: '', description: '', permissions: [], agentIds: [] });
   const [roleAgentSearch, setRoleAgentSearch] = useState('');
+  const [expandedRoleId, setExpandedRoleId] = useState(null);
+  const [expandedRoleSearch, setExpandedRoleSearch] = useState('');
+  const [updatingRoleAgent, setUpdatingRoleAgent] = useState({});
 
   useEffect(() => {
     if (!hasLoaded && !isLoading) {
@@ -198,6 +201,29 @@ const Agents = () => {
       dispatch(showNotification({ type: 'error', message: err?.message || 'Erreur lors de la soumission du rôle.' }));
     } finally {
       setIsSubmittingRole(false);
+    }
+  };
+
+  // Bascule immédiate (depuis la carte dépliée d'un rôle, sans passer par le
+  // modal) : assigne le rôle si l'agent ne l'a pas, le retire si l'agent
+  // l'a déjà - un agent ne pouvant porter qu'un seul rôle à la fois.
+  const toggleAgentRoleAssignment = async (agent, role) => {
+    if (!canEditAgent) return;
+    const hasRole = agent.role_id === role.id;
+    setUpdatingRoleAgent((prev) => ({ ...prev, [agent.id]: true }));
+    try {
+      await dispatch(editAgent({ agentId: agent.id, agentData: { role_id: hasRole ? null : role.id } })).unwrap();
+      dispatch(fetchRoles());
+      dispatch(showNotification({
+        type: 'success',
+        message: hasRole
+          ? `${agent.nom} ${agent.prenoms} retiré du rôle ${role.nom}.`
+          : `${agent.nom} ${agent.prenoms} assigné au rôle ${role.nom}.`,
+      }));
+    } catch (err) {
+      dispatch(showNotification({ type: 'error', message: err?.message || "Erreur lors de la mise à jour de l'agent." }));
+    } finally {
+      setUpdatingRoleAgent((prev) => ({ ...prev, [agent.id]: false }));
     }
   };
 
@@ -431,35 +457,114 @@ const Agents = () => {
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {roles.map((role) => (
-                <div key={role.id} className="p-4 md:p-5 flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-slate-900">{role.nom}</p>
-                      <span className="text-xs font-bold text-slate-400">
-                        {role.users_count || 0} agent{(role.users_count || 0) > 1 ? 's' : ''}
-                      </span>
+              {roles.map((role) => {
+                const isExpanded = expandedRoleId === role.id;
+                const roleAgents = agents.filter((a) => a.role_id === role.id);
+                const visibleAgents = agents.filter((a) => {
+                  const term = expandedRoleSearch.trim().toLowerCase();
+                  if (!term) return true;
+                  return `${a.nom} ${a.prenoms} ${a.email}`.toLowerCase().includes(term);
+                });
+
+                return (
+                  <div key={role.id}>
+                    <div className="p-4 md:p-5 flex items-start justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExpandedRoleId(isExpanded ? null : role.id);
+                          setExpandedRoleSearch('');
+                        }}
+                        className="min-w-0 flex-1 text-left flex items-start gap-3"
+                      >
+                        <LucideChevronDown
+                          size={18}
+                          className={`shrink-0 mt-1 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-slate-900">{role.nom}</p>
+                            <span className="text-xs font-bold text-slate-400">
+                              {roleAgents.length} agent{roleAgents.length > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          {role.description && <p className="text-sm text-slate-500 mt-0.5">{role.description}</p>}
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {Object.entries(
+                              (role.permissions || []).reduce((acc, key) => {
+                                const [resourceKey] = key.split('.');
+                                const resource = availablePermissions.find((r) => r.key === resourceKey);
+                                const label = resource?.label || resourceKey;
+                                acc[label] = (acc[label] || 0) + 1;
+                                return acc;
+                              }, {})
+                            ).map(([label, count]) => (
+                              <span key={label} className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600">
+                                {label} ({count})
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </button>
+                      <RowActions onEdit={() => openRoleModal(role)} onDelete={() => setRoleToDelete(role)} />
                     </div>
-                    {role.description && <p className="text-sm text-slate-500 mt-0.5">{role.description}</p>}
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {Object.entries(
-                        (role.permissions || []).reduce((acc, key) => {
-                          const [resourceKey] = key.split('.');
-                          const resource = availablePermissions.find((r) => r.key === resourceKey);
-                          const label = resource?.label || resourceKey;
-                          acc[label] = (acc[label] || 0) + 1;
-                          return acc;
-                        }, {})
-                      ).map(([label, count]) => (
-                        <span key={label} className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600">
-                          {label} ({count})
-                        </span>
-                      ))}
-                    </div>
+
+                    {isExpanded && (
+                      <div className="px-4 md:px-5 pb-5 pl-11 space-y-3">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+                          <input
+                            type="text"
+                            value={expandedRoleSearch}
+                            onChange={(e) => setExpandedRoleSearch(e.target.value)}
+                            placeholder="Rechercher un agent à assigner/retirer..."
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all"
+                          />
+                        </div>
+                        <div className="border border-slate-200 rounded-lg max-h-72 overflow-y-auto divide-y divide-slate-100 bg-white">
+                          {visibleAgents.length === 0 && (
+                            <p className="text-xs text-slate-400 text-center py-4">Aucun agent trouvé.</p>
+                          )}
+                          {visibleAgents.map((agent) => {
+                            const hasRole = agent.role_id === role.id;
+                            const belongsToOtherRole = agent.role_id && !hasRole;
+                            const isUpdating = !!updatingRoleAgent[agent.id];
+                            return (
+                              <label
+                                key={agent.id}
+                                className={`flex items-center justify-between gap-3 px-3 py-2 transition-colors ${canEditAgent ? 'hover:bg-slate-50 cursor-pointer' : 'cursor-default opacity-70'}`}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  {isUpdating ? (
+                                    <Loader2 size={16} className="animate-spin text-slate-400 shrink-0" />
+                                  ) : (
+                                    <input
+                                      type="checkbox"
+                                      checked={hasRole}
+                                      disabled={!canEditAgent}
+                                      onChange={() => toggleAgentRoleAssignment(agent, role)}
+                                      className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer disabled:cursor-not-allowed"
+                                    />
+                                  )}
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-slate-900 truncate">{agent.nom} {agent.prenoms}</p>
+                                    <p className="text-xs text-slate-500 truncate">{agent.email}</p>
+                                  </div>
+                                </div>
+                                {belongsToOtherRole && (
+                                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded whitespace-nowrap">
+                                    {agent.custom_role?.nom || 'Autre rôle'}
+                                  </span>
+                                )}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <RowActions onEdit={() => openRoleModal(role)} onDelete={() => setRoleToDelete(role)} />
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
