@@ -277,7 +277,7 @@ const ParcelControl = () => {
 
     const status = getStatusInfo(currentParcel.expedition?.statut_expedition);
     const isLD = currentParcel.expedition?.type_expedition === 'simple';
-    const isAir = currentParcel.code_colis?.includes('AERIEN');
+    const isAir = currentParcel.code_colis?.includes('DHD-AR');
 
     return (
         <div className="w-full space-y-6 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">

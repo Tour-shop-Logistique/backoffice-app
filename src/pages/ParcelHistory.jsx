@@ -111,8 +111,8 @@ const ParcelHistory = () => {
     };
 
     const getTypeIcon = (reference = '') => {
-        if (reference.includes('AERIEN')) return Plane;
-        if (reference.includes('MARITIME')) return Ship;
+        if (reference.includes('DHD-AR')) return Plane;
+        if (reference.includes('DHD-MR')) return Ship;
         return Package;
     };
 
