@@ -50,7 +50,8 @@ const Agents = () => {
   const [editingRole, setEditingRole] = useState(null);
   const [roleToDelete, setRoleToDelete] = useState(null);
   const [isSubmittingRole, setIsSubmittingRole] = useState(false);
-  const [roleForm, setRoleForm] = useState({ nom: '', description: '', permissions: [] });
+  const [roleForm, setRoleForm] = useState({ nom: '', description: '', permissions: [], agentIds: [] });
+  const [roleAgentSearch, setRoleAgentSearch] = useState('');
 
   useEffect(() => {
     if (!hasLoaded && !isLoading) {
@@ -120,12 +121,14 @@ const Agents = () => {
 
   // ── Gestion des rôles ──
   const openRoleModal = (role) => {
+    setRoleAgentSearch('');
     if (role) {
       setEditingRole(role);
-      setRoleForm({ id: role.id, nom: role.nom || '', description: role.description || '', permissions: role.permissions || [] });
+      const assignedAgentIds = agents.filter((a) => a.role_id === role.id).map((a) => a.id);
+      setRoleForm({ id: role.id, nom: role.nom || '', description: role.description || '', permissions: role.permissions || [], agentIds: assignedAgentIds });
     } else {
       setEditingRole(null);
-      setRoleForm({ nom: '', description: '', permissions: [] });
+      setRoleForm({ nom: '', description: '', permissions: [], agentIds: [] });
     }
     setIsRoleModalOpen(true);
   };
@@ -133,7 +136,17 @@ const Agents = () => {
   const closeRoleModal = () => {
     setIsRoleModalOpen(false);
     setEditingRole(null);
-    setRoleForm({ nom: '', description: '', permissions: [] });
+    setRoleAgentSearch('');
+    setRoleForm({ nom: '', description: '', permissions: [], agentIds: [] });
+  };
+
+  const toggleRoleAgent = (agentId) => {
+    setRoleForm((prev) => ({
+      ...prev,
+      agentIds: prev.agentIds.includes(agentId)
+        ? prev.agentIds.filter((id) => id !== agentId)
+        : [...prev.agentIds, agentId],
+    }));
   };
 
   const handleSubmitRole = async (e) => {
@@ -149,14 +162,37 @@ const Agents = () => {
 
     setIsSubmittingRole(true);
     try {
+      const { id, agentIds, ...roleData } = roleForm;
+      let roleId = id;
+
       if (editingRole) {
-        const { id, ...roleData } = roleForm;
         await dispatch(editRole({ roleId: id, roleData })).unwrap();
-        dispatch(showNotification({ type: 'success', message: 'Rôle mis à jour avec succès.' }));
       } else {
-        await dispatch(addRole(roleForm)).unwrap();
-        dispatch(showNotification({ type: 'success', message: 'Rôle créé avec succès.' }));
+        const created = await dispatch(addRole(roleData)).unwrap();
+        roleId = created?.id;
       }
+
+      // Synchronise les agents assignés/retirés de ce rôle (diff avec l'état
+      // initial du modal) - le backend n'a pas de relation many-to-many
+      // dédiée, chaque agent porte simplement un role_id unique.
+      if (roleId) {
+        const initiallyAssigned = editingRole
+          ? agents.filter((a) => a.role_id === editingRole.id).map((a) => a.id)
+          : [];
+        const toAssign = agentIds.filter((agentId) => !initiallyAssigned.includes(agentId));
+        const toUnassign = initiallyAssigned.filter((agentId) => !agentIds.includes(agentId));
+
+        await Promise.all([
+          ...toAssign.map((agentId) => dispatch(editAgent({ agentId, agentData: { role_id: roleId } })).unwrap()),
+          ...toUnassign.map((agentId) => dispatch(editAgent({ agentId, agentData: { role_id: null } })).unwrap()),
+        ]);
+
+        if (toAssign.length > 0 || toUnassign.length > 0) {
+          dispatch(fetchRoles());
+        }
+      }
+
+      dispatch(showNotification({ type: 'success', message: editingRole ? 'Rôle mis à jour avec succès.' : 'Rôle créé avec succès.' }));
       closeRoleModal();
     } catch (err) {
       dispatch(showNotification({ type: 'error', message: err?.message || 'Erreur lors de la soumission du rôle.' }));
@@ -779,6 +815,61 @@ const Agents = () => {
               value={roleForm.permissions}
               onChange={(next) => setRoleForm((p) => ({ ...p, permissions: next }))}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
+              Agents assignés à ce rôle ({roleForm.agentIds.length})
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+              <input
+                type="text"
+                value={roleAgentSearch}
+                onChange={(e) => setRoleAgentSearch(e.target.value)}
+                placeholder="Rechercher un agent..."
+                className={`${inputStyle} pl-9`}
+              />
+            </div>
+            <div className="border border-slate-200 rounded-lg max-h-64 overflow-y-auto divide-y divide-slate-100">
+              {agents
+                .filter((a) => {
+                  const term = roleAgentSearch.trim().toLowerCase();
+                  if (!term) return true;
+                  return `${a.nom} ${a.prenoms} ${a.email}`.toLowerCase().includes(term);
+                })
+                .map((agent) => {
+                  const checked = roleForm.agentIds.includes(agent.id);
+                  const belongsToOtherRole = agent.role_id && agent.role_id !== editingRole?.id && !checked;
+                  return (
+                    <label
+                      key={agent.id}
+                      className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleRoleAgent(agent.id)}
+                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-900 truncate">{agent.nom} {agent.prenoms}</p>
+                          <p className="text-xs text-slate-500 truncate">{agent.email}</p>
+                        </div>
+                      </div>
+                      {belongsToOtherRole && (
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded whitespace-nowrap">
+                          {agent.custom_role?.nom || 'Autre rôle'}
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+              {agents.length === 0 && (
+                <p className="text-xs text-slate-400 text-center py-4">Aucun agent disponible.</p>
+              )}
+            </div>
           </div>
         </form>
       </Modal>
