@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchParcels, updateExpeditionInfo } from '../redux/slices/parcelSlice';
 import { ROUTES } from '../routes';
 import Modal from '../components/common/Modal';
+import useHasPermission from '../hooks/useHasPermission';
 import {
     Package,
     Search,
@@ -34,6 +35,7 @@ const ParcelHistory = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const isUpdatingExpedition = useSelector(state => state.parcels.isUpdatingExpedition);
+    const canEditExpedition = useHasPermission('expeditions.update_info');
 
     // Expedition Edit State
     const [isExpeditionModalOpen, setIsExpeditionModalOpen] = useState(false);
@@ -342,13 +344,15 @@ const ParcelHistory = () => {
                                                                     {group.parcels.length} Colis
                                                                 </span>
                                                             </div>
-                                                            <button
-                                                                onClick={() => handleEditExpedition(group.expedition)}
-                                                                className="p-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 transition-all shadow-sm group"
-                                                                title="Modifier l'expédition"
-                                                            >
-                                                                <Edit2 size={13} className="group-hover:scale-110 transition-transform" />
-                                                            </button>
+                                                            {canEditExpedition && (
+                                                                <button
+                                                                    onClick={() => handleEditExpedition(group.expedition)}
+                                                                    className="p-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 transition-all shadow-sm group"
+                                                                    title="Modifier l'expédition"
+                                                                >
+                                                                    <Edit2 size={13} className="group-hover:scale-110 transition-transform" />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -424,12 +428,14 @@ const ParcelHistory = () => {
                                             <span className="text-xs font-bold bg-white px-2 py-1 rounded border border-slate-200 text-slate-500">
                                                 {group.parcels.length}
                                             </span>
-                                            <button
-                                                onClick={() => handleEditExpedition(group.expedition)}
-                                                className="ml-2 p-1.5 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-blue-600 active:bg-slate-50"
-                                            >
-                                                <Edit2 size={14} />
-                                            </button>
+                                            {canEditExpedition && (
+                                                <button
+                                                    onClick={() => handleEditExpedition(group.expedition)}
+                                                    className="ml-2 p-1.5 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-blue-600 active:bg-slate-50"
+                                                >
+                                                    <Edit2 size={14} />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="divide-y divide-slate-100">

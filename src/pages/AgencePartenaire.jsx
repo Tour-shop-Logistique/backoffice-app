@@ -5,6 +5,7 @@ import { fetchAgences, toggleAgenceStatus } from "../redux/slices/agenceSlice";
 import { showNotification } from "../redux/slices/uiSlice";
 import { ROUTES } from "../routes";
 import ViewDetailsButton from '../components/common/ViewDetailsButton';
+import useHasPermission from '../hooks/useHasPermission';
 import {
   Phone,
   Building2,
@@ -21,6 +22,7 @@ const AgencePartenaire = () => {
   const navigate = useNavigate();
   const { agences, isLoading, error, hasLoaded } = useSelector((state) => state.agences);
   const { user } = useSelector((state) => state.auth);
+  const canToggleStatus = useHasPermission('agence_partenaire.toggle_status');
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -204,13 +206,19 @@ const AgencePartenaire = () => {
                       </td>
                       <td className="px-6 py-3 font-semibold text-sm">{agence.telephone}</td>
                       <td className="px-6 py-3">
-                        <button
-                          onClick={(e) => handleToggleStatus(e, agence.id, agence.actif)}
-                          disabled={updatingStatus[agence.id]}
-                          className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${agence.actif ? 'bg-emerald-500' : 'bg-slate-200'} ${updatingStatus[agence.id] ? 'opacity-50' : ''}`}
-                        >
-                          <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${agence.actif ? 'translate-x-5' : 'translate-x-0'} ${updatingStatus[agence.id] ? 'animate-pulse scale-75' : ''}`} />
-                        </button>
+                        {canToggleStatus ? (
+                          <button
+                            onClick={(e) => handleToggleStatus(e, agence.id, agence.actif)}
+                            disabled={updatingStatus[agence.id]}
+                            className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${agence.actif ? 'bg-emerald-500' : 'bg-slate-200'} ${updatingStatus[agence.id] ? 'opacity-50' : ''}`}
+                          >
+                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${agence.actif ? 'translate-x-5' : 'translate-x-0'} ${updatingStatus[agence.id] ? 'animate-pulse scale-75' : ''}`} />
+                          </button>
+                        ) : (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${agence.actif ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                            {agence.actif ? 'Actif' : 'Inactif'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-3 text-right">
                         <ViewDetailsButton
@@ -251,13 +259,19 @@ const AgencePartenaire = () => {
                       </div>
                     </div>
                     <div onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={(e) => handleToggleStatus(e, agence.id, agence.actif)}
-                        disabled={updatingStatus[agence.id]}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-200 ease-in-out focus:outline-none ${agence.actif ? 'bg-emerald-500' : 'bg-slate-200'} ${updatingStatus[agence.id] ? 'opacity-50' : ''}`}
-                      >
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${agence.actif ? 'translate-x-5' : 'translate-x-0'} ${updatingStatus[agence.id] ? 'animate-pulse scale-75' : ''}`} />
-                      </button>
+                      {canToggleStatus ? (
+                        <button
+                          onClick={(e) => handleToggleStatus(e, agence.id, agence.actif)}
+                          disabled={updatingStatus[agence.id]}
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-200 ease-in-out focus:outline-none ${agence.actif ? 'bg-emerald-500' : 'bg-slate-200'} ${updatingStatus[agence.id] ? 'opacity-50' : ''}`}
+                        >
+                          <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${agence.actif ? 'translate-x-5' : 'translate-x-0'} ${updatingStatus[agence.id] ? 'animate-pulse scale-75' : ''}`} />
+                        </button>
+                      ) : (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${agence.actif ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                          {agence.actif ? 'Actif' : 'Inactif'}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="mt-3 flex items-center justify-end gap-1 text-xs font-semibold text-slate-500 uppercase">

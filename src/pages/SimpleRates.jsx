@@ -31,6 +31,9 @@ import { showNotification } from '../redux/slices/uiSlice';
 const SimpleRates = () => {
     const dispatch = useDispatch();
     const canCreate = useHasPermission('tarification_simple.create');
+    const canEdit = useHasPermission('tarification_simple.edit');
+    const canDelete = useHasPermission('tarification_simple.delete');
+    const canToggleStatus = useHasPermission('tarification_simple.toggle_status');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -339,22 +342,28 @@ const SimpleRates = () => {
                                                     <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-xs">FCFA</span></p>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
-                                                    <button
-                                                        onClick={() => handleStatusChange(tarif)}
-                                                        disabled={updatingStatus[tarif.id]}
-                                                        className="group relative flex items-center gap-3 transition-all active:scale-95 mx-auto disabled:opacity-50"
-                                                        title={`Cliquez pour ${tarif.actif ? 'désactiver' : 'activer'}`}
-                                                    >
-                                                        <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                                                            <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-5' : 'translate-x-0'}`} />
-                                                        </div>
-                                                    </button>
+                                                    {canToggleStatus ? (
+                                                        <button
+                                                            onClick={() => handleStatusChange(tarif)}
+                                                            disabled={updatingStatus[tarif.id]}
+                                                            className="group relative flex items-center gap-3 transition-all active:scale-95 mx-auto disabled:opacity-50"
+                                                            title={`Cliquez pour ${tarif.actif ? 'désactiver' : 'activer'}`}
+                                                        >
+                                                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                                <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                            </div>
+                                                        </button>
+                                                    ) : (
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                            {tarif.actif ? 'Actif' : 'Inactif'}
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-3">
                                                     <div className="flex justify-end">
                                                         <RowActions
-                                                            onEdit={() => handleOpenEditModal(tarif)}
-                                                            onDelete={() => handleOpenDeleteModal(tarif)}
+                                                            onEdit={canEdit ? () => handleOpenEditModal(tarif) : undefined}
+                                                            onDelete={canDelete ? () => handleOpenDeleteModal(tarif) : undefined}
                                                         />
                                                     </div>
                                                 </td>
@@ -389,15 +398,21 @@ const SimpleRates = () => {
                                                     </p>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => handleStatusChange(tarif)}
-                                                disabled={updatingStatus[tarif.id]}
-                                                className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
-                                            >
-                                                <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                                                    <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-4' : 'translate-x-0'}`} />
-                                                </div>
-                                            </button>
+                                            {canToggleStatus ? (
+                                                <button
+                                                    onClick={() => handleStatusChange(tarif)}
+                                                    disabled={updatingStatus[tarif.id]}
+                                                    className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                                                >
+                                                    <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                        <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                    </div>
+                                                </button>
+                                            ) : (
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                    {tarif.actif ? 'Actif' : 'Inactif'}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2">
@@ -414,21 +429,27 @@ const SimpleRates = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => handleOpenEditModal(tarif)}
-                                                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
-                                            >
-                                                <Edit3 size={13} />
-                                                Modifier
-                                            </button>
-                                            <button
-                                                onClick={() => handleOpenDeleteModal(tarif)}
-                                                className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
-                                            >
-                                                <Trash2 size={15} />
-                                            </button>
-                                        </div>
+                                        {(canEdit || canDelete) && (
+                                            <div className="flex gap-2">
+                                                {canEdit && (
+                                                    <button
+                                                        onClick={() => handleOpenEditModal(tarif)}
+                                                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
+                                                    >
+                                                        <Edit3 size={13} />
+                                                        Modifier
+                                                    </button>
+                                                )}
+                                                {canDelete && (
+                                                    <button
+                                                        onClick={() => handleOpenDeleteModal(tarif)}
+                                                        className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
+                                                    >
+                                                        <Trash2 size={15} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}

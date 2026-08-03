@@ -57,6 +57,8 @@ const ParcelControl = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const canBlock = useHasPermission('colis.block');
+    const canReceive = useHasPermission('colis.receive');
+    const canControl = useHasPermission('colis.control');
     const {
         todoList, historyList, incomingList, currentParcel,
         isLoadingDetail, detailError,
@@ -309,7 +311,7 @@ const ParcelControl = () => {
                         </button>
                     )}
 
-                    {!(currentParcel.is_controlled && !isFromIncoming && !currentParcel.is_blocked) && (
+                    {!(currentParcel.is_controlled && !isFromIncoming && !currentParcel.is_blocked) && (isFromIncoming ? canReceive : canControl) && (
                         <button
                             onClick={handleValidate}
                             disabled={isValidating || isBulkBlocking || isBulkReceiving || isBulkControlling || (isFromIncoming && (!selectedAgencyId || !hasDepartedOrigin(currentParcel.expedition?.statut_expedition)))}

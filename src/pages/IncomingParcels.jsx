@@ -409,24 +409,26 @@ const IncomingParcels = () => {
                                 <span className="hidden md:inline text-xs font-bold text-indigo-600 uppercase tracking-widest whitespace-nowrap">
                                     {selectedCodes.length} sélectionné(s)
                                 </span>
-                                <button
-                                    onClick={handleBulkReceive}
-                                    disabled={isBulkReceiving || isBulkBlocking || !canReceive}
-                                    title={!canReceive ? "Permission requise" : undefined}
-                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm shadow-indigo-200 active:scale-95 disabled:opacity-50"
-                                >
-                                    {isBulkReceiving ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
-                                    Réceptionner
-                                </button>
-                                <button
-                                    onClick={handleBulkBlock}
-                                    disabled={isBulkReceiving || isBulkBlocking || !canBlock}
-                                    title={!canBlock ? "Permission requise" : undefined}
-                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm shadow-rose-200 active:scale-95 disabled:opacity-50"
-                                >
-                                    {isBulkBlocking ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
-                                    Écarter la sélection
-                                </button>
+                                {canReceive && (
+                                    <button
+                                        onClick={handleBulkReceive}
+                                        disabled={isBulkReceiving || isBulkBlocking}
+                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm shadow-indigo-200 active:scale-95 disabled:opacity-50"
+                                    >
+                                        {isBulkReceiving ? <Loader2 size={12} className="animate-spin" /> : <PackageCheck size={12} />}
+                                        Réceptionner
+                                    </button>
+                                )}
+                                {canBlock && (
+                                    <button
+                                        onClick={handleBulkBlock}
+                                        disabled={isBulkReceiving || isBulkBlocking}
+                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg md:rounded-md text-xs font-bold uppercase tracking-wider transition-all shadow-sm shadow-rose-200 active:scale-95 disabled:opacity-50"
+                                    >
+                                        {isBulkBlocking ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
+                                        Écarter la sélection
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setSelectedCodes([])}
                                     className="px-2 py-2 md:py-1 text-xs font-bold text-slate-500 hover:text-slate-600 uppercase tracking-widest transition-colors flex items-center justify-center"

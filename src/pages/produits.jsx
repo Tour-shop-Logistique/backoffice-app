@@ -18,10 +18,19 @@ import { showNotification } from "../redux/slices/uiSlice"
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 import RowActions from '../components/common/RowActions';
+import useHasPermission from '../hooks/useHasPermission';
 
 export default function Produits() {
   const dispatch = useDispatch();
   const { listProduits, isLoading, categories, hasLoadedProduits, hasLoadedCategories } = useSelector(state => state.produits);
+  const canCreateProduit = useHasPermission('produits.create');
+  const canEditProduit = useHasPermission('produits.edit');
+  const canDeleteProduit = useHasPermission('produits.delete');
+  const canToggleProduitStatus = useHasPermission('produits.toggle_status');
+  const canCreateCategory = useHasPermission('product_categories.create');
+  const canEditCategory = useHasPermission('product_categories.edit');
+  const canDeleteCategory = useHasPermission('product_categories.delete');
+  const canToggleCategoryStatus = useHasPermission('product_categories.toggle_status');
 
   // PRODUITS
   const [editingProduit, setEditingProduit] = useState(null);
@@ -346,14 +355,16 @@ export default function Produits() {
                 <span className="hidden md:inline md:ml-2">Rafraîchir</span>
               </button>
 
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
-                title="Ajouter"
-              >
-                <PlusCircle className="h-4 w-4" />
-                <span className="hidden md:inline md:ml-2">Ajouter</span>
-              </button>
+              {canCreateProduit && (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
+                  title="Ajouter"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  <span className="hidden md:inline md:ml-2">Ajouter</span>
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -517,21 +528,27 @@ export default function Produits() {
                           </span>
                         </td>
                         <td className="px-6 py-3">
-                          <button
-                            onClick={() => handleToggleProduitStatus(produit)}
-                            disabled={updatingStatus[`prod-${produit.id}`]}
-                            className="group relative inline-flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
-                            title={`Cliquez pour ${produit.actif ? 'désactiver' : 'activer'}`}
-                          >
-                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${produit.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                              <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${produit.actif ? 'translate-x-5' : 'translate-x-0'}`} />
-                            </div>
-                          </button>
+                          {canToggleProduitStatus ? (
+                            <button
+                              onClick={() => handleToggleProduitStatus(produit)}
+                              disabled={updatingStatus[`prod-${produit.id}`]}
+                              className="group relative inline-flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+                              title={`Cliquez pour ${produit.actif ? 'désactiver' : 'activer'}`}
+                            >
+                              <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${produit.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${produit.actif ? 'translate-x-5' : 'translate-x-0'}`} />
+                              </div>
+                            </button>
+                          ) : (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${produit.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                              {produit.actif ? 'Actif' : 'Inactif'}
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-3 text-right">
                           <RowActions
-                            onEdit={() => setEditingProduit(produit)}
-                            onDelete={() => setProduitToDelete(produit)}
+                            onEdit={canEditProduit ? () => setEditingProduit(produit) : undefined}
+                            onDelete={canDeleteProduit ? () => setProduitToDelete(produit) : undefined}
                           />
                         </td>
                       </tr>
@@ -554,36 +571,48 @@ export default function Produits() {
                         </div>
                         <p className="text-xs text-slate-600 line-clamp-2">Ref : {produit.reference}</p>
                       </div>
-                      <button
-                        onClick={() => handleToggleProduitStatus(produit)}
-                        disabled={updatingStatus[`prod-${produit.id}`]}
-                        className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
-                      >
-                        <div className={`relative w-8 h-4 rounded-full transition-colors ${produit.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                          <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${produit.actif ? 'translate-x-4' : 'translate-x-0'}`} />
-                        </div>
-                      </button>
+                      {canToggleProduitStatus ? (
+                        <button
+                          onClick={() => handleToggleProduitStatus(produit)}
+                          disabled={updatingStatus[`prod-${produit.id}`]}
+                          className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                        >
+                          <div className={`relative w-8 h-4 rounded-full transition-colors ${produit.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                            <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${produit.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                          </div>
+                        </button>
+                      ) : (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${produit.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                          {produit.actif ? 'Actif' : 'Inactif'}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center">
                       <span className="text-sm text-blue-600 font-semibold">Catégorie : {produit.category?.nom || 'Sans catégorie'}</span>
                     </div>
 
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        onClick={() => setEditingProduit(produit)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
-                      >
-                        <Edit2 size={13} />
-                        Modifier
-                      </button>
-                      <button
-                        onClick={() => setProduitToDelete(produit)}
-                        className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
+                    {(canEditProduit || canDeleteProduit) && (
+                      <div className="flex gap-2 pt-1">
+                        {canEditProduit && (
+                          <button
+                            onClick={() => setEditingProduit(produit)}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
+                          >
+                            <Edit2 size={13} />
+                            Modifier
+                          </button>
+                        )}
+                        {canDeleteProduit && (
+                          <button
+                            onClick={() => setProduitToDelete(produit)}
+                            className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -774,14 +803,16 @@ export default function Produits() {
                 className="w-full border border-slate-200 p-3 rounded-lg focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 outline-none bg-white"
               />
               <div className="flex gap-3">
-                <button
-                  onClick={handleAddCategory}
-                  disabled={isSubmitting}
-                  className="flex-1 bg-slate-900 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all"
-                >
-                  {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                  {editingCategory ? "Mettre à jour" : "Ajouter"}
-                </button>
+                {(editingCategory ? canEditCategory : canCreateCategory) && (
+                  <button
+                    onClick={handleAddCategory}
+                    disabled={isSubmitting}
+                    className="flex-1 bg-slate-900 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all"
+                  >
+                    {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                    {editingCategory ? "Mettre à jour" : "Ajouter"}
+                  </button>
+                )}
                 {editingCategory && (
                   <button
                     onClick={() => { setEditingCategory(null); setCategoryForm({ nom: "" }); }}
@@ -825,19 +856,25 @@ export default function Produits() {
                         ) : (
                           <div className="flex justify-end items-center gap-3">
                             <RowActions
-                              onEdit={() => { setEditingCategory(cat); setCategoryForm({ nom: cat.nom }); }}
-                              onDelete={() => setCategoryToDelete(cat)}
+                              onEdit={canEditCategory ? () => { setEditingCategory(cat); setCategoryForm({ nom: cat.nom }); } : undefined}
+                              onDelete={canDeleteCategory ? () => setCategoryToDelete(cat) : undefined}
                             />
-                            <button
-                              onClick={() => handleToggleCategoryStatus(cat)}
-                              disabled={updatingStatus[`cat-${cat.id}`]}
-                              className="group relative flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
-                              title={`Cliquez pour ${cat.actif ? 'désactiver' : 'activer'}`}
-                            >
-                              <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${cat.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                                <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${cat.actif ? 'translate-x-4' : 'translate-x-0'}`} />
-                              </div>
-                            </button>
+                            {canToggleCategoryStatus ? (
+                              <button
+                                onClick={() => handleToggleCategoryStatus(cat)}
+                                disabled={updatingStatus[`cat-${cat.id}`]}
+                                className="group relative flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+                                title={`Cliquez pour ${cat.actif ? 'désactiver' : 'activer'}`}
+                              >
+                                <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${cat.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                  <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${cat.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
+                              </button>
+                            ) : (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${cat.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                {cat.actif ? 'Actif' : 'Inactif'}
+                              </span>
+                            )}
                           </div>
                         )}
                       </td>

@@ -23,9 +23,14 @@ import Addtarifgroupe from '../components/widget/Addtarifgroupe';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 import RowActions from '../components/common/RowActions';
+import useHasPermission from '../hooks/useHasPermission';
 
 const GroupedRates = () => {
   const dispatch = useDispatch();
+  const canCreate = useHasPermission('tarification_groupage.create');
+  const canEdit = useHasPermission('tarification_groupage.edit');
+  const canDelete = useHasPermission('tarification_groupage.delete');
+  const canToggleStatus = useHasPermission('tarification_groupage.toggle_status');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tarifToEdit, setTarifToEdit] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -197,14 +202,16 @@ const GroupedRates = () => {
                 <span className="hidden md:inline md:ml-2">Rafraîchir</span>
               </button>
 
-              <button
-                onClick={() => openModal()}
-                className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
-                title="Ajouter"
-              >
-                <PlusCircle className="h-4 w-4" />
-                <span className="hidden md:inline md:ml-2">Ajouter</span>
-              </button>
+              {canCreate && (
+                <button
+                  onClick={() => openModal()}
+                  className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
+                  title="Ajouter"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  <span className="hidden md:inline md:ml-2">Ajouter</span>
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -394,22 +401,28 @@ const GroupedRates = () => {
                           <p className="font-bold text-slate-900">{exp.toLocaleString()} <span className="text-xs">FCFA</span></p>
                         </td>
                         <td className="px-6 py-3 text-center">
-                          <button
-                            onClick={() => handleStatusToggle(tarif.id)}
-                            disabled={updatingStatus[tarif.id]}
-                            className="group relative flex items-center gap-3 transition-all active:scale-95 mx-auto disabled:opacity-50"
-                            title={`Cliquez pour ${tarif.actif ? 'désactiver' : 'activer'}`}
-                          >
-                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                              <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-5' : 'translate-x-0'}`} />
-                            </div>
-                          </button>
+                          {canToggleStatus ? (
+                            <button
+                              onClick={() => handleStatusToggle(tarif.id)}
+                              disabled={updatingStatus[tarif.id]}
+                              className="group relative flex items-center gap-3 transition-all active:scale-95 mx-auto disabled:opacity-50"
+                              title={`Cliquez pour ${tarif.actif ? 'désactiver' : 'activer'}`}
+                            >
+                              <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-5' : 'translate-x-0'}`} />
+                              </div>
+                            </button>
+                          ) : (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                              {tarif.actif ? 'Actif' : 'Inactif'}
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-3">
                           <div className="flex justify-end">
                             <RowActions
-                              onEdit={() => openModal(tarif)}
-                              onDelete={() => setTarifToDelete(tarif)}
+                              onEdit={canEdit ? () => openModal(tarif) : undefined}
+                              onDelete={canDelete ? () => setTarifToDelete(tarif) : undefined}
                             />
                           </div>
                         </td>
@@ -459,15 +472,21 @@ const GroupedRates = () => {
                           )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleStatusToggle(tarif.id)}
-                        disabled={updatingStatus[tarif.id]}
-                        className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
-                      >
-                        <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                          <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-4' : 'translate-x-0'}`} />
-                        </div>
-                      </button>
+                      {canToggleStatus ? (
+                        <button
+                          onClick={() => handleStatusToggle(tarif.id)}
+                          disabled={updatingStatus[tarif.id]}
+                          className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                        >
+                          <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                            <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                          </div>
+                        </button>
+                      ) : (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                          {tarif.actif ? 'Actif' : 'Inactif'}
+                        </span>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -484,21 +503,27 @@ const GroupedRates = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openModal(tarif)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
-                      >
-                        <Edit3 size={13} />
-                        Modifier
-                      </button>
-                      <button
-                        onClick={() => setTarifToDelete(tarif)}
-                        className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
+                    {(canEdit || canDelete) && (
+                      <div className="flex gap-2">
+                        {canEdit && (
+                          <button
+                            onClick={() => openModal(tarif)}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
+                          >
+                            <Edit3 size={13} />
+                            Modifier
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => setTarifToDelete(tarif)}
+                            className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

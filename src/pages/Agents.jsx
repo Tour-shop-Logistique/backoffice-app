@@ -9,12 +9,17 @@ import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 import RowActions from '../components/common/RowActions';
 import PermissionMatrix from '../components/roles/PermissionMatrix';
+import useHasPermission from '../hooks/useHasPermission';
 
 const Agents = () => {
   const dispatch = useDispatch();
   const { agents, isLoading, error, hasLoaded } = useSelector((state) => state.agents);
   const { roles, isLoading: isLoadingRoles, hasLoaded: rolesLoaded } = useSelector((state) => state.roles);
   const { resources: availablePermissions, hasLoaded: permissionsHasLoaded } = useSelector((state) => state.permissions);
+  const canCreateAgent = useHasPermission('agents.create');
+  const canEditAgent = useHasPermission('agents.edit');
+  const canDeleteAgent = useHasPermission('agents.delete');
+  const canToggleAgentStatus = useHasPermission('agents.toggle_status');
 
   const [activeTab, setActiveTab] = useState('agents');
 
@@ -320,14 +325,16 @@ const Agents = () => {
                 </button>
               )}
 
-              <button
-                onClick={() => (activeTab === 'agents' ? setIsModalOpen(true) : openRoleModal(null))}
-                className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
-                title="Ajouter"
-              >
-                <PlusCircle className="h-4 w-4" />
-                <span className="hidden md:inline md:ml-2">{activeTab === 'agents' ? 'Ajouter un agent' : 'Nouveau rôle'}</span>
-              </button>
+              {(activeTab === 'agents' ? canCreateAgent : true) && (
+                <button
+                  onClick={() => (activeTab === 'agents' ? setIsModalOpen(true) : openRoleModal(null))}
+                  className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
+                  title="Ajouter"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  <span className="hidden md:inline md:ml-2">{activeTab === 'agents' ? 'Ajouter un agent' : 'Nouveau rôle'}</span>
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -522,22 +529,28 @@ const Agents = () => {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => toggleUserStatus(agent)}
-                          disabled={updatingStatus[agent.id]}
-                          className="group relative flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
-                          title={`Cliquez pour ${agent.actif ? 'désactiver' : 'activer'}`}
-                        >
-                          <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${agent.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                            <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${agent.actif ? 'translate-x-5' : 'translate-x-0'}`} />
-                          </div>
-                        </button>
+                        {canToggleAgentStatus ? (
+                          <button
+                            onClick={() => toggleUserStatus(agent)}
+                            disabled={updatingStatus[agent.id]}
+                            className="group relative flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+                            title={`Cliquez pour ${agent.actif ? 'désactiver' : 'activer'}`}
+                          >
+                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${agent.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                              <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${agent.actif ? 'translate-x-5' : 'translate-x-0'}`} />
+                            </div>
+                          </button>
+                        ) : (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${agent.actif ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                            {agent.actif ? 'Actif' : 'Inactif'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end">
                           <RowActions
-                            onEdit={() => openEditModal(agent)}
-                            onDelete={() => setAgentToDelete(agent)}
+                            onEdit={canEditAgent ? () => openEditModal(agent) : undefined}
+                            onDelete={canDeleteAgent ? () => setAgentToDelete(agent) : undefined}
                           />
                         </div>
                       </td>
@@ -561,15 +574,21 @@ const Agents = () => {
                         <p className="text-xs text-slate-500 truncate lowercase">{agent.email}</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => toggleUserStatus(agent)}
-                      disabled={updatingStatus[agent.id]}
-                      className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
-                    >
-                      <div className={`relative w-8 h-4 rounded-full transition-colors ${agent.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                        <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${agent.actif ? 'translate-x-4' : 'translate-x-0'}`} />
-                      </div>
-                    </button>
+                    {canToggleAgentStatus ? (
+                      <button
+                        onClick={() => toggleUserStatus(agent)}
+                        disabled={updatingStatus[agent.id]}
+                        className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                      >
+                        <div className={`relative w-8 h-4 rounded-full transition-colors ${agent.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                          <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transform transition-transform ${agent.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                        </div>
+                      </button>
+                    ) : (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${agent.actif ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                        {agent.actif ? 'Actif' : 'Inactif'}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1.5 text-slate-600 px-1 font-medium">
@@ -588,21 +607,27 @@ const Agents = () => {
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      onClick={() => openEditModal(agent)}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
-                    >
-                      <Edit3 size={13} />
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => setAgentToDelete(agent)}
-                      className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
+                  {(canEditAgent || canDeleteAgent) && (
+                    <div className="flex gap-2 pt-1">
+                      {canEditAgent && (
+                        <button
+                          onClick={() => openEditModal(agent)}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
+                        >
+                          <Edit3 size={13} />
+                          Modifier
+                        </button>
+                      )}
+                      {canDeleteAgent && (
+                        <button
+                          onClick={() => setAgentToDelete(agent)}
+                          className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

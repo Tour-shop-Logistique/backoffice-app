@@ -8,6 +8,7 @@ import { fetchAnnouncements, createAnnouncement, deleteAnnouncement, bulkDeleteA
 import { fetchAgences } from '../redux/slices/agenceSlice';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
+import useHasPermission from '../hooks/useHasPermission';
 
 const TARGET_MODES = {
   ALL: 'all',
@@ -30,6 +31,9 @@ const Announcements = () => {
   const dispatch = useDispatch();
   const { items, pagination, isLoading, isSending, hasLoaded } = useSelector((state) => state.announcements);
   const { agences, hasLoaded: agencesLoaded } = useSelector((state) => state.agences);
+  const canCreate = useHasPermission('announcements.create');
+  const canDelete = useHasPermission('announcements.delete');
+  const canBulkDelete = useHasPermission('announcements.bulk_delete');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
@@ -226,13 +230,15 @@ const Announcements = () => {
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
             Actualiser
           </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10"
-          >
-            <Plus size={16} />
-            Nouvelle annonce
-          </button>
+          {canCreate && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10"
+            >
+              <Plus size={16} />
+              Nouvelle annonce
+            </button>
+          )}
         </div>
       </div>
 
@@ -248,13 +254,15 @@ const Announcements = () => {
             >
               Annuler
             </button>
-            <button
-              onClick={() => setIsBulkDeleteModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-all active:scale-95"
-            >
-              <Trash2 size={14} />
-              Supprimer
-            </button>
+            {canBulkDelete && (
+              <button
+                onClick={() => setIsBulkDeleteModalOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-all active:scale-95"
+              >
+                <Trash2 size={14} />
+                Supprimer
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -332,12 +340,14 @@ const Announcements = () => {
                       >
                         <Eye size={16} />
                       </button>
-                      <button
-                        onClick={() => setToDelete(a)}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {canDelete && (
+                        <button
+                          onClick={() => setToDelete(a)}
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -507,16 +517,18 @@ const Announcements = () => {
         size="md"
         position="right"
         footer={
-          <button
-            onClick={() => {
-              setToDelete(selectedAnnouncement);
-              setSelectedAnnouncement(null);
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 text-red-600 text-xs font-bold uppercase tracking-widest hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <Trash2 size={14} />
-            Supprimer cette annonce
-          </button>
+          canDelete ? (
+            <button
+              onClick={() => {
+                setToDelete(selectedAnnouncement);
+                setSelectedAnnouncement(null);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 text-red-600 text-xs font-bold uppercase tracking-widest hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <Trash2 size={14} />
+              Supprimer cette annonce
+            </button>
+          ) : null
         }
       >
         {selectedAnnouncement && (

@@ -14,6 +14,7 @@ import {
   clearSearch,
 } from '../redux/slices/messageSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
+import useHasPermission from '../hooks/useHasPermission';
 
 const formatSize = (bytes) => {
   if (bytes < 1024) return `${bytes} o`;
@@ -27,6 +28,8 @@ const Messages = () => {
   const dispatch = useDispatch();
   const { conversations, conversationsLoaded, isLoadingConversation, byAgence, isSending, searchResults, isSearching } = useSelector((state) => state.messages);
   const { agences, hasLoaded: agencesLoaded } = useSelector((state) => state.agences);
+  const canEdit = useHasPermission('communication.edit');
+  const canDelete = useHasPermission('communication.delete');
 
   const [selectedAgenceId, setSelectedAgenceId] = useState(null);
   const [body, setBody] = useState('');
@@ -262,9 +265,9 @@ const Messages = () => {
                               >
                                 <MoreVertical size={12} />
                               </button>
-                              {openMenuId === m.id && (
+                              {openMenuId === m.id && (canEdit || canDelete) && (
                                 <div className="absolute top-6 left-0 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 w-32">
-                                  {m.body && (
+                                  {canEdit && m.body && (
                                     <button
                                       onClick={() => startEdit(m)}
                                       className="w-full text-left px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
@@ -272,12 +275,14 @@ const Messages = () => {
                                       <Pencil size={12} /> Modifier
                                     </button>
                                   )}
-                                  <button
-                                    onClick={() => handleDelete(m.id)}
-                                    className="w-full text-left px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                  >
-                                    <Trash2 size={12} /> Supprimer
-                                  </button>
+                                  {canDelete && (
+                                    <button
+                                      onClick={() => handleDelete(m.id)}
+                                      className="w-full text-left px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                    >
+                                      <Trash2 size={12} /> Supprimer
+                                    </button>
+                                  )}
                                 </div>
                               )}
                             </div>
