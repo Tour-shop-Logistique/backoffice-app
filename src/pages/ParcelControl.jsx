@@ -11,8 +11,6 @@ import {
     Loader2,
     Building2,
     Truck,
-    Plane,
-    Ship,
     MapPin,
     Scale,
     Euro,
@@ -276,8 +274,6 @@ const ParcelControl = () => {
     if (!currentParcel) return null;
 
     const status = getStatusInfo(currentParcel.expedition?.statut_expedition);
-    const isLD = currentParcel.expedition?.type_expedition === 'simple';
-    const isAir = currentParcel.code_colis?.includes('DHD-AR');
 
     return (
         <div className="w-full space-y-6 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -361,28 +357,12 @@ const ParcelControl = () => {
                         </div>
                     </div>
 
-                    <div className="md:col-span-5 p-6 bg-white/60 flex items-center justify-between">
+                    <div className="md:col-span-5 p-6 bg-white/60 flex items-center">
                         <div>
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">État du Contrôle</p>
                             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-bold uppercase border ${status.styles}`}>
                                 <status.icon size={14} />
                                 {status.label}
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Transport</p>
-                            <div className="flex items-center gap-2 justify-end text-slate-700">
-                                {isLD ? (
-                                    <>
-                                        <Truck size={18} className="text-indigo-500" />
-                                        <span className="text-sm font-bold uppercase">Livraison directe</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        {isAir ? <Plane size={18} className="text-blue-500" /> : <Ship size={18} className="text-slate-500" />}
-                                        <span className="text-sm font-bold uppercase">{isAir ? 'Aérien' : 'Maritime'}</span>
-                                    </>
-                                )}
                             </div>
                         </div>
                     </div>
