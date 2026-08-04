@@ -1,28 +1,45 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
+import { PlusCircle, Loader2, RefreshCw, Search, ShieldCheck, Plane, Ship } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { showNotification } from '../redux/slices/uiSlice';
-import { fetchMinimumGroupedTarifs, upsertMinimumGroupedTarif } from '../redux/slices/tarificationSlice';
+import {
+  fetchMinimumGroupedTarifs,
+  upsertMinimumGroupedTarif,
+  deleteMinimumGroupedTarif,
+} from '../redux/slices/tarificationSlice';
+import AddMinimumTarif from '../components/widget/AddMinimumTarif';
+import Modal from '../components/common/Modal';
+import DeleteModal from '../components/common/DeleteModal';
+import RowActions from '../components/common/RowActions';
 import useHasPermission from '../hooks/useHasPermission';
 
-const TYPES_GROUPAGE = [
-  { value: 'groupage_afrique', label: 'Groupage Afrique' },
-  { value: 'groupage_ca', label: 'Groupage CA' },
-  { value: 'groupage_dhd_aerien', label: 'DHD Aérien' },
-  { value: 'groupage_dhd_maritime', label: 'DHD Maritime' },
-];
+const getTypeLabel = (type) => {
+  switch (type) {
+    case 'groupage_dhd_aerien': return 'DHD Aérien';
+    case 'groupage_dhd_maritime': return 'DHD Maritime';
+    default: return type || 'N/A';
+  }
+};
+
+const getTypeIcon = (type) => (type === 'groupage_dhd_aerien' ? Plane : Ship);
 
 const MinimumRates = () => {
   const dispatch = useDispatch();
-  const canEdit = useHasPermission('tarification_groupage.create');
+  const canCreate = useHasPermission('tarification_groupage.create');
+  const canEdit = useHasPermission('tarification_groupage.edit');
+  const canDelete = useHasPermission('tarification_groupage.delete');
 
   const { minimumGroupedTarifs, isLoadingMinimumGrouped, minimumGroupedHasLoaded } = useSelector(
     (state) => state.tarification
   );
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [forms, setForms] = useState({});
-  const [savingType, setSavingType] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [tarifToEdit, setTarifToEdit] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tarifToDelete, setTarifToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!minimumGroupedHasLoaded && !isLoadingMinimumGrouped) {
@@ -30,33 +47,11 @@ const MinimumRates = () => {
     }
   }, [dispatch, minimumGroupedHasLoaded, isLoadingMinimumGrouped]);
 
-  const tarifsByType = useMemo(() => {
-    const map = {};
-    (minimumGroupedTarifs || []).forEach((t) => {
-      map[t.type_expedition] = t;
-    });
-    return map;
-  }, [minimumGroupedTarifs]);
-
-  const getFormValue = (type, field) => {
-    if (forms[type]?.[field] !== undefined) return forms[type][field];
-    const existing = tarifsByType[type];
-    if (field === 'montant_base') return existing?.montant_base ?? '';
-    if (field === 'pourcentage_prestation') return existing?.pourcentage_prestation ?? '';
-    return '';
-  };
-
-  const handleChange = (type, field, value) => {
-    setForms((prev) => ({
-      ...prev,
-      [type]: { ...prev[type], [field]: value },
-    }));
-  };
-
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await dispatch(fetchMinimumGroupedTarifs()).unwrap();
+      await dispatch(fetchMinimumGroupedTarifs({ silent: true })).unwrap();
+      dispatch(showNotification({ type: 'success', message: 'Tarifs minimum mis à jour.' }));
     } catch (err) {
       dispatch(showNotification({ type: 'error', message: 'Erreur lors du rafraîchissement.' }));
     } finally {
@@ -64,153 +59,169 @@ const MinimumRates = () => {
     }
   };
 
-  const handleSave = async (type) => {
-    const montantBase = parseFloat(getFormValue(type, 'montant_base'));
-    const pourcentagePrestation = parseFloat(getFormValue(type, 'pourcentage_prestation'));
+  const openModal = (tarif = null) => {
+    setTarifToEdit(tarif);
+    setShowModal(true);
+  };
 
-    if (isNaN(montantBase) || montantBase < 0) {
-      return dispatch(showNotification({ type: 'error', message: 'Le montant de base doit être un nombre positif.' }));
-    }
-    if (isNaN(pourcentagePrestation) || pourcentagePrestation < 0 || pourcentagePrestation > 100) {
-      return dispatch(showNotification({ type: 'error', message: 'Le pourcentage de prestation doit être entre 0 et 100.' }));
-    }
+  const closeModal = () => {
+    setShowModal(false);
+    setTarifToEdit(null);
+  };
 
-    setSavingType(type);
+  const handleSubmit = async (data) => {
+    setIsSubmitting(true);
     try {
-      await dispatch(upsertMinimumGroupedTarif({
-        type_expedition: type,
-        montant_base: montantBase,
-        pourcentage_prestation: pourcentagePrestation,
-      })).unwrap();
+      await dispatch(upsertMinimumGroupedTarif(data)).unwrap();
       dispatch(showNotification({ type: 'success', message: 'Tarif minimum enregistré avec succès.' }));
-      setForms((prev) => ({ ...prev, [type]: undefined }));
+      closeModal();
     } catch (err) {
       dispatch(showNotification({ type: 'error', message: err?.message || "Erreur lors de l'enregistrement." }));
     } finally {
-      setSavingType(null);
+      setIsSubmitting(false);
     }
   };
 
+  const handleDelete = async () => {
+    if (!tarifToDelete) return;
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteMinimumGroupedTarif(tarifToDelete.id)).unwrap();
+      dispatch(showNotification({ type: 'success', message: 'Tarif minimum supprimé avec succès.' }));
+      setTarifToDelete(null);
+    } catch (err) {
+      dispatch(showNotification({ type: 'error', message: 'Erreur lors de la suppression.' }));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const filteredTarifs = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return minimumGroupedTarifs || [];
+    return (minimumGroupedTarifs || []).filter((t) =>
+      (t.ligne || '').toLowerCase().includes(term) || getTypeLabel(t.type_expedition).toLowerCase().includes(term)
+    );
+  }, [minimumGroupedTarifs, searchTerm]);
+
   return (
     <div className="space-y-4 md:space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-start gap-3">
           <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 shrink-0">
             <ShieldCheck size={20} />
           </div>
           <div>
-            <h2 className="font-bold text-slate-900">Tarifs minimum par type de groupage</h2>
-            <p className="text-sm text-slate-500 mt-0.5">
-              Si le tarif calculé pour une expédition groupage est en dessous de ce plancher, ce tarif minimum est utilisé à la place.
+            <h2 className="font-bold text-slate-900">Tarifs minimum DHD par ligne</h2>
+            <p className="text-sm text-slate-500 mt-0.5 max-w-xl">
+              Si le tarif DHD calculé pour une ligne (départ → arrivée) est en dessous de ce plancher, ce tarif minimum est utilisé à la place.
             </p>
           </div>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="shrink-0 inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
-          title="Rafraîchir"
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
+            title="Rafraîchir"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
+          {canCreate && (
+            <button
+              onClick={() => openModal(null)}
+              className="flex items-center gap-2 p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span className="hidden md:inline">Nouveau tarif minimum</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {isLoadingMinimumGrouped && minimumGroupedTarifs.length === 0 ? (
-        <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center py-20 px-6">
-          <Loader2 className="animate-spin text-slate-900 mb-4" size={48} strokeWidth={1.5} />
-          <p className="text-slate-500 font-medium text-sm">Chargement des tarifs minimum...</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {TYPES_GROUPAGE.map(({ value, label }) => {
-            const montantBase = parseFloat(getFormValue(value, 'montant_base')) || 0;
-            const pourcentagePrestation = parseFloat(getFormValue(value, 'pourcentage_prestation')) || 0;
-            const montantPrestation = (montantBase * pourcentagePrestation) / 100;
-            const montantExpedition = montantBase + montantPrestation;
-            const existing = tarifsByType[value];
-            const isSaving = savingType === value;
+      <div className="relative group">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+        <input
+          type="text"
+          placeholder="Rechercher par ligne ou mode..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-12 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
+        />
+      </div>
 
-            return (
-              <div key={value} className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm p-4 md:p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold text-slate-900">{label}</p>
-                  {existing ? (
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-wide">
-                      Configuré
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full uppercase tracking-wide">
-                      Non configuré
-                    </span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Montant de base</label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        disabled={!canEdit}
-                        value={getFormValue(value, 'montant_base')}
-                        onChange={(e) => handleChange(value, 'montant_base', e.target.value)}
-                        placeholder="0"
-                        className="w-full pl-3 pr-14 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-bold text-slate-900 transition-all disabled:opacity-60"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 uppercase tracking-wider pointer-events-none">
-                        FCFA
-                      </span>
+      <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        {isLoadingMinimumGrouped && (minimumGroupedTarifs || []).length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 px-6">
+            <Loader2 className="animate-spin text-slate-900 mb-4" size={48} strokeWidth={1.5} />
+            <p className="text-slate-500 font-medium text-sm">Chargement des tarifs minimum...</p>
+          </div>
+        ) : filteredTarifs.length === 0 ? (
+          <div className="py-20 text-center px-6">
+            <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShieldCheck className="text-slate-400" size={32} />
+            </div>
+            <h3 className="font-bold text-slate-900 text-lg">Aucun tarif minimum configuré</h3>
+            <p className="text-slate-500 text-sm mt-2">Ajoutez un plancher pour une ligne DHD afin de garantir un tarif minimum.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {filteredTarifs.map((tarif) => {
+              const TypeIcon = getTypeIcon(tarif.type_expedition);
+              return (
+                <div key={tarif.id} className="p-4 md:p-5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center border border-slate-200 shrink-0">
+                      <TypeIcon size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-slate-900 capitalize truncate">{(tarif.ligne || '').replace('-', ' → ')}</p>
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                          {getTypeLabel(tarif.type_expedition)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Base: {Number(tarif.montant_base).toLocaleString()} FCFA · Prestation: {tarif.pourcentage_prestation}%
+                      </p>
                     </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Prestation agence</label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        disabled={!canEdit}
-                        value={getFormValue(value, 'pourcentage_prestation')}
-                        onChange={(e) => handleChange(value, 'pourcentage_prestation', e.target.value)}
-                        placeholder="0"
-                        className="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-bold text-slate-900 transition-all disabled:opacity-60"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
-                        %
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <p className="text-sm font-bold text-indigo-600 whitespace-nowrap">
+                      {Number(tarif.montant_expedition).toLocaleString()} FCFA
+                    </p>
+                    <RowActions
+                      onEdit={canEdit ? () => openModal(tarif) : undefined}
+                      onDelete={canDelete ? () => setTarifToDelete(tarif) : undefined}
+                    />
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-                <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prestation calculée</p>
-                    <p className="text-sm font-bold text-slate-700">{montantPrestation.toLocaleString()} FCFA</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tarif minimum</p>
-                    <p className="text-base font-bold text-indigo-600">{montantExpedition.toLocaleString()} FCFA</p>
-                  </div>
-                </div>
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={tarifToEdit ? 'Modifier le tarif minimum' : 'Nouveau tarif minimum'}
+        subtitle="Plancher appliqué si le tarif DHD calculé pour cette ligne est en dessous"
+        size="md"
+        confirmFormId="minimum-tarif-form"
+        isLoading={isSubmitting}
+        confirmLabel={tarifToEdit ? 'Mettre à jour' : 'Enregistrer'}
+      >
+        <AddMinimumTarif id="minimum-tarif-form" tarifToEdit={tarifToEdit} onSubmit={handleSubmit} />
+      </Modal>
 
-                {canEdit && (
-                  <button
-                    onClick={() => handleSave(value)}
-                    disabled={isSaving}
-                    className="w-full px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {isSaving && <Loader2 size={14} className="animate-spin" />}
-                    Enregistrer
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <DeleteModal
+        isOpen={!!tarifToDelete}
+        onClose={() => setTarifToDelete(null)}
+        onConfirm={handleDelete}
+        itemName={tarifToDelete ? `${getTypeLabel(tarifToDelete.type_expedition)} - ${tarifToDelete.ligne}` : ''}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };
