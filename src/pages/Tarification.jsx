@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { DollarSign, BarChart3, ShieldCheck } from "lucide-react";
+import { DollarSign, BarChart3 } from "lucide-react";
 import SimpleRates from "./SimpleRates";
 import GroupedRates from "./GroupedRates";
-import MinimumRates from "./MinimumRates";
 
 const Tarification = () => {
   const [activeTab, setActiveTab] = useState("simple");
@@ -33,23 +32,10 @@ const Tarification = () => {
             <BarChart3 size={16} />
             Tarification groupée
           </button>
-          <button
-            onClick={() => setActiveTab("minimum")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              activeTab === "minimum"
-                ? "bg-slate-900 text-white shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <ShieldCheck size={16} />
-            Tarifs minimum
-          </button>
         </div>
       </div>
 
-      {activeTab === "simple" && <SimpleRates />}
-      {activeTab === "groupee" && <GroupedRates />}
-      {activeTab === "minimum" && <MinimumRates />}
+      {activeTab === "simple" ? <SimpleRates /> : <GroupedRates />}
     </div>
   );
 };

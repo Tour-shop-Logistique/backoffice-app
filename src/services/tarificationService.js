@@ -59,21 +59,6 @@ const updateGroupedTarifStatus = async (arg) => {
   return response.data;
 };
 
-const getMinimumGroupedTarifs = async () => {
-  const response = await api.get('/tarification/list-minimum-groupage');
-  return response.data.tarifs;
-};
-
-const upsertMinimumGroupedTarif = async (tarifData) => {
-  const response = await api.post('/tarification/upsert-minimum-groupage', tarifData);
-  return response.data;
-};
-
-const deleteMinimumGroupedTarif = async (tarifId) => {
-  const response = await api.delete(`/tarification/delete-minimum-groupage/${tarifId}`);
-  return response.data;
-};
-
 const tarificationService = {
   getTarifs,
   getGroupedTarifs,
@@ -85,9 +70,6 @@ const tarificationService = {
   editGroupedTarif,
   deleteGroupedTarif,
   updateGroupedTarifStatus,
-  getMinimumGroupedTarifs,
-  upsertMinimumGroupedTarif,
-  deleteMinimumGroupedTarif,
 };
 
 export default tarificationService;

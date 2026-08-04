@@ -4,18 +4,15 @@ import tarificationService from '../../services/tarificationService';
 const initialState = {
   tarifs: [],
   groupedTarifs: [],
-  minimumGroupedTarifs: [],
   // Flags séparés (et non un isLoading partagé) : fetchTarifs et
   // fetchGroupedTarifs sont dispatchés en parallèle au montage du Layout, et
   // un flag commun faisait échouer silencieusement le second thunk via son
   // `condition` guard (il voyait isLoading déjà à true à cause du premier).
   isLoadingSimple: false,
   isLoadingGrouped: false,
-  isLoadingMinimumGrouped: false,
   error: null,
   hasLoaded: false,
   groupedHasLoaded: false,
-  minimumGroupedHasLoaded: false,
 };
 
 /*--------------------------- SIMPLE TARIFS ---------------------------*/
@@ -152,51 +149,6 @@ export const updateGroupedTarifStatus = createAsyncThunk(
     try {
       const id = typeof arg === 'object' ? arg.tarifId : arg;
       return await tarificationService.updateGroupedTarifStatus(id);
-    } catch (error) {
-      console.error(error);
-      return rejectWithValue(error.response.data);
-    }
-  }
-);
-
-/*--------------------------- MINIMUM GROUPED TARIFS ---------------------------*/
-
-export const fetchMinimumGroupedTarifs = createAsyncThunk(
-  'tarification/fetchMinimumGroupedTarifs',
-  async (options = {}, { rejectWithValue }) => {
-    try {
-      return await tarificationService.getMinimumGroupedTarifs();
-    } catch (error) {
-      console.error(error);
-      return rejectWithValue(error.response.data);
-    }
-  },
-  {
-    condition: (_, { getState }) => {
-      const { tarification } = getState();
-      if (tarification.isLoadingMinimumGrouped) return false;
-    },
-  }
-);
-
-export const upsertMinimumGroupedTarif = createAsyncThunk(
-  'tarification/upsertMinimumGroupedTarif',
-  async (tarifData, { rejectWithValue }) => {
-    try {
-      return await tarificationService.upsertMinimumGroupedTarif(tarifData);
-    } catch (error) {
-      console.error(error);
-      return rejectWithValue(error.response.data);
-    }
-  }
-);
-
-export const deleteMinimumGroupedTarif = createAsyncThunk(
-  'tarification/deleteMinimumGroupedTarif',
-  async (tarifId, { rejectWithValue }) => {
-    try {
-      await tarificationService.deleteMinimumGroupedTarif(tarifId);
-      return tarifId;
     } catch (error) {
       console.error(error);
       return rejectWithValue(error.response.data);
@@ -360,39 +312,6 @@ const tarificationSlice = createSlice({
           // If API doesn't return the full object, the pending state already toggled 'actif'
           // We just leave it as is or refresh if necessary.
         }
-      });
-
-    /*---------------- MINIMUM GROUPED ----------------*/
-    builder
-      .addCase(fetchMinimumGroupedTarifs.pending, (state, action) => {
-        if (!action.meta.arg?.silent) {
-          state.isLoadingMinimumGrouped = true;
-        }
-        state.error = null;
-      })
-      .addCase(fetchMinimumGroupedTarifs.fulfilled, (state, action) => {
-        state.isLoadingMinimumGrouped = false;
-        state.minimumGroupedTarifs = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
-        state.minimumGroupedHasLoaded = true;
-      })
-      .addCase(fetchMinimumGroupedTarifs.rejected, (state, action) => {
-        state.isLoadingMinimumGrouped = false;
-        state.error = action.payload;
-      })
-
-      .addCase(upsertMinimumGroupedTarif.fulfilled, (state, action) => {
-        const updated = action.payload?.tarif || action.payload?.data || action.payload;
-        if (!updated || !updated.id) return;
-        const index = state.minimumGroupedTarifs.findIndex((t) => t.id === updated.id);
-        if (index !== -1) {
-          state.minimumGroupedTarifs[index] = updated;
-        } else {
-          state.minimumGroupedTarifs.push(updated);
-        }
-      })
-
-      .addCase(deleteMinimumGroupedTarif.fulfilled, (state, action) => {
-        state.minimumGroupedTarifs = state.minimumGroupedTarifs.filter((t) => t.id !== action.payload);
       });
   },
 });

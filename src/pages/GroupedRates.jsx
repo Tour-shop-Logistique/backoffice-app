@@ -399,6 +399,11 @@ const GroupedRates = () => {
                         </td>
                         <td className="px-6 py-3">
                           <p className="font-bold text-slate-900">{exp.toLocaleString()} <span className="text-xs">FCFA</span></p>
+                          {tarif.montant_expedition_minimum != null && (
+                            <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100 whitespace-nowrap">
+                              Min: {Number(tarif.montant_expedition_minimum).toLocaleString()} FCFA
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-3 text-center">
                           {canToggleStatus ? (
@@ -468,6 +473,11 @@ const GroupedRates = () => {
                           {tarif.category && (
                             <span className="text-sm font-semibold text-blue-600 truncate">
                               Catégorie : {tarif.category?.nom}
+                            </span>
+                          )}
+                          {tarif.montant_expedition_minimum != null && (
+                            <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100 whitespace-nowrap">
+                              Min: {Number(tarif.montant_expedition_minimum).toLocaleString()} FCFA
                             </span>
                           )}
                         </div>
