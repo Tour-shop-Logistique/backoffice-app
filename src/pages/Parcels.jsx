@@ -191,8 +191,7 @@ const Parcels = () => {
   const handleDepartClick = (expedition, colisCount) => {
     const target = { ...expedition, colis_count: colisCount };
     setSelectedExpedition(target);
-    const fraisDejaRenseignes = Number(expedition.frais_annexes || 0) > 0;
-    if (!fraisDejaRenseignes) {
+    if (!expedition.infos_depart_renseignees) {
       setFraisExpedition('');
       setLienTracking(expedition.code_suivi_expedition || '');
       setIsExpeditionModalOpen(true);
@@ -939,22 +938,22 @@ const Parcels = () => {
         size="lg"
         isLoading={isUpdatingExpedition}
         footer={
-          <>
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
             <button
               type="button"
               onClick={() => setIsConfirmModalOpen(false)}
               disabled={isUpdatingExpedition}
-              className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest disabled:opacity-50"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest disabled:opacity-50"
             >
               Annuler
             </button>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               {fraisModifiables && (
                 <button
                   type="button"
                   onClick={handleOpenEditFrais}
                   disabled={isUpdatingExpedition}
-                  className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest disabled:opacity-50 flex items-center gap-2"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Wallet size={14} />
                   Modifier les frais
@@ -965,12 +964,12 @@ const Parcels = () => {
                 onClick={handleConfirmDepartAction}
                 disabled={isUpdatingExpedition || decisionAgenceRequise || agenceReceptionManquante}
                 title={agenceReceptionManquante ? "Renseignez l'agence de réception pour chaque colis" : undefined}
-                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 shadow-slate-900/10 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg disabled:opacity-50"
+                className="w-full sm:w-auto px-6 py-2.5 bg-slate-900 hover:bg-slate-800 shadow-slate-900/10 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg disabled:opacity-50"
               >
                 {isUpdatingExpedition ? <Loader2 className="animate-spin h-5 w-5" /> : 'Confirmer'}
               </button>
             </div>
-          </>
+          </div>
         }
       >
         <div className="space-y-4">
@@ -1069,7 +1068,7 @@ const Parcels = () => {
           {/* Agence de réception : choisie ici, au départ, plutôt que par
               le backoffice d'arrivée après réception. */}
           <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Building2 size={16} className="text-slate-400" />
                 <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">Agence de réception</span>
@@ -1079,7 +1078,7 @@ const Parcels = () => {
                   onChange={(e) => { if (e.target.value) { handleAssignAgenceReceptionToAll(e.target.value); e.target.value = ''; } }}
                   disabled={isAssigningAgence || isLoadingAgencesByCountry}
                   defaultValue=""
-                  className="text-xs font-bold border border-slate-200 rounded-lg px-2 py-1.5 bg-slate-50 text-slate-600 disabled:opacity-50"
+                  className="w-full sm:w-auto text-xs font-bold border border-slate-200 rounded-lg px-2 py-2 bg-slate-50 text-slate-600 disabled:opacity-50"
                 >
                   <option value="" disabled>Appliquer à tous...</option>
                   {agencesByCountry.map(agence => (
@@ -1094,15 +1093,15 @@ const Parcels = () => {
             ) : agencesByCountry.length === 0 ? (
               <p className="text-xs text-rose-500 font-medium">Aucune agence trouvée dans le pays de destination ({liveSelectedExpedition?.pays_destination}).</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {liveSelectedColis.map(colis => (
-                  <div key={colis.code_colis} className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-semibold text-slate-600 shrink-0">{colis.code_colis}</span>
+                  <div key={colis.code_colis} className="space-y-1">
+                    <span className="text-xs font-semibold text-slate-600 block truncate">{colis.code_colis}</span>
                     <select
                       value={agenceReceptionParColis[colis.code_colis] || ''}
                       onChange={(e) => handleAssignAgenceReception(colis.code_colis, e.target.value)}
                       disabled={isAssigningAgence}
-                      className={`flex-1 text-xs font-medium border rounded-lg px-2 py-1.5 disabled:opacity-50 ${
+                      className={`w-full text-xs font-medium border rounded-lg px-2 py-2 disabled:opacity-50 ${
                         agenceReceptionParColis[colis.code_colis] ? 'border-slate-200 text-slate-700' : 'border-rose-200 text-rose-600 bg-rose-50/50'
                       }`}
                     >

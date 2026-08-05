@@ -500,6 +500,7 @@ const parcelSlice = createSlice({
                 const patch = {
                     frais_annexes: Number(expedition.frais_annexes || 0),
                     code_suivi_expedition: expedition.code_suivi_expedition,
+                    infos_depart_renseignees: !!expedition.infos_depart_renseignees,
                     frais_decision_agence_prise: !!expedition.frais_decision_agence_prise,
                     statut_paiement_frais: expedition.statut_paiement_frais,
                 };
