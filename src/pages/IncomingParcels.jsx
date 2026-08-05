@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchIncomingParcels, blockParcels, assignParcels, receiveParcels } from '../redux/slices/parcelSlice';
+import { fetchIncomingParcels, blockParcels, receiveParcels } from '../redux/slices/parcelSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
 import { showNotification } from '../redux/slices/uiSlice';
 import { ROUTES } from '../routes';
@@ -68,35 +68,12 @@ const IncomingParcels = () => {
     const [selectedCodes, setSelectedCodes] = useState([]);
     const [validatingCode, setValidatingCode] = useState(null);
 
-    const [assigningCodes, setAssigningCodes] = useState({});
-
     // Source de vérité = donnée serveur (agence_destination_id sur le colis),
-    // synchronisée dans Redux dès que l'assignation réussit (voir
-    // assignParcels.fulfilled dans parcelSlice.js) — plus de state local
-    // séparé qui pouvait se désynchroniser ou se perdre à la navigation.
+    // désormais renseignée par le backoffice de départ avant le transit -
+    // ce module ne fait plus qu'afficher/confirmer, plus d'assignation ici.
     const getAgencyForColis = (code) => {
         const parcel = items.find((p) => p.code_colis === code);
         return parcel?.agence_destination_id || '';
-    };
-
-    const setAgencyForColis = async (code, agenceId) => {
-        if (!agenceId) return;
-
-        setAssigningCodes(prev => ({ ...prev, [code]: true }));
-
-        try {
-            const payload = { colis_assignments: { [code]: agenceId } };
-            await dispatch(assignParcels(payload)).unwrap();
-            dispatch(showNotification({ type: 'success', message: `Colis ${code} assigné à l'agence.` }));
-        } catch (err) {
-            dispatch(showNotification({ type: 'error', message: err?.message || 'Erreur lors de l\'assignation.' }));
-        } finally {
-            setAssigningCodes(prev => {
-                const copy = { ...prev };
-                delete copy[code];
-                return copy;
-            });
-        }
     };
 
     const areAllSelectedColisAssigned = () => {
@@ -109,25 +86,6 @@ const IncomingParcels = () => {
             const parcel = filteredParcels.find((p) => p.code_colis === code);
             return hasDepartedOrigin(parcel?.expedition?.statut_expedition);
         });
-    };
-
-    // Assigne la même agence à tous les colis d'un coup (un seul appel API),
-    // utilisé par le sélecteur "Agence pour tous" de la modale multi-colis.
-    const [isBulkAssigning, setIsBulkAssigning] = useState(false);
-    const assignAgencyToAll = async (codes, agenceId) => {
-        if (!agenceId || codes.length === 0) return;
-
-        setIsBulkAssigning(true);
-        try {
-            const colisAssignments = {};
-            codes.forEach(code => { colisAssignments[code] = agenceId; });
-            await dispatch(assignParcels({ colis_assignments: colisAssignments })).unwrap();
-            dispatch(showNotification({ type: 'success', message: `${codes.length} colis assignés à l'agence.` }));
-        } catch (err) {
-            dispatch(showNotification({ type: 'error', message: err?.message || "Erreur lors de l'assignation groupée." }));
-        } finally {
-            setIsBulkAssigning(false);
-        }
     };
 
     // Block State
@@ -556,36 +514,16 @@ const IncomingParcels = () => {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-3">
-                                                        <div className="relative inline-flex items-center">
-                                                            {assigningCodes[parcel.code_colis] && (
-                                                                <Loader2 size={14} className="absolute left-2.5 text-indigo-500 animate-spin pointer-events-none" />
-                                                            )}
-                                                            <select
-                                                                value={getAgencyForColis(parcel.code_colis)}
-                                                                onChange={(e) => setAgencyForColis(parcel.code_colis, e.target.value)}
-                                                                disabled={!!assigningCodes[parcel.code_colis]}
-                                                                className={`text-xs font-bold px-3 py-2 rounded-lg border transition-all focus:outline-none focus:ring-4 focus:ring-slate-900/5 ${
-                                                                    assigningCodes[parcel.code_colis] ? 'pl-8' : ''
-                                                                } ${
-                                                                    getAgencyForColis(parcel.code_colis)
-                                                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-900 focus:border-emerald-900'
-                                                                        : 'bg-white border-slate-200 text-slate-600 focus:border-slate-900'
-                                                                }`}
-                                                            >
-                                                                {assigningCodes[parcel.code_colis] ? (
-                                                                    <option value="" disabled>Assignation...</option>
-                                                                ) : agences.length === 0 ? (
-                                                                    <option value="" disabled>Chargement des agences...</option>
-                                                                ) : (
-                                                                    <option value="">Sélectionner...</option>
-                                                                )}
-                                                                {agences.map(agency => (
-                                                                    <option key={agency.id} value={agency.id}>
-                                                                        {agency.nom_agence} ({agency.ville})
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
+                                                        {getAgencyForColis(parcel.code_colis) ? (
+                                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-900">
+                                                                <Building2 size={12} />
+                                                                {agences.find(a => a.id === getAgencyForColis(parcel.code_colis))?.nom_agence || 'Agence assignée'}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg border bg-rose-50 border-rose-200 text-rose-600">
+                                                                Agence non renseignée
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     <td className="px-6 py-3 text-right">
                                                         <div className="flex items-center justify-end gap-2">
@@ -601,7 +539,7 @@ const IncomingParcels = () => {
                                                                 const disabled = isBulkControlling || validatingCode === parcel.code_colis || noAgency || !departed;
                                                                 const title = !departed
                                                                     ? "L'expédition n'a pas encore été confirmée en transit par le backoffice de départ"
-                                                                    : noAgency ? "Veuillez sélectionner une agence d'abord" : "";
+                                                                    : noAgency ? "Agence de réception non renseignée par le backoffice de départ" : "";
                                                                 return (
                                                                     <button
                                                                         onClick={() => handleSingleReceive(parcel.code_colis)}
@@ -733,7 +671,7 @@ const IncomingParcels = () => {
                                                                                 disabled={!departed || noAgency}
                                                                                 title={!departed
                                                                                     ? "L'expédition n'a pas encore été confirmée en transit"
-                                                                                    : noAgency ? "Sélectionnez d'abord une agence" : ""}
+                                                                                    : noAgency ? "Agence de réception non renseignée par le backoffice de départ" : ""}
                                                                                 className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2 disabled:opacity-50"
                                                                             >
                                                                                 <PackageCheck className="h-4 w-4" />
@@ -811,17 +749,20 @@ const IncomingParcels = () => {
                 />
             </Modal>
 
-            {/* AGENCY SELECTION MODAL */}
+            {/* RECEPTION CONFIRMATION MODAL - l'agence de réception est
+                désormais choisie par le backoffice de départ avant le
+                transit, ce modal ne fait plus que confirmer la réception
+                physique (affichage lecture seule de l'agence déjà assignée). */}
             <Modal
                 isOpen={isAgencyModalOpen}
                 onClose={() => {
                     setIsAgencyModalOpen(false);
                     setPendingAction(null);
                 }}
-                title="Agence de réception"
+                title="Confirmer la réception"
                 subtitle={pendingAction?.codes.length === 1
-                    ? "Choisissez l'agence qui recevra ce colis"
-                    : `Choisissez les agences pour ces ${pendingAction?.codes.length} colis`
+                    ? "Confirmez la réception de ce colis"
+                    : `Confirmez la réception de ces ${pendingAction?.codes.length} colis`
                 }
                 size={pendingAction?.codes.length === 1 ? "md" : "lg"}
                 onConfirm={confirmReceive}
@@ -834,115 +775,46 @@ const IncomingParcels = () => {
                         <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-3">
                             <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={16} />
                             <div className="text-xs text-amber-700 font-medium">
-                                Un ou plusieurs colis ne peuvent pas encore être réceptionnés : leur expédition n'a pas été confirmée en transit par le backoffice de départ. Vous pouvez tout de même choisir l'agence de réception dès maintenant pour anticiper.
+                                Un ou plusieurs colis ne peuvent pas encore être réceptionnés : leur expédition n'a pas été confirmée en transit par le backoffice de départ.
                             </div>
                         </div>
                     )}
-                    {pendingAction?.codes.length === 1 ? (
-                        // Single colis - simple dropdown
-                        <div className="space-y-3">
-                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Colis</p>
-                                <p className="text-sm font-bold text-slate-900">{pendingAction?.codes?.[0]}</p>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
-                                    Agence de destination
-                                </label>
-                                <div className="relative">
-                                    <Building2 size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                    <select
-                                        value={getAgencyForColis(pendingAction?.codes?.[0])}
-                                        onChange={(e) => setAgencyForColis(pendingAction?.codes?.[0], e.target.value)}
-                                        className="w-full bg-white border border-slate-200 rounded-lg pl-10 pr-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all"
-                                    >
-                                        <option value="">Sélectionner une agence...</option>
-                                        {agences.map(agency => (
-                                            <option key={agency.id} value={agency.id}>
-                                                {agency.nom_agence} — {agency.ville}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                    {!areAllSelectedColisAssigned() && (
+                        <div className="p-3 bg-rose-50 border border-rose-100 rounded-lg flex items-start gap-3">
+                            <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={16} />
+                            <div className="text-xs text-rose-700 font-medium">
+                                Un ou plusieurs colis n'ont pas d'agence de réception renseignée par le backoffice de départ. Contactez-le pour corriger avant de réceptionner.
                             </div>
                         </div>
-                    ) : (
-                        // Multiple colis - list with dropdown for each
-                        <div className="space-y-3 max-h-[50vh] overflow-y-auto">
-                            <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-3">
-                                <AlertCircle className="text-blue-500 shrink-0 mt-0.5" size={16} />
-                                <div className="text-xs text-blue-700 font-medium">
-                                    Assignez une agence à chaque colis, ou choisissez une agence unique pour tous ci-dessous.
-                                </div>
-                            </div>
+                    )}
+                    <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                        {pendingAction?.codes?.map((code) => {
+                            const parcel = filteredParcels.find(p => p.code_colis === code);
+                            const agenceId = getAgencyForColis(code);
+                            const agenceNom = agences.find(a => a.id === agenceId)?.nom_agence;
 
-                            <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg space-y-2">
-                                <label className="block text-xs font-bold text-indigo-700 uppercase tracking-widest">
-                                    Agence pour tous les colis sélectionnés
-                                </label>
-                                <select
-                                    value=""
-                                    disabled={isBulkAssigning}
-                                    onChange={(e) => assignAgencyToAll(pendingAction?.codes || [], e.target.value)}
-                                    className="w-full bg-white border border-indigo-200 rounded-lg px-3 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all disabled:opacity-50"
-                                >
-                                    <option value="">
-                                        {isBulkAssigning ? 'Assignation en cours...' : 'Appliquer la même agence à tous...'}
-                                    </option>
-                                    {agences.map(agency => (
-                                        <option key={agency.id} value={agency.id}>
-                                            {agency.nom_agence} ({agency.ville})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {pendingAction?.codes?.map((code) => {
-                                const parcel = filteredParcels.find(p => p.code_colis === code);
-                                
-                                return (
-                                    <div key={code} className="p-3 border border-slate-200 rounded-lg space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-slate-900">{code}</p>
-                                                <p className="text-xs text-slate-500 font-medium truncate">
-                                                    {parcel?.designation || 'Sans désignation'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="relative">
-                                            {assigningCodes[code] && (
-                                                <Loader2 size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-indigo-500 animate-spin pointer-events-none" />
-                                            )}
-                                            <select
-                                                value={getAgencyForColis(code)}
-                                                onChange={(e) => setAgencyForColis(code, e.target.value)}
-                                                disabled={!!assigningCodes[code]}
-                                                className={`w-full bg-white border rounded-lg px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all disabled:opacity-70 ${
-                                                    assigningCodes[code] ? 'pl-8' : ''
-                                                } ${
-                                                    getAgencyForColis(code) ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200'
-                                                }`}
-                                            >
-                                                {assigningCodes[code] ? (
-                                                    <option value="" disabled>Assignation...</option>
-                                                ) : agences.length === 0 ? (
-                                                    <option value="" disabled>Chargement des agences...</option>
-                                                ) : (
-                                                    <option value="">Sélectionner...</option>
-                                                )}
-                                                {agences.map(agency => (
-                                                    <option key={agency.id} value={agency.id}>
-                                                        {agency.nom_agence} ({agency.ville})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
+                            return (
+                                <div key={code} className="p-3 border border-slate-200 rounded-lg flex items-center justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-slate-900">{code}</p>
+                                        <p className="text-xs text-slate-500 font-medium truncate">
+                                            {parcel?.designation || 'Sans désignation'}
+                                        </p>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                                    {agenceId ? (
+                                        <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 shrink-0">
+                                            <Building2 size={12} />
+                                            {agenceNom || 'Agence assignée'}
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 shrink-0">
+                                            Non renseignée
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </Modal>
 

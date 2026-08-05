@@ -6,6 +6,11 @@ const agenceService = {
         return response.data;
     },
 
+    getAgencesByCountry: async (codePays) => {
+        const response = await api.get('/agence/list', { params: { code_pays: codePays } });
+        return response.data;
+    },
+
     updateAgenceStatus: async (agenceId, status) => {
         const response = await api.put(`/agence/status/${agenceId}`, { status });
         return response.data;

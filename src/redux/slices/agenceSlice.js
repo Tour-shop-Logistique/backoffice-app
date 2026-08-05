@@ -26,6 +26,27 @@ export const fetchAgences = createAsyncThunk(
     }
 );
 
+// Distinct de fetchAgences (qui liste les agences du backoffice courant,
+// utilisé dans plusieurs écrans) : sert au choix de l'agence de réception
+// au moment du contrôle avant départ, dans un AUTRE pays (celui de
+// destination de l'expédition) - state séparé pour ne pas écraser
+// `agences.agences` déjà utilisé ailleurs.
+export const fetchAgencesByCountry = createAsyncThunk(
+    'agences/fetchAgencesByCountry',
+    async (codePays, { rejectWithValue }) => {
+        try {
+            const data = await agenceService.getAgencesByCountry(codePays);
+            if (data.success) {
+                return { codePays, agences: data.agences };
+            }
+            return rejectWithValue("Impossible de charger les agences du pays de destination");
+        } catch (error) {
+            console.error(error);
+            return rejectWithValue(error.message || "Erreur lors de la récupération des agences");
+        }
+    }
+);
+
 export const fetchAgenceById = createAsyncThunk(
     'agences/fetchById',
     async (agenceId, { rejectWithValue }) => {
@@ -133,6 +154,9 @@ const agenceSlice = createSlice({
         isLoadingTarifs: false,
         error: null,
         hasLoaded: false,
+        agencesByCountry: [],
+        agencesByCountryCode: null,
+        isLoadingAgencesByCountry: false,
         currentAgence: null,
         currentAgencyTarifsGroupage: [],
         currentAgencyTarifsSimple: [],
@@ -191,6 +215,17 @@ const agenceSlice = createSlice({
             .addCase(fetchAgences.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.payload;
+            })
+            .addCase(fetchAgencesByCountry.pending, (state) => {
+                state.isLoadingAgencesByCountry = true;
+            })
+            .addCase(fetchAgencesByCountry.fulfilled, (state, action) => {
+                state.isLoadingAgencesByCountry = false;
+                state.agencesByCountry = action.payload.agences;
+                state.agencesByCountryCode = action.payload.codePays;
+            })
+            .addCase(fetchAgencesByCountry.rejected, (state) => {
+                state.isLoadingAgencesByCountry = false;
             })
             // Toggle Status (Optimistic Update)
             .addCase(toggleAgenceStatus.pending, (state, action) => {

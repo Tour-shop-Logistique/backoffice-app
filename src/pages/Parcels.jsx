@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchParcels, updateExpeditionInfo, confirmExpeditionDepart, controlParcels, blockParcels } from '../redux/slices/parcelSlice';
+import { fetchParcels, updateExpeditionInfo, confirmExpeditionDepart, controlParcels, blockParcels, assignParcels } from '../redux/slices/parcelSlice';
+import { fetchAgencesByCountry } from '../redux/slices/agenceSlice';
 import { showNotification } from "../redux/slices/uiSlice";
 import { ROUTES } from '../routes';
 import Modal from '../components/common/Modal';
@@ -48,6 +49,14 @@ const Parcels = () => {
   const isUpdatingExpedition = useSelector(state => state.parcels.isUpdatingExpedition);
   const isBulkControlling = useSelector(state => state.parcels.isBulkControlling);
   const isBulkBlocking = useSelector(state => state.parcels.isBulkBlocking);
+
+  // Agence de réception (destination finale) : choisie par le backoffice de
+  // départ au moment de la confirmation, parmi les agences du pays de
+  // destination de l'expédition.
+  const agencesByCountry = useSelector(state => state.agences.agencesByCountry);
+  const isLoadingAgencesByCountry = useSelector(state => state.agences.isLoadingAgencesByCountry);
+  const [agenceReceptionParColis, setAgenceReceptionParColis] = useState({});
+  const [isAssigningAgence, setIsAssigningAgence] = useState(false);
 
   // Selection state
   const [selectedCodes, setSelectedCodes] = useState([]);
@@ -335,6 +344,68 @@ const Parcels = () => {
     const group = groupedParcels.find(g => g.expedition?.id === selectedExpedition.id);
     return group ? { ...group.expedition, colis_count: group.parcels.length } : selectedExpedition;
   }, [selectedExpedition, groupedParcels]);
+
+  const liveSelectedColis = useMemo(() => {
+    if (!selectedExpedition) return [];
+    const group = groupedParcels.find(g => g.expedition?.id === selectedExpedition.id);
+    return group ? group.parcels : [];
+  }, [selectedExpedition, groupedParcels]);
+
+  // Charge les agences du pays de destination dès qu'une expédition est
+  // sélectionnée, et initialise les assignations avec l'agence déjà en
+  // base pour chaque colis (utile si le contrôle a été fait en plusieurs
+  // fois).
+  useEffect(() => {
+    if (!liveSelectedExpedition?.code_pays_destination) return;
+    dispatch(fetchAgencesByCountry(liveSelectedExpedition.code_pays_destination));
+  }, [dispatch, liveSelectedExpedition?.code_pays_destination]);
+
+  useEffect(() => {
+    if (liveSelectedColis.length === 0) return;
+    setAgenceReceptionParColis(prev => {
+      const next = { ...prev };
+      liveSelectedColis.forEach(c => {
+        if (next[c.code_colis] === undefined) {
+          next[c.code_colis] = c.agence_destination_id || '';
+        }
+      });
+      return next;
+    });
+  }, [liveSelectedColis]);
+
+  const agenceReceptionManquante = liveSelectedColis.some(c => !agenceReceptionParColis[c.code_colis]);
+
+  const handleAssignAgenceReception = async (code, agenceId) => {
+    setAgenceReceptionParColis(prev => ({ ...prev, [code]: agenceId }));
+    if (!agenceId) return;
+    setIsAssigningAgence(true);
+    try {
+      await dispatch(assignParcels({ colis_assignments: { [code]: agenceId } })).unwrap();
+    } catch (error) {
+      dispatch(showNotification({ type: 'error', message: error.message || "Erreur lors de l'assignation de l'agence." }));
+    } finally {
+      setIsAssigningAgence(false);
+    }
+  };
+
+  const handleAssignAgenceReceptionToAll = async (agenceId) => {
+    if (!agenceId || liveSelectedColis.length === 0) return;
+    setIsAssigningAgence(true);
+    try {
+      const colisAssignments = {};
+      liveSelectedColis.forEach(c => { colisAssignments[c.code_colis] = agenceId; });
+      await dispatch(assignParcels({ colis_assignments: colisAssignments })).unwrap();
+      setAgenceReceptionParColis(prev => {
+        const next = { ...prev };
+        liveSelectedColis.forEach(c => { next[c.code_colis] = agenceId; });
+        return next;
+      });
+    } catch (error) {
+      dispatch(showNotification({ type: 'error', message: error.message || "Erreur lors de l'assignation de l'agence." }));
+    } finally {
+      setIsAssigningAgence(false);
+    }
+  };
 
   const fraisAnnexesMontant = Number(liveSelectedExpedition?.frais_annexes || 0);
   const decisionAgenceRequise = fraisAnnexesMontant > 0 && !liveSelectedExpedition?.frais_decision_agence_prise;
@@ -892,7 +963,8 @@ const Parcels = () => {
               <button
                 type="button"
                 onClick={handleConfirmDepartAction}
-                disabled={isUpdatingExpedition || decisionAgenceRequise}
+                disabled={isUpdatingExpedition || decisionAgenceRequise || agenceReceptionManquante}
+                title={agenceReceptionManquante ? "Renseignez l'agence de réception pour chaque colis" : undefined}
                 className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 shadow-slate-900/10 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg disabled:opacity-50"
               >
                 {isUpdatingExpedition ? <Loader2 className="animate-spin h-5 w-5" /> : 'Confirmer'}
@@ -992,6 +1064,57 @@ const Parcels = () => {
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Agence de réception : choisie ici, au départ, plutôt que par
+              le backoffice d'arrivée après réception. */}
+          <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Building2 size={16} className="text-slate-400" />
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">Agence de réception</span>
+              </div>
+              {liveSelectedColis.length > 1 && (
+                <select
+                  onChange={(e) => { if (e.target.value) { handleAssignAgenceReceptionToAll(e.target.value); e.target.value = ''; } }}
+                  disabled={isAssigningAgence || isLoadingAgencesByCountry}
+                  defaultValue=""
+                  className="text-xs font-bold border border-slate-200 rounded-lg px-2 py-1.5 bg-slate-50 text-slate-600 disabled:opacity-50"
+                >
+                  <option value="" disabled>Appliquer à tous...</option>
+                  {agencesByCountry.map(agence => (
+                    <option key={agence.id} value={agence.id}>{agence.nom_agence} ({agence.ville})</option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {isLoadingAgencesByCountry ? (
+              <p className="text-xs text-slate-400 flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Chargement des agences...</p>
+            ) : agencesByCountry.length === 0 ? (
+              <p className="text-xs text-rose-500 font-medium">Aucune agence trouvée dans le pays de destination ({liveSelectedExpedition?.pays_destination}).</p>
+            ) : (
+              <div className="space-y-2">
+                {liveSelectedColis.map(colis => (
+                  <div key={colis.code_colis} className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-semibold text-slate-600 shrink-0">{colis.code_colis}</span>
+                    <select
+                      value={agenceReceptionParColis[colis.code_colis] || ''}
+                      onChange={(e) => handleAssignAgenceReception(colis.code_colis, e.target.value)}
+                      disabled={isAssigningAgence}
+                      className={`flex-1 text-xs font-medium border rounded-lg px-2 py-1.5 disabled:opacity-50 ${
+                        agenceReceptionParColis[colis.code_colis] ? 'border-slate-200 text-slate-700' : 'border-rose-200 text-rose-600 bg-rose-50/50'
+                      }`}
+                    >
+                      <option value="">Sélectionner une agence...</option>
+                      {agencesByCountry.map(agence => (
+                        <option key={agence.id} value={agence.id}>{agence.nom_agence} ({agence.ville})</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </Modal>
