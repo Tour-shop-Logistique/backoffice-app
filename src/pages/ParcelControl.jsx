@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchParcelByCode, clearCurrentParcel, setCurrentParcel, controlParcels, receiveParcels, assignParcels, blockParcels } from '../redux/slices/parcelSlice';
+import { fetchParcelByCode, clearCurrentParcel, setCurrentParcel, controlParcels, receiveParcels, blockParcels } from '../redux/slices/parcelSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
 import { showNotification } from '../redux/slices/uiSlice';
 import Modal from '../components/common/Modal';
@@ -65,32 +65,11 @@ const ParcelControl = () => {
     const { agences, hasLoaded: agencesLoaded, isLoading: isLoadingAgences } = useSelector(state => state.agences);
     const [isValidating, setIsValidating] = useState(false);
     const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
-    const [isAssigningAgency, setIsAssigningAgency] = useState(false);
 
-    // L'agence de réception assignée à ce colis (source de vérité serveur,
-    // synchronisée immédiatement au choix — cohérent avec le comportement
-    // du tableau "Arrivages prévus" et de ses modales).
+    // L'agence de réception, désormais choisie par le backoffice de départ
+    // au contrôle avant départ - ici on ne fait que la lire (lecture seule),
+    // plus d'assignation possible depuis la fiche détail d'un colis.
     const selectedAgencyId = currentParcel?.agence_destination_id || '';
-
-    const handleAssignAgency = async (agenceId) => {
-        if (!agenceId || !currentParcel?.code_colis) return;
-
-        setIsAssigningAgency(true);
-        try {
-            // currentParcel.agence_destination_id se met à jour automatiquement
-            // via le reducer assignParcels.fulfilled (parcelSlice.js).
-            await dispatch(assignParcels({
-                colis_assignments: { [currentParcel.code_colis]: agenceId }
-            })).unwrap();
-        } catch (err) {
-            dispatch(showNotification({
-                type: 'error',
-                message: err?.message || "Erreur lors de l'assignation de l'agence."
-            }));
-        } finally {
-            setIsAssigningAgency(false);
-        }
-    };
 
     // Block State
     const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -515,30 +494,17 @@ const ParcelControl = () => {
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
                                     Agence de réception
                                 </label>
-                                <div className="relative">
-                                    {isAssigningAgency && (
-                                        <Loader2 size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 animate-spin pointer-events-none" />
-                                    )}
-                                    <select
-                                        value={selectedAgencyId}
-                                        onChange={(e) => handleAssignAgency(e.target.value)}
-                                        disabled={isAssigningAgency}
-                                        className={`w-full px-4 py-3 rounded border text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-slate-900/5 disabled:opacity-70 ${
-                                            isAssigningAgency ? 'pl-10' : ''
-                                        } ${
-                                            selectedAgencyId
-                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-900 focus:border-emerald-900'
-                                                : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-slate-900'
-                                        }`}
-                                    >
-                                        <option value="">Sélectionner une agence...</option>
-                                        {agences.map(agency => (
-                                            <option key={agency.id} value={agency.id}>
-                                                {agency.nom_agence} ({agency.ville})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                {/* Choisie par le backoffice de départ au contrôle avant
+                                    départ - affichage lecture seule ici, pas de select. */}
+                                {selectedAgencyId ? (
+                                    <div className="px-4 py-3 rounded border bg-emerald-50 border-emerald-200 text-emerald-900 text-sm font-bold">
+                                        {agences.find(a => a.id === selectedAgencyId)?.nom_agence || 'Agence assignée'}
+                                    </div>
+                                ) : (
+                                    <div className="px-4 py-3 rounded border bg-rose-50 border-rose-200 text-rose-600 text-sm font-bold">
+                                        Non renseignée par le backoffice de départ
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -582,7 +548,7 @@ const ParcelControl = () => {
             <Modal
                 isOpen={isAgencyModalOpen}
                 onClose={() => setIsAgencyModalOpen(false)}
-                title="Agence de Réception"
+                title="Confirmer la Réception"
                 subtitle="Confirmation de l'entrée en entrepôt central"
                 size="md"
                 onConfirm={confirmReceive}
@@ -592,23 +558,22 @@ const ParcelControl = () => {
             >
                 <div className="space-y-6">
                     <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-xs font-medium text-blue-700 leading-relaxed">
-                        Veuillez confirmer l'agence qui réceptionne physiquement ce colis pour valider son statut.
+                        Veuillez confirmer la réception physique de ce colis pour valider son statut.
                     </div>
-                    <select
-                        value={selectedAgencyId}
-                        onChange={(e) => handleAssignAgency(e.target.value)}
-                        disabled={isAssigningAgency}
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 transition-all outline-none disabled:opacity-70"
-                    >
-                        <option value="">
-                            {isAssigningAgency ? 'Assignation en cours...' : 'Sélectionner une agence...'}
-                        </option>
-                        {agences.map(agency => (
-                            <option key={agency.id} value={agency.id}>
-                                {agency.nom_agence} ({agency.ville})
-                            </option>
-                        ))}
-                    </select>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
+                            Agence de réception
+                        </label>
+                        {selectedAgencyId ? (
+                            <div className="w-full px-5 py-4 bg-emerald-50 border border-emerald-200 rounded-xl text-sm font-bold text-emerald-900">
+                                {agences.find(a => a.id === selectedAgencyId)?.nom_agence || 'Agence assignée'}
+                            </div>
+                        ) : (
+                            <div className="w-full px-5 py-4 bg-rose-50 border border-rose-200 rounded-xl text-sm font-bold text-rose-600">
+                                Non renseignée par le backoffice de départ
+                            </div>
+                        )}
+                    </div>
                 </div>
             </Modal>
 
