@@ -318,7 +318,12 @@ const Agents = () => {
         }
       }
     } catch (err) {
-      dispatch(showNotification({ type: 'error', message: err.message || 'Erreur lors de la soumission.' }));
+      // err (via .unwrap()) est le payload Laravel rejeté : {message, errors}
+      // pour un 422 de validation, {message} seul pour les autres erreurs -
+      // on privilégie le premier message de champ s'il existe, plus précis
+      // que le message générique.
+      const firstFieldError = err?.errors && Object.values(err.errors)[0]?.[0];
+      dispatch(showNotification({ type: 'error', message: firstFieldError || err?.message || 'Erreur lors de la soumission.' }));
     } finally {
       setIsSubmitting(false);
     }

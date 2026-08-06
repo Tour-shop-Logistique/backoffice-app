@@ -115,7 +115,10 @@ const agentSlice = createSlice({
 
             // ADD
             .addCase(addAgent.fulfilled, (state, action) => {
-                const newAgent = action.payload?.agent || action.payload?.data || action.payload;
+                // Le backend renvoie { success, message, user } - garde les
+                // anciennes clés (agent/data) en repli pour compatibilité si
+                // la forme de réponse changeait à nouveau.
+                const newAgent = action.payload?.user || action.payload?.agent || action.payload?.data || action.payload;
                 const agentData = action.meta.arg;
 
                 if (newAgent && typeof newAgent === 'object') {
