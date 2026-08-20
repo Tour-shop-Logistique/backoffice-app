@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardStats, fetchDashboardRecap } from '../redux/slices/parcelSlice';
 import { ROUTES } from '../routes';
+import { getCountryName } from '../utils/countries';
 import {
   Loader2,
   RefreshCw,
@@ -360,7 +361,7 @@ const Dashboard = () => {
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${i === 0 ? 'bg-amber-400' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-slate-300' : 'bg-slate-200'}`}>
                         {i + 1}
                       </span>
-                      <span className="text-sm font-semibold text-slate-700">{dest.pays}</span>
+                      <span className="text-sm font-semibold text-slate-700">{getCountryName(dest.code_pays) || dest.pays}</span>
                     </div>
                     <span className="text-sm font-bold text-slate-900">{dest.total}</span>
                   </div>
