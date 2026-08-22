@@ -20,6 +20,18 @@ import DeleteModal from '../components/common/DeleteModal';
 import RowActions from '../components/common/RowActions';
 import useHasPermission from '../hooks/useHasPermission';
 
+// Éligibilité par type d'expédition, configurable par produit (CA en est
+// volontairement exclu : tout produit de la catégorie système "Colis
+// Accompagnés" y est toujours éligible implicitement, jamais un choix).
+const ELIGIBILITE_FIELDS = [
+  { key: 'eligible_ld', label: 'Éligible LD (livraison à domicile)', help: "Décochez si ce produit ne peut pas voyager en mode LD." },
+  { key: 'eligible_afrique', label: 'Éligible Groupage Afrique', help: "Décochez si ce produit ne peut pas voyager vers une destination africaine en groupage." },
+  { key: 'eligible_dhd_aerien', label: 'Éligible DHD Aérien', help: "Décochez si ce produit est interdit en soute avion (ex: matières inflammables)." },
+  { key: 'eligible_dhd_maritime', label: 'Éligible DHD Maritime', help: "Décochez si ce produit ne peut pas voyager en fret maritime." },
+];
+
+const ELIGIBILITE_DEFAULTS = Object.fromEntries(ELIGIBILITE_FIELDS.map(f => [f.key, true]));
+
 export default function Produits() {
   const dispatch = useDispatch();
   const { listProduits, isLoading, categories, hasLoadedProduits, hasLoadedCategories } = useSelector(state => state.produits);
@@ -40,6 +52,7 @@ export default function Produits() {
     category_id: "",
     designation: "",
     reference: "",
+    ...ELIGIBILITE_DEFAULTS,
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -139,7 +152,7 @@ export default function Produits() {
 
       if (response.success) {
         showNotification("success", "Produit ajouté avec succès !");
-        setProduitForm({ category_id: "", designation: "", reference: "" });
+        setProduitForm({ category_id: "", designation: "", reference: "", ...ELIGIBILITE_DEFAULTS });
         setIsModalOpen(false);
         dispatch(fetchProduits({ silent: true }));
       } else {
@@ -191,7 +204,8 @@ export default function Produits() {
         produitData: {
           category_id: editingProduit.category_id,
           designation: editingProduit.designation,
-          reference: editingProduit.reference
+          reference: editingProduit.reference,
+          ...Object.fromEntries(ELIGIBILITE_FIELDS.map(f => [f.key, editingProduit[f.key]])),
         }
       })).unwrap();
 
@@ -522,10 +536,32 @@ export default function Produits() {
                           </div>
                         </td>
                         <td className="px-6 py-3">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium">
-                            <Tag className="h-3 w-3" />
-                            {produit.category?.nom || 'Sans catégorie'}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium">
+                              <Tag className="h-3 w-3" />
+                              {produit.category?.nom || 'Sans catégorie'}
+                            </span>
+                            {produit.eligible_ld === false && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                Non éligible LD
+                              </span>
+                            )}
+                            {produit.eligible_afrique === false && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                Non éligible Afrique
+                              </span>
+                            )}
+                            {produit.eligible_dhd_aerien === false && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                Non éligible DHD Aérien
+                              </span>
+                            )}
+                            {produit.eligible_dhd_maritime === false && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                Non éligible DHD Maritime
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-3">
                           {canToggleProduitStatus ? (
@@ -588,8 +624,28 @@ export default function Produits() {
                       )}
                     </div>
 
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-sm text-blue-600 font-semibold">Catégorie : {produit.category?.nom || 'Sans catégorie'}</span>
+                      {produit.eligible_ld === false && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                          Non éligible LD
+                        </span>
+                      )}
+                      {produit.eligible_afrique === false && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                          Non éligible Afrique
+                        </span>
+                      )}
+                      {produit.eligible_dhd_aerien === false && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                          Non éligible DHD Aérien
+                        </span>
+                      )}
+                      {produit.eligible_dhd_maritime === false && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                          Non éligible DHD Maritime
+                        </span>
+                      )}
                     </div>
 
                     {(canEditProduit || canDeleteProduit) && (
@@ -626,7 +682,7 @@ export default function Produits() {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setProduitForm({ category_id: "", designation: "", reference: "" });
+          setProduitForm({ category_id: "", designation: "", reference: "", ...ELIGIBILITE_DEFAULTS });
         }}
         title="Nouveau produit"
         subtitle="Ajoutez une nouvelle référence à votre catalogue"
@@ -684,6 +740,25 @@ export default function Produits() {
               onChange={(e) => setProduitForm({ ...produitForm, reference: e.target.value.toUpperCase() })}
               className="w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all bg-slate-50 uppercase placeholder:text-slate-300"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Éligibilité par type d'expédition</label>
+            {ELIGIBILITE_FIELDS.map(field => (
+              <label key={field.key} className="flex items-start gap-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={produitForm[field.key] !== false}
+                  onChange={(e) => setProduitForm({ ...produitForm, [field.key]: e.target.checked })}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900/20"
+                />
+                <span className="text-sm text-slate-600">
+                  <span className="font-semibold text-slate-700">{field.label}</span>
+                  <br />
+                  {field.help}
+                </span>
+              </label>
+            ))}
           </div>
         </div>
       </Modal>
@@ -744,6 +819,25 @@ export default function Produits() {
                 onChange={(e) => setEditingProduit({ ...editingProduit, reference: e.target.value.toUpperCase() })}
                 className="w-full border border-slate-200 rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all bg-slate-50 uppercase"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Éligibilité par type d'expédition</label>
+              {ELIGIBILITE_FIELDS.map(field => (
+                <label key={field.key} className="flex items-start gap-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editingProduit[field.key] !== false}
+                    onChange={(e) => setEditingProduit({ ...editingProduit, [field.key]: e.target.checked })}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900/20"
+                  />
+                  <span className="text-sm text-slate-600">
+                    <span className="font-semibold text-slate-700">{field.label}</span>
+                    <br />
+                    {field.help}
+                  </span>
+                </label>
+              ))}
             </div>
           </div>
         )}
