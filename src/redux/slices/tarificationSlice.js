@@ -4,15 +4,21 @@ import tarificationService from '../../services/tarificationService';
 const initialState = {
   tarifs: [],
   groupedTarifs: [],
+  intervilleTarifs: [],
+  livraisonCommuneTarifs: [],
   // Flags séparés (et non un isLoading partagé) : fetchTarifs et
   // fetchGroupedTarifs sont dispatchés en parallèle au montage du Layout, et
   // un flag commun faisait échouer silencieusement le second thunk via son
   // `condition` guard (il voyait isLoading déjà à true à cause du premier).
   isLoadingSimple: false,
   isLoadingGrouped: false,
+  isLoadingInterville: false,
+  isLoadingLivraisonCommune: false,
   error: null,
   hasLoaded: false,
   groupedHasLoaded: false,
+  intervilleHasLoaded: false,
+  livraisonCommuneHasLoaded: false,
 };
 
 /*--------------------------- SIMPLE TARIFS ---------------------------*/
@@ -149,6 +155,144 @@ export const updateGroupedTarifStatus = createAsyncThunk(
     try {
       const id = typeof arg === 'object' ? arg.tarifId : arg;
       return await tarificationService.updateGroupedTarifStatus(id);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+/*--------------------------- INTERVILLE TARIFS ---------------------------*/
+
+export const fetchIntervilleTarifs = createAsyncThunk(
+  'tarification/fetchIntervilleTarifs',
+  async (options = {}, { rejectWithValue }) => {
+    try {
+      return await tarificationService.getIntervilleTarifs();
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { tarification } = getState();
+      if (tarification.isLoadingInterville) return false;
+    },
+  }
+);
+
+export const addIntervilleTarif = createAsyncThunk(
+  'tarification/addIntervilleTarif',
+  async (tarifData, { rejectWithValue }) => {
+    try {
+      return await tarificationService.addIntervilleTarif(tarifData);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const editIntervilleTarif = createAsyncThunk(
+  'tarification/editIntervilleTarif',
+  async ({ tarifId, tarifData }, { rejectWithValue }) => {
+    try {
+      return await tarificationService.editIntervilleTarif(tarifId, tarifData);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const deleteIntervilleTarif = createAsyncThunk(
+  'tarification/deleteIntervilleTarif',
+  async (tarifId, { rejectWithValue }) => {
+    try {
+      await tarificationService.deleteIntervilleTarif(tarifId);
+      return tarifId;
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const updateIntervilleTarifStatus = createAsyncThunk(
+  'tarification/updateIntervilleTarifStatus',
+  async (tarifId, { rejectWithValue }) => {
+    try {
+      return await tarificationService.updateIntervilleTarifStatus(tarifId);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+/*--------------------------- LIVRAISON COMMUNE TARIFS ---------------------------*/
+
+export const fetchLivraisonCommuneTarifs = createAsyncThunk(
+  'tarification/fetchLivraisonCommuneTarifs',
+  async (options = {}, { rejectWithValue }) => {
+    try {
+      return await tarificationService.getLivraisonCommuneTarifs();
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { tarification } = getState();
+      if (tarification.isLoadingLivraisonCommune) return false;
+    },
+  }
+);
+
+export const addLivraisonCommuneTarif = createAsyncThunk(
+  'tarification/addLivraisonCommuneTarif',
+  async (tarifData, { rejectWithValue }) => {
+    try {
+      return await tarificationService.addLivraisonCommuneTarif(tarifData);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const editLivraisonCommuneTarif = createAsyncThunk(
+  'tarification/editLivraisonCommuneTarif',
+  async ({ tarifId, tarifData }, { rejectWithValue }) => {
+    try {
+      return await tarificationService.editLivraisonCommuneTarif(tarifId, tarifData);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const deleteLivraisonCommuneTarif = createAsyncThunk(
+  'tarification/deleteLivraisonCommuneTarif',
+  async (tarifId, { rejectWithValue }) => {
+    try {
+      await tarificationService.deleteLivraisonCommuneTarif(tarifId);
+      return tarifId;
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const updateLivraisonCommuneTarifStatus = createAsyncThunk(
+  'tarification/updateLivraisonCommuneTarifStatus',
+  async (tarifId, { rejectWithValue }) => {
+    try {
+      return await tarificationService.updateLivraisonCommuneTarifStatus(tarifId);
     } catch (error) {
       console.error(error);
       return rejectWithValue(error.response.data);
@@ -311,6 +455,146 @@ const tarificationSlice = createSlice({
         } else {
           // If API doesn't return the full object, the pending state already toggled 'actif'
           // We just leave it as is or refresh if necessary.
+        }
+      });
+
+    /*---------------- INTERVILLE ----------------*/
+    builder
+      .addCase(fetchIntervilleTarifs.pending, (state, action) => {
+        if (!action.meta.arg?.silent) {
+          state.isLoadingInterville = true;
+        }
+        state.error = null;
+      })
+      .addCase(fetchIntervilleTarifs.fulfilled, (state, action) => {
+        state.isLoadingInterville = false;
+        const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+        state.intervilleTarifs = data.map(t => ({
+          ...t,
+          actif: t.actif === true || t.actif === 1 || t.actif === "1"
+        }));
+        state.intervilleHasLoaded = true;
+      })
+      .addCase(fetchIntervilleTarifs.rejected, (state, action) => {
+        state.isLoadingInterville = false;
+        state.error = action.payload;
+      })
+
+      .addCase(addIntervilleTarif.fulfilled, (state, action) => {
+        const newTarif = action.payload?.tarif || action.payload?.data || action.payload;
+        if (newTarif) {
+          state.intervilleTarifs.unshift({
+            ...newTarif,
+            actif: newTarif.actif !== undefined ? newTarif.actif : true
+          });
+        }
+      })
+
+      .addCase(editIntervilleTarif.fulfilled, (state, action) => {
+        const updated = action.payload?.tarif || action.payload?.data || action.payload;
+        const { tarifId, tarifData } = action.meta.arg;
+
+        state.intervilleTarifs = state.intervilleTarifs.map((t) =>
+          t.id === tarifId
+            ? { ...t, ...tarifData, ...(updated && updated.id ? updated : {}) }
+            : t
+        );
+      })
+
+      .addCase(deleteIntervilleTarif.fulfilled, (state, action) => {
+        state.intervilleTarifs = state.intervilleTarifs.filter((t) => t.id !== action.payload);
+      })
+
+      .addCase(updateIntervilleTarifStatus.pending, (state, action) => {
+        const tarifId = action.meta.arg;
+        const index = state.intervilleTarifs.findIndex(t => t.id === tarifId);
+        if (index !== -1) {
+          state.intervilleTarifs[index].actif = !state.intervilleTarifs[index].actif;
+        }
+      })
+      .addCase(updateIntervilleTarifStatus.rejected, (state, action) => {
+        const tarifId = action.meta.arg;
+        const index = state.intervilleTarifs.findIndex(t => t.id === tarifId);
+        if (index !== -1) {
+          state.intervilleTarifs[index].actif = !state.intervilleTarifs[index].actif;
+        }
+      })
+      .addCase(updateIntervilleTarifStatus.fulfilled, (state, action) => {
+        const updated = action.payload?.tarif || action.payload?.data || action.payload;
+        if (updated) {
+          state.intervilleTarifs = state.intervilleTarifs.map((t) =>
+            t.id === updated.id ? updated : t
+          );
+        }
+      });
+
+    /*---------------- LIVRAISON COMMUNE ----------------*/
+    builder
+      .addCase(fetchLivraisonCommuneTarifs.pending, (state, action) => {
+        if (!action.meta.arg?.silent) {
+          state.isLoadingLivraisonCommune = true;
+        }
+        state.error = null;
+      })
+      .addCase(fetchLivraisonCommuneTarifs.fulfilled, (state, action) => {
+        state.isLoadingLivraisonCommune = false;
+        const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+        state.livraisonCommuneTarifs = data.map(t => ({
+          ...t,
+          actif: t.actif === true || t.actif === 1 || t.actif === "1"
+        }));
+        state.livraisonCommuneHasLoaded = true;
+      })
+      .addCase(fetchLivraisonCommuneTarifs.rejected, (state, action) => {
+        state.isLoadingLivraisonCommune = false;
+        state.error = action.payload;
+      })
+
+      .addCase(addLivraisonCommuneTarif.fulfilled, (state, action) => {
+        const newTarif = action.payload?.tarif || action.payload?.data || action.payload;
+        if (newTarif) {
+          state.livraisonCommuneTarifs.unshift({
+            ...newTarif,
+            actif: newTarif.actif !== undefined ? newTarif.actif : true
+          });
+        }
+      })
+
+      .addCase(editLivraisonCommuneTarif.fulfilled, (state, action) => {
+        const updated = action.payload?.tarif || action.payload?.data || action.payload;
+        const { tarifId, tarifData } = action.meta.arg;
+
+        state.livraisonCommuneTarifs = state.livraisonCommuneTarifs.map((t) =>
+          t.id === tarifId
+            ? { ...t, ...tarifData, ...(updated && updated.id ? updated : {}) }
+            : t
+        );
+      })
+
+      .addCase(deleteLivraisonCommuneTarif.fulfilled, (state, action) => {
+        state.livraisonCommuneTarifs = state.livraisonCommuneTarifs.filter((t) => t.id !== action.payload);
+      })
+
+      .addCase(updateLivraisonCommuneTarifStatus.pending, (state, action) => {
+        const tarifId = action.meta.arg;
+        const index = state.livraisonCommuneTarifs.findIndex(t => t.id === tarifId);
+        if (index !== -1) {
+          state.livraisonCommuneTarifs[index].actif = !state.livraisonCommuneTarifs[index].actif;
+        }
+      })
+      .addCase(updateLivraisonCommuneTarifStatus.rejected, (state, action) => {
+        const tarifId = action.meta.arg;
+        const index = state.livraisonCommuneTarifs.findIndex(t => t.id === tarifId);
+        if (index !== -1) {
+          state.livraisonCommuneTarifs[index].actif = !state.livraisonCommuneTarifs[index].actif;
+        }
+      })
+      .addCase(updateLivraisonCommuneTarifStatus.fulfilled, (state, action) => {
+        const updated = action.payload?.tarif || action.payload?.data || action.payload;
+        if (updated) {
+          state.livraisonCommuneTarifs = state.livraisonCommuneTarifs.map((t) =>
+            t.id === updated.id ? updated : t
+          );
         }
       });
   },

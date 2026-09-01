@@ -59,6 +59,56 @@ const updateGroupedTarifStatus = async (arg) => {
   return response.data;
 };
 
+const getIntervilleTarifs = async () => {
+  const response = await api.get('/tarification/list-interville');
+  return response.data.tarifs;
+};
+
+const addIntervilleTarif = async (tarifData) => {
+  const response = await api.post('/tarification/add-interville', tarifData);
+  return response.data;
+};
+
+const editIntervilleTarif = async (tarifId, tarifData) => {
+  const response = await api.put(`/tarification/edit-interville/${tarifId}`, tarifData);
+  return response.data;
+};
+
+const deleteIntervilleTarif = async (tarifId) => {
+  const response = await api.delete(`/tarification/delete-interville/${tarifId}`);
+  return response.data;
+};
+
+const updateIntervilleTarifStatus = async (tarifId) => {
+  const response = await api.put(`/tarification/status-interville/${tarifId}`);
+  return response.data;
+};
+
+const getLivraisonCommuneTarifs = async () => {
+  const response = await api.get('/tarification/list-livraison-commune');
+  return response.data.tarifs;
+};
+
+const addLivraisonCommuneTarif = async (tarifData) => {
+  const response = await api.post('/tarification/add-livraison-commune', tarifData);
+  return response.data;
+};
+
+const editLivraisonCommuneTarif = async (tarifId, tarifData) => {
+  const response = await api.put(`/tarification/edit-livraison-commune/${tarifId}`, tarifData);
+  return response.data;
+};
+
+const deleteLivraisonCommuneTarif = async (tarifId) => {
+  const response = await api.delete(`/tarification/delete-livraison-commune/${tarifId}`);
+  return response.data;
+};
+
+const updateLivraisonCommuneTarifStatus = async (tarifId) => {
+  const response = await api.put(`/tarification/status-livraison-commune/${tarifId}`);
+  return response.data;
+};
+
 const tarificationService = {
   getTarifs,
   getGroupedTarifs,
@@ -70,6 +120,16 @@ const tarificationService = {
   editGroupedTarif,
   deleteGroupedTarif,
   updateGroupedTarifStatus,
+  getIntervilleTarifs,
+  addIntervilleTarif,
+  editIntervilleTarif,
+  deleteIntervilleTarif,
+  updateIntervilleTarifStatus,
+  getLivraisonCommuneTarifs,
+  addLivraisonCommuneTarif,
+  editLivraisonCommuneTarif,
+  deleteLivraisonCommuneTarif,
+  updateLivraisonCommuneTarifStatus,
 };
 
 export default tarificationService;

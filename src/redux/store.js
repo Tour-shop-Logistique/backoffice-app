@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import zoneReducer from './slices/zoneSlice';
+import communeReducer from './slices/communeSlice';
 import tarificationReducer from './slices/tarificationSlice';
 import backofficeReducer from './slices/backofficeSlice';
 import produitReducer from './slices/produitSlice';
@@ -18,6 +19,7 @@ export const store = configureStore({
   reducer: {
     auth: authReducer,
     zones: zoneReducer,
+    communes: communeReducer,
     tarification: tarificationReducer,
     backoffice: backofficeReducer,
     produits: produitReducer,
