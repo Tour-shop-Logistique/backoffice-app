@@ -183,7 +183,7 @@ const IntervilleRates = () => {
                 <header className="space-y-3 md:space-y-0 text-black">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Tarifs Interville</h1>
+                            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Tarifs Interville (National)</h1>
                             <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
                                 Transport entre communes d'un même pays
                             </p>
@@ -431,7 +431,7 @@ const IntervilleRates = () => {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title="Nouveau Tarif Interville"
+                title="Nouveau Tarif Interville (National)"
                 subtitle="Définissez le trajet et les commissions"
                 size="xl"
                 confirmFormId="add-interville-form"
@@ -448,7 +448,7 @@ const IntervilleRates = () => {
             <Modal
                 isOpen={isEditingModalOpen}
                 onClose={() => setIsEditingModalOpen(false)}
-                title="Modifier Tarif Interville"
+                title="Modifier Tarif Interville (National)"
                 subtitle={`Mise à jour du trajet ${selectedTarif?.commune_a?.nom || '?'} ↔ ${selectedTarif?.commune_b?.nom || '?'}`}
                 size="xl"
                 confirmFormId="edit-interville-form"

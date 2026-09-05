@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { ArrowLeftRight, Truck } from "lucide-react";
+import { ArrowLeftRight, Truck, PackageCheck } from "lucide-react";
 import IntervilleRates from "./IntervilleRates";
 import LivraisonCommuneRates from "./LivraisonCommuneRates";
+import TarifsEnlevementRates from "./TarifsEnlevementRates";
 
 /**
  * Regroupe les briques de configuration Interville (tarifs de transport,
@@ -29,10 +30,18 @@ const IntervilleConfig = () => {
                     <Truck size={16} />
                     Livraison à domicile
                 </button>
+                <button
+                    onClick={() => setActiveSubTab("enlevement")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeSubTab === "enlevement" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                >
+                    <PackageCheck size={16} />
+                    Enlèvement à domicile
+                </button>
             </div>
 
             {activeSubTab === "tarifs" && <IntervilleRates />}
             {activeSubTab === "livraison" && <LivraisonCommuneRates />}
+            {activeSubTab === "enlevement" && <TarifsEnlevementRates />}
         </div>
     );
 };

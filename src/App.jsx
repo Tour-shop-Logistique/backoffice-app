@@ -21,6 +21,7 @@ const ParcelHistory = lazy(() => import('./pages/ParcelHistory'));
 const Tarification = lazy(() => import('./pages/Tarification'));
 const ZoneConfiguration = lazy(() => import('./pages/ZoneConfiguration'));
 const CommuneConfiguration = lazy(() => import('./pages/CommuneConfiguration'));
+const Livreurs = lazy(() => import('./pages/Livreurs'));
 const AgencePartenaire = lazy(() => import('./pages/AgencePartenaire'));
 const AgenceDetail = lazy(() => import('./pages/AgenceDetail'));
 const Produits = lazy(() => import('./pages/produits'));
@@ -98,6 +99,11 @@ function App() {
             <Route path={ROUTES.COMMUNE_CONFIGURATION} element={
               <ProtectedRoute pageKey="commune_configuration">
                 <CommuneConfiguration />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.LIVREURS} element={
+              <ProtectedRoute pageKey="livreurs">
+                <Livreurs />
               </ProtectedRoute>
             } />
             <Route path={ROUTES.AGENCE_PARTENAIRE} element={

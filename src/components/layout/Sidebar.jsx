@@ -14,6 +14,7 @@ import {
   Users,
   Settings,
   MessageSquare,
+  Bike,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectUnreadConversationsCount } from "../../redux/slices/messageSlice";
@@ -33,6 +34,7 @@ const PAGE_KEY_BY_HREF = {
   "/tarification": "tarification",
   "/zone-configuration": "zone_configuration",
   "/communes": "commune_configuration",
+  "/livreurs": "livreurs",
   "/produits": "produits",
   "/agents": "agents",
 };
@@ -77,6 +79,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         { name: "Tarification", href: "/tarification", icon: DollarSign, color: "text-emerald-400" },
         { name: "Zones d'expéditions", href: "/zone-configuration", icon: Globe, color: "text-sky-400" },
         { name: "Communes", href: "/communes", icon: MapPin, color: "text-orange-400" },
+        { name: "Livreurs", href: "/livreurs", icon: Bike, color: "text-cyan-400" },
         { name: "Produits & Catégories", href: "/produits", icon: Tag, color: "text-rose-400" },
         { name: "Équipe & Accès", href: "/agents", icon: Users, color: "text-indigo-400", adminOnly: true },
       ],

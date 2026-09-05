@@ -20,7 +20,7 @@ const Tarification = () => {
             }`}
           >
             <DollarSign size={16} />
-            Tarification simple
+            Tarification Internationale (LD)
           </button>
           <button
             onClick={() => setActiveTab("groupee")}
@@ -31,7 +31,7 @@ const Tarification = () => {
             }`}
           >
             <BarChart3 size={16} />
-            Tarification groupée
+            Tarification Internationale (Groupage)
           </button>
           <button
             onClick={() => setActiveTab("interville")}
@@ -42,7 +42,7 @@ const Tarification = () => {
             }`}
           >
             <ArrowLeftRight size={16} />
-            Interville
+            Tarification Interville (National)
           </button>
         </div>
       </div>

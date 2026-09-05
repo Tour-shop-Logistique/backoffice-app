@@ -109,6 +109,31 @@ const updateLivraisonCommuneTarifStatus = async (tarifId) => {
   return response.data;
 };
 
+const getEnlevementCommuneTarifs = async () => {
+  const response = await api.get('/tarification/list-enlevement-commune');
+  return response.data.tarifs;
+};
+
+const addEnlevementCommuneTarif = async (tarifData) => {
+  const response = await api.post('/tarification/add-enlevement-commune', tarifData);
+  return response.data;
+};
+
+const editEnlevementCommuneTarif = async (tarifId, tarifData) => {
+  const response = await api.put(`/tarification/edit-enlevement-commune/${tarifId}`, tarifData);
+  return response.data;
+};
+
+const deleteEnlevementCommuneTarif = async (tarifId) => {
+  const response = await api.delete(`/tarification/delete-enlevement-commune/${tarifId}`);
+  return response.data;
+};
+
+const updateEnlevementCommuneTarifStatus = async (tarifId) => {
+  const response = await api.put(`/tarification/status-enlevement-commune/${tarifId}`);
+  return response.data;
+};
+
 const tarificationService = {
   getTarifs,
   getGroupedTarifs,
@@ -130,6 +155,11 @@ const tarificationService = {
   editLivraisonCommuneTarif,
   deleteLivraisonCommuneTarif,
   updateLivraisonCommuneTarifStatus,
+  getEnlevementCommuneTarifs,
+  addEnlevementCommuneTarif,
+  editEnlevementCommuneTarif,
+  deleteEnlevementCommuneTarif,
+  updateEnlevementCommuneTarifStatus,
 };
 
 export default tarificationService;

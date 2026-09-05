@@ -6,6 +6,7 @@ const initialState = {
   groupedTarifs: [],
   intervilleTarifs: [],
   livraisonCommuneTarifs: [],
+  enlevementCommuneTarifs: [],
   // Flags séparés (et non un isLoading partagé) : fetchTarifs et
   // fetchGroupedTarifs sont dispatchés en parallèle au montage du Layout, et
   // un flag commun faisait échouer silencieusement le second thunk via son
@@ -14,11 +15,13 @@ const initialState = {
   isLoadingGrouped: false,
   isLoadingInterville: false,
   isLoadingLivraisonCommune: false,
+  isLoadingEnlevementCommune: false,
   error: null,
   hasLoaded: false,
   groupedHasLoaded: false,
   intervilleHasLoaded: false,
   livraisonCommuneHasLoaded: false,
+  enlevementCommuneHasLoaded: false,
 };
 
 /*--------------------------- SIMPLE TARIFS ---------------------------*/
@@ -293,6 +296,75 @@ export const updateLivraisonCommuneTarifStatus = createAsyncThunk(
   async (tarifId, { rejectWithValue }) => {
     try {
       return await tarificationService.updateLivraisonCommuneTarifStatus(tarifId);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+/*--------------------------- ENLEVEMENT COMMUNE TARIFS ---------------------------*/
+
+export const fetchEnlevementCommuneTarifs = createAsyncThunk(
+  'tarification/fetchEnlevementCommuneTarifs',
+  async (options = {}, { rejectWithValue }) => {
+    try {
+      return await tarificationService.getEnlevementCommuneTarifs();
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { tarification } = getState();
+      if (tarification.isLoadingEnlevementCommune) return false;
+    },
+  }
+);
+
+export const addEnlevementCommuneTarif = createAsyncThunk(
+  'tarification/addEnlevementCommuneTarif',
+  async (tarifData, { rejectWithValue }) => {
+    try {
+      return await tarificationService.addEnlevementCommuneTarif(tarifData);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const editEnlevementCommuneTarif = createAsyncThunk(
+  'tarification/editEnlevementCommuneTarif',
+  async ({ tarifId, tarifData }, { rejectWithValue }) => {
+    try {
+      return await tarificationService.editEnlevementCommuneTarif(tarifId, tarifData);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const deleteEnlevementCommuneTarif = createAsyncThunk(
+  'tarification/deleteEnlevementCommuneTarif',
+  async (tarifId, { rejectWithValue }) => {
+    try {
+      await tarificationService.deleteEnlevementCommuneTarif(tarifId);
+      return tarifId;
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const updateEnlevementCommuneTarifStatus = createAsyncThunk(
+  'tarification/updateEnlevementCommuneTarifStatus',
+  async (tarifId, { rejectWithValue }) => {
+    try {
+      return await tarificationService.updateEnlevementCommuneTarifStatus(tarifId);
     } catch (error) {
       console.error(error);
       return rejectWithValue(error.response.data);
@@ -593,6 +665,76 @@ const tarificationSlice = createSlice({
         const updated = action.payload?.tarif || action.payload?.data || action.payload;
         if (updated) {
           state.livraisonCommuneTarifs = state.livraisonCommuneTarifs.map((t) =>
+            t.id === updated.id ? updated : t
+          );
+        }
+      });
+
+    /*---------------- ENLEVEMENT COMMUNE ----------------*/
+    builder
+      .addCase(fetchEnlevementCommuneTarifs.pending, (state, action) => {
+        if (!action.meta.arg?.silent) {
+          state.isLoadingEnlevementCommune = true;
+        }
+        state.error = null;
+      })
+      .addCase(fetchEnlevementCommuneTarifs.fulfilled, (state, action) => {
+        state.isLoadingEnlevementCommune = false;
+        const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+        state.enlevementCommuneTarifs = data.map(t => ({
+          ...t,
+          actif: t.actif === true || t.actif === 1 || t.actif === "1"
+        }));
+        state.enlevementCommuneHasLoaded = true;
+      })
+      .addCase(fetchEnlevementCommuneTarifs.rejected, (state, action) => {
+        state.isLoadingEnlevementCommune = false;
+        state.error = action.payload;
+      })
+
+      .addCase(addEnlevementCommuneTarif.fulfilled, (state, action) => {
+        const newTarif = action.payload?.tarif || action.payload?.data || action.payload;
+        if (newTarif) {
+          state.enlevementCommuneTarifs.unshift({
+            ...newTarif,
+            actif: newTarif.actif !== undefined ? newTarif.actif : true
+          });
+        }
+      })
+
+      .addCase(editEnlevementCommuneTarif.fulfilled, (state, action) => {
+        const updated = action.payload?.tarif || action.payload?.data || action.payload;
+        const { tarifId, tarifData } = action.meta.arg;
+
+        state.enlevementCommuneTarifs = state.enlevementCommuneTarifs.map((t) =>
+          t.id === tarifId
+            ? { ...t, ...tarifData, ...(updated && updated.id ? updated : {}) }
+            : t
+        );
+      })
+
+      .addCase(deleteEnlevementCommuneTarif.fulfilled, (state, action) => {
+        state.enlevementCommuneTarifs = state.enlevementCommuneTarifs.filter((t) => t.id !== action.payload);
+      })
+
+      .addCase(updateEnlevementCommuneTarifStatus.pending, (state, action) => {
+        const tarifId = action.meta.arg;
+        const index = state.enlevementCommuneTarifs.findIndex(t => t.id === tarifId);
+        if (index !== -1) {
+          state.enlevementCommuneTarifs[index].actif = !state.enlevementCommuneTarifs[index].actif;
+        }
+      })
+      .addCase(updateEnlevementCommuneTarifStatus.rejected, (state, action) => {
+        const tarifId = action.meta.arg;
+        const index = state.enlevementCommuneTarifs.findIndex(t => t.id === tarifId);
+        if (index !== -1) {
+          state.enlevementCommuneTarifs[index].actif = !state.enlevementCommuneTarifs[index].actif;
+        }
+      })
+      .addCase(updateEnlevementCommuneTarifStatus.fulfilled, (state, action) => {
+        const updated = action.payload?.tarif || action.payload?.data || action.payload;
+        if (updated) {
+          state.enlevementCommuneTarifs = state.enlevementCommuneTarifs.map((t) =>
             t.id === updated.id ? updated : t
           );
         }

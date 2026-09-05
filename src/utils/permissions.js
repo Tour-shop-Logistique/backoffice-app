@@ -15,6 +15,7 @@ export const PAGE_RESOURCE_MAP = {
   tarification: ["tarification_simple", "tarification_groupage"],
   zone_configuration: ["zones"],
   commune_configuration: ["communes"],
+  livreurs: ["livreurs"],
   produits: ["produits", "product_categories"],
   agents: ["agents"],
 };
