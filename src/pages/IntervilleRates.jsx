@@ -155,23 +155,20 @@ const IntervilleRates = () => {
     const filteredBySearch = useMemo(() => {
         if (!Array.isArray(tarifs)) return [];
         return tarifs.filter(tarif => {
-            const indice = tarif.indice?.toString() || '';
             const communeA = (tarif.commune_a?.nom || '').toLowerCase();
             const communeB = (tarif.commune_b?.nom || '').toLowerCase();
             const search = searchTerm.toLowerCase();
-            return indice.includes(search) || communeA.includes(search) || communeB.includes(search);
+            return communeA.includes(search) || communeB.includes(search);
         });
     }, [tarifs, searchTerm]);
 
     const intervilleTarifs = useMemo(() => {
-        const filtered = filteredBySearch.filter(tarif => {
+        return filteredBySearch.filter(tarif => {
             const matchesStatus = filterStatus === 'all' ||
                 (filterStatus === 'active' && tarif.actif) ||
                 (filterStatus === 'inactive' && !tarif.actif);
             return matchesStatus;
         });
-
-        return filtered.sort((a, b) => (a.indice || 0) - (b.indice || 0));
     }, [filteredBySearch, filterStatus]);
 
     const counts = useMemo(() => ({
@@ -221,7 +218,7 @@ const IntervilleRates = () => {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
                     <input
                         type="text"
-                        placeholder="Rechercher par indice ou commune..."
+                        placeholder="Rechercher par commune..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
@@ -272,7 +269,6 @@ const IntervilleRates = () => {
                             <table className="w-full text-sm">
                                 <thead className="bg-slate-50/50 border-b border-slate-200">
                                     <tr>
-                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Indice</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Trajet</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Montant Base</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Commission départ</th>
@@ -291,11 +287,6 @@ const IntervilleRates = () => {
 
                                         return (
                                             <tr key={tarif.id} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="px-6 py-3">
-                                                    <div className="inline-flex items-center justify-center px-2.5 py-1 rounded bg-blue-100 text-slate-700 font-bold text-xs border border-slate-200">
-                                                        {tarif.indice}
-                                                    </div>
-                                                </td>
                                                 <td className="px-6 py-3">
                                                     <div className="flex items-center gap-1.5 text-slate-900 font-semibold">
                                                         <span>{tarif.commune_a?.nom || '?'}</span>
@@ -371,9 +362,6 @@ const IntervilleRates = () => {
                                     <div key={tarif.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="flex items-center gap-2.5 min-w-0">
-                                                <div className="px-2 py-1 rounded bg-blue-100 text-slate-700 font-bold text-xs border border-slate-200 shrink-0">
-                                                    {tarif.indice}
-                                                </div>
                                                 <div className="min-w-0">
                                                     <p className="font-semibold text-slate-900 text-sm truncate flex items-center gap-1">
                                                         {tarif.commune_a?.nom} <ArrowLeftRight size={10} className="text-slate-400 shrink-0" /> {tarif.commune_b?.nom}
@@ -444,7 +432,7 @@ const IntervilleRates = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 title="Nouveau Tarif Interville"
-                subtitle="Définissez l'indice, le trajet et les commissions"
+                subtitle="Définissez le trajet et les commissions"
                 size="xl"
                 confirmFormId="add-interville-form"
                 isLoading={isSubmitting}
@@ -461,7 +449,7 @@ const IntervilleRates = () => {
                 isOpen={isEditingModalOpen}
                 onClose={() => setIsEditingModalOpen(false)}
                 title="Modifier Tarif Interville"
-                subtitle={`Mise à jour de la grille pour l'indice #${selectedTarif?.indice}`}
+                subtitle={`Mise à jour du trajet ${selectedTarif?.commune_a?.nom || '?'} ↔ ${selectedTarif?.commune_b?.nom || '?'}`}
                 size="xl"
                 confirmFormId="edit-interville-form"
                 isLoading={isSubmitting}
@@ -481,7 +469,7 @@ const IntervilleRates = () => {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleDeleteTarif}
-                itemName={`${tarifToDelete?.indice} - ${tarifToDelete?.commune_a?.nom || '?'} / ${tarifToDelete?.commune_b?.nom || '?'}`}
+                itemName={`${tarifToDelete?.commune_a?.nom || '?'} / ${tarifToDelete?.commune_b?.nom || '?'}`}
                 isLoading={isDeleting}
             />
         </div>

@@ -6,6 +6,7 @@ export const ROUTES = {
     PARCELS: '/parcels',
     TARIFICATION: '/tarification',
     ZONE_CONFIGURATION: '/zone-configuration',
+    COMMUNE_CONFIGURATION: '/communes',
     AGENCE_PARTENAIRE: '/agence-partenaire',
     AGENCE_DETAIL: '/agence-partenaire/:id',
     PRODUITS: '/produits',

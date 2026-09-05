@@ -1,4 +1,5 @@
 import countriesData from '../data/countries.json';
+import { isAfricanCountry } from './africanCountries';
 
 /**
  * Source de vérité unique pour les pays (code ISO 3166-1 alpha-2 + nom FR),
@@ -9,6 +10,13 @@ import countriesData from '../data/countries.json';
 
 // Options prêtes pour un dropdown : {id: code, label: nom}
 export const COUNTRY_OPTIONS = countriesData.map(({ code, name }) => ({ id: code, label: name }));
+
+// Sous-ensemble hors Afrique, pour les dropdowns GROUPAGE_CA/GROUPAGE_DHD_*
+// (ces types couvrent tous les pays hors Afrique, voir africanCountries.js).
+export const NON_AFRICAN_COUNTRY_OPTIONS = COUNTRY_OPTIONS.filter((c) => !isAfricanCountry(c.id));
+
+// Sous-ensemble Afrique uniquement, pour le dropdown GROUPAGE_AFRIQUE.
+export const AFRICAN_COUNTRY_OPTIONS = COUNTRY_OPTIONS.filter((c) => isAfricanCountry(c.id));
 
 const BY_CODE = new Map(countriesData.map((c) => [c.code, c.name]));
 

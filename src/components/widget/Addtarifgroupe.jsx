@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { X } from 'lucide-react';
 import SearchableDropdown from '../common/SearchableDropdown';
-import { COUNTRY_OPTIONS } from '../../utils/countries';
+import CityAutocomplete from '../common/CityAutocomplete';
+import { AFRICAN_COUNTRY_OPTIONS, NON_AFRICAN_COUNTRY_OPTIONS } from '../../utils/countries';
+import { fetchCommunes } from '../../redux/slices/communeSlice';
 
 
 
@@ -13,11 +16,21 @@ const Addtarifgroupe = ({
   onSubmit: handleFormSubmit,
   isSubmitting = false
 }) => {
+  const dispatch = useDispatch();
+  const { communes, hasLoaded: hasLoadedCommunes, isLoading: isLoadingCommunes } = useSelector((state) => state.communes);
+
+  useEffect(() => {
+    if (!hasLoadedCommunes && !isLoadingCommunes) {
+      dispatch(fetchCommunes());
+    }
+  }, [dispatch, hasLoadedCommunes, isLoadingCommunes]);
+
   const [formData, setFormData] = useState({
     type_expedition: 'GROUPAGE_DHD_AERIEN',
     category_id: '',
     code_pays: '',
     mode: 'avion',
+    commune_depart_id: '',
     ville_depart: '',
     ville_arrivee: '',
     montant_base: '',
@@ -42,6 +55,7 @@ const Addtarifgroupe = ({
         category_id: tarifToEdit.category_id || '',
         code_pays: tarifToEdit.code_pays || '',
         mode: tarifToEdit.mode || getModeForType(type),
+        commune_depart_id: tarifToEdit.commune_depart_id || '',
         ville_depart: ville_depart,
         ville_arrivee: ville_arrivee,
         montant_base: tarifToEdit.montant_base || '',
@@ -72,6 +86,7 @@ const Addtarifgroupe = ({
       mode: newMode,
       category_id: '',
       code_pays: '',
+      commune_depart_id: '',
       ville_depart: '',
       ville_arrivee: '',
       montant_base: '',
@@ -105,11 +120,14 @@ const Addtarifgroupe = ({
 
     if (type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
       if (!formData.category_id) newErrors.category_id = 'Catégorie requise';
-      if (!formData.ville_depart) newErrors.ville_depart = 'Ville de départ requise';
+      if (!formData.commune_depart_id) newErrors.commune_depart_id = 'Commune de départ requise';
       if (!formData.ville_arrivee) newErrors.ville_arrivee = 'Ville d\'arrivée requise';
     }
 
-    if (type_expedition === 'GROUPAGE_AFRIQUE') {
+    // code_pays est desormais requis pour les 4 types geo-dependants
+    // (GROUPAGE_AFRIQUE -> pays africain uniquement ; GROUPAGE_CA et DHD ->
+    // tous pays hors Afrique), meme regle que cote backend (TypeExpeditionGeoRule).
+    if (type_expedition === 'GROUPAGE_AFRIQUE' || type_expedition === 'GROUPAGE_CA' || type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
       if (!formData.code_pays) newErrors.code_pays = 'Pays requis';
     }
 
@@ -147,12 +165,22 @@ const Addtarifgroupe = ({
 
     if (type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
       dataToSubmit.category_id = formData.category_id;
-      dataToSubmit.ligne = `${formData.ville_depart.trim().toLowerCase()}-${formData.ville_arrivee.trim().toLowerCase()}`;
+      dataToSubmit.commune_depart_id = formData.commune_depart_id;
+      // La ville de depart (texte) vient du nom de la commune choisie, pas
+      // d'une saisie libre - garantit une ligne toujours coherente avec
+      // commune_depart_id (voir ExpeditionTarificationService::resoudreTarifGroupageDHD).
+      const communeDepart = communes.find(c => String(c.id) === String(formData.commune_depart_id));
+      const villeDepart = (communeDepart?.nom || formData.ville_depart || '').trim().toLowerCase();
+      dataToSubmit.ligne = `${villeDepart}-${formData.ville_arrivee.trim().toLowerCase()}`;
       if (formData.montant_minimum !== '' && formData.pourcentage_prestation_minimum !== '') {
         dataToSubmit.montant_minimum = parseFloat(formData.montant_minimum);
         dataToSubmit.pourcentage_prestation_minimum = parseFloat(formData.pourcentage_prestation_minimum);
       }
-    } else if (type_expedition === 'GROUPAGE_AFRIQUE') {
+    }
+
+    // code_pays s'ajoute pour les 4 types geo-dependants (le bloc DHD
+    // ci-dessus reste separe : ligne/category_id/plancher lui sont propres).
+    if (type_expedition === 'GROUPAGE_AFRIQUE' || type_expedition === 'GROUPAGE_CA' || type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
       dataToSubmit.code_pays = formData.code_pays;
     }
 
@@ -243,38 +271,63 @@ const Addtarifgroupe = ({
               )}
             </div>
 
+            {/* Pays de destination (hors Afrique - DHD ne va jamais vers l'Afrique) */}
+            <div className="mt-6">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                <span className="inline-flex items-center gap-2">
+                  Pays de destination <span className="text-red-500">*</span>
+                </span>
+              </label>
+              <SearchableDropdown
+                value={formData.code_pays}
+                onChange={(code) => handleInputChange('code_pays', code)}
+                options={NON_AFRICAN_COUNTRY_OPTIONS.map((c) => ({ label: c.label, value: c.id }))}
+                placeholder="Rechercher un pays..."
+                error={errors.code_pays}
+                themeColor="emerald"
+              />
+              {errors.code_pays && (
+                <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                  <span>⚠️</span> {errors.code_pays}
+                </p>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-              {/* Departure City */}
+              {/* Departure Commune - choisie dans le referentiel du backoffice,
+                  partage avec Interville (voir menu Communes) */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                  Ville de départ <span className="text-red-500">*</span>
+                  Commune de départ <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={formData.ville_depart}
-                  onChange={(e) => handleInputChange('ville_depart', e.target.value)}
-                  className={`w-full px-4 py-2.5 border-2 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition duration-150 ${errors.ville_depart ? 'border-red-400 bg-red-50' : 'border-gray-200'
-                    }`}
-                  placeholder="ex: Abidjan"
+                <SearchableDropdown
+                  value={formData.commune_depart_id}
+                  onChange={(v) => handleInputChange('commune_depart_id', v)}
+                  options={communes.map((c) => ({ label: c.nom, value: c.id }))}
+                  placeholder={isLoadingCommunes ? 'Chargement...' : 'Sélectionner une commune...'}
+                  error={errors.commune_depart_id}
+                  themeColor="blue"
                 />
-                {errors.ville_depart && (
+                {errors.commune_depart_id && (
                   <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <span>⚠️</span> {errors.ville_depart}
+                    <span>⚠️</span> {errors.commune_depart_id}
                   </p>
+                )}
+                {!isLoadingCommunes && communes.length === 0 && (
+                  <p className="text-[10px] text-amber-600 mt-1">Aucune commune configurée. Rendez-vous dans le menu "Communes".</p>
                 )}
               </div>
 
-              {/* Arrival City */}
+              {/* Arrival City - assistée par countries.dev selon le pays choisi */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                   Ville d'arrivée <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <CityAutocomplete
+                  countryCode={formData.code_pays}
                   value={formData.ville_arrivee}
-                  onChange={(e) => handleInputChange('ville_arrivee', e.target.value)}
-                  className={`w-full px-4 py-2.5 border-2 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white transition duration-150 ${errors.ville_arrivee ? 'border-red-400 bg-red-50' : 'border-gray-200'
-                    }`}
+                  onChange={(v) => handleInputChange('ville_arrivee', v)}
+                  error={errors.ville_arrivee}
                   placeholder="ex: Paris"
                 />
                 {errors.ville_arrivee && (
@@ -288,14 +341,16 @@ const Addtarifgroupe = ({
         </div>
       )}
 
-      {/* STEP 2: Africa Destination */}
-      {formData.type_expedition === 'GROUPAGE_AFRIQUE' && (
+      {/* STEP 2: Destination (Afrique uniquement, ou CA hors Afrique) */}
+      {(formData.type_expedition === 'GROUPAGE_AFRIQUE' || formData.type_expedition === 'GROUPAGE_CA') && (
         <div className="relative">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold text-sm shadow-lg">
               2
             </div>
-            <h3 className="text-lg font-semibold text-slate-800">Destination Afrique</h3>
+            <h3 className="text-lg font-semibold text-slate-800">
+              {formData.type_expedition === 'GROUPAGE_AFRIQUE' ? 'Destination Afrique' : 'Pays de destination (hors Afrique)'}
+            </h3>
           </div>
 
           <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-orange-200 shadow-sm">
@@ -308,7 +363,7 @@ const Addtarifgroupe = ({
             <SearchableDropdown
               value={formData.code_pays}
               onChange={(code) => handleInputChange('code_pays', code)}
-              options={COUNTRY_OPTIONS.map((c) => ({ label: c.label, value: c.id }))}
+              options={(formData.type_expedition === 'GROUPAGE_AFRIQUE' ? AFRICAN_COUNTRY_OPTIONS : NON_AFRICAN_COUNTRY_OPTIONS).map((c) => ({ label: c.label, value: c.id }))}
               placeholder="Rechercher un pays..."
               error={errors.code_pays}
             />
@@ -326,7 +381,7 @@ const Addtarifgroupe = ({
       <div className="relative">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-lg">
-            {(formData.type_expedition === 'GROUPAGE_DHD_AERIEN' || formData.type_expedition === 'GROUPAGE_DHD_MARITIME' || formData.type_expedition === 'GROUPAGE_AFRIQUE') ? '3' : '2'}
+            {(formData.type_expedition === 'GROUPAGE_DHD_AERIEN' || formData.type_expedition === 'GROUPAGE_DHD_MARITIME' || formData.type_expedition === 'GROUPAGE_AFRIQUE' || formData.type_expedition === 'GROUPAGE_CA') ? '3' : '2'}
           </div>
           <h3 className="text-lg font-semibold text-slate-800">Tarification</h3>
         </div>
@@ -344,6 +399,7 @@ const Addtarifgroupe = ({
                   type="number"
                   value={formData.montant_base}
                   onChange={(e) => handleInputChange('montant_base', e.target.value)}
+                  min="0"
                   className={`w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white transition-all font-medium text-slate-800 ${errors.montant_base ? 'border-red-400 bg-red-50' : 'border-gray-300'
                     }`}
                   placeholder="1000"
@@ -369,6 +425,8 @@ const Addtarifgroupe = ({
                   type="number"
                   value={formData.pourcentage_prestation}
                   onChange={(e) => handleInputChange('pourcentage_prestation', e.target.value)}
+                  min="0"
+                  max="100"
                   className={`w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white transition-all font-medium text-slate-800 ${errors.pourcentage_prestation ? 'border-red-400 bg-red-50' : 'border-gray-300'
                     }`}
                   placeholder="10"
@@ -432,6 +490,7 @@ const Addtarifgroupe = ({
                     type="number"
                     value={formData.montant_minimum}
                     onChange={(e) => handleInputChange('montant_minimum', e.target.value)}
+                    min="0"
                     className={`w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white transition-all font-medium text-slate-800 ${errors.montant_minimum ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
                     placeholder="13500"
                   />
@@ -448,6 +507,8 @@ const Addtarifgroupe = ({
                     type="number"
                     value={formData.pourcentage_prestation_minimum}
                     onChange={(e) => handleInputChange('pourcentage_prestation_minimum', e.target.value)}
+                    min="0"
+                    max="100"
                     className={`w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white transition-all font-medium text-slate-800 ${errors.pourcentage_prestation_minimum ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
                     placeholder="10"
                   />
@@ -461,14 +522,27 @@ const Addtarifgroupe = ({
 
             {formData.montant_minimum !== '' && formData.pourcentage_prestation_minimum !== '' && (
               <div className="mt-4 p-3 bg-white rounded-md border border-gray-200">
-                <div className="flex justify-between font-bold text-sm">
-                  <span>Tarif minimum:</span>
-                  <span className="text-orange-600">
-                    {formatCurrency(
-                      (parseFloat(formData.montant_minimum) || 0) +
-                      ((parseFloat(formData.montant_minimum) || 0) * (parseFloat(formData.pourcentage_prestation_minimum) || 0)) / 100
-                    )}
-                  </span>
+                <div className="text-xs text-slate-600 space-y-1">
+                  <div className="flex justify-between">
+                    <span>Base:</span>
+                    <span className="font-semibold">{formatCurrency(parseFloat(formData.montant_minimum) || 0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Prestation ({formData.pourcentage_prestation_minimum}%):</span>
+                    <span className="font-semibold text-orange-600">
+                      +{formatCurrency((parseFloat(formData.montant_minimum) || 0) * (parseFloat(formData.pourcentage_prestation_minimum) || 0) / 100)}
+                    </span>
+                  </div>
+                  <div className="border-t border-gray-200 pt-1 mt-1"></div>
+                  <div className="flex justify-between font-bold text-sm">
+                    <span>Total:</span>
+                    <span className="text-emerald-600">
+                      {formatCurrency(
+                        (parseFloat(formData.montant_minimum) || 0) +
+                        ((parseFloat(formData.montant_minimum) || 0) * (parseFloat(formData.pourcentage_prestation_minimum) || 0)) / 100
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}

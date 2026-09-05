@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import { MapPin, ArrowLeftRight, Truck } from "lucide-react";
-import CommuneConfiguration from "./CommuneConfiguration";
+import { ArrowLeftRight, Truck } from "lucide-react";
 import IntervilleRates from "./IntervilleRates";
 import LivraisonCommuneRates from "./LivraisonCommuneRates";
 
 /**
- * Regroupe les 3 briques de configuration Interville (communes, tarifs de
- * transport, tarifs de livraison à domicile) sous des sous-onglets, pour ne
- * pas surcharger Tarification.jsx d'un 5e onglet top-level.
+ * Regroupe les briques de configuration Interville (tarifs de transport,
+ * tarifs de livraison à domicile) sous des sous-onglets. Les communes ont
+ * leur propre menu dédié (src/pages/CommuneConfiguration.jsx) car elles
+ * sont désormais partagées avec la configuration DHD, pas seulement Interville.
  */
 const IntervilleConfig = () => {
     const [activeSubTab, setActiveSubTab] = useState("tarifs");
@@ -23,13 +23,6 @@ const IntervilleConfig = () => {
                     Tarifs de transport
                 </button>
                 <button
-                    onClick={() => setActiveSubTab("communes")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeSubTab === "communes" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
-                >
-                    <MapPin size={16} />
-                    Communes
-                </button>
-                <button
                     onClick={() => setActiveSubTab("livraison")}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeSubTab === "livraison" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                 >
@@ -39,7 +32,6 @@ const IntervilleConfig = () => {
             </div>
 
             {activeSubTab === "tarifs" && <IntervilleRates />}
-            {activeSubTab === "communes" && <CommuneConfiguration />}
             {activeSubTab === "livraison" && <LivraisonCommuneRates />}
         </div>
     );

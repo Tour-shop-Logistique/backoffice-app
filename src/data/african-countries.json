@@ -1,0 +1,218 @@
+[
+    {
+        "code": "ZA",
+        "name": "Afrique du Sud"
+    },
+    {
+        "code": "DZ",
+        "name": "Algérie"
+    },
+    {
+        "code": "AO",
+        "name": "Angola"
+    },
+    {
+        "code": "BW",
+        "name": "Botswana"
+    },
+    {
+        "code": "BF",
+        "name": "Burkina Faso"
+    },
+    {
+        "code": "BI",
+        "name": "Burundi"
+    },
+    {
+        "code": "BJ",
+        "name": "Bénin"
+    },
+    {
+        "code": "CM",
+        "name": "Cameroun"
+    },
+    {
+        "code": "CV",
+        "name": "Cap-Vert"
+    },
+    {
+        "code": "KM",
+        "name": "Comores"
+    },
+    {
+        "code": "CI",
+        "name": "Côte-d'Ivoire"
+    },
+    {
+        "code": "DJ",
+        "name": "Djibouti"
+    },
+    {
+        "code": "GA",
+        "name": "Gabon"
+    },
+    {
+        "code": "GM",
+        "name": "Gambie"
+    },
+    {
+        "code": "GH",
+        "name": "Ghana"
+    },
+    {
+        "code": "GN",
+        "name": "Guinée"
+    },
+    {
+        "code": "GQ",
+        "name": "Guinée équatoriale"
+    },
+    {
+        "code": "GW",
+        "name": "Guinée-Bissau"
+    },
+    {
+        "code": "KE",
+        "name": "Kenya"
+    },
+    {
+        "code": "LS",
+        "name": "Lesotho"
+    },
+    {
+        "code": "LY",
+        "name": "Libye"
+    },
+    {
+        "code": "LR",
+        "name": "Libéria"
+    },
+    {
+        "code": "MG",
+        "name": "Madagascar"
+    },
+    {
+        "code": "MW",
+        "name": "Malawi"
+    },
+    {
+        "code": "ML",
+        "name": "Mali"
+    },
+    {
+        "code": "MA",
+        "name": "Maroc"
+    },
+    {
+        "code": "MU",
+        "name": "Maurice"
+    },
+    {
+        "code": "MR",
+        "name": "Mauritanie"
+    },
+    {
+        "code": "MZ",
+        "name": "Mozambique"
+    },
+    {
+        "code": "NA",
+        "name": "Namibie"
+    },
+    {
+        "code": "NE",
+        "name": "Niger"
+    },
+    {
+        "code": "NG",
+        "name": "Nigéria"
+    },
+    {
+        "code": "UG",
+        "name": "Ouganda"
+    },
+    {
+        "code": "SZ",
+        "name": "Royaume d'Eswatini"
+    },
+    {
+        "code": "RW",
+        "name": "Rwanda"
+    },
+    {
+        "code": "CF",
+        "name": "République Centrafricaine"
+    },
+    {
+        "code": "CG",
+        "name": "République du Congo"
+    },
+    {
+        "code": "CD",
+        "name": "République démocratique du Congo"
+    },
+    {
+        "code": "TZ",
+        "name": "République unie de Tanzanie"
+    },
+    {
+        "code": "SC",
+        "name": "Seychelles"
+    },
+    {
+        "code": "SL",
+        "name": "Sierra Leone"
+    },
+    {
+        "code": "SO",
+        "name": "Somalie"
+    },
+    {
+        "code": "SD",
+        "name": "Soudan"
+    },
+    {
+        "code": "SS",
+        "name": "Soudan du Sud"
+    },
+    {
+        "code": "ST",
+        "name": "São Tomé-et-Principe"
+    },
+    {
+        "code": "SN",
+        "name": "Sénégal"
+    },
+    {
+        "code": "TD",
+        "name": "Tchad"
+    },
+    {
+        "code": "TG",
+        "name": "Togo"
+    },
+    {
+        "code": "TN",
+        "name": "Tunisie"
+    },
+    {
+        "code": "ZM",
+        "name": "Zambie"
+    },
+    {
+        "code": "ZW",
+        "name": "Zimbabwe"
+    },
+    {
+        "code": "EG",
+        "name": "Égypte"
+    },
+    {
+        "code": "ER",
+        "name": "Érythrée"
+    },
+    {
+        "code": "ET",
+        "name": "Éthiopie"
+    }
+]

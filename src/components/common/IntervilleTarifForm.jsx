@@ -65,7 +65,6 @@ const CommuneSelect = ({ label, value, onChange, communes, excludeId, disabled }
 
 const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialData, communes = [] }) => {
   const [formData, setFormData] = useState({
-    indice: '',
     commune_depart_id: '',
     commune_arrivee_id: '',
     montant_base: '',
@@ -77,7 +76,6 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
     if (initialData) {
       setFormData({
         id: initialData.id,
-        indice: initialData.indice ?? '',
         commune_depart_id: initialData.commune_a_id || '',
         commune_arrivee_id: initialData.commune_b_id || '',
         montant_base: (parseFloat(initialData.montant_base) || 0).toString(),
@@ -94,7 +92,6 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
   const handleSubmit = (e) => {
     e.preventDefault();
     const submissionData = {
-      indice: parseFloat(formData.indice),
       commune_depart_id: formData.commune_depart_id,
       commune_arrivee_id: formData.commune_arrivee_id,
       montant_base: parseFloat(formData.montant_base),
@@ -121,21 +118,6 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
 
   return (
     <form id={id} onSubmit={handleSubmit} className="space-y-6 relative pb-4">
-      <div className={`bg-slate-50 p-3 rounded-lg border border-slate-200 ${formData.id ? 'opacity-60' : ''}`}>
-        <label className={labelClasses}>Indice de Tarification</label>
-        <input
-          type="number"
-          value={formData.indice}
-          onChange={e => handleInputChange('indice', e.target.value)}
-          step="0.1"
-          min="0"
-          placeholder="Ex: 2.0"
-          className={`${inputClasses} mt-2 bg-white ${formData.id ? 'cursor-not-allowed' : ''}`}
-          required
-          disabled={!!formData.id}
-        />
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <CommuneSelect
           label="Commune de départ"
