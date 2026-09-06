@@ -24,10 +24,10 @@ import useHasPermission from '../hooks/useHasPermission';
 const ZoneConfiguration = () => {
   const dispatch = useDispatch();
   const { zones, isLoading, error, hasLoaded } = useSelector((state) => state.zones);
-  const canCreate = useHasPermission('zones.create');
-  const canEdit = useHasPermission('zones.edit');
-  const canDelete = useHasPermission('zones.delete');
-  const canToggleStatus = useHasPermission('zones.toggle_status');
+  const canCreate = useHasPermission('zones_communes.create');
+  const canEdit = useHasPermission('zones_communes.edit');
+  const canDelete = useHasPermission('zones_communes.delete');
+  const canToggleStatus = useHasPermission('zones_communes.toggle_status');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);

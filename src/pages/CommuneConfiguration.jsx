@@ -20,10 +20,10 @@ import useHasPermission from '../hooks/useHasPermission';
 const CommuneConfiguration = () => {
   const dispatch = useDispatch();
   const { communes, isLoading, hasLoaded } = useSelector((state) => state.communes);
-  const canCreate = useHasPermission('communes.create');
-  const canEdit = useHasPermission('communes.edit');
-  const canDelete = useHasPermission('communes.delete');
-  const canToggleStatus = useHasPermission('communes.toggle_status');
+  const canCreate = useHasPermission('zones_communes.create');
+  const canEdit = useHasPermission('zones_communes.edit');
+  const canDelete = useHasPermission('zones_communes.delete');
+  const canToggleStatus = useHasPermission('zones_communes.toggle_status');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCommune, setSelectedCommune] = useState(null);

@@ -19,8 +19,7 @@ const Agents = lazy(() => import('./pages/Agents'));
 const Parcels = lazy(() => import('./pages/Parcels'));
 const ParcelHistory = lazy(() => import('./pages/ParcelHistory'));
 const Tarification = lazy(() => import('./pages/Tarification'));
-const ZoneConfiguration = lazy(() => import('./pages/ZoneConfiguration'));
-const CommuneConfiguration = lazy(() => import('./pages/CommuneConfiguration'));
+const ZonesEtCommunes = lazy(() => import('./pages/ZonesEtCommunes'));
 const Livreurs = lazy(() => import('./pages/Livreurs'));
 const AgencePartenaire = lazy(() => import('./pages/AgencePartenaire'));
 const AgenceDetail = lazy(() => import('./pages/AgenceDetail'));
@@ -91,14 +90,9 @@ function App() {
                 <Tarification />
               </ProtectedRoute>
             } />
-            <Route path={ROUTES.ZONE_CONFIGURATION} element={
-              <ProtectedRoute pageKey="zone_configuration">
-                <ZoneConfiguration />
-              </ProtectedRoute>
-            } />
-            <Route path={ROUTES.COMMUNE_CONFIGURATION} element={
-              <ProtectedRoute pageKey="commune_configuration">
-                <CommuneConfiguration />
+            <Route path={ROUTES.ZONES_COMMUNES} element={
+              <ProtectedRoute pageKey="zones_communes">
+                <ZonesEtCommunes />
               </ProtectedRoute>
             } />
             <Route path={ROUTES.LIVREURS} element={
