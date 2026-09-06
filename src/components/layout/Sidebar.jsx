@@ -14,6 +14,7 @@ import {
   Settings,
   MessageSquare,
   Bike,
+  Truck,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectUnreadConversationsCount } from "../../redux/slices/messageSlice";
@@ -33,6 +34,7 @@ const PAGE_KEY_BY_HREF = {
   "/tarification": "tarification",
   "/zones-communes": "zones_communes",
   "/livreurs": "livreurs",
+  "/missions-groupage": "missions",
   "/produits": "produits",
   "/agents": "agents",
 };
@@ -60,6 +62,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       items: [
         { name: "Colis à contrôler", href: "/parcels", icon: ClipboardCheck, color: "text-blue-400" },
         { name: "Arrivages prévus", href: "/incoming-parcels", icon: ArrowDownToLine, color: "text-emerald-400" },
+        { name: "Missions groupage", href: "/missions-groupage", icon: Truck, color: "text-orange-400" },
         { name: "Historique", href: "/historique", icon: History, color: "text-slate-400" },
       ],
     },
