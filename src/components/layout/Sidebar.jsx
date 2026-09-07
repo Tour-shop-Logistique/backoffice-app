@@ -79,7 +79,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       items: [
         { name: "Tarification", href: "/tarification", icon: DollarSign, color: "text-emerald-400" },
         { name: "Zones et Communes", href: "/zones-communes", icon: Globe, color: "text-sky-400" },
-        { name: "Livreurs", href: "/livreurs", icon: Bike, color: "text-cyan-400" },
+        // Masqué pour l'instant (chantier livreurs pas encore prêt côté produit) :
+        // { name: "Livreurs", href: "/livreurs", icon: Bike, color: "text-cyan-400" },
         { name: "Produits & Catégories", href: "/produits", icon: Tag, color: "text-rose-400" },
         { name: "Équipe & Accès", href: "/agents", icon: Users, color: "text-indigo-400", adminOnly: true },
       ],

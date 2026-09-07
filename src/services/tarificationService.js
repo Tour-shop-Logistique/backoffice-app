@@ -84,53 +84,28 @@ const updateIntervilleTarifStatus = async (tarifId) => {
   return response.data;
 };
 
-const getLivraisonCommuneTarifs = async () => {
-  const response = await api.get('/tarification/list-livraison-commune');
+const getEnlevementTranchesKm = async (communeId) => {
+  const response = await api.get(`/tarification/list-enlevement-tranches-km${communeId ? `/${communeId}` : ''}`);
   return response.data.tarifs;
 };
 
-const addLivraisonCommuneTarif = async (tarifData) => {
-  const response = await api.post('/tarification/add-livraison-commune', tarifData);
+const addEnlevementTrancheKm = async (trancheData) => {
+  const response = await api.post('/tarification/add-enlevement-tranche-km', trancheData);
   return response.data;
 };
 
-const editLivraisonCommuneTarif = async (tarifId, tarifData) => {
-  const response = await api.put(`/tarification/edit-livraison-commune/${tarifId}`, tarifData);
+const editEnlevementTrancheKm = async (trancheId, trancheData) => {
+  const response = await api.put(`/tarification/edit-enlevement-tranche-km/${trancheId}`, trancheData);
   return response.data;
 };
 
-const deleteLivraisonCommuneTarif = async (tarifId) => {
-  const response = await api.delete(`/tarification/delete-livraison-commune/${tarifId}`);
+const deleteEnlevementTrancheKm = async (trancheId) => {
+  const response = await api.delete(`/tarification/delete-enlevement-tranche-km/${trancheId}`);
   return response.data;
 };
 
-const updateLivraisonCommuneTarifStatus = async (tarifId) => {
-  const response = await api.put(`/tarification/status-livraison-commune/${tarifId}`);
-  return response.data;
-};
-
-const getEnlevementCommuneTarifs = async () => {
-  const response = await api.get('/tarification/list-enlevement-commune');
-  return response.data.tarifs;
-};
-
-const addEnlevementCommuneTarif = async (tarifData) => {
-  const response = await api.post('/tarification/add-enlevement-commune', tarifData);
-  return response.data;
-};
-
-const editEnlevementCommuneTarif = async (tarifId, tarifData) => {
-  const response = await api.put(`/tarification/edit-enlevement-commune/${tarifId}`, tarifData);
-  return response.data;
-};
-
-const deleteEnlevementCommuneTarif = async (tarifId) => {
-  const response = await api.delete(`/tarification/delete-enlevement-commune/${tarifId}`);
-  return response.data;
-};
-
-const updateEnlevementCommuneTarifStatus = async (tarifId) => {
-  const response = await api.put(`/tarification/status-enlevement-commune/${tarifId}`);
+const updateEnlevementTrancheKmStatus = async (trancheId) => {
+  const response = await api.put(`/tarification/status-enlevement-tranche-km/${trancheId}`);
   return response.data;
 };
 
@@ -150,16 +125,11 @@ const tarificationService = {
   editIntervilleTarif,
   deleteIntervilleTarif,
   updateIntervilleTarifStatus,
-  getLivraisonCommuneTarifs,
-  addLivraisonCommuneTarif,
-  editLivraisonCommuneTarif,
-  deleteLivraisonCommuneTarif,
-  updateLivraisonCommuneTarifStatus,
-  getEnlevementCommuneTarifs,
-  addEnlevementCommuneTarif,
-  editEnlevementCommuneTarif,
-  deleteEnlevementCommuneTarif,
-  updateEnlevementCommuneTarifStatus,
+  getEnlevementTranchesKm,
+  addEnlevementTrancheKm,
+  editEnlevementTrancheKm,
+  deleteEnlevementTrancheKm,
+  updateEnlevementTrancheKmStatus,
 };
 
 export default tarificationService;
