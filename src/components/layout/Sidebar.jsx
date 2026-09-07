@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Bike,
   Truck,
+  Gift,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectUnreadConversationsCount } from "../../redux/slices/messageSlice";
@@ -35,6 +36,7 @@ const PAGE_KEY_BY_HREF = {
   "/zones-communes": "zones_communes",
   "/livreurs": "livreurs",
   "/missions-groupage": "missions",
+  "/parrainage": "parrainage",
   "/produits": "produits",
   "/agents": "agents",
 };
@@ -81,6 +83,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         { name: "Zones et Communes", href: "/zones-communes", icon: Globe, color: "text-sky-400" },
         // Masqué pour l'instant (chantier livreurs pas encore prêt côté produit) :
         // { name: "Livreurs", href: "/livreurs", icon: Bike, color: "text-cyan-400" },
+        { name: "Parrainage", href: "/parrainage", icon: Gift, color: "text-pink-400" },
         { name: "Produits & Catégories", href: "/produits", icon: Tag, color: "text-rose-400" },
         { name: "Équipe & Accès", href: "/agents", icon: Users, color: "text-indigo-400", adminOnly: true },
       ],

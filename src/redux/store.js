@@ -4,6 +4,7 @@ import zoneReducer from './slices/zoneSlice';
 import communeReducer from './slices/communeSlice';
 import livreurReducer from './slices/livreurSlice';
 import missionGroupageReducer from './slices/missionGroupageSlice';
+import parrainageReducer from './slices/parrainageSlice';
 import tarificationReducer from './slices/tarificationSlice';
 import backofficeReducer from './slices/backofficeSlice';
 import produitReducer from './slices/produitSlice';
@@ -24,6 +25,7 @@ export const store = configureStore({
     communes: communeReducer,
     livreurs: livreurReducer,
     missionGroupage: missionGroupageReducer,
+    parrainage: parrainageReducer,
     tarification: tarificationReducer,
     backoffice: backofficeReducer,
     produits: produitReducer,

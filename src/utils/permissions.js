@@ -16,6 +16,7 @@ export const PAGE_RESOURCE_MAP = {
   zones_communes: ["zones_communes"],
   livreurs: ["livreurs"],
   missions: ["missions"],
+  parrainage: ["parrainage"],
   produits: ["produits", "product_categories"],
   agents: ["agents"],
 };

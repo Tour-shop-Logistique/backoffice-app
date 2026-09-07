@@ -8,6 +8,7 @@ export const ROUTES = {
     ZONES_COMMUNES: '/zones-communes',
     LIVREURS: '/livreurs',
     MISSIONS_GROUPAGE: '/missions-groupage',
+    PARRAINAGE: '/parrainage',
     AGENCE_PARTENAIRE: '/agence-partenaire',
     AGENCE_DETAIL: '/agence-partenaire/:id',
     PRODUITS: '/produits',
