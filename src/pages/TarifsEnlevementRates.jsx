@@ -171,7 +171,7 @@ const TarifsEnlevementRates = () => {
                                         {communeSelectionnee?.nom || 'Commune'}
                                     </h1>
                                     <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
-                                        Grille de tarifs d'enlèvement par tranche de distance
+                                        Grille de tarifs d'enlèvement et de livraison par tranche de distance
                                     </p>
                                 </div>
                             </div>
@@ -362,9 +362,9 @@ const TarifsEnlevementRates = () => {
                 <header className="space-y-3 md:space-y-0 text-black">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Enlèvement à domicile</h1>
+                            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Enlèvement & Livraison à domicile</h1>
                             <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
-                                Grille de tarifs par tranche de distance, par commune
+                                Grille de tarifs par tranche de distance, par commune — partagée entre enlèvement et livraison
                             </p>
                         </div>
 
