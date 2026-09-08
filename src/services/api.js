@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getStore } from '../redux/storeAccessor';
 
 // URL racine du backend, SANS suffixe /api (ex: https://api.tourshop-express.com)
 export const API_URL = import.meta.env.VITE_API_URL;
@@ -53,6 +54,19 @@ api.interceptors.response.use(
       // Le serveur a répondu avec un code d'erreur
       console.error('❌ API Error Status:', error.response.status);
       console.error('❌ API Error Data:', error.response.data);
+
+      // Session expirée/invalide : déconnexion automatique, sauf sur la
+      // requête de connexion elle-même (un 401 sur /login = identifiants
+      // invalides, pas une session à couper - l'utilisateur n'est pas
+      // encore connecté).
+      if (error.response.status === 401 && !error.config?.url?.includes('/login')) {
+        const store = getStore();
+        if (store) {
+          import('../redux/slices/authSlice').then(({ handleSessionExpired }) => {
+            store.dispatch(handleSessionExpired());
+          });
+        }
+      }
     } else if (error.request) {
       // La requête a été faite mais pas de réponse reçue
       console.error('⚠️ No Response from server (Network Error or CORS):', error.message);

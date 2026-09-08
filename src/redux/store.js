@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { setStore } from './storeAccessor';
 import authReducer from './slices/authSlice';
 import zoneReducer from './slices/zoneSlice';
 import communeReducer from './slices/communeSlice';
@@ -40,3 +41,7 @@ export const store = configureStore({
     inAppNotifications: inAppNotificationsReducer,
   },
 });
+
+// Rend le store accessible depuis src/services/api.js (intercepteur 401)
+// sans import statique circulaire - voir storeAccessor.js.
+setStore(store);

@@ -65,6 +65,35 @@ export const performLogout = createAsyncThunk('auth/performLogout', async (_, { 
   window.location.href = '/';
 });
 
+// Déconnexion déclenchée automatiquement par l'intercepteur 401 (src/services/api.js)
+// quand le token n'est plus valide (expiré/révoqué) - même nettoyage que
+// performLogout, mais sans rappel serveur (le token qui a expiré ne peut de
+// toute façon plus authentifier ce /logout) et avec un message qui explique
+// pourquoi on déconnecte l'utilisateur plutôt que de laisser croire à une
+// action volontaire.
+export const handleSessionExpired = createAsyncThunk('auth/handleSessionExpired', async (_, { dispatch, getState }) => {
+  // Ne rien faire si déjà déconnecté (évite un flash de notification en
+  // boucle si plusieurs requêtes 401 arrivent en même temps).
+  if (!getState().auth.isAuthenticated) {
+    return;
+  }
+
+  dispatch(showNotification({
+    type: 'error',
+    message: 'Votre session a expiré. Veuillez vous reconnecter.'
+  }));
+
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+  disconnectEcho();
+
+  dispatch(resetBackoffice());
+
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  window.location.href = '/';
+});
+
 // Thunk pour resynchroniser l'utilisateur connecté depuis le backend (role_id/
 // role_details notamment) : le login initial persiste le user en localStorage
 // mais rien ne le revalide ensuite, donc un simple F5 servait des données
