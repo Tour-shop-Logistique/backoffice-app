@@ -67,6 +67,7 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
   const [formData, setFormData] = useState({
     commune_depart_id: '',
     commune_arrivee_id: '',
+    format_colis: 'moyen',
     montant_base: '',
     pourcentage_commission_depart: '',
     pourcentage_commission_arrivee: '',
@@ -78,6 +79,7 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
         id: initialData.id,
         commune_depart_id: initialData.commune_a_id || '',
         commune_arrivee_id: initialData.commune_b_id || '',
+        format_colis: initialData.format_colis || 'moyen',
         montant_base: (parseFloat(initialData.montant_base) || 0).toString(),
         pourcentage_commission_depart: (parseFloat(initialData.pourcentage_commission_depart) || 0).toString(),
         pourcentage_commission_arrivee: (parseFloat(initialData.pourcentage_commission_arrivee) || 0).toString(),
@@ -94,6 +96,7 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
     const submissionData = {
       commune_depart_id: formData.commune_depart_id,
       commune_arrivee_id: formData.commune_arrivee_id,
+      format_colis: formData.format_colis,
       montant_base: parseFloat(formData.montant_base),
       pourcentage_commission_depart: parseFloat(formData.pourcentage_commission_depart),
       pourcentage_commission_arrivee: parseFloat(formData.pourcentage_commission_arrivee),
@@ -139,6 +142,35 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
       {!formData.id && (
         <p className="text-xs text-slate-400 -mt-4 ml-1">Le tarif est symétrique : il s'appliquera dans les deux sens du trajet.</p>
       )}
+
+      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+        <label className={labelClasses}>Format du colis</label>
+        {formData.id ? (
+          <p className="mt-2 px-3 py-2.5 border rounded-md bg-white text-slate-500 font-medium capitalize">
+            {formData.format_colis}
+          </p>
+        ) : (
+          <div className="grid grid-cols-3 gap-2 mt-2">
+            {['petit', 'moyen', 'grand'].map((format) => (
+              <button
+                key={format}
+                type="button"
+                onClick={() => handleInputChange('format_colis', format)}
+                className={`px-3 py-2.5 rounded-md border text-sm font-semibold capitalize transition-all ${
+                  formData.format_colis === format
+                    ? 'bg-slate-900 border-slate-900 text-white'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {format}
+              </button>
+            ))}
+          </div>
+        )}
+        {!formData.id && (
+          <p className="text-xs text-slate-400 mt-2">Chaque format a son propre montant et ses propres commissions - non modifiable après création.</p>
+        )}
+      </div>
 
       <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-6">Détails du Prix</h3>

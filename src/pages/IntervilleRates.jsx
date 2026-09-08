@@ -27,6 +27,18 @@ import {
 } from "lucide-react";
 import { showNotification } from '../redux/slices/uiSlice';
 
+const FORMAT_BADGE_CLASSES = {
+    petit: 'bg-sky-50 text-sky-700 border-sky-100',
+    moyen: 'bg-violet-50 text-violet-700 border-violet-100',
+    grand: 'bg-amber-50 text-amber-700 border-amber-100',
+};
+
+const FormatBadge = ({ format }) => (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded border font-semibold text-xs capitalize ${FORMAT_BADGE_CLASSES[format] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+        {format || '—'}
+    </span>
+);
+
 const IntervilleRates = () => {
     const dispatch = useDispatch();
     const canCreate = useHasPermission('tarification_interville.create');
@@ -270,6 +282,7 @@ const IntervilleRates = () => {
                                 <thead className="bg-slate-50/50 border-b border-slate-200">
                                     <tr>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Trajet</th>
+                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Format</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Montant Base</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Commission départ</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Commission arrivée</th>
@@ -293,6 +306,9 @@ const IntervilleRates = () => {
                                                         <ArrowLeftRight size={12} className="text-slate-400 shrink-0" />
                                                         <span>{tarif.commune_b?.nom || '?'}</span>
                                                     </div>
+                                                </td>
+                                                <td className="px-6 py-3">
+                                                    <FormatBadge format={tarif.format_colis} />
                                                 </td>
                                                 <td className="px-6 py-3">
                                                     <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-xs">FCFA</span></p>
@@ -362,13 +378,16 @@ const IntervilleRates = () => {
                                     <div key={tarif.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="flex items-center gap-2.5 min-w-0">
-                                                <div className="min-w-0">
+                                                <div className="min-w-0 space-y-1">
                                                     <p className="font-semibold text-slate-900 text-sm truncate flex items-center gap-1">
                                                         {tarif.commune_a?.nom} <ArrowLeftRight size={10} className="text-slate-400 shrink-0" /> {tarif.commune_b?.nom}
                                                     </p>
-                                                    <p className="text-xs text-slate-500 font-bold uppercase">
-                                                        {total.toLocaleString()} FCFA
-                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        <FormatBadge format={tarif.format_colis} />
+                                                        <p className="text-xs text-slate-500 font-bold uppercase">
+                                                            {total.toLocaleString()} FCFA
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                             {canToggleStatus ? (
