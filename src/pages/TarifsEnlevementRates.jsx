@@ -42,6 +42,7 @@ const TarifsEnlevementRates = () => {
     const { communes, hasLoaded: hasLoadedCommunes, isLoading: isLoadingCommunes } = useSelector((state) => state.communes);
 
     const [selectedCommuneId, setSelectedCommuneId] = useState(null);
+    const [selectedVehicule, setSelectedVehicule] = useState('moto');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTranche, setSelectedTranche] = useState(null);
     const [isEditingModalOpen, setIsEditingModalOpen] = useState(false);
@@ -146,6 +147,7 @@ const TarifsEnlevementRates = () => {
 
     const communeSelectionnee = communes.find(c => String(c.id) === String(selectedCommuneId));
     const trancheSelectionnees = (tranchesParCommune.get(selectedCommuneId) || [])
+        .filter(t => (t.type_vehicule || 'moto') === selectedVehicule)
         .slice()
         .sort((a, b) => (parseFloat(a.km_min) || 0) - (parseFloat(b.km_min) || 0));
 
@@ -160,7 +162,7 @@ const TarifsEnlevementRates = () => {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3 min-w-0">
                                 <button
-                                    onClick={() => setSelectedCommuneId(null)}
+                                    onClick={() => { setSelectedCommuneId(null); setSelectedVehicule('moto'); }}
                                     className="inline-flex items-center justify-center p-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm shrink-0"
                                     title="Retour"
                                 >
@@ -188,6 +190,31 @@ const TarifsEnlevementRates = () => {
                             )}
                         </div>
                     </header>
+
+                    <div className="inline-flex items-center gap-1 p-1 bg-slate-200/60 rounded-lg">
+                        {['moto', 'voiture'].map((vehicule) => {
+                            const nbTranchesVehicule = (tranchesParCommune.get(selectedCommuneId) || [])
+                                .filter(t => (t.type_vehicule || 'moto') === vehicule).length;
+                            return (
+                                <button
+                                    key={vehicule}
+                                    onClick={() => setSelectedVehicule(vehicule)}
+                                    className={`px-4 py-2 rounded-md text-sm font-semibold capitalize transition-all ${
+                                        selectedVehicule === vehicule
+                                            ? 'bg-white text-slate-900 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    {vehicule}
+                                    <span className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                        selectedVehicule === vehicule ? 'bg-slate-100 text-slate-600' : 'bg-slate-300/60 text-slate-500'
+                                    }`}>
+                                        {nbTranchesVehicule}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -197,7 +224,7 @@ const TarifsEnlevementRates = () => {
                                 <Ruler className="text-slate-400" size={32} />
                             </div>
                             <h3 className="font-bold text-slate-900 text-lg">Aucune tranche définie</h3>
-                            <p className="text-slate-500 text-sm mt-2">Ajoutez une première tranche pour cette commune.</p>
+                            <p className="text-slate-500 text-sm mt-2 capitalize">Ajoutez une première tranche pour cette commune en {selectedVehicule}.</p>
                         </div>
                     ) : (
                         <>
@@ -326,7 +353,7 @@ const TarifsEnlevementRates = () => {
                     isLoading={isSubmitting}
                     confirmLabel="Enregistrer"
                 >
-                    <TarifEnlevementTrancheKmForm id="add-tranche-km-form" onSubmit={handleAddTranche} communeId={selectedCommuneId} />
+                    <TarifEnlevementTrancheKmForm id="add-tranche-km-form" onSubmit={handleAddTranche} communeId={selectedCommuneId} defaultTypeVehicule={selectedVehicule} />
                 </Modal>
 
                 <Modal
