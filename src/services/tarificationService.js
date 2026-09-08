@@ -109,6 +109,26 @@ const updateEnlevementTrancheKmStatus = async (trancheId) => {
   return response.data;
 };
 
+const getFormatsColis = async () => {
+  const response = await api.get('/tarification/list-formats-colis');
+  return response.data.formats;
+};
+
+const addFormatColis = async (formatData) => {
+  const response = await api.post('/tarification/add-format-colis', formatData);
+  return response.data;
+};
+
+const editFormatColis = async (formatId, formatData) => {
+  const response = await api.put(`/tarification/edit-format-colis/${formatId}`, formatData);
+  return response.data;
+};
+
+const deleteFormatColis = async (formatId) => {
+  const response = await api.delete(`/tarification/delete-format-colis/${formatId}`);
+  return response.data;
+};
+
 const tarificationService = {
   getTarifs,
   getGroupedTarifs,
@@ -130,6 +150,10 @@ const tarificationService = {
   editEnlevementTrancheKm,
   deleteEnlevementTrancheKm,
   updateEnlevementTrancheKmStatus,
+  getFormatsColis,
+  addFormatColis,
+  editFormatColis,
+  deleteFormatColis,
 };
 
 export default tarificationService;

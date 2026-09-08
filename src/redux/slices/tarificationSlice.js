@@ -6,6 +6,7 @@ const initialState = {
   groupedTarifs: [],
   intervilleTarifs: [],
   enlevementTranchesKm: [],
+  formatsColis: [],
   // Flags séparés (et non un isLoading partagé) : fetchTarifs et
   // fetchGroupedTarifs sont dispatchés en parallèle au montage du Layout, et
   // un flag commun faisait échouer silencieusement le second thunk via son
@@ -14,11 +15,13 @@ const initialState = {
   isLoadingGrouped: false,
   isLoadingInterville: false,
   isLoadingEnlevementTranchesKm: false,
+  isLoadingFormatsColis: false,
   error: null,
   hasLoaded: false,
   groupedHasLoaded: false,
   intervilleHasLoaded: false,
   enlevementTranchesKmHasLoaded: false,
+  formatsColisHasLoaded: false,
 };
 
 /*--------------------------- SIMPLE TARIFS ---------------------------*/
@@ -297,6 +300,63 @@ export const updateEnlevementTrancheKmStatus = createAsyncThunk(
   async (trancheId, { rejectWithValue }) => {
     try {
       return await tarificationService.updateEnlevementTrancheKmStatus(trancheId);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+/*--------------------------- FORMATS COLIS ---------------------------*/
+
+export const fetchFormatsColis = createAsyncThunk(
+  'tarification/fetchFormatsColis',
+  async (options = {}, { rejectWithValue }) => {
+    try {
+      return await tarificationService.getFormatsColis();
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { tarification } = getState();
+      if (tarification.isLoadingFormatsColis) return false;
+    },
+  }
+);
+
+export const addFormatColis = createAsyncThunk(
+  'tarification/addFormatColis',
+  async (formatData, { rejectWithValue }) => {
+    try {
+      return await tarificationService.addFormatColis(formatData);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const editFormatColis = createAsyncThunk(
+  'tarification/editFormatColis',
+  async ({ formatId, formatData }, { rejectWithValue }) => {
+    try {
+      return await tarificationService.editFormatColis(formatId, formatData);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const deleteFormatColis = createAsyncThunk(
+  'tarification/deleteFormatColis',
+  async (formatId, { rejectWithValue }) => {
+    try {
+      await tarificationService.deleteFormatColis(formatId);
+      return formatId;
     } catch (error) {
       console.error(error);
       return rejectWithValue(error.response.data);
@@ -600,6 +660,44 @@ const tarificationSlice = createSlice({
             t.id === updated.id ? updated : t
           );
         }
+      });
+
+    /*---------------- FORMATS COLIS ----------------*/
+    builder
+      .addCase(fetchFormatsColis.pending, (state, action) => {
+        if (!action.meta.arg?.silent) {
+          state.isLoadingFormatsColis = true;
+        }
+        state.error = null;
+      })
+      .addCase(fetchFormatsColis.fulfilled, (state, action) => {
+        state.isLoadingFormatsColis = false;
+        state.formatsColis = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+        state.formatsColisHasLoaded = true;
+      })
+      .addCase(fetchFormatsColis.rejected, (state, action) => {
+        state.isLoadingFormatsColis = false;
+        state.error = action.payload;
+      })
+
+      .addCase(addFormatColis.fulfilled, (state, action) => {
+        const newFormat = action.payload?.format || action.payload?.data || action.payload;
+        if (newFormat) {
+          state.formatsColis.push(newFormat);
+          state.formatsColis.sort((a, b) => a.ordre - b.ordre);
+        }
+      })
+
+      .addCase(editFormatColis.fulfilled, (state, action) => {
+        const updated = action.payload?.format || action.payload?.data || action.payload;
+        if (updated) {
+          state.formatsColis = state.formatsColis.map((f) => (f.id === updated.id ? updated : f));
+          state.formatsColis.sort((a, b) => a.ordre - b.ordre);
+        }
+      })
+
+      .addCase(deleteFormatColis.fulfilled, (state, action) => {
+        state.formatsColis = state.formatsColis.filter((f) => f.id !== action.payload);
       });
   },
 });

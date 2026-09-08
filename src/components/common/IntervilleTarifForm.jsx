@@ -63,11 +63,13 @@ const CommuneSelect = ({ label, value, onChange, communes, excludeId, disabled }
   );
 };
 
-const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialData, communes = [] }) => {
+const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialData, communes = [], formats = [] }) => {
+  const formatsTries = [...formats].sort((a, b) => a.ordre - b.ordre);
+
   const [formData, setFormData] = useState({
     commune_depart_id: '',
     commune_arrivee_id: '',
-    format_colis: 'moyen',
+    format_colis_id: '',
     montant_base: '',
     pourcentage_commission_depart: '',
     pourcentage_commission_arrivee: '',
@@ -79,13 +81,17 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
         id: initialData.id,
         commune_depart_id: initialData.commune_a_id || '',
         commune_arrivee_id: initialData.commune_b_id || '',
-        format_colis: initialData.format_colis || 'moyen',
+        format_colis_id: initialData.format_colis_id || initialData.format_colis?.id || '',
         montant_base: (parseFloat(initialData.montant_base) || 0).toString(),
         pourcentage_commission_depart: (parseFloat(initialData.pourcentage_commission_depart) || 0).toString(),
         pourcentage_commission_arrivee: (parseFloat(initialData.pourcentage_commission_arrivee) || 0).toString(),
       });
+    } else if (formatsTries.length > 0) {
+      const parDefaut = formatsTries.find(f => f.is_default) || formatsTries[0];
+      setFormData(prev => ({ ...prev, format_colis_id: prev.format_colis_id || parDefaut.id }));
     }
-  }, [initialData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData, formats.length]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -96,7 +102,7 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
     const submissionData = {
       commune_depart_id: formData.commune_depart_id,
       commune_arrivee_id: formData.commune_arrivee_id,
-      format_colis: formData.format_colis,
+      format_colis_id: formData.format_colis_id,
       montant_base: parseFloat(formData.montant_base),
       pourcentage_commission_depart: parseFloat(formData.pourcentage_commission_depart),
       pourcentage_commission_arrivee: parseFloat(formData.pourcentage_commission_arrivee),
@@ -104,6 +110,8 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
     if (formData.id) submissionData.id = formData.id;
     onSubmit(submissionData);
   };
+
+  const formatSelectionne = formatsTries.find(f => String(f.id) === String(formData.format_colis_id));
 
   const formatCurrency = (value) => new Intl.NumberFormat('fr-FR', {
     style: 'currency', currency: 'XOF', minimumFractionDigits: 0
@@ -146,23 +154,25 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
       <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
         <label className={labelClasses}>Format du colis</label>
         {formData.id ? (
-          <p className="mt-2 px-3 py-2.5 border rounded-md bg-white text-slate-500 font-medium capitalize">
-            {formData.format_colis}
+          <p className="mt-2 px-3 py-2.5 border rounded-md bg-white text-slate-500 font-medium">
+            {formatSelectionne?.nom || '—'}
           </p>
+        ) : formatsTries.length === 0 ? (
+          <p className="mt-2 text-sm text-amber-600">Aucun format configuré - créez-en d'abord dans Formats de colis.</p>
         ) : (
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            {['petit', 'moyen', 'grand'].map((format) => (
+          <div className="grid gap-2 mt-2" style={{ gridTemplateColumns: `repeat(${Math.min(formatsTries.length, 4)}, minmax(0, 1fr))` }}>
+            {formatsTries.map((format) => (
               <button
-                key={format}
+                key={format.id}
                 type="button"
-                onClick={() => handleInputChange('format_colis', format)}
-                className={`px-3 py-2.5 rounded-md border text-sm font-semibold capitalize transition-all ${
-                  formData.format_colis === format
+                onClick={() => handleInputChange('format_colis_id', format.id)}
+                className={`px-3 py-2.5 rounded-md border text-sm font-semibold transition-all ${
+                  String(formData.format_colis_id) === String(format.id)
                     ? 'bg-slate-900 border-slate-900 text-white'
                     : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                {format}
+                {format.nom}
               </button>
             ))}
           </div>
