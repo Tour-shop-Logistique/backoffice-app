@@ -16,6 +16,7 @@ import {
 import Modal from '../components/common/Modal';
 import ZoneForm from '../components/common/ZoneForm';
 import RowActions from '../components/common/RowActions';
+import ExportButton from '../components/common/ExportButton';
 import { showNotification } from '../redux/slices/uiSlice';
 import DeleteModal from '../components/common/DeleteModal';
 import { getCountryName } from '../utils/countries';
@@ -166,6 +167,22 @@ const ZoneConfiguration = () => {
     inactive: filteredBySearch.filter(z => !z.actif).length
   }), [filteredBySearch]);
 
+  const exportColumns = useMemo(() => ([
+    { header: 'Zone', key: 'nom' },
+    { header: 'Pays', key: 'pays' },
+    { header: 'Actif', key: 'actif' },
+  ]), []);
+
+  const exportRows = useMemo(() => filteredZones.map((zone) => {
+    const codes = Array.isArray(zone.pays_codes) ? zone.pays_codes : [];
+    const paysNoms = codes.length > 0 ? codes.map(getCountryName) : (Array.isArray(zone.pays) ? zone.pays : []);
+    return {
+      nom: zone.nom,
+      pays: paysNoms.join(', '),
+      actif: zone.actif ? 'Oui' : 'Non',
+    };
+  }), [filteredZones]);
+
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
 
@@ -193,6 +210,13 @@ const ZoneConfiguration = () => {
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span className="hidden md:inline md:ml-2">Rafraîchir</span>
               </button>
+
+              <ExportButton
+                columns={exportColumns}
+                rows={exportRows}
+                filename="zones"
+                title="Zones géographiques"
+              />
 
               {canCreate && (
                 <button

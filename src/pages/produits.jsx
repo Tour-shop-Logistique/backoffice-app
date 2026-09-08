@@ -18,6 +18,7 @@ import { showNotification } from "../redux/slices/uiSlice"
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 import RowActions from '../components/common/RowActions';
+import ExportButton from '../components/common/ExportButton';
 import useHasPermission from '../hooks/useHasPermission';
 
 // Éligibilité par type d'expédition, configurable par produit (CA en est
@@ -340,6 +341,39 @@ export default function Produits() {
     inactive: filteredBySearchAndCategory.filter(p => !p.actif).length
   }), [filteredBySearchAndCategory]);
 
+  // Export (filet de sécurité) : produits + catégories, catégorie résolue en clair
+  const exportColumns = useMemo(() => [
+    { header: 'Référence', key: 'reference' },
+    { header: 'Désignation', key: 'designation' },
+    { header: 'Catégorie', key: 'categorie' },
+    { header: 'Éligible LD', key: 'eligible_ld' },
+    { header: 'Éligible Groupage Afrique', key: 'eligible_afrique' },
+    { header: 'Éligible DHD Aérien', key: 'eligible_dhd_aerien' },
+    { header: 'Éligible DHD Maritime', key: 'eligible_dhd_maritime' },
+    { header: 'Actif', key: 'actif' },
+  ], []);
+
+  const exportRows = useMemo(() => (listProduits || []).map(p => ({
+    reference: p.reference,
+    designation: p.designation,
+    categorie: categories?.find(c => String(c.id) === String(p.category_id))?.nom || '',
+    eligible_ld: p.eligible_ld === false ? 'Non' : 'Oui',
+    eligible_afrique: p.eligible_afrique === false ? 'Non' : 'Oui',
+    eligible_dhd_aerien: p.eligible_dhd_aerien === false ? 'Non' : 'Oui',
+    eligible_dhd_maritime: p.eligible_dhd_maritime === false ? 'Non' : 'Oui',
+    actif: p.actif ? 'Oui' : 'Non',
+  })), [listProduits, categories]);
+
+  const categoriesExportColumns = useMemo(() => [
+    { header: 'Nom', key: 'nom' },
+    { header: 'Actif', key: 'actif' },
+  ], []);
+
+  const categoriesExportRows = useMemo(() => (categories || []).map(c => ({
+    nom: c.nom,
+    actif: c.actif ? 'Oui' : 'Non',
+  })), [categories]);
+
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
@@ -368,6 +402,14 @@ export default function Produits() {
                 <RefreshCw className={`h-4 w-4 ${isRefreshingProduits || isRefreshingCategories ? 'animate-spin' : ''}`} />
                 <span className="hidden md:inline md:ml-2">Rafraîchir</span>
               </button>
+
+              <ExportButton
+                columns={exportColumns}
+                rows={exportRows}
+                filename="produits"
+                title="Produits"
+                disabled={exportRows.length === 0}
+              />
 
               {canCreateProduit && (
                 <button
@@ -878,14 +920,24 @@ export default function Produits() {
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-slate-700">{editingCategory ? "Modifier la catégorie" : "Nouvelle catégorie"}</h3>
-              <button
-                onClick={handleRefreshCategories}
-                disabled={isRefreshingCategories}
-                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all disabled:opacity-50"
-                title="Rafraîchir les données"
-              >
-                <RefreshCw size={18} className={isRefreshingCategories ? 'animate-spin' : ''} />
-              </button>
+              <div className="flex items-center gap-1">
+                <ExportButton
+                  columns={categoriesExportColumns}
+                  rows={categoriesExportRows}
+                  filename="categories-produits"
+                  title="Catégories de produits"
+                  disabled={categoriesExportRows.length === 0}
+                  compact
+                />
+                <button
+                  onClick={handleRefreshCategories}
+                  disabled={isRefreshingCategories}
+                  className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all disabled:opacity-50"
+                  title="Rafraîchir les données"
+                >
+                  <RefreshCw size={18} className={isRefreshingCategories ? 'animate-spin' : ''} />
+                </button>
+              </div>
             </div>
             <div className="space-y-4">
               <input

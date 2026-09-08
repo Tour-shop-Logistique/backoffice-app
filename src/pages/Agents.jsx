@@ -8,6 +8,7 @@ import { fetchAvailablePermissions } from '../redux/slices/permissionsSlice';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 import RowActions from '../components/common/RowActions';
+import ExportButton from '../components/common/ExportButton';
 import PermissionMatrix from '../components/roles/PermissionMatrix';
 import useHasPermission from '../hooks/useHasPermission';
 
@@ -378,6 +379,36 @@ const Agents = () => {
     inactive: filteredBySearch.filter(a => !a.actif).length
   }), [filteredBySearch]);
 
+  const agentsExportColumns = useMemo(() => ([
+    { header: 'Nom', key: 'nom' },
+    { header: 'Prénoms', key: 'prenoms' },
+    { header: 'Téléphone', key: 'telephone' },
+    { header: 'Email', key: 'email' },
+    { header: 'Rôle', key: 'role' },
+    { header: 'Actif', key: 'actif' },
+  ]), []);
+
+  const agentsExportRows = useMemo(() => filteredAgents.map((agent) => ({
+    nom: agent.nom || '',
+    prenoms: agent.prenoms || '',
+    telephone: agent.telephone || '',
+    email: agent.email || '',
+    role: agent.custom_role?.nom || (agent.role === 'is_backoffice_admin' ? 'Administrateur' : ''),
+    actif: agent.actif ? 'Oui' : 'Non',
+  })), [filteredAgents]);
+
+  const rolesExportColumns = useMemo(() => ([
+    { header: 'Nom', key: 'nom' },
+    { header: 'Description', key: 'description' },
+    { header: 'Permissions', key: 'permissions' },
+  ]), []);
+
+  const rolesExportRows = useMemo(() => (roles || []).map((role) => ({
+    nom: role.nom || '',
+    description: role.description || '',
+    permissions: (role.permissions || []).join(', '),
+  })), [roles]);
+
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
 
@@ -417,6 +448,13 @@ const Agents = () => {
                   <span className="hidden md:inline md:ml-2">Rafraîchir</span>
                 </button>
               )}
+
+              <ExportButton
+                columns={activeTab === 'agents' ? agentsExportColumns : rolesExportColumns}
+                rows={activeTab === 'agents' ? agentsExportRows : rolesExportRows}
+                filename={activeTab === 'agents' ? 'agents' : 'roles-permissions'}
+                title={activeTab === 'agents' ? 'Agents' : 'Rôles & Permissions'}
+              />
 
               {(activeTab === 'agents' ? canCreateAgent : true) && (
                 <button

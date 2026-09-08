@@ -13,6 +13,7 @@ import Modal from "../components/common/Modal";
 import DeleteModal from "../components/common/DeleteModal";
 import TarifEnlevementTrancheKmForm from "../components/common/TarifEnlevementTrancheKmForm";
 import RowActions from "../components/common/RowActions";
+import ExportButton from "../components/common/ExportButton";
 import useHasPermission from "../hooks/useHasPermission";
 import {
     MapPin,
@@ -152,6 +153,27 @@ const TarifsEnlevementRates = () => {
         .sort((a, b) => (parseFloat(a.km_min) || 0) - (parseFloat(b.km_min) || 0));
 
     const formatKmMax = (kmMax) => kmMax == null ? 'et plus' : `${kmMax} km`;
+
+    // Export de la grille complète (toutes communes/véhicules confondus),
+    // pas juste la vue détail affichée à l'écran - plus utile comme filet
+    // de sécurité pour reconstituer toute la configuration.
+    const exportColumns = useMemo(() => ([
+        { header: 'Commune', key: 'commune' },
+        { header: 'Véhicule', key: 'vehicule' },
+        { header: 'Km min', key: 'km_min' },
+        { header: 'Km max', key: 'km_max' },
+        { header: 'Montant (FCFA)', key: 'montant' },
+        { header: 'Actif', key: 'actif' },
+    ]), []);
+
+    const exportRows = useMemo(() => (tranches || []).map((t) => ({
+        commune: communes.find(c => String(c.id) === String(t.commune_id || t.commune?.id))?.nom || t.commune?.nom || '',
+        vehicule: t.type_vehicule || 'moto',
+        km_min: parseFloat(t.km_min) || 0,
+        km_max: t.km_max == null ? 'Illimité' : parseFloat(t.km_max),
+        montant: parseFloat(t.montant) || 0,
+        actif: t.actif ? 'Oui' : 'Non',
+    })), [tranches, communes]);
 
     // ------------------- Vue détail : grille de tranches d'une commune -------------------
     if (selectedCommuneId) {
@@ -405,6 +427,13 @@ const TarifsEnlevementRates = () => {
                                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                                 <span className="hidden md:inline md:ml-2">Rafraîchir</span>
                             </button>
+
+                            <ExportButton
+                                columns={exportColumns}
+                                rows={exportRows}
+                                filename="tarifs-enlevement-livraison"
+                                title="Enlèvement & Livraison à domicile"
+                            />
                         </div>
                     </div>
                 </header>

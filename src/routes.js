@@ -22,4 +22,5 @@ export const ROUTES = {
     HISTORIQUE: '/historique',
     ANNOUNCEMENTS: '/annonces',
     MESSAGES: '/messages',
+    EXPORT_CONFIGURATION: '/export-configuration',
 };

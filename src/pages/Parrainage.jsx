@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchTauxParrainage, updateTauxParrainage, fetchParrainageClients } from '../redux/slices/parrainageSlice';
 import { showNotification } from '../redux/slices/uiSlice';
 import useHasPermission from '../hooks/useHasPermission';
+import ExportButton from '../components/common/ExportButton';
 import {
   Gift,
   Percent,
@@ -99,6 +100,30 @@ const Parrainage = () => {
     return nomComplet.includes(term) || (c.code_parrainage || '').toLowerCase().includes(term) || (c.telephone || '').includes(term);
   });
 
+  // Les 4 taux sont inclus en tête d'export (une ligne "récapitulatif"),
+  // suivis de la liste des clients - un seul export couvrant toute la page.
+  const exportColumns = [
+    { header: 'Client', key: 'client' },
+    { header: 'Téléphone', key: 'telephone' },
+    { header: 'Code parrainage', key: 'code_parrainage' },
+    { header: 'Filleuls', key: 'filleuls' },
+    { header: 'Solde bonus (FCFA)', key: 'solde' },
+  ];
+
+  const exportRows = [
+    {
+      client: `Taux : international ${formData.taux_international}%, national ${formData.taux_national}%, enlèvement ${formData.taux_enlevement}%, marketplace ${formData.taux_marketplace}%`,
+      telephone: '', code_parrainage: '', filleuls: '', solde: '',
+    },
+    ...filteredClients.map((c) => ({
+      client: `${c.nom || ''} ${c.prenoms || ''}`.trim(),
+      telephone: c.telephone || '',
+      code_parrainage: c.code_parrainage || '',
+      filleuls: c.filleuls_count ?? 0,
+      solde: parseFloat(c.solde_parrainage) || 0,
+    })),
+  ];
+
   const inputBase = "w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-colors placeholder:text-slate-400 text-sm font-medium text-slate-900 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed";
   const labelBase = "text-sm font-semibold text-slate-700 flex items-center gap-1.5";
 
@@ -112,15 +137,24 @@ const Parrainage = () => {
               Taux de bonus et clients de votre pays
             </p>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
-            title="Rafraîchir"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="hidden md:inline md:ml-2">Rafraîchir</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
+              title="Rafraîchir"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden md:inline md:ml-2">Rafraîchir</span>
+            </button>
+
+            <ExportButton
+              columns={exportColumns}
+              rows={exportRows}
+              filename="parrainage"
+              title="Parrainage"
+            />
+          </div>
         </header>
       </div>
 

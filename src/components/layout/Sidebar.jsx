@@ -16,6 +16,7 @@ import {
   Bike,
   Truck,
   Gift,
+  Download,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectUnreadConversationsCount } from "../../redux/slices/messageSlice";
@@ -86,6 +87,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         { name: "Parrainage", href: "/parrainage", icon: Gift, color: "text-pink-400" },
         { name: "Produits & Catégories", href: "/produits", icon: Tag, color: "text-rose-400" },
         { name: "Équipe & Accès", href: "/agents", icon: Users, color: "text-indigo-400", adminOnly: true },
+        { name: "Sauvegarde des configs", href: "/export-configuration", icon: Download, color: "text-slate-400", adminOnly: true },
       ],
     },
   ]

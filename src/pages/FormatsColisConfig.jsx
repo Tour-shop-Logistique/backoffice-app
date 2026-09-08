@@ -11,6 +11,7 @@ import Modal from "../components/common/Modal";
 import DeleteModal from "../components/common/DeleteModal";
 import FormatColisForm from "../components/common/FormatColisForm";
 import RowActions from "../components/common/RowActions";
+import ExportButton from "../components/common/ExportButton";
 import useHasPermission from "../hooks/useHasPermission";
 import {
     Package,
@@ -117,6 +118,26 @@ const FormatsColisConfig = () => {
         return `${dim(format.longueur_max)} x ${dim(format.largeur_max)} x ${dim(format.hauteur_max)} cm`;
     };
 
+    const exportColumns = [
+        { header: 'Ordre', key: 'ordre' },
+        { header: 'Nom', key: 'nom' },
+        { header: 'Poids max (kg)', key: 'poids_max' },
+        { header: 'Longueur max (cm)', key: 'longueur_max' },
+        { header: 'Largeur max (cm)', key: 'largeur_max' },
+        { header: 'Hauteur max (cm)', key: 'hauteur_max' },
+        { header: 'Par défaut', key: 'is_default' },
+    ];
+
+    const exportRows = formatsTries.map((f) => ({
+        ordre: f.ordre,
+        nom: f.nom,
+        poids_max: f.poids_max == null ? 'Illimité' : Number(f.poids_max),
+        longueur_max: f.longueur_max == null ? 'Illimité' : Number(f.longueur_max),
+        largeur_max: f.largeur_max == null ? 'Illimité' : Number(f.largeur_max),
+        hauteur_max: f.hauteur_max == null ? 'Illimité' : Number(f.hauteur_max),
+        is_default: f.is_default ? 'Oui' : 'Non',
+    }));
+
     return (
         <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
             <div className="flex items-center justify-between gap-3">
@@ -136,6 +157,12 @@ const FormatsColisConfig = () => {
                         <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                         <span className="hidden md:inline md:ml-2">Rafraîchir</span>
                     </button>
+                    <ExportButton
+                        columns={exportColumns}
+                        rows={exportRows}
+                        filename="formats-colis"
+                        title="Formats de colis"
+                    />
                     {canCreate && (
                         <button
                             onClick={() => { setSelectedFormat(null); setIsModalOpen(true); }}

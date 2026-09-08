@@ -12,6 +12,7 @@ import Modal from "../components/common/Modal";
 import DeleteModal from "../components/common/DeleteModal";
 import SimpleTarifForm from "../components/common/SimpleTarifForm";
 import RowActions from "../components/common/RowActions";
+import ExportButton from "../components/common/ExportButton";
 import useHasPermission from "../hooks/useHasPermission";
 import {
     CheckCircle2,
@@ -188,6 +189,31 @@ const SimpleRates = () => {
         inactive: filteredBySearch.filter(t => !t.actif).length
     }), [filteredBySearch]);
 
+    const exportColumns = useMemo(() => ([
+        { header: 'Indice', key: 'indice' },
+        { header: 'Destination', key: 'destination' },
+        { header: 'Montant Base (FCFA)', key: 'montant_base' },
+        { header: '% Prestation', key: 'pourcentage_prestation' },
+        { header: 'Montant Prestation (FCFA)', key: 'montant_prestation' },
+        { header: 'Total (FCFA)', key: 'total' },
+        { header: 'Actif', key: 'actif' },
+    ]), []);
+
+    const exportRows = useMemo(() => simpleTarifs.map((tarif) => {
+        const mb = parseFloat(tarif.montant_base) || 0;
+        const pp = parseFloat(tarif.pourcentage_prestation) || 0;
+        const mp = mb * (pp / 100);
+        return {
+            indice: tarif.indice,
+            destination: tarif.zone?.nom || tarif.pays || '',
+            montant_base: mb,
+            pourcentage_prestation: pp,
+            montant_prestation: mp,
+            total: mb + mp,
+            actif: tarif.actif ? 'Oui' : 'Non',
+        };
+    }), [simpleTarifs]);
+
     return (
         <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
 
@@ -211,6 +237,13 @@ const SimpleRates = () => {
                                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                                 <span className="hidden md:inline md:ml-2">Rafraîchir</span>
                             </button>
+
+                            <ExportButton
+                                columns={exportColumns}
+                                rows={exportRows}
+                                filename="tarifs-simples"
+                                title="Tarifs Simples"
+                            />
 
                             {canCreate && (
                             <button

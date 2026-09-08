@@ -23,6 +23,7 @@ import Addtarifgroupe from '../components/widget/Addtarifgroupe';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 import RowActions from '../components/common/RowActions';
+import ExportButton from '../components/common/ExportButton';
 import useHasPermission from '../hooks/useHasPermission';
 
 const GroupedRates = () => {
@@ -174,6 +175,36 @@ const GroupedRates = () => {
     inactive: filteredBySearchAndType.filter(t => !t.actif).length
   }), [filteredBySearchAndType]);
 
+  const exportColumns = useMemo(() => ([
+    { header: 'Type', key: 'type' },
+    { header: 'Catégorie', key: 'categorie' },
+    { header: 'Itinéraire / Pays', key: 'itineraire' },
+    { header: 'Montant Base (FCFA)', key: 'montant_base' },
+    { header: '% Prestation', key: 'pourcentage_prestation' },
+    { header: 'Montant Prestation (FCFA)', key: 'montant_prestation' },
+    { header: 'Total (FCFA)', key: 'total' },
+    { header: 'Total Minimum (FCFA)', key: 'total_minimum' },
+    { header: 'Actif', key: 'actif' },
+  ]), []);
+
+  const exportRows = useMemo(() => filteredTarifs.map((tarif) => {
+    const base = parseFloat(tarif.tarif_minimum || tarif.montant_base) || 0;
+    const prest = parseFloat(tarif.pourcentage_prestation) || 0;
+    const mp = parseFloat(tarif.montant_prestation) || base * prest / 100;
+    const exp = parseFloat(tarif.montant_expedition) || base + mp;
+    return {
+      type: getTypeLabel(tarif.type_expedition),
+      categorie: tarif.category?.nom || '',
+      itineraire: tarif.ligne ? tarif.ligne.replace('-', ' → ') : (tarif.pays || ''),
+      montant_base: base,
+      pourcentage_prestation: prest,
+      montant_prestation: mp,
+      total: exp,
+      total_minimum: tarif.montant_expedition_minimum != null ? Number(tarif.montant_expedition_minimum) : '',
+      actif: tarif.actif ? 'Oui' : 'Non',
+    };
+  }), [filteredTarifs]);
+
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
 
@@ -201,6 +232,13 @@ const GroupedRates = () => {
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span className="hidden md:inline md:ml-2">Rafraîchir</span>
               </button>
+
+              <ExportButton
+                columns={exportColumns}
+                rows={exportRows}
+                filename="tarifs-groupage"
+                title="Tarifs Groupages"
+              />
 
               {canCreate && (
                 <button

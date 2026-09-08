@@ -34,6 +34,7 @@ const Comptabilite = lazy(() => import('./pages/Comptabilite'));
 const Historique = lazy(() => import('./pages/Historique'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Communication = lazy(() => import('./pages/Communication'));
+const ExportConfiguration = lazy(() => import('./pages/ExportConfiguration'));
 
 // Composant de chargement
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -158,6 +159,11 @@ function App() {
             <Route path={ROUTES.MESSAGES} element={
               <ProtectedRoute pageKey="communication">
                 <Communication />
+              </ProtectedRoute>
+            } />
+            <Route path={ROUTES.EXPORT_CONFIGURATION} element={
+              <ProtectedRoute adminOnly={true}>
+                <ExportConfiguration />
               </ProtectedRoute>
             } />
           </Route>

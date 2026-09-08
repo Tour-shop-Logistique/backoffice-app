@@ -182,6 +182,45 @@ export const formatPDFNumber = (value) => {
 };
 
 /**
+ * Export PDF générique d'un tableau de données (sans cartes résumé,
+ * contrairement aux rapports transactionnels comme Historique/Comptabilité)
+ * - utilisé pour l'export brut des pages de configuration (ExportButton.jsx,
+ * ExportConfiguration.jsx), où le but est de pouvoir reconstituer
+ * manuellement la config en cas d'incident, pas de produire un rapport.
+ *
+ * `columns` : tableau de { header, key } (même format que excelHelper.js).
+ * `rows` : tableau d'objets déjà aplatis (valeurs primitives uniquement).
+ * Charge jsPDF/autoTable en import dynamique (comme les usages existants),
+ * pour ne pas alourdir le bundle initial d'un module rarement utilisé.
+ */
+export const exportTableToPDF = async (columns, rows, { title, subtitle = '', filename }) => {
+  const { jsPDF } = await import('jspdf');
+  const { default: autoTable } = await import('jspdf-autotable');
+
+  const doc = new jsPDF();
+  createPDFHeader(doc, {
+    title: cleanPDFText(title),
+    subtitle: cleanPDFText(subtitle),
+    metadata1: `${rows.length} ligne${rows.length > 1 ? 's' : ''}`,
+  });
+
+  autoTable(doc, {
+    head: [columns.map((c) => cleanPDFText(c.header))],
+    body: rows.map((row) => columns.map((c) => cleanPDFText(String(row[c.key] ?? '')))),
+    startY: 58,
+    theme: 'grid',
+    headStyles: { fillColor: [71, 85, 105], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+    bodyStyles: { fontSize: 8 },
+    margin: { left: 14, right: 14 },
+    didDrawPage: () => {
+      createPDFFooter(doc, { company: 'Tour Shop' });
+    },
+  });
+
+  doc.save(`${filename}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+};
+
+/**
  * Nettoie les caractères spéciaux pour le PDF
  * @param {string} text - Texte à nettoyer
  * @returns {string} Texte nettoyé

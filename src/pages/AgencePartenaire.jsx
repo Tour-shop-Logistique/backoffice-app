@@ -5,6 +5,7 @@ import { fetchAgences, toggleAgenceStatus } from "../redux/slices/agenceSlice";
 import { showNotification } from "../redux/slices/uiSlice";
 import { ROUTES } from "../routes";
 import ViewDetailsButton from '../components/common/ViewDetailsButton';
+import ExportButton from '../components/common/ExportButton';
 import useHasPermission from '../hooks/useHasPermission';
 import {
   Phone,
@@ -89,6 +90,24 @@ const AgencePartenaire = () => {
     inactive: filteredBySearch.filter(a => !a.actif).length
   }), [filteredBySearch]);
 
+  const exportColumns = useMemo(() => ([
+    { header: 'Code', key: 'code' },
+    { header: 'Nom agence', key: 'nom' },
+    { header: 'Commune', key: 'commune' },
+    { header: 'Adresse', key: 'adresse' },
+    { header: 'Téléphone', key: 'telephone' },
+    { header: 'Actif', key: 'actif' },
+  ]), []);
+
+  const exportRows = useMemo(() => filteredAgences.map((agence) => ({
+    code: agence.code_agence || '',
+    nom: agence.nom_agence || '',
+    commune: agence.commune || '',
+    adresse: agence.adresse || '',
+    telephone: agence.telephone || '',
+    actif: agence.actif ? 'Oui' : 'Non',
+  })), [filteredAgences]);
+
   const goToDetail = (e, agenceId) => {
     if (e) {
       e.preventDefault();
@@ -107,14 +126,23 @@ const AgencePartenaire = () => {
               <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Agences Partenaires</h1>
               <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">Consultez et gérez le réseau d'agences physiques</p>
             </div>
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing || isLoading}
-              className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm active:scale-95 disabled:opacity-50"
-            >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden md:inline md:ml-2">Rafraîchir</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing || isLoading}
+                className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden md:inline md:ml-2">Rafraîchir</span>
+              </button>
+
+              <ExportButton
+                columns={exportColumns}
+                rows={exportRows}
+                filename="agences-partenaires"
+                title="Agences Partenaires"
+              />
+            </div>
           </div>
         </header>
 

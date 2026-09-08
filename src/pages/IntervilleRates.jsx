@@ -14,6 +14,7 @@ import Modal from "../components/common/Modal";
 import DeleteModal from "../components/common/DeleteModal";
 import IntervilleTarifForm from "../components/common/IntervilleTarifForm";
 import RowActions from "../components/common/RowActions";
+import ExportButton from "../components/common/ExportButton";
 import useHasPermission from "../hooks/useHasPermission";
 import {
     MapPin,
@@ -205,6 +206,33 @@ const IntervilleRates = () => {
         inactive: filteredBySearch.filter(t => !t.actif).length
     }), [filteredBySearch]);
 
+    const exportColumns = useMemo(() => ([
+        { header: 'Commune A', key: 'commune_a' },
+        { header: 'Commune B', key: 'commune_b' },
+        { header: 'Format', key: 'format' },
+        { header: 'Montant Base (FCFA)', key: 'montant_base' },
+        { header: '% Commission départ', key: 'pourcentage_commission_depart' },
+        { header: '% Commission arrivée', key: 'pourcentage_commission_arrivee' },
+        { header: 'Total (FCFA)', key: 'total' },
+        { header: 'Actif', key: 'actif' },
+    ]), []);
+
+    const exportRows = useMemo(() => intervilleTarifs.map((tarif) => {
+        const mb = parseFloat(tarif.montant_base) || 0;
+        const mDepart = parseFloat(tarif.montant_commission_depart) || 0;
+        const mArrivee = parseFloat(tarif.montant_commission_arrivee) || 0;
+        return {
+            commune_a: tarif.commune_a?.nom || '',
+            commune_b: tarif.commune_b?.nom || '',
+            format: tarif.format_colis?.nom || '',
+            montant_base: mb,
+            pourcentage_commission_depart: parseFloat(tarif.pourcentage_commission_depart) || 0,
+            pourcentage_commission_arrivee: parseFloat(tarif.pourcentage_commission_arrivee) || 0,
+            total: parseFloat(tarif.montant_expedition) || (mb + mDepart + mArrivee),
+            actif: tarif.actif ? 'Oui' : 'Non',
+        };
+    }), [intervilleTarifs]);
+
     return (
         <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
             <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
@@ -227,6 +255,13 @@ const IntervilleRates = () => {
                                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                                 <span className="hidden md:inline md:ml-2">Rafraîchir</span>
                             </button>
+
+                            <ExportButton
+                                columns={exportColumns}
+                                rows={exportRows}
+                                filename="tarifs-interville"
+                                title="Tarifs Interville"
+                            />
 
                             {canCreate && (
                                 <button

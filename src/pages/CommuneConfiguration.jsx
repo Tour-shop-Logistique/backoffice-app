@@ -13,6 +13,7 @@ import {
 import Modal from '../components/common/Modal';
 import CommuneForm from '../components/common/CommuneForm';
 import RowActions from '../components/common/RowActions';
+import ExportButton from '../components/common/ExportButton';
 import { showNotification } from '../redux/slices/uiSlice';
 import DeleteModal from '../components/common/DeleteModal';
 import useHasPermission from '../hooks/useHasPermission';
@@ -134,6 +135,16 @@ const CommuneConfiguration = () => {
     inactive: filteredBySearch.filter(c => !c.actif).length
   }), [filteredBySearch]);
 
+  const exportColumns = useMemo(() => ([
+    { header: 'Commune', key: 'nom' },
+    { header: 'Actif', key: 'actif' },
+  ]), []);
+
+  const exportRows = useMemo(() => filteredCommunes.map((c) => ({
+    nom: c.nom,
+    actif: c.actif ? 'Oui' : 'Non',
+  })), [filteredCommunes]);
+
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
       <div className="sticky top-[-24px] md:top-[-32px] z-30 bg-[#f1f5f9] -mx-6 px-6 py-3 md:-mx-8 md:px-8 space-y-4 pt-4 lg:pt-2 pb-3">
@@ -158,6 +169,13 @@ const CommuneConfiguration = () => {
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span className="hidden md:inline md:ml-2">Rafraîchir</span>
               </button>
+
+              <ExportButton
+                columns={exportColumns}
+                rows={exportRows}
+                filename="communes"
+                title="Communes"
+              />
 
               {canCreate && (
                 <button
