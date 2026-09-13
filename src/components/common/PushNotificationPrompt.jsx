@@ -21,14 +21,14 @@ const PushNotificationPrompt = () => {
   };
 
   return (
-    <div className="mb-4 p-4 bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4">
+    <div className="mb-4 p-4 bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4">
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
           <Bell size={16} className="text-indigo-600" />
         </div>
         <span className="text-sm font-medium">Activez les notifications pour être alerté même quand cet onglet est fermé.</span>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
         <button
           onClick={subscribe}
           disabled={isLoading}

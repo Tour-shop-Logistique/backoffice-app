@@ -14,6 +14,7 @@ import { showNotification } from '../redux/slices/uiSlice';
 import { exportMultiSheetExcel } from '../utils/excelHelper';
 import { getCountryName } from '../utils/countries';
 import { getStore } from '../redux/storeAccessor';
+import { sortFormatsColisParTaille } from '../utils/formatColisSort';
 
 /**
  * Page "Tout exporter" : filet de sécurité anti-incident (voir contexte de
@@ -232,7 +233,7 @@ export default function ExportConfiguration() {
         {
           name: 'Formats de colis',
           columns: [
-            { header: 'Ordre', key: 'ordre' },
+            { header: 'Rang', key: 'rang' },
             { header: 'Nom', key: 'nom' },
             { header: 'Poids max (kg)', key: 'poids_max' },
             { header: 'Longueur max (cm)', key: 'longueur_max' },
@@ -240,8 +241,8 @@ export default function ExportConfiguration() {
             { header: 'Hauteur max (cm)', key: 'hauteur_max' },
             { header: 'Par défaut', key: 'is_default' },
           ],
-          rows: [...(t.formatsColis || [])].sort((a, b) => a.ordre - b.ordre).map((f) => ({
-            ordre: f.ordre,
+          rows: sortFormatsColisParTaille(t.formatsColis).map((f, i) => ({
+            rang: i + 1,
             nom: f.nom,
             poids_max: f.poids_max == null ? 'Illimité' : Number(f.poids_max),
             longueur_max: f.longueur_max == null ? 'Illimité' : Number(f.longueur_max),

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 // Retire les accents pour que "suede" trouve "Suède" - NFD decompose les
 // caracteres accentues en (lettre de base + marque diacritique), qu'on
@@ -29,7 +30,9 @@ const SearchableDropdown = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [menuPos, setMenuPos] = useState(null);
     const dropdownRef = useRef(null);
+    const menuRef = useRef(null);
 
     // Couleurs dynamiques basées sur le thème
     const colors = {
@@ -101,18 +104,42 @@ const SearchableDropdown = ({
     // Trouver le label de la valeur sélectionnée
     const selectedLabel = normalizedOptions.find(opt => opt.value === value)?.label || value;
 
+    // Le menu se rend via un portail (document.body), en position fixed
+    // calculée depuis le champ - sans ça, un ancêtre avec overflow-hidden
+    // (ex: une carte de formulaire) tronque le menu au lieu de le laisser
+    // flotter par-dessus le reste de la page (bug rencontré et corrigé).
+    const updateMenuPos = () => {
+        if (!dropdownRef.current) return;
+        const rect = dropdownRef.current.getBoundingClientRect();
+        setMenuPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    };
+
     // Fermer le dropdown en cliquant à l'extérieur
     useEffect(() => {
+        if (!isOpen) return;
+
+        updateMenuPos();
+
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (
+                dropdownRef.current && !dropdownRef.current.contains(event.target)
+                && menuRef.current && !menuRef.current.contains(event.target)
+            ) {
                 setIsOpen(false);
                 setSearchTerm('');
             }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+        window.addEventListener('scroll', updateMenuPos, true);
+        window.addEventListener('resize', updateMenuPos);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('scroll', updateMenuPos, true);
+            window.removeEventListener('resize', updateMenuPos);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
 
     const handleSelect = (option) => {
         onChange(option.value);
@@ -180,8 +207,17 @@ const SearchableDropdown = ({
             </div>
 
             {/* Dropdown List */}
-            {isOpen && !disabled && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+            {isOpen && !disabled && menuPos && createPortal(
+                <div
+                    ref={menuRef}
+                    className="fixed bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto"
+                    // z-index au-dessus de Modal.jsx (9999) : ce dropdown doit
+                    // rester visible même utilisé à l'intérieur d'un modal (ex.
+                    // ZoneForm) - un menu rendu en portail mais sous le modal
+                    // serait invisible sans jamais lever d'erreur (bug
+                    // rencontré et corrigé).
+                    style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width, zIndex: 10050 }}
+                >
                     {filteredOptions.length > 0 ? (
                         filteredOptions.map((option, index) => (
                             <div
@@ -200,7 +236,8 @@ const SearchableDropdown = ({
                             Aucun résultat trouvé
                         </div>
                     )}
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

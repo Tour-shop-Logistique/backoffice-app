@@ -49,7 +49,7 @@ const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword }) => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-1.5">
-                    <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider ml-1">
+                    <label className="block text-base font-bold text-slate-700 uppercase tracking-wider ml-1">
                         Email ou numéro de téléphone
                     </label>
                     <div className="relative">
@@ -62,22 +62,25 @@ const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword }) => {
                             required
                             value={formData.identifier}
                             onChange={handleChange}
-                            className="w-full pl-14 pr-6 py-3.5 bg-slate-50 border border-slate-200 rounded-full focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-base font-medium text-slate-700"
+                            className="w-full pl-14 pr-6 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-lg font-medium text-slate-700"
                             placeholder="Email ou téléphone"
                         />
                     </div>
+                    <p className="text-sm font-medium text-slate-400 ml-5">
+                        Téléphone sans indicatif, ex : 0575081162
+                    </p>
                 </div>
 
                 <div className="space-y-1.5">
                     <div className="flex items-center justify-between ml-1">
-                        <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider">
+                        <label className="block text-base font-bold text-slate-700 uppercase tracking-wider">
                             Mot de passe
                         </label>
                         <button
                             id="login-forgot-password-btn"
                             type="button"
                             onClick={switchToForgotPassword}
-                            className="text-sm font-bold text-slate-900 transition-colors uppercase tracking-widest"
+                            className="text-base font-bold text-slate-900 transition-colors uppercase tracking-widest"
                         >
                             Oublié ?
                         </button>
@@ -92,7 +95,7 @@ const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword }) => {
                             required
                             value={formData.password}
                             onChange={handleChange}
-                            className="w-full pl-14 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-full focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-base font-medium text-slate-700"
+                            className="w-full pl-14 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-lg font-medium text-slate-700"
                             placeholder="••••••••"
                         />
                         <button
@@ -112,7 +115,7 @@ const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword }) => {
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-full transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
+                    className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-900 hover:bg-slate-800 text-white text-base font-bold rounded-xl transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
                 >
                     {isLoading ? (
                         <>

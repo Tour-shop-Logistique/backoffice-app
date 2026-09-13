@@ -60,14 +60,14 @@ const EmailVerificationForm = ({ email, onSuccess, onBack }) => {
             </div>
 
             {error && (
-                <div className="p-4 text-sm font-bold text-red-600 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
+                <div className="p-4 text-base font-bold text-red-600 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
                     {error}
                 </div>
             )}
 
             {message && (
-                <div className="p-4 text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center gap-2">
+                <div className="p-4 text-base font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 shrink-0" />
                     {message}
                 </div>
@@ -75,7 +75,7 @@ const EmailVerificationForm = ({ email, onSuccess, onBack }) => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                    <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider ml-1">
+                    <label className="block text-base font-bold text-slate-700 uppercase tracking-wider ml-1">
                         Code de verification
                     </label>
                     <input
@@ -86,7 +86,7 @@ const EmailVerificationForm = ({ email, onSuccess, onBack }) => {
                         required
                         value={code}
                         onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-full focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-base font-medium text-slate-700 tracking-[0.4em] text-center font-mono"
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-lg font-medium text-slate-700 tracking-[0.4em] text-center font-mono"
                         placeholder="000000"
                     />
                 </div>
@@ -94,7 +94,7 @@ const EmailVerificationForm = ({ email, onSuccess, onBack }) => {
                 <button
                     type="submit"
                     disabled={isLoading || code.length !== 6}
-                    className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-full transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
+                    className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-900 hover:bg-slate-800 text-white text-base font-bold rounded-xl transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
                 >
                     {isLoading ? (
                         <><Loader2 className="w-5 h-5 animate-spin" /><span>Verification...</span></>
@@ -107,7 +107,7 @@ const EmailVerificationForm = ({ email, onSuccess, onBack }) => {
                     type="button"
                     onClick={handleResend}
                     disabled={isResending}
-                    className="w-full py-3 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest disabled:opacity-50"
+                    className="w-full py-3 text-base font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest disabled:opacity-50"
                 >
                     {isResending ? 'Envoi...' : 'Renvoyer le code'}
                 </button>
@@ -115,7 +115,7 @@ const EmailVerificationForm = ({ email, onSuccess, onBack }) => {
                 <button
                     type="button"
                     onClick={onBack}
-                    className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-widest"
+                    className="w-full flex items-center justify-center gap-2 py-3 text-base font-bold text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-widest"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     Retour a l'inscription

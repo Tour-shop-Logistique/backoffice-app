@@ -23,6 +23,7 @@ import {
     Star,
 } from "lucide-react";
 import { showNotification } from '../redux/slices/uiSlice';
+import { sortFormatsColisParTaille } from '../utils/formatColisSort';
 
 /**
  * Configuration des formats de colis (Petit/Moyen/Grand par défaut,
@@ -110,7 +111,11 @@ const FormatsColisConfig = () => {
         }
     };
 
-    const formatsTries = [...(formatsColis || [])].sort((a, b) => a.ordre - b.ordre);
+    // Pas de rang manuel ("ordre") : le backend renvoie déjà la grille triée
+    // du plus petit au plus grand (poids_max croissant, volume_max en
+    // départage) - voir FormatColis::scopeParTailleCroissante(). Le rang
+    // affiché (badge numéroté) est simplement la position dans cette liste.
+    const formatsTries = sortFormatsColisParTaille(formatsColis);
     const formatSeuil = (valeur, unite) => valeur == null ? 'Illimité' : `${Number(valeur).toLocaleString()} ${unite}`;
     const formatDimensions = (format) => {
         if (format.longueur_max == null && format.largeur_max == null && format.hauteur_max == null) return 'Illimité';
@@ -119,7 +124,7 @@ const FormatsColisConfig = () => {
     };
 
     const exportColumns = [
-        { header: 'Ordre', key: 'ordre' },
+        { header: 'Rang', key: 'rang' },
         { header: 'Nom', key: 'nom' },
         { header: 'Poids max (kg)', key: 'poids_max' },
         { header: 'Longueur max (cm)', key: 'longueur_max' },
@@ -128,8 +133,8 @@ const FormatsColisConfig = () => {
         { header: 'Par défaut', key: 'is_default' },
     ];
 
-    const exportRows = formatsTries.map((f) => ({
-        ordre: f.ordre,
+    const exportRows = formatsTries.map((f, i) => ({
+        rang: i + 1,
         nom: f.nom,
         poids_max: f.poids_max == null ? 'Illimité' : Number(f.poids_max),
         longueur_max: f.longueur_max == null ? 'Illimité' : Number(f.longueur_max),
@@ -196,7 +201,7 @@ const FormatsColisConfig = () => {
                             <table className="w-full text-sm">
                                 <thead className="bg-slate-50/50 border-b border-slate-200">
                                     <tr>
-                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Ordre</th>
+                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Rang</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Nom</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Poids max</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Dimensions max (L x l x H)</th>
@@ -205,11 +210,11 @@ const FormatsColisConfig = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200">
-                                    {formatsTries.map((format) => (
+                                    {formatsTries.map((format, i) => (
                                         <tr key={format.id} className="hover:bg-slate-50/50 transition-colors">
                                             <td className="px-6 py-3">
                                                 <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
-                                                    {format.ordre}
+                                                    {i + 1}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-3">
@@ -240,12 +245,12 @@ const FormatsColisConfig = () => {
                         </div>
 
                         <div className="md:hidden divide-y divide-slate-200">
-                            {formatsTries.map((format) => (
+                            {formatsTries.map((format, i) => (
                                 <div key={format.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="flex items-center gap-2.5 min-w-0">
                                             <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-700 font-bold text-xs shrink-0">
-                                                {format.ordre}
+                                                {i + 1}
                                             </span>
                                             <div className="min-w-0">
                                                 <p className="font-semibold text-slate-900 text-sm truncate flex items-center gap-1.5">

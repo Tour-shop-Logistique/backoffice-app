@@ -82,6 +82,13 @@ const ProfilePage = () => {
     setInfoForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Le téléphone peut contenir un "+" et des espaces (indicatif inclus dans
+  // la même chaîne pour les comptes existants) mais aucune lettre.
+  const handleTelephoneChange = (e) => {
+    const sanitized = e.target.value.replace(/[^\d+\s]/g, '');
+    setInfoForm((prev) => ({ ...prev, telephone: sanitized }));
+  };
+
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     setPasswordForm((prev) => ({ ...prev, [name]: value }));
@@ -181,46 +188,47 @@ const ProfilePage = () => {
 
   return (
     <div>
-      {/* Carte identité */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-xl font-bold shrink-0">
+      {/* Carte identité — avatar, nom et badge sur une ligne dès mobile
+          (plus de contour lâche autour d'un contenu clairsemé), badge de
+          rôle qui ne s'écrase jamais (shrink-0). */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 mb-6 flex items-center gap-3 sm:gap-4">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-slate-900 text-white flex items-center justify-center text-base sm:text-lg font-bold shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-lg font-bold text-slate-900 truncate">
+          <p className="text-base sm:text-lg font-bold text-slate-900 truncate">
             {infoForm.nom} {infoForm.prenoms}
           </p>
-          <p className="text-sm text-slate-500 truncate">{infoForm.email || 'Aucun e-mail renseigné'}</p>
+          <p className="text-xs sm:text-sm text-slate-500 truncate">{infoForm.email || 'Aucun e-mail renseigné'}</p>
         </div>
-        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border w-fit ${roleBadge.className}`}>
+        <span className={`px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-full border shrink-0 ${roleBadge.className}`}>
           {roleBadge.label}
         </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Navigation Onglets */}
+        {/* Navigation Onglets — pleine largeur répartie en 2 colonnes sur
+            mobile (pas d'icônes, elles n'ajoutaient rien face au libellé). */}
         <div className="md:col-span-1">
-          <div className="flex flex-row md:flex-col gap-2 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
+          <div className="grid grid-cols-2 md:flex md:flex-col gap-2 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
             <button
               onClick={() => setActiveTab('info')}
-              className={`flex-1 md:flex-initial flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+              className={`px-3 md:px-4 py-2.5 text-sm font-semibold text-center md:text-left rounded-lg transition-all ${
                 activeTab === 'info'
                   ? 'bg-slate-900 text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <User size={16} className="shrink-0" />
               Mes informations
             </button>
             <button
               onClick={() => setActiveTab('password')}
-              className={`flex-1 md:flex-initial flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+              className={`px-3 md:px-4 py-2.5 text-sm font-semibold text-center md:text-left rounded-lg transition-all ${
                 activeTab === 'password'
                   ? 'bg-slate-900 text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Lock size={16} className="shrink-0" />
               Sécurité & accès
             </button>
           </div>
@@ -286,7 +294,7 @@ const ProfilePage = () => {
                         name="telephone"
                         id="telephone"
                         value={infoForm.telephone}
-                        onChange={handleInfoChange}
+                        onChange={handleTelephoneChange}
                         required
                         placeholder="Ex: +225 0102030405"
                         className={inputBase}

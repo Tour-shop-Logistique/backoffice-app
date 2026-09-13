@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
     fetchTarifs,
     addSimpleTarif,
+    addSimpleTarifBulk,
     editSimpleTarif,
     deleteTarif,
     updateTarifStatus,
@@ -47,6 +48,7 @@ const SimpleRates = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [filterZone, setFilterZone] = useState('all');
     const [isDeleting, setIsDeleting] = useState(false);
     const [tarifToDelete, setTarifToDelete] = useState(null);
     const [updatingStatus, setUpdatingStatus] = useState({});
@@ -76,9 +78,16 @@ const SimpleRates = () => {
     const handleAddTarif = async (tarifData) => {
         setIsSubmitting(true);
         try {
-            await dispatch(addSimpleTarif(tarifData)).unwrap();
+            // La création groupée (une zone, plusieurs indices) envoie
+            // `lignes` ; l'ajout unitaire n'a pas ce champ.
+            if (tarifData.lignes) {
+                const result = await dispatch(addSimpleTarifBulk(tarifData)).unwrap();
+                dispatch(showNotification({ type: 'success', message: result?.message || 'Tarifs ajoutés avec succès.' }));
+            } else {
+                await dispatch(addSimpleTarif(tarifData)).unwrap();
+                dispatch(showNotification({ type: 'success', message: 'Nouveau tarif ajouté avec succès.' }));
+            }
             setIsModalOpen(false);
-            dispatch(showNotification({ type: 'success', message: 'Nouveau tarif ajouté avec succès.' }));
             // Refresh in background
             dispatch(fetchTarifs({ silent: true }));
         } catch (error) {
@@ -154,7 +163,22 @@ const SimpleRates = () => {
         }
     };
 
-    // 1. Filtrer d'abord par type et par recherche (pour les compteurs)
+    // Zones réellement utilisées par les tarifs simples existants (plutôt
+    // que toutes les zones du référentiel, qui peuvent ne rien avoir ici).
+    const zonesUtilisees = useMemo(() => {
+        if (!Array.isArray(tarifs)) return [];
+        const map = new Map();
+        tarifs
+            .filter((t) => t && t.type_expedition === "simple" && t.zone_destination_id)
+            .forEach((t) => {
+                if (!map.has(t.zone_destination_id)) {
+                    map.set(t.zone_destination_id, t.zone?.nom || t.pays || 'Zone ?');
+                }
+            });
+        return Array.from(map, ([id, nom]) => ({ id, nom })).sort((a, b) => a.nom.localeCompare(b.nom));
+    }, [tarifs]);
+
+    // 1. Filtrer d'abord par type, recherche et zone (pour les compteurs)
     const filteredBySearch = useMemo(() => {
         if (!Array.isArray(tarifs)) return [];
         const raw = tarifs.filter((t) => t && t.type_expedition === "simple");
@@ -163,9 +187,11 @@ const SimpleRates = () => {
             const indice = tarif.indice?.toString() || '';
             const zoneName = (tarif.zone?.nom || tarif.pays || '').toLowerCase();
             const search = searchTerm.toLowerCase();
-            return indice.includes(search) || zoneName.includes(search);
+            const matchesSearch = indice.includes(search) || zoneName.includes(search);
+            const matchesZone = filterZone === 'all' || tarif.zone_destination_id === filterZone;
+            return matchesSearch && matchesZone;
         });
-    }, [tarifs, searchTerm]);
+    }, [tarifs, searchTerm, filterZone]);
 
     // 2. Filtrer par statut pour l'affichage
     const simpleTarifs = useMemo(() => {
@@ -259,16 +285,31 @@ const SimpleRates = () => {
                     </div>
                 </header>
 
-                {/* SEARCH BAR */}
-                <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
-                    <input
-                        type="text"
-                        placeholder="Rechercher par indice ou pays..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
-                    />
+                {/* SEARCH BAR + FILTRE ZONE */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative group flex-1">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+                        <input
+                            type="text"
+                            placeholder="Rechercher par indice ou pays..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
+                        />
+                    </div>
+                    <div className="relative group sm:w-64 shrink-0">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors pointer-events-none" />
+                        <select
+                            value={filterZone}
+                            onChange={(e) => setFilterZone(e.target.value)}
+                            className="w-full pl-10 md:pl-11 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm text-black font-medium cursor-pointer appearance-none"
+                        >
+                            <option value="all">Toutes les zones</option>
+                            {zonesUtilisees.map((zone) => (
+                                <option key={zone.id} value={zone.id}>{zone.nom}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -495,8 +536,8 @@ const SimpleRates = () => {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title="Nouveau Tarif Simple"
-                subtitle="Définissez l'indice, la zone et les prix"
+                title="Nouveaux Tarifs Simples"
+                subtitle="Choisissez une zone puis renseignez le prix de chaque indice"
                 size="xl"
                 confirmFormId="add-tarif-form"
                 isLoading={isSubmitting}

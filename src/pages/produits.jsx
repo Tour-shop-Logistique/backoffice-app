@@ -144,7 +144,7 @@ export default function Produits() {
   // -------------------------------
   const handleAddProduit = async () => {
     if (!produitForm.category_id || !produitForm.designation || !produitForm.reference) {
-      return showNotification("error", "Veuillez remplir tous les champs !");
+      return dispatch(showNotification({ type: "error", message: "Veuillez remplir tous les champs !" }));
     }
 
     setIsSubmitting(true);
@@ -152,15 +152,15 @@ export default function Produits() {
       const response = await dispatch(addProduit(produitForm)).unwrap();
 
       if (response.success) {
-        showNotification("success", "Produit ajouté avec succès !");
+        dispatch(showNotification({ type: "success", message: "Produit ajouté avec succès !" }));
         setProduitForm({ category_id: "", designation: "", reference: "", ...ELIGIBILITE_DEFAULTS });
         setIsModalOpen(false);
         dispatch(fetchProduits({ silent: true }));
       } else {
-        showNotification("error", "Erreur lors de l'ajout du produit !");
+        dispatch(showNotification({ type: "error", message: "Erreur lors de l'ajout du produit !" }));
       }
     } catch (error) {
-      showNotification("error", error.message || "Erreur lors de l'ajout !");
+      dispatch(showNotification({ type: "error", message: error.message || "Erreur lors de l'ajout !" }));
     } finally {
       setIsSubmitting(false);
     }

@@ -243,11 +243,11 @@ const Announcements = () => {
       </div>
 
       {selectedIds.length > 0 && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 bg-slate-900 rounded-lg shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-slate-900 rounded-lg shadow-md">
           <span className="text-sm font-semibold text-white">
             {selectedIds.length} annonce{selectedIds.length > 1 ? 's' : ''} sélectionnée{selectedIds.length > 1 ? 's' : ''}
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <button
               onClick={() => setSelectedIds([])}
               className="px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white uppercase tracking-widest transition-colors"

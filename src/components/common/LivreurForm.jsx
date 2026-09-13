@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Shield } from 'lucide-react';
+import PhoneInput from './PhoneInput';
 
 const LivreurForm = ({ id = "livreur-form", onSubmit, initialData }) => {
   const isEditing = Boolean(initialData);
@@ -7,6 +8,7 @@ const LivreurForm = ({ id = "livreur-form", onSubmit, initialData }) => {
   const [formData, setFormData] = useState({
     nom: '',
     prenoms: '',
+    indicatif_telephone: '',
     telephone: '',
     email: '',
     password: '',
@@ -25,6 +27,7 @@ const LivreurForm = ({ id = "livreur-form", onSubmit, initialData }) => {
       setFormData({
         nom: initialData.user?.nom || '',
         prenoms: initialData.user?.prenoms || '',
+        indicatif_telephone: initialData.user?.indicatif_telephone || '',
         telephone: initialData.user?.telephone || '',
         email: initialData.user?.email || '',
         password: '',
@@ -51,6 +54,10 @@ const LivreurForm = ({ id = "livreur-form", onSubmit, initialData }) => {
     // requis/modifiable qu'à la création, jamais en édition (le profil
     // véhicule seul est éditable ensuite).
     if (!isEditing) {
+      if (!formData.indicatif_telephone) {
+        setPasswordError("Veuillez sélectionner l'indicatif téléphonique.");
+        return;
+      }
       if (!formData.password) {
         setPasswordError('Le mot de passe est requis pour un nouveau livreur.');
         return;
@@ -72,6 +79,7 @@ const LivreurForm = ({ id = "livreur-form", onSubmit, initialData }) => {
       onSubmit({
         nom: formData.nom,
         prenoms: formData.prenoms,
+        indicatif_telephone: formData.indicatif_telephone,
         telephone: formData.telephone,
         email: formData.email || null,
         password: formData.password,
@@ -110,9 +118,12 @@ const LivreurForm = ({ id = "livreur-form", onSubmit, initialData }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClasses}>Téléphone</label>
-              <input
-                type="tel" name="telephone" value={formData.telephone} onChange={handleChange}
-                placeholder="0700000000" className={inputClasses} required
+              <PhoneInput
+                dialCode={formData.indicatif_telephone}
+                localNumber={formData.telephone}
+                onDialCodeChange={(dialCode) => setFormData((prev) => ({ ...prev, indicatif_telephone: dialCode }))}
+                onLocalNumberChange={(telephone) => setFormData((prev) => ({ ...prev, telephone }))}
+                inputClassName={inputClasses}
               />
             </div>
             <div>

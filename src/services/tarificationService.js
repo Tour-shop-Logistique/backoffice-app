@@ -13,6 +13,12 @@ const addSimpleTarif = async (tarifData) => {
   return response.data;
 };
 
+// Création groupée : { zone_destination_id, pourcentage_prestation, lignes: [{indice, montant_base}] }
+const addSimpleTarifBulk = async (payload) => {
+  const response = await api.post('/tarification/add-simple-bulk', payload);
+  return response.data;
+};
+
 const editSimpleTarif = async (tarifId, tarifData) => {
   const response = await api.put(`/tarification/edit-simple/${tarifId}`, tarifData);
   return response.data;
@@ -66,6 +72,12 @@ const getIntervilleTarifs = async () => {
 
 const addIntervilleTarif = async (tarifData) => {
   const response = await api.post('/tarification/add-interville', tarifData);
+  return response.data;
+};
+
+// Création groupée : { commune_depart_id, commune_arrivee_id, lignes: [{format_colis_id, montant_base, pourcentage_commission_depart, pourcentage_commission_arrivee}] }
+const addIntervilleTarifBulk = async (payload) => {
+  const response = await api.post('/tarification/add-interville-bulk', payload);
   return response.data;
 };
 
@@ -133,6 +145,7 @@ const tarificationService = {
   getTarifs,
   getGroupedTarifs,
   addSimpleTarif,
+  addSimpleTarifBulk,
   editSimpleTarif,
   deleteTarif,
   updateTarifStatus,
@@ -142,6 +155,7 @@ const tarificationService = {
   updateGroupedTarifStatus,
   getIntervilleTarifs,
   addIntervilleTarif,
+  addIntervilleTarifBulk,
   editIntervilleTarif,
   deleteIntervilleTarif,
   updateIntervilleTarifStatus,

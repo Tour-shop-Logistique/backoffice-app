@@ -9,6 +9,7 @@ import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 import RowActions from '../components/common/RowActions';
 import ExportButton from '../components/common/ExportButton';
+import PhoneInput from '../components/common/PhoneInput';
 import PermissionMatrix from '../components/roles/PermissionMatrix';
 import useHasPermission from '../hooks/useHasPermission';
 
@@ -39,6 +40,7 @@ const Agents = () => {
   const [agentForm, setAgentForm] = useState({
     nom: '',
     prenoms: '',
+    indicatif_telephone: '',
     telephone: '',
     email: '',
     password: '',
@@ -114,6 +116,7 @@ const Agents = () => {
       id: agent.id,
       nom: agent.nom || '',
       prenoms: agent.prenoms || '',
+      indicatif_telephone: agent.indicatif_telephone || '',
       telephone: agent.telephone || '',
       email: agent.email || '',
       type: agent.type || 'backoffice',
@@ -130,6 +133,7 @@ const Agents = () => {
     setAgentForm({
       nom: '',
       prenoms: '',
+      indicatif_telephone: '',
       telephone: '',
       email: '',
       password: '',
@@ -281,7 +285,7 @@ const Agents = () => {
     if (isSubmitting) return;
 
     // Basic validation
-    if (!agentForm.nom || !agentForm.prenoms || !agentForm.telephone || !agentForm.email) {
+    if (!agentForm.nom || !agentForm.prenoms || !agentForm.indicatif_telephone || !agentForm.telephone || !agentForm.email) {
       return dispatch(showNotification({ type: 'error', message: 'Veuillez remplir tous les champs obligatoires.' }));
     }
 
@@ -881,7 +885,13 @@ const Agents = () => {
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Téléphone <span className="text-red-500">*</span></label>
-            <input type="text" name="telephone" value={agentForm.telephone || ""} onChange={handleInputChange} placeholder="+225 ..." className={inputStyle} required />
+            <PhoneInput
+              dialCode={agentForm.indicatif_telephone}
+              localNumber={agentForm.telephone}
+              onDialCodeChange={(dialCode) => setAgentForm((prev) => ({ ...prev, indicatif_telephone: dialCode }))}
+              onLocalNumberChange={(telephone) => setAgentForm((prev) => ({ ...prev, telephone }))}
+              inputClassName={inputStyle}
+            />
           </div>
 
           <div className="space-y-1.5">

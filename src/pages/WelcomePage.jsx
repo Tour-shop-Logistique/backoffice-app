@@ -16,7 +16,7 @@ const viewCopy = {
     subtitle: 'Accédez à votre espace backoffice.',
   },
   register: {
-    title: 'Créer un compte',
+    title: 'Créer un compte admin',
     subtitle: 'Configurez votre accès backoffice.',
   },
   forgot: {
@@ -87,7 +87,7 @@ const WelcomePage = () => {
               <h2 className="text-xl font-bold uppercase tracking-wide text-slate-950">
                 {viewCopy[activeView].title}
               </h2>
-              <p className="mt-2 text-sm font-medium text-slate-600">
+              <p className="mt-2 text-base font-medium text-slate-600">
                 {viewCopy[activeView].subtitle}
               </p>
             </div>
@@ -129,7 +129,7 @@ const WelcomePage = () => {
               )}
             </div>
 
-            <div className="mt-5 flex flex-col items-center justify-center gap-1 text-center text-sm font-normal text-slate-700 sm:flex-row sm:gap-2">
+            <div className="mt-5 flex flex-col items-center justify-center gap-1 text-center text-base font-normal text-slate-700 sm:flex-row sm:gap-2">
               {activeView === 'login' && (
                 <>
                   <span>Pas encore de compte ?</span>

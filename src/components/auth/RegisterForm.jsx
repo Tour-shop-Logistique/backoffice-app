@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { register } from '../../redux/slices/authSlice';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
+import PhoneInput from '../common/PhoneInput';
 
 const RegisterForm = ({ onSuccess, onVerificationRequired, switchToLogin }) => {
     const dispatch = useDispatch();
@@ -10,6 +11,7 @@ const RegisterForm = ({ onSuccess, onVerificationRequired, switchToLogin }) => {
     const [formData, setFormData] = useState({
         nom: '',
         prenoms: '',
+        indicatif_telephone: '',
         telephone: '',
         email: '',
         password: '',
@@ -28,6 +30,10 @@ const RegisterForm = ({ onSuccess, onVerificationRequired, switchToLogin }) => {
             alert('Les mots de passe ne correspondent pas.');
             return;
         }
+        if (!formData.indicatif_telephone) {
+            alert("Veuillez sélectionner l'indicatif téléphonique.");
+            return;
+        }
 
         dispatch(register(formData)).then((result) => {
             if (register.fulfilled.match(result)) {
@@ -41,8 +47,8 @@ const RegisterForm = ({ onSuccess, onVerificationRequired, switchToLogin }) => {
         });
     };
 
-    const inputBase = "w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-full focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-base font-medium text-slate-700";
-    const labelBase = "block text-sm font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1";
+    const inputBase = "w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all placeholder:text-slate-400 text-lg font-medium text-slate-700";
+    const labelBase = "block text-base font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1";
 
     return (
         <div className="space-y-6">
@@ -54,44 +60,55 @@ const RegisterForm = ({ onSuccess, onVerificationRequired, switchToLogin }) => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-0.5">
+                        <label className={labelBase}>Nom</label>
+                        <input
+                            name="nom"
+                            type="text"
+                            required
+                            value={formData.nom}
+                            onChange={handleChange}
+                            className={inputBase}
+                            placeholder="Ex: Tounkara"
+                        />
+                    </div>
+                    <div className="space-y-0.5">
+                        <label className={labelBase}>Prénoms</label>
+                        <input
+                            name="prenoms"
+                            type="text"
+                            required
+                            value={formData.prenoms}
+                            onChange={handleChange}
+                            className={inputBase}
+                            placeholder="Ex: Amadou"
+                        />
+                    </div>
+                </div>
+
                 <div className="space-y-0.5">
-                    <label className={labelBase}>Nom Complet</label>
-                    <input
-                        name="nom"
-                        type="text"
-                        required
-                        value={formData.nom}
-                        onChange={handleChange}
-                        className={inputBase}
-                        placeholder="Ex: Amadou Tounkara"
+                    <label className={labelBase}>Téléphone</label>
+                    <PhoneInput
+                        dialCode={formData.indicatif_telephone}
+                        localNumber={formData.telephone}
+                        onDialCodeChange={(dialCode) => setFormData({ ...formData, indicatif_telephone: dialCode })}
+                        onLocalNumberChange={(telephone) => setFormData({ ...formData, telephone })}
+                        inputClassName={inputBase}
                     />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="space-y-0.5">
-                        <label className={labelBase}>Téléphone</label>
-                        <input
-                            name="telephone"
-                            type="text"
-                            required
-                            value={formData.telephone}
-                            onChange={handleChange}
-                            className={inputBase}
-                            placeholder="6XX XX XX XX"
-                        />
-                    </div>
-                    <div className="space-y-0.5">
-                        <label className={labelBase}>Email Professionnel</label>
-                        <input
-                            name="email"
-                            type="email"
-                            required
-                            value={formData.email}
-                            onChange={handleChange}
-                            className={inputBase}
-                            placeholder="agence@exemple.com"
-                        />
-                    </div>
+                <div className="space-y-0.5">
+                    <label className={labelBase}>Email Professionnel</label>
+                    <input
+                        name="email"
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={handleChange}
+                        className={inputBase}
+                        placeholder="agence@exemple.com"
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2 border-t border-slate-100">
@@ -150,7 +167,7 @@ const RegisterForm = ({ onSuccess, onVerificationRequired, switchToLogin }) => {
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-full transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest mt-4"
+                    className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-900 hover:bg-slate-800 text-white text-base font-bold rounded-xl transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest mt-4"
                 >
                     {isLoading ? (
                         <>
@@ -158,7 +175,7 @@ const RegisterForm = ({ onSuccess, onVerificationRequired, switchToLogin }) => {
                             <span>Traitement en cours...</span>
                         </>
                     ) : (
-                        'Créer le compte agence'
+                        'Créer le compte admin'
                     )}
                 </button>
             </form>

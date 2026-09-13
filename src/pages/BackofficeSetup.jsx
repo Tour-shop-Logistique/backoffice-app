@@ -6,12 +6,11 @@ import { fetchBackofficeConfig } from '../redux/slices/backofficeSlice';
 import { showNotification } from '../redux/slices/uiSlice';
 import {
     Globe,
-    Building2,
     Save,
     Loader2,
     MapPin,
     Building,
-    Phone,
+    MessageCircle,
     Mail,
     Info,
     CheckCircle2,
@@ -19,7 +18,9 @@ import {
     Lock,
 } from 'lucide-react';
 import SearchableDropdown from '../components/common/SearchableDropdown';
+import PhoneInput from '../components/common/PhoneInput';
 import { COUNTRY_OPTIONS } from '../utils/countries';
+import { splitPhoneNumber, joinPhoneNumber } from '../utils/phoneCountries';
 
 const BackofficeSetup = () => {
     const dispatch = useDispatch();
@@ -34,7 +35,6 @@ const BackofficeSetup = () => {
 
     const [formData, setFormData] = useState({
         nom_organisation: '',
-        telephone: '',
         localisation: '',
         adresse: '',
         ville: '',
@@ -43,11 +43,19 @@ const BackofficeSetup = () => {
         email: '',
     });
 
+    // Téléphone et WhatsApp restent chacun un seul champ côté backend
+    // (Backoffice.telephone / Backoffice.whatsapp), mais s'affichent en deux
+    // parties (indicatif + numéro local, voir PhoneInput) - fusionnées avant
+    // l'envoi (voir handleSubmit) et séparées ici au chargement de la config.
+    const [telDialCode, setTelDialCode] = useState('');
+    const [telLocalNumber, setTelLocalNumber] = useState('');
+    const [waDialCode, setWaDialCode] = useState('');
+    const [waLocalNumber, setWaLocalNumber] = useState('');
+
     useEffect(() => {
         if (config) {
             setFormData({
                 nom_organisation: config.nom_organisation || config.nom || '',
-                telephone: config.telephone || '',
                 localisation: config.localisation || '',
                 adresse: config.adresse || '',
                 ville: config.ville || '',
@@ -55,6 +63,12 @@ const BackofficeSetup = () => {
                 code_pays: config.code_pays || 'SN',
                 email: config.email || '',
             });
+            const tel = splitPhoneNumber(config.telephone);
+            setTelDialCode(tel.dialCode);
+            setTelLocalNumber(tel.localNumber);
+            const wa = splitPhoneNumber(config.whatsapp);
+            setWaDialCode(wa.dialCode);
+            setWaLocalNumber(wa.localNumber);
         }
     }, [config]);
 
@@ -85,23 +99,29 @@ const BackofficeSetup = () => {
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
 
-        if (!formData.nom_organisation || !formData.telephone) {
-            dispatch(showNotification({ type: 'error', message: "Le nom de l'organisation et le téléphone sont obligatoires." }));
+        if (!formData.nom_organisation || !telDialCode || !telLocalNumber) {
+            dispatch(showNotification({ type: 'error', message: "Le nom de l'organisation et le téléphone (avec indicatif) sont obligatoires." }));
             return;
         }
 
-        if (!formData.code_pays || !formData.ville || !formData.adresse) {
+        if (!formData.code_pays || !formData.ville) {
             dispatch(showNotification({ type: 'error', message: "Veuillez remplir les informations de localisation obligatoires." }));
             return;
         }
 
+        const payload = {
+            ...formData,
+            telephone: joinPhoneNumber(telDialCode, telLocalNumber),
+            whatsapp: joinPhoneNumber(waDialCode, waLocalNumber) || null,
+        };
+
         setIsLoading(true);
         try {
             if (isConfigured) {
-                await api.put('/backoffice/update', formData);
+                await api.put('/backoffice/update', payload);
                 dispatch(showNotification({ type: 'success', message: 'Paramètres mis à jour !' }));
             } else {
-                await api.post('/backoffice/setup', formData);
+                await api.post('/backoffice/setup', payload);
                 dispatch(showNotification({ type: 'success', message: 'Configuration réussie !' }));
             }
 
@@ -112,9 +132,16 @@ const BackofficeSetup = () => {
             }
         } catch (error) {
             console.error(error);
+            // En 422, `errors` porte le détail champ par champ (format Laravel
+            // standard) - le message générique seul ("Erreur de validation des
+            // données.") ne dit jamais ce qui a réellement échoué.
+            const fieldErrors = error.response?.data?.errors;
+            const firstFieldMessage = fieldErrors && typeof fieldErrors === 'object' && !Array.isArray(fieldErrors)
+                ? Object.values(fieldErrors)[0]?.[0]
+                : null;
             dispatch(showNotification({
                 type: 'error',
-                message: error.response?.data?.message || 'Une erreur est survenue.'
+                message: firstFieldMessage || error.response?.data?.message || 'Une erreur est survenue.'
             }));
         } finally {
             setIsLoading(false);
@@ -126,12 +153,9 @@ const BackofficeSetup = () => {
     const labelBase = "text-sm font-semibold text-slate-700 flex items-center gap-1.5";
 
     return (
-        <div className={isConfigured ? '' : 'max-w-3xl mx-auto'}>
+        <div>
             {!isConfigured && (
-                <div className="mb-6 text-center space-y-2">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto shadow-sm">
-                        <Building2 size={26} />
-                    </div>
+                <div className="mb-8 text-center space-y-1.5">
                     <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Bienvenue sur TourShop</h1>
                     <p className="text-slate-500 text-sm md:text-base max-w-md mx-auto">
                         Configurons votre backoffice. Ces informations pourront être modifiées plus tard depuis les Paramètres.
@@ -147,6 +171,7 @@ const BackofficeSetup = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 {/* Identité */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
@@ -180,19 +205,14 @@ const BackofficeSetup = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             <div className="space-y-1.5">
                                 <label className={labelBase}>Téléphone <span className="text-rose-500">*</span></label>
-                                <div className="relative">
-                                    <Phone className="h-4.5 w-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                    <input
-                                        required
-                                        name="telephone"
-                                        type="text"
-                                        value={formData.telephone}
-                                        onChange={handleChange}
-                                        placeholder="+225 07 XX XX XX XX"
-                                        className={inputBase}
-                                        disabled={readOnly}
-                                    />
-                                </div>
+                                <PhoneInput
+                                    dialCode={telDialCode}
+                                    localNumber={telLocalNumber}
+                                    onDialCodeChange={setTelDialCode}
+                                    onLocalNumberChange={setTelLocalNumber}
+                                    inputClassName={plainInputBase}
+                                    disabled={readOnly}
+                                />
                             </div>
 
                             <div className="space-y-1.5">
@@ -210,6 +230,19 @@ const BackofficeSetup = () => {
                                     />
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className={labelBase}><MessageCircle size={14} className="text-emerald-600" /> WhatsApp <span className="text-xs font-normal text-slate-400">(optionnel)</span></label>
+                            <PhoneInput
+                                dialCode={waDialCode}
+                                localNumber={waLocalNumber}
+                                onDialCodeChange={setWaDialCode}
+                                onLocalNumberChange={setWaLocalNumber}
+                                required={false}
+                                inputClassName={plainInputBase}
+                                disabled={readOnly}
+                            />
                         </div>
                     </div>
                 </div>
@@ -270,9 +303,8 @@ const BackofficeSetup = () => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className={labelBase}>Adresse précise <span className="text-rose-500">*</span></label>
+                                <label className={labelBase}>Adresse précise</label>
                                 <input
-                                    required
                                     name="adresse"
                                     type="text"
                                     value={formData.adresse}
@@ -320,9 +352,10 @@ const BackofficeSetup = () => {
                         </div>
                     </div>
                 </div>
+                </div>
 
                 {!readOnly && (
-                    <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4">
                         <p className="text-xs text-slate-500 flex items-center gap-2">
                             <Info size={14} className="shrink-0" />
                             Les champs marqués <span className="text-rose-500 font-semibold">*</span> sont obligatoires
@@ -330,7 +363,7 @@ const BackofficeSetup = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                         >
                             {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                             {isConfigured ? 'Enregistrer' : 'Finaliser la configuration'}

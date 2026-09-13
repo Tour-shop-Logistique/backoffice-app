@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import tarificationService from '../../services/tarificationService';
+import { sortFormatsColisParTaille } from '../../utils/formatColisSort';
 
 const initialState = {
   tarifs: [],
@@ -54,6 +55,18 @@ export const addSimpleTarif = createAsyncThunk(
     } catch (error) {
       console.error(error);
       return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const addSimpleTarifBulk = createAsyncThunk(
+  'tarification/addSimpleTarifBulk',
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await tarificationService.addSimpleTarifBulk(payload);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response?.data || { message: 'Erreur lors de la création groupée.' });
     }
   }
 );
@@ -190,6 +203,18 @@ export const addIntervilleTarif = createAsyncThunk(
   async (tarifData, { rejectWithValue }) => {
     try {
       return await tarificationService.addIntervilleTarif(tarifData);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const addIntervilleTarifBulk = createAsyncThunk(
+  'tarification/addIntervilleTarifBulk',
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await tarificationService.addIntervilleTarifBulk(payload);
     } catch (error) {
       console.error(error);
       return rejectWithValue(error.response.data);
@@ -404,6 +429,10 @@ const tarificationSlice = createSlice({
           });
         }
       })
+      // La création groupée renvoie plusieurs tarifs (payload.crees) : la
+      // page appelante refetch la liste en arrière-plan après succès, pas
+      // besoin de manipuler le state ici.
+      .addCase(addSimpleTarifBulk.fulfilled, () => {})
 
       .addCase(editSimpleTarif.fulfilled, (state, action) => {
         const updated = action.payload?.data || action.payload;
@@ -554,6 +583,11 @@ const tarificationSlice = createSlice({
         }
       })
 
+      // Refetch géré par la page appelante (IntervilleRates.jsx), comme
+      // addSimpleTarifBulk : le rapport créés/ignorés doit d'abord être
+      // affiché à l'utilisateur avant de rafraîchir la liste.
+      .addCase(addIntervilleTarifBulk.fulfilled, () => {})
+
       .addCase(editIntervilleTarif.fulfilled, (state, action) => {
         const updated = action.payload?.tarif || action.payload?.data || action.payload;
         const { tarifId, tarifData } = action.meta.arg;
@@ -684,7 +718,7 @@ const tarificationSlice = createSlice({
         const newFormat = action.payload?.format || action.payload?.data || action.payload;
         if (newFormat) {
           state.formatsColis.push(newFormat);
-          state.formatsColis.sort((a, b) => a.ordre - b.ordre);
+          state.formatsColis = sortFormatsColisParTaille(state.formatsColis);
         }
       })
 
@@ -692,7 +726,7 @@ const tarificationSlice = createSlice({
         const updated = action.payload?.format || action.payload?.data || action.payload;
         if (updated) {
           state.formatsColis = state.formatsColis.map((f) => (f.id === updated.id ? updated : f));
-          state.formatsColis.sort((a, b) => a.ordre - b.ordre);
+          state.formatsColis = sortFormatsColisParTaille(state.formatsColis);
         }
       })
 

@@ -10,6 +10,12 @@ const addCommune = async (communeData) => {
   return response.data;
 };
 
+// Création groupée : { noms: string[] } -> { creees, ignorees, message }
+const addCommunesBulk = async (noms) => {
+  const response = await api.post('/communes/add-bulk', { noms });
+  return response.data;
+};
+
 const editCommune = async (communeId, communeData) => {
   const response = await api.put(`/communes/edit/${communeId}`, communeData);
   return response.data;
@@ -28,6 +34,7 @@ const updateCommuneStatus = async (communeId) => {
 const communeService = {
   getCommunes,
   addCommune,
+  addCommunesBulk,
   editCommune,
   deleteCommune,
   updateCommuneStatus,

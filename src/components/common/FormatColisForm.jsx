@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 
 /**
- * Formulaire d'un format de colis (nom, ordre, seuils poids/dimensions,
- * format par défaut). Le volume n'est jamais saisi directement : le
- * backoffice renseigne longueur/largeur/hauteur max (affiché "L x l x H"
- * comme côté client/agence), le backend dérive volume_max automatiquement -
- * voir FormatColis::saving() côté backend. Le nom et l'ordre ne sont
- * modifiables qu'à la création : les changer après coup sur un format déjà
- * référencé par des colis/tarifs romprait la logique "le plus contraignant
- * gagne" - voir ExpeditionTarificationService::determinerFormatColis().
+ * Formulaire d'un format de colis (nom, seuils poids/dimensions, format par
+ * défaut). Le volume n'est jamais saisi directement : le backoffice
+ * renseigne longueur/largeur/hauteur max (affiché "L x l x H" comme côté
+ * client/agence), le backend dérive volume_max automatiquement - voir
+ * FormatColis::saving() côté backend. Pas de rang manuel ("ordre") : le
+ * classement du plus petit au plus grand se déduit uniquement du poids_max
+ * (et du volume_max en départage) - voir FormatColis::scopeParTailleCroissante()
+ * et ExpeditionTarificationService::determinerFormatColis() côté backend.
  */
 const FormatColisForm = ({ id = "format-colis-form", onSubmit, initialData }) => {
   const [formData, setFormData] = useState({
     nom: '',
-    ordre: '',
     poids_max: '',
     longueur_max: '',
     largeur_max: '',
@@ -26,7 +25,6 @@ const FormatColisForm = ({ id = "format-colis-form", onSubmit, initialData }) =>
       setFormData({
         id: initialData.id,
         nom: initialData.nom || '',
-        ordre: (initialData.ordre ?? '').toString(),
         poids_max: initialData.poids_max != null ? parseFloat(initialData.poids_max).toString() : '',
         longueur_max: initialData.longueur_max != null ? parseFloat(initialData.longueur_max).toString() : '',
         largeur_max: initialData.largeur_max != null ? parseFloat(initialData.largeur_max).toString() : '',
@@ -40,7 +38,6 @@ const FormatColisForm = ({ id = "format-colis-form", onSubmit, initialData }) =>
     e.preventDefault();
     const submissionData = {
       nom: formData.nom,
-      ordre: parseInt(formData.ordre, 10),
       poids_max: formData.poids_max === '' ? null : parseFloat(formData.poids_max),
       longueur_max: formData.longueur_max === '' ? null : parseFloat(formData.longueur_max),
       largeur_max: formData.largeur_max === '' ? null : parseFloat(formData.largeur_max),
@@ -70,21 +67,6 @@ const FormatColisForm = ({ id = "format-colis-form", onSubmit, initialData }) =>
           className={inputClasses}
           required
         />
-      </div>
-
-      <div>
-        <label className={labelClasses}>Ordre (rang, 1 = le plus petit)</label>
-        <input
-          type="number"
-          value={formData.ordre}
-          onChange={(e) => setFormData(prev => ({ ...prev, ordre: e.target.value }))}
-          placeholder="Ex: 4"
-          min="1"
-          step="1"
-          className={inputClasses}
-          required
-        />
-        <p className="text-xs text-slate-400 mt-1 ml-1">Détermine le rang du format entre poids et volume (le plus contraignant gagne).</p>
       </div>
 
       <div>

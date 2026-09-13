@@ -92,34 +92,49 @@ const Dashboard = () => {
   return (
     <div className="space-y-5 pb-6 md:space-y-7 md:pb-12">
 
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+      {/* HEADER — le refresh reste sur la même ligne que le titre à tous
+          les breakpoints (jamais de flex-col ici) : c'est une action
+          secondaire compacte, pas un bloc de contenu qui a besoin de sa
+          propre ligne. */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Tableau de bord</h1>
           <p className="text-sm text-slate-500 mt-0.5 font-medium">Vue d'ensemble de votre activité logistique</p>
         </div>
-        <button onClick={() => dispatch(fetchDashboardStats())} disabled={loading} className="p-2.5 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 text-slate-500 transition-all self-start md:self-auto">
+        <button
+          onClick={() => dispatch(fetchDashboardStats())}
+          disabled={loading}
+          title="Actualiser"
+          className="p-2.5 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 active:scale-95 text-slate-500 transition-all shrink-0"
+        >
           <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
 
-      {/* KPI CARDS — chaque carte est un bouton qui mène vers son menu */}
+      {/* KPI CARDS — chaque carte est un bouton qui mène vers son menu.
+          Sur mobile : grande icône + chiffre côte à côte en tête de carte,
+          label sur toute la largeur en dessous (lisible sur plusieurs mots
+          sans jamais couper). À partir de lg, tout repasse sur une seule
+          ligne horizontale avec chevron, plus confortable en desktop. */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {kpiCards.map((kpi, i) => (
           <button
             key={i}
             type="button"
             onClick={() => navigate(kpi.href)}
-            className={`bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3 text-left transition-all group cursor-pointer hover:shadow-md hover:ring-4 hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm ${kpi.ring} ${kpi.border}`}
+            className={`bg-white rounded-xl border border-slate-200 p-4 flex flex-col lg:flex-row lg:items-center gap-3 text-left transition-all group cursor-pointer hover:shadow-md hover:ring-4 hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm ${kpi.ring} ${kpi.border}`}
           >
-            <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center shrink-0 text-lg transition-transform group-hover:scale-105`}>
-              <span aria-hidden="true">{kpi.emoji}</span>
+            <div className="flex items-center gap-3 lg:contents">
+              <div className={`w-12 h-12 lg:w-10 lg:h-10 rounded-xl ${kpi.bg} flex items-center justify-center shrink-0 text-2xl lg:text-lg transition-transform group-hover:scale-105`}>
+                <span aria-hidden="true">{kpi.emoji}</span>
+              </div>
+              <p className="text-2xl font-bold text-slate-900 leading-tight lg:hidden">{kpi.value}</p>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-2xl font-bold text-slate-900 leading-tight">{kpi.value}</p>
+              <p className="hidden lg:block text-2xl font-bold text-slate-900 leading-tight">{kpi.value}</p>
               <p className="text-xs font-semibold text-slate-500 leading-snug">{kpi.label}</p>
             </div>
-            <div className={`w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center shrink-0 transition-all group-hover:${kpi.bg}`}>
+            <div className={`hidden lg:flex w-6 h-6 rounded-full bg-slate-50 items-center justify-center shrink-0 transition-all group-hover:${kpi.bg}`}>
               <ChevronRight size={14} className="text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all" />
             </div>
           </button>
@@ -131,20 +146,22 @@ const Dashboard = () => {
 
         {/* Chart */}
         <section className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                <span aria-hidden="true">📊</span> {activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}
-              </h3>
-              <p className="text-sm text-slate-500 font-medium mt-0.5">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires quotidien'}</p>
-            </div>
+          <div className="p-4 border-b border-slate-100">
+            <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <span aria-hidden="true">📊</span> {activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}
+            </h3>
+            <p className="text-sm text-slate-500 font-medium mt-0.5">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires quotidien'}</p>
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200">
+            {/* Barre de contrôles compacte — reste sur une seule ligne à
+                tous les breakpoints (le sélecteur mois/année se resserre en
+                mobile, refresh/export sont des icônes pures) plutôt que de
+                sauter à la ligne façon web classique. */}
+            <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-0.5 bg-slate-50 rounded-lg border border-slate-200 pl-1 flex-1 min-w-0 sm:flex-initial">
                 <select
                   value={selectedDate.month}
                   onChange={(e) => setSelectedDate(prev => ({ ...prev, month: parseInt(e.target.value) }))}
-                  className="bg-transparent text-sm font-semibold text-slate-600 focus:outline-none px-2 py-1 cursor-pointer"
+                  className="bg-transparent text-sm font-semibold text-slate-600 focus:outline-none py-2 pr-1 cursor-pointer min-w-0 flex-1 sm:flex-initial"
                 >
                   {['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'].map((m, i) => (
                     <option key={i + 1} value={i + 1}>{m}</option>
@@ -153,7 +170,7 @@ const Dashboard = () => {
                 <select
                   value={selectedDate.year}
                   onChange={(e) => setSelectedDate(prev => ({ ...prev, year: parseInt(e.target.value) }))}
-                  className="bg-transparent text-sm font-semibold text-slate-600 focus:outline-none px-2 py-1 cursor-pointer border-l border-slate-200"
+                  className="bg-transparent text-sm font-semibold text-slate-600 focus:outline-none px-2 py-2 cursor-pointer border-l border-slate-200 shrink-0"
                 >
                   {[2024, 2025, 2026].map(y => (
                     <option key={y} value={y}>{y}</option>
@@ -165,12 +182,16 @@ const Dashboard = () => {
                 onClick={refreshRecap}
                 disabled={recapLoading}
                 title="Actualiser"
-                className="flex items-center gap-2 px-3 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-100 transition-all disabled:opacity-50"
+                className="p-2.5 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-100 active:scale-95 transition-all disabled:opacity-50 shrink-0"
               >
                 <RefreshCw size={16} className={recapLoading ? 'animate-spin' : ''} />
               </button>
-              <button className="flex items-center gap-2 px-3 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-100 transition-all">
-                <Download size={16} /> Exporter
+              <button
+                type="button"
+                title="Exporter"
+                className="p-2.5 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-100 active:scale-95 transition-all shrink-0"
+              >
+                <Download size={16} />
               </button>
             </div>
           </div>

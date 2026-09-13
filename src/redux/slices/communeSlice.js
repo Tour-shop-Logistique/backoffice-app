@@ -37,6 +37,15 @@ export const addCommune = createAsyncThunk('communes/addCommune', async (commune
   }
 });
 
+export const addCommunesBulk = createAsyncThunk('communes/addCommunesBulk', async (noms, { rejectWithValue }) => {
+  try {
+    return await communeService.addCommunesBulk(noms);
+  } catch (error) {
+    console.error(error);
+    return rejectWithValue(error.response?.data || { message: 'Erreur lors de la création groupée.' });
+  }
+});
+
 export const editCommune = createAsyncThunk('communes/editCommune', async ({ communeId, communeData }, { rejectWithValue }) => {
   try {
     const updatedCommune = await communeService.editCommune(communeId, communeData);
@@ -97,6 +106,17 @@ const communeSlice = createSlice({
         state.isLoading = false;
       })
       .addCase(addCommune.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(addCommunesBulk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(addCommunesBulk.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(addCommunesBulk.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       })

@@ -84,14 +84,14 @@ const Layout = ({ children }) => {
           {loading === 'pending' && <LoadingSpinner fullScreen={false} />}
 
           {loading === 'failed' && !isConfigured && (
-            <div className=" p-4 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl flex justify-between items-center transition-all animate-in fade-in slide-in-from-top-4">
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all animate-in fade-in slide-in-from-top-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                   <Building2 size={16} />
                 </div>
                 <span className="text-sm font-medium">Votre espace n'est pas encore configuré.</span>
               </div>
-              <button onClick={() => navigate(ROUTES.BACKOFFICE_SETUP)} className="text-xs font-bold uppercase tracking-widest bg-amber-200/50 px-3 py-1.5 rounded-lg hover:bg-amber-200 transition-colors">Configurer</button>
+              <button onClick={() => navigate(ROUTES.BACKOFFICE_SETUP)} className="w-full sm:w-auto text-xs font-bold uppercase tracking-widest bg-amber-200/50 px-3 py-1.5 rounded-lg hover:bg-amber-200 transition-colors">Configurer</button>
             </div>
           )}
 

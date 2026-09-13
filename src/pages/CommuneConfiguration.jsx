@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCommunes, addCommune, editCommune, deleteCommune, updateCommuneStatus } from '../redux/slices/communeSlice';
+import { fetchCommunes, addCommunesBulk, editCommune, deleteCommune, updateCommuneStatus } from '../redux/slices/communeSlice';
 import {
   Loader2,
   MapPin,
@@ -54,15 +54,15 @@ const CommuneConfiguration = () => {
     }
   };
 
-  const handleAddCommune = async (communeData) => {
+  const handleAddCommune = async ({ noms }) => {
     setIsSubmitting(true);
     try {
-      await dispatch(addCommune(communeData)).unwrap();
+      const result = await dispatch(addCommunesBulk(noms)).unwrap();
       setIsModalOpen(false);
-      dispatch(showNotification({ type: 'success', message: 'Commune ajoutée avec succès.' }));
+      dispatch(showNotification({ type: 'success', message: result?.message || 'Communes ajoutées avec succès.' }));
       dispatch(fetchCommunes({ silent: true }));
     } catch (error) {
-      dispatch(showNotification({ type: 'error', message: error?.message || "Erreur lors de l'ajout de la commune." }));
+      dispatch(showNotification({ type: 'error', message: error?.message || "Erreur lors de l'ajout des communes." }));
     } finally {
       setIsSubmitting(false);
     }
@@ -348,12 +348,12 @@ const CommuneConfiguration = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setIsSubmitting(false); }}
-        title="Nouvelle Commune"
-        subtitle="Ajoutez une commune utilisable dans la tarification interville"
+        title="Nouvelles Communes"
+        subtitle="Ajoutez une ou plusieurs communes utilisables dans la tarification interville"
         size="lg"
         confirmFormId="add-commune-form"
         isLoading={isSubmitting}
-        confirmLabel="Créer la commune"
+        confirmLabel="Créer les communes"
       >
         <CommuneForm id="add-commune-form" onSubmit={handleAddCommune} />
       </Modal>

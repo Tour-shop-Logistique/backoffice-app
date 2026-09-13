@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
     fetchIntervilleTarifs,
     addIntervilleTarif,
+    addIntervilleTarifBulk,
     editIntervilleTarif,
     deleteIntervilleTarif,
     updateIntervilleTarifStatus,
@@ -26,12 +27,15 @@ import {
     Edit3,
     Trash2,
     Loader2,
+    Package,
 } from "lucide-react";
 import { showNotification } from '../redux/slices/uiSlice';
 
-// Palette cyclique par rang (ordre) plutôt qu'un mapping figé par nom : la
-// grille de formats est désormais extensible (voir FormatColis côté backend),
-// un nom de format n'est plus une valeur connue à l'avance.
+// Palette cyclique par nom (hash stable) plutôt qu'un mapping figé ou un
+// rang manuel ("ordre", retiré côté backend) : la grille de formats est
+// extensible (voir FormatColis côté backend), un nom de format n'est pas une
+// valeur connue à l'avance, mais un même nom doit toujours retomber sur la
+// même couleur d'un rendu à l'autre.
 const FORMAT_BADGE_PALETTE = [
     'bg-sky-50 text-sky-700 border-sky-100',
     'bg-violet-50 text-violet-700 border-violet-100',
@@ -40,9 +44,16 @@ const FORMAT_BADGE_PALETTE = [
     'bg-rose-50 text-rose-700 border-rose-100',
 ];
 
+const hashNomFormat = (nom) => {
+    let hash = 0;
+    for (let i = 0; i < (nom || '').length; i++) {
+        hash = (hash * 31 + nom.charCodeAt(i)) % FORMAT_BADGE_PALETTE.length;
+    }
+    return hash;
+};
+
 const FormatBadge = ({ format }) => {
-    const rang = format?.ordre ? format.ordre - 1 : 0;
-    const classes = FORMAT_BADGE_PALETTE[rang % FORMAT_BADGE_PALETTE.length];
+    const classes = FORMAT_BADGE_PALETTE[hashNomFormat(format?.nom)];
     return (
         <span className={`inline-flex items-center px-2 py-0.5 rounded border font-semibold text-xs ${classes}`}>
             {format?.nom || '—'}
@@ -68,6 +79,7 @@ const IntervilleRates = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [filterFormat, setFilterFormat] = useState('all');
     const [isDeleting, setIsDeleting] = useState(false);
     const [tarifToDelete, setTarifToDelete] = useState(null);
     const [updatingStatus, setUpdatingStatus] = useState({});
@@ -115,9 +127,16 @@ const IntervilleRates = () => {
     const handleAddTarif = async (tarifData) => {
         setIsSubmitting(true);
         try {
-            await dispatch(addIntervilleTarif(tarifData)).unwrap();
+            // La création groupée (un trajet, plusieurs formats) envoie
+            // `lignes` ; l'ajout unitaire n'a pas ce champ.
+            if (tarifData.lignes) {
+                const result = await dispatch(addIntervilleTarifBulk(tarifData)).unwrap();
+                dispatch(showNotification({ type: 'success', message: result?.message || 'Tarifs ajoutés avec succès.' }));
+            } else {
+                await dispatch(addIntervilleTarif(tarifData)).unwrap();
+                dispatch(showNotification({ type: 'success', message: 'Nouveau tarif interville ajouté avec succès.' }));
+            }
             setIsModalOpen(false);
-            dispatch(showNotification({ type: 'success', message: 'Nouveau tarif interville ajouté avec succès.' }));
             dispatch(fetchIntervilleTarifs({ silent: true }));
         } catch (error) {
             dispatch(showNotification({ type: 'error', message: error.message || "Erreur lors de l'ajout du tarif." }));
@@ -181,15 +200,33 @@ const IntervilleRates = () => {
         }
     };
 
+    // Formats réellement utilisés par les tarifs interville existants
+    // (plutôt que toute la grille de formats du référentiel, qui peut en
+    // avoir sans tarif interville configuré).
+    const formatsUtilises = useMemo(() => {
+        if (!Array.isArray(tarifs)) return [];
+        const map = new Map();
+        tarifs
+            .filter((t) => t && t.format_colis_id)
+            .forEach((t) => {
+                if (!map.has(t.format_colis_id)) {
+                    map.set(t.format_colis_id, t.format_colis?.nom || 'Format ?');
+                }
+            });
+        return Array.from(map, ([id, nom]) => ({ id, nom })).sort((a, b) => a.nom.localeCompare(b.nom));
+    }, [tarifs]);
+
     const filteredBySearch = useMemo(() => {
         if (!Array.isArray(tarifs)) return [];
         return tarifs.filter(tarif => {
             const communeA = (tarif.commune_a?.nom || '').toLowerCase();
             const communeB = (tarif.commune_b?.nom || '').toLowerCase();
             const search = searchTerm.toLowerCase();
-            return communeA.includes(search) || communeB.includes(search);
+            const matchesSearch = communeA.includes(search) || communeB.includes(search);
+            const matchesFormat = filterFormat === 'all' || tarif.format_colis_id === filterFormat;
+            return matchesSearch && matchesFormat;
         });
-    }, [tarifs, searchTerm]);
+    }, [tarifs, searchTerm, filterFormat]);
 
     const intervilleTarifs = useMemo(() => {
         return filteredBySearch.filter(tarif => {
@@ -277,15 +314,30 @@ const IntervilleRates = () => {
                     </div>
                 </header>
 
-                <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
-                    <input
-                        type="text"
-                        placeholder="Rechercher par commune..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
-                    />
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative group flex-1">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+                        <input
+                            type="text"
+                            placeholder="Rechercher par commune..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
+                        />
+                    </div>
+                    <div className="relative group sm:w-56 shrink-0">
+                        <Package className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors pointer-events-none" />
+                        <select
+                            value={filterFormat}
+                            onChange={(e) => setFilterFormat(e.target.value)}
+                            className="w-full pl-10 md:pl-11 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm text-black font-medium cursor-pointer appearance-none"
+                        >
+                            <option value="all">Tous les formats</option>
+                            {formatsUtilises.map((format) => (
+                                <option key={format.id} value={format.id}>{format.nom}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -501,8 +553,8 @@ const IntervilleRates = () => {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title="Nouveau Tarif Interville (National)"
-                subtitle="Définissez le trajet et les commissions"
+                title="Nouveaux Tarifs Interville (National)"
+                subtitle="Choisissez un trajet puis renseignez le prix de chaque format"
                 size="xl"
                 confirmFormId="add-interville-form"
                 isLoading={isSubmitting}

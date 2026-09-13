@@ -4,10 +4,11 @@ import { fetchTauxParrainage, updateTauxParrainage, fetchParrainageClients } fro
 import { showNotification } from '../redux/slices/uiSlice';
 import useHasPermission from '../hooks/useHasPermission';
 import ExportButton from '../components/common/ExportButton';
+import Modal from '../components/common/Modal';
 import {
   Gift,
   Percent,
-  Save,
+  Pencil,
   Loader2,
   Users,
   Search,
@@ -16,10 +17,22 @@ import {
 
 const formatCFA = (amount) => new Intl.NumberFormat('fr-FR').format(amount || 0) + ' FCFA';
 
+const TAUX_FIELDS = [
+  { key: 'taux_international', label: 'Expéditions internationales' },
+  { key: 'taux_national', label: 'Expéditions nationales (Interville)' },
+  { key: 'taux_enlevement', label: 'Enlèvement / Livraison à domicile' },
+  { key: 'taux_marketplace', label: 'Marketplace', badge: 'Bientôt actif' },
+];
+
 /**
  * Configuration des 4 taux de bonus de parrainage du backoffice (un seul
  * enregistrement, pattern calqué sur BackofficeSetup.jsx) + liste des
  * clients du pays avec leur code de parrainage, nombre de filleuls et solde.
+ *
+ * Les taux sont affichés en lecture simple (pas de champs de formulaire à
+ * l'écran) : seul un clic sur "Modifier" ouvre un modal avec le vrai
+ * formulaire d'édition, cohérent avec le pattern déjà utilisé ailleurs dans
+ * le backoffice pour les réglages peu modifiés (voir Modal.jsx).
  */
 const Parrainage = () => {
   const dispatch = useDispatch();
@@ -33,6 +46,7 @@ const Parrainage = () => {
     taux_enlevement: '',
     taux_marketplace: '',
   });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -74,8 +88,22 @@ const Parrainage = () => {
         taux_marketplace: parseFloat(formData.taux_marketplace) || 0,
       })).unwrap();
       dispatch(showNotification({ type: 'success', message: 'Taux de parrainage mis à jour.' }));
+      setIsEditModalOpen(false);
     } catch (error) {
       dispatch(showNotification({ type: 'error', message: error?.message || 'Erreur lors de la mise à jour.' }));
+    }
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    // Revenir aux valeurs enregistrées si l'utilisateur ferme sans valider.
+    if (taux) {
+      setFormData({
+        taux_international: (taux.taux_international ?? 0).toString(),
+        taux_national: (taux.taux_national ?? 0).toString(),
+        taux_enlevement: (taux.taux_enlevement ?? 0).toString(),
+        taux_marketplace: (taux.taux_marketplace ?? 0).toString(),
+      });
     }
   };
 
@@ -161,17 +189,17 @@ const Parrainage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4 md:gap-6 items-start">
         {/* Clients & parrainages */}
         <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden order-2 lg:order-1">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+          <div className="px-4 sm:px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
               <Users size={18} />
             </div>
-            <div>
+            <div className="min-w-0">
               <h2 className="font-semibold text-slate-900">Clients & parrainages</h2>
               <p className="text-xs text-slate-500">Clients inscrits dans votre pays, avec leur code et leur solde de bonus</p>
             </div>
           </div>
 
-          <div className="px-6 py-3 border-b border-slate-100">
+          <div className="px-4 sm:px-6 py-3 border-b border-slate-100">
             <div className="relative group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
               <input
@@ -199,6 +227,7 @@ const Parrainage = () => {
             </div>
           ) : (
             <>
+              {/* Vue desktop : tableau dense, inchangé */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50/50 border-b border-slate-200">
@@ -229,17 +258,27 @@ const Parrainage = () => {
                 </table>
               </div>
 
-              <div className="md:hidden divide-y divide-slate-200">
+              {/* Vue mobile : cartes façon app, solde mis en avant comme
+                  élément principal plutôt qu'une ligne de liste dense. */}
+              <div className="md:hidden divide-y divide-slate-100">
                 {filteredClients.map((client) => (
-                  <div key={client.id} className="p-3 space-y-1.5">
-                    <div className="font-semibold text-slate-900 text-sm">{`${client.nom || ''} ${client.prenoms || ''}`.trim() || '—'}</div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-mono font-bold">
-                        {client.code_parrainage || '—'}
-                      </span>
-                      <span className="text-slate-500">{client.filleuls_count ?? 0} filleul(s)</span>
+                  <div key={client.id} className="p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">
+                      {(client.nom || '?').charAt(0).toUpperCase()}
                     </div>
-                    <div className="text-sm font-bold text-slate-900">{formatCFA(client.solde_parrainage)}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-slate-900 text-sm truncate">
+                        {`${client.nom || ''} ${client.prenoms || ''}`.trim() || '—'}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-mono font-bold text-[11px]">
+                          {client.code_parrainage || '—'}
+                        </span>
+                        <span className="text-xs text-slate-400">·</span>
+                        <span className="text-xs text-slate-500">{client.filleuls_count ?? 0} filleul{(client.filleuls_count ?? 0) > 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm font-bold text-slate-900 shrink-0 text-right">{formatCFA(client.solde_parrainage)}</p>
                   </div>
                 ))}
               </div>
@@ -247,16 +286,26 @@ const Parrainage = () => {
           )}
         </div>
 
-        {/* Config des 4 taux */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden order-1 lg:order-2 lg:sticky lg:top-24">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-              <Gift size={18} />
+        {/* Taux de bonus — affichage en lecture simple, édition via modal */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden order-1 lg:order-2 lg:sticky lg:top-24">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <Gift size={18} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-semibold text-slate-900 text-sm">Taux de bonus</h2>
+                <p className="text-xs text-slate-500">Sur la commission de l'agence de départ</p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-semibold text-slate-900 text-sm">Taux de bonus</h2>
-              <p className="text-xs text-slate-500">Sur la commission de l'agence de départ</p>
-            </div>
+            {canEdit && !isLoadingTaux && (
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shrink-0"
+              >
+                <Pencil size={13} /> Modifier
+              </button>
+            )}
           </div>
 
           {isLoadingTaux ? (
@@ -265,90 +314,64 @@ const Parrainage = () => {
               <p className="text-slate-500 text-sm font-medium">Chargement...</p>
             </div>
           ) : (
-            <div className="p-5 space-y-4">
-              <div className="space-y-1.5">
-                <label className={labelBase}>Expéditions internationales</label>
-                <div className="relative">
-                  <Percent className="h-4.5 w-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    name="taux_international"
-                    type="number" min="0" max="100" step="0.1"
-                    value={formData.taux_international}
-                    onChange={handleChange}
-                    placeholder="Ex: 10"
-                    className={inputBase}
-                    disabled={!canEdit}
-                  />
+            <div className="divide-y divide-slate-100">
+              {TAUX_FIELDS.map((field) => (
+                <div key={field.key} className="px-5 py-3.5 flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-slate-600 flex items-center gap-2 min-w-0">
+                    <span className="truncate">{field.label}</span>
+                    {field.badge && (
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded shrink-0">
+                        {field.badge}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-lg font-bold text-slate-900 shrink-0">
+                    {formData[field.key] || 0}<span className="text-sm font-semibold text-slate-400">%</span>
+                  </span>
                 </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className={labelBase}>Expéditions nationales (Interville)</label>
-                <div className="relative">
-                  <Percent className="h-4.5 w-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    name="taux_national"
-                    type="number" min="0" max="100" step="0.1"
-                    value={formData.taux_national}
-                    onChange={handleChange}
-                    placeholder="Ex: 5"
-                    className={inputBase}
-                    disabled={!canEdit}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className={labelBase}>Enlèvement / Livraison à domicile</label>
-                <div className="relative">
-                  <Percent className="h-4.5 w-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    name="taux_enlevement"
-                    type="number" min="0" max="100" step="0.1"
-                    value={formData.taux_enlevement}
-                    onChange={handleChange}
-                    placeholder="Ex: 20"
-                    className={inputBase}
-                    disabled={!canEdit}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className={labelBase}>
-                  Marketplace
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Bientôt actif</span>
-                </label>
-                <div className="relative">
-                  <Percent className="h-4.5 w-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    name="taux_marketplace"
-                    type="number" min="0" max="100" step="0.1"
-                    value={formData.taux_marketplace}
-                    onChange={handleChange}
-                    placeholder="Ex: 2"
-                    className={inputBase}
-                    disabled={!canEdit}
-                  />
-                </div>
-              </div>
-
-              {canEdit && (
-                <div className="flex justify-end pt-1">
-                  <button
-                    type="submit"
-                    disabled={isSaving}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-50 shadow-sm"
-                  >
-                    {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                    Enregistrer
-                  </button>
-                </div>
-              )}
+              ))}
             </div>
           )}
-        </form>
+        </div>
       </div>
+
+      {/* Modal d'édition des 4 taux */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={closeEditModal}
+        title="Modifier les taux de bonus"
+        subtitle="Parrainage"
+        confirmFormId="taux-parrainage-form"
+        confirmLabel="Enregistrer"
+        isLoading={isSaving}
+        size="md"
+      >
+        <form id="taux-parrainage-form" onSubmit={handleSubmit} className="space-y-4">
+          {TAUX_FIELDS.map((field) => (
+            <div key={field.key} className="space-y-1.5">
+              <label className={labelBase}>
+                {field.label}
+                {field.badge && (
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                    {field.badge}
+                  </span>
+                )}
+              </label>
+              <div className="relative">
+                <Percent className="h-4.5 w-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  name={field.key}
+                  type="number" min="0" max="100" step="0.1"
+                  value={formData[field.key]}
+                  onChange={handleChange}
+                  placeholder="Ex: 10"
+                  className={inputBase}
+                />
+              </div>
+            </div>
+          ))}
+        </form>
+      </Modal>
     </div>
   );
 };
