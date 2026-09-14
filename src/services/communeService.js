@@ -5,6 +5,15 @@ const getCommunes = async () => {
   return response.data.communes;
 };
 
+// Variante publique, filtrée par pays plutôt que par le backoffice de
+// l'utilisateur connecté - utilisée pour choisir la commune de destination
+// d'un tarif DHD, qui peut appartenir à n'importe quel backoffice actif
+// (voir CommuneController::listPublic() côté backend).
+const getCommunesByPays = async (codePays) => {
+  const response = await api.get(`/communes?code_pays=${encodeURIComponent(codePays)}`);
+  return response.data.communes || [];
+};
+
 const addCommune = async (communeData) => {
   const response = await api.post('/communes/add', communeData);
   return response.data;
@@ -33,6 +42,7 @@ const updateCommuneStatus = async (communeId) => {
 
 const communeService = {
   getCommunes,
+  getCommunesByPays,
   addCommune,
   addCommunesBulk,
   editCommune,

@@ -6,6 +6,7 @@ import { Megaphone, Plus, Trash2, Loader2, Users, Building2, Globe, MapPin, Sear
 import { showNotification } from '../redux/slices/uiSlice';
 import { fetchAnnouncements, createAnnouncement, deleteAnnouncement, bulkDeleteAnnouncements } from '../redux/slices/announcementSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
+import { fetchCommunes } from '../redux/slices/communeSlice';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 import useHasPermission from '../hooks/useHasPermission';
@@ -23,7 +24,7 @@ const emptyForm = {
   targetMode: TARGET_MODES.ALL,
   agence_id: '',
   pays_cible: [],
-  villes_cible: [],
+  communes_cible: [],
   scheduled_at: '',
 };
 
@@ -31,6 +32,7 @@ const Announcements = () => {
   const dispatch = useDispatch();
   const { items, pagination, isLoading, isSending, hasLoaded } = useSelector((state) => state.announcements);
   const { agences, hasLoaded: agencesLoaded } = useSelector((state) => state.agences);
+  const { communes, hasLoaded: communesLoaded, isLoading: communesLoading } = useSelector((state) => state.communes);
   const canCreate = useHasPermission('announcements.create');
   const canDelete = useHasPermission('announcements.delete');
   const canBulkDelete = useHasPermission('announcements.bulk_delete');
@@ -75,15 +77,24 @@ const Announcements = () => {
     }
   }, [dispatch, agencesLoaded]);
 
+  useEffect(() => {
+    if (!communesLoaded && !communesLoading) {
+      dispatch(fetchCommunes());
+    }
+  }, [dispatch, communesLoaded, communesLoading]);
+
   const paysDisponibles = useMemo(() => {
     const set = new Set((agences || []).map((a) => a.pays).filter(Boolean));
     return Array.from(set);
   }, [agences]);
 
-  const villesDisponibles = useMemo(() => {
-    const set = new Set((agences || []).map((a) => a.ville).filter(Boolean));
-    return Array.from(set);
-  }, [agences]);
+  // Communes réellement utilisées par au moins une agence existante
+  // (référentiel structuré, remplace l'ancien ciblage par ville texte
+  // libre - voir Announcement::communes_cible côté backend).
+  const communesDisponibles = useMemo(() => {
+    const idsUtilises = new Set((agences || []).map((a) => a.commune_id).filter(Boolean));
+    return (communes || []).filter((c) => idsUtilises.has(c.id));
+  }, [agences, communes]);
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -97,10 +108,10 @@ const Announcements = () => {
     }));
   };
 
-  const toggleVille = (ville) => {
+  const toggleCommune = (communeId) => {
     setForm((p) => ({
       ...p,
-      villes_cible: p.villes_cible.includes(ville) ? p.villes_cible.filter((x) => x !== ville) : [...p.villes_cible, ville],
+      communes_cible: p.communes_cible.includes(communeId) ? p.communes_cible.filter((x) => x !== communeId) : [...p.communes_cible, communeId],
     }));
   };
 
@@ -113,7 +124,7 @@ const Announcements = () => {
     const payload = { titre: form.titre.trim(), message: form.message.trim() };
     if (form.targetMode === TARGET_MODES.AGENCE) payload.agence_id = form.agence_id || null;
     if (form.targetMode === TARGET_MODES.PAYS) payload.pays_cible = form.pays_cible;
-    if (form.targetMode === TARGET_MODES.VILLES) payload.villes_cible = form.villes_cible;
+    if (form.targetMode === TARGET_MODES.VILLES) payload.communes_cible = form.communes_cible;
     if (form.scheduled_at) payload.scheduled_at = new Date(form.scheduled_at).toISOString();
 
     try {
@@ -471,20 +482,23 @@ const Announcements = () => {
 
             {form.targetMode === TARGET_MODES.VILLES && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {villesDisponibles.map((ville) => (
+                {communesDisponibles.map((commune) => (
                   <button
-                    key={ville}
+                    key={commune.id}
                     type="button"
-                    onClick={() => toggleVille(ville)}
+                    onClick={() => toggleCommune(commune.id)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                      form.villes_cible.includes(ville)
+                      form.communes_cible.includes(commune.id)
                         ? 'bg-indigo-600 text-white border-indigo-600'
                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    {ville}
+                    {commune.nom}
                   </button>
                 ))}
+                {communesDisponibles.length === 0 && (
+                  <p className="text-xs text-slate-400">Aucune commune n'est encore utilisée par une agence.</p>
+                )}
               </div>
             )}
           </div>

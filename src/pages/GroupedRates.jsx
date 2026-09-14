@@ -26,6 +26,24 @@ import RowActions from '../components/common/RowActions';
 import ExportButton from '../components/common/ExportButton';
 import useHasPermission from '../hooks/useHasPermission';
 
+// Itinéraire d'un tarif groupage : privilégie les communes structurées
+// (communeDepart/communeArrivee, chargées par le backend pour DHD - voir
+// TarifGroupageController::list()) plutôt que "ligne" texte (corrige au
+// passage un bug d'affichage : ligne.replace('-', ...) ne remplaçait que la
+// première occurrence, cassant l'affichage pour un nom de commune composé
+// contenant lui-même un tiret). Repli sur "ligne"/pays pour les anciens
+// tarifs sans relation chargée (Afrique/CA, qui n'ont pas de notion de
+// commune).
+const formatItineraire = (tarif) => {
+  if (tarif.commune_depart?.nom && tarif.commune_arrivee?.nom) {
+    return `${tarif.commune_depart.nom} → ${tarif.commune_arrivee.nom}`;
+  }
+  if (tarif.ligne) {
+    return tarif.ligne.split('-').map((v) => v.trim()).join(' → ');
+  }
+  return tarif.pays || '';
+};
+
 const GroupedRates = () => {
   const dispatch = useDispatch();
   const canCreate = useHasPermission('tarification_groupage.create');
@@ -195,7 +213,7 @@ const GroupedRates = () => {
     return {
       type: getTypeLabel(tarif.type_expedition),
       categorie: tarif.category?.nom || '',
-      itineraire: tarif.ligne ? tarif.ligne.replace('-', ' → ') : (tarif.pays || ''),
+      itineraire: formatItineraire(tarif),
       montant_base: base,
       pourcentage_prestation: prest,
       montant_prestation: mp,
@@ -418,7 +436,7 @@ const GroupedRates = () => {
                               <Globe size={14} className="text-slate-400" />
                             )}
                             <p className="font-semibold uppercase text-slate-700">
-                              {tarif.ligne ? tarif.ligne.replace('-', ' → ') : (tarif.pays || 'N/A')}
+                              {formatItineraire(tarif) || 'N/A'}
                             </p>
                           </div>
                         </td>
@@ -505,7 +523,7 @@ const GroupedRates = () => {
                             </span>
                             <span className="text-slate-400">•</span>
                             <span className="text-xs uppercase text-slate-500 font-medium truncate">
-                              {tarif.ligne ? tarif.ligne.replace('-', ' → ') : tarif.pays}
+                              {formatItineraire(tarif)}
                             </span>
                           </div>
                           {tarif.category && (

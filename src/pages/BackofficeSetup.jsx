@@ -38,7 +38,6 @@ const BackofficeSetup = () => {
         localisation: '',
         adresse: '',
         ville: '',
-        commune: '',
         code_pays: 'SN',
         email: '',
     });
@@ -59,7 +58,6 @@ const BackofficeSetup = () => {
                 localisation: config.localisation || '',
                 adresse: config.adresse || '',
                 ville: config.ville || '',
-                commune: config.commune || '',
                 code_pays: config.code_pays || 'SN',
                 email: config.email || '',
             });
@@ -288,32 +286,17 @@ const BackofficeSetup = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            <div className="space-y-1.5">
-                                <label className={labelBase}>Commune / Secteur</label>
-                                <input
-                                    name="commune"
-                                    type="text"
-                                    value={formData.commune}
-                                    onChange={handleChange}
-                                    placeholder="Ex: Plateau"
-                                    className={plainInputBase}
-                                    disabled={readOnly}
-                                />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className={labelBase}>Adresse précise</label>
-                                <input
-                                    name="adresse"
-                                    type="text"
-                                    value={formData.adresse}
-                                    onChange={handleChange}
-                                    placeholder="Numéro de porte, Immeuble..."
-                                    className={plainInputBase}
-                                    disabled={readOnly}
-                                />
-                            </div>
+                        <div className="space-y-1.5">
+                            <label className={labelBase}>Adresse précise</label>
+                            <input
+                                name="adresse"
+                                type="text"
+                                value={formData.adresse}
+                                onChange={handleChange}
+                                placeholder="Numéro de porte, Immeuble..."
+                                className={plainInputBase}
+                                disabled={readOnly}
+                            />
                         </div>
 
                         <div className="space-y-1.5">

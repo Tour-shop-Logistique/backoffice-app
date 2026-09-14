@@ -1082,7 +1082,7 @@ const Parcels = () => {
                 >
                   <option value="" disabled>Appliquer à tous...</option>
                   {agencesByCountry.map(agence => (
-                    <option key={agence.id} value={agence.id}>{agence.nom_agence} ({agence.ville})</option>
+                    <option key={agence.id} value={agence.id}>{agence.nom_agence} ({agence.commune?.nom})</option>
                   ))}
                 </select>
               )}
@@ -1107,7 +1107,7 @@ const Parcels = () => {
                     >
                       <option value="">Sélectionner une agence...</option>
                       {agencesByCountry.map(agence => (
-                        <option key={agence.id} value={agence.id}>{agence.nom_agence} ({agence.ville})</option>
+                        <option key={agence.id} value={agence.id}>{agence.nom_agence} ({agence.commune?.nom})</option>
                       ))}
                     </select>
                   </div>

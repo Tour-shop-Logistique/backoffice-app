@@ -77,9 +77,11 @@ export function splitPhoneNumber(fullNumber) {
 }
 
 // Fusionne l'indicatif et le numéro local en une seule chaîne pour l'envoi
-// au backend (ex: "+225" + "0102030405" -> "+225 0102030405"), l'inverse de
-// splitPhoneNumber().
+// au backend (ex: "+225" + "0102030405" -> "+2250102030405", sans espace -
+// cohérent avec le format déjà utilisé ailleurs dans le projet, ex.
+// Agence.telephone), l'inverse de splitPhoneNumber() (qui reste tolérant à
+// un éventuel espace pour les numéros déjà stockés avec l'ancien format).
 export function joinPhoneNumber(dialCode, localNumber) {
   if (!dialCode && !localNumber) return '';
-  return `${dialCode} ${localNumber}`.trim();
+  return `${dialCode}${localNumber}`.trim();
 }

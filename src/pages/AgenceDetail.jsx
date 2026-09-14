@@ -499,7 +499,7 @@ const AgenceDetail = () => {
                                                 <p className="text-xs font-bold text-slate-500 uppercase">Localisation</p>
                                                 <p className="text-sm font-semibold text-slate-900 flex items-start gap-2 leading-snug">
                                                     <MapPin size={20} className="text-slate-400 mt-0.5" />
-                                                    <span>{currentAgence.ville}, {currentAgence.commune}</span>
+                                                    <span>{currentAgence.commune?.nom}</span>
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
@@ -541,17 +541,6 @@ const AgenceDetail = () => {
                                             {currentAgence.description || "Aucune description enregistrée pour ce partenaire logistique."}
                                         </p>
                                     </div>
-
-                                    {currentAgence.message_accueil && (
-                                        <div className="p-6 bg-slate-50/30">
-                                            <div className="border-l-4 border-slate-900 pl-4 py-1">
-                                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Message client</p>
-                                                <p className="text-sm font-semibold text-slate-700 italic">
-                                                    "{currentAgence.message_accueil}"
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
 
                                     <div className="p-4">
                                         <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">

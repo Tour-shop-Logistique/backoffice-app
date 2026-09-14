@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { X } from 'lucide-react';
 import SearchableDropdown from '../common/SearchableDropdown';
-import CityAutocomplete from '../common/CityAutocomplete';
 import { AFRICAN_COUNTRY_OPTIONS, NON_AFRICAN_COUNTRY_OPTIONS } from '../../utils/countries';
 import { fetchCommunes } from '../../redux/slices/communeSlice';
+import communeService from '../../services/communeService';
 
 
 
@@ -31,8 +31,7 @@ const Addtarifgroupe = ({
     code_pays: '',
     mode: 'avion',
     commune_depart_id: '',
-    ville_depart: '',
-    ville_arrivee: '',
+    commune_arrivee_id: '',
     montant_base: '',
     pourcentage_prestation: '',
     montant_minimum: '',
@@ -40,15 +39,27 @@ const Addtarifgroupe = ({
   });
   const [errors, setErrors] = useState({});
 
+  // Communes d'arrivée : filtrées par le pays de destination choisi, tous
+  // backoffices confondus (pas seulement celui du backoffice courant, voir
+  // communeService.getCommunesByPays - la destination DHD peut appartenir à
+  // n'importe quel backoffice actif).
+  const [communesArrivee, setCommunesArrivee] = useState([]);
+  const [isLoadingCommunesArrivee, setIsLoadingCommunesArrivee] = useState(false);
+
+  useEffect(() => {
+    if (!formData.code_pays || !['GROUPAGE_DHD_AERIEN', 'GROUPAGE_DHD_MARITIME'].includes(formData.type_expedition)) {
+      setCommunesArrivee([]);
+      return;
+    }
+    setIsLoadingCommunesArrivee(true);
+    communeService.getCommunesByPays(formData.code_pays)
+      .then(setCommunesArrivee)
+      .finally(() => setIsLoadingCommunesArrivee(false));
+  }, [formData.code_pays, formData.type_expedition]);
+
   useEffect(() => {
     if (tarifToEdit) {
       const type = tarifToEdit.type_expedition ? tarifToEdit.type_expedition.toUpperCase() : 'GROUPAGE_DHD_AERIEN';
-
-      let ville_depart = '';
-      let ville_arrivee = '';
-      if (tarifToEdit.ligne && tarifToEdit.ligne.includes('-')) {
-        [ville_depart, ville_arrivee] = tarifToEdit.ligne.split('-').map(v => v.trim());
-      }
 
       setFormData({
         type_expedition: type,
@@ -56,8 +67,7 @@ const Addtarifgroupe = ({
         code_pays: tarifToEdit.code_pays || '',
         mode: tarifToEdit.mode || getModeForType(type),
         commune_depart_id: tarifToEdit.commune_depart_id || '',
-        ville_depart: ville_depart,
-        ville_arrivee: ville_arrivee,
+        commune_arrivee_id: tarifToEdit.commune_arrivee_id || '',
         montant_base: tarifToEdit.montant_base || '',
         pourcentage_prestation: tarifToEdit.pourcentage_prestation || '',
         montant_minimum: tarifToEdit.montant_minimum ?? '',
@@ -87,8 +97,7 @@ const Addtarifgroupe = ({
       category_id: '',
       code_pays: '',
       commune_depart_id: '',
-      ville_depart: '',
-      ville_arrivee: '',
+      commune_arrivee_id: '',
       montant_base: '',
       pourcentage_prestation: '',
       montant_minimum: '',
@@ -121,7 +130,7 @@ const Addtarifgroupe = ({
     if (type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
       if (!formData.category_id) newErrors.category_id = 'Catégorie requise';
       if (!formData.commune_depart_id) newErrors.commune_depart_id = 'Commune de départ requise';
-      if (!formData.ville_arrivee) newErrors.ville_arrivee = 'Ville d\'arrivée requise';
+      if (!formData.commune_arrivee_id) newErrors.commune_arrivee_id = 'Commune d\'arrivée requise';
     }
 
     // code_pays est desormais requis pour les 4 types geo-dependants
@@ -165,13 +174,11 @@ const Addtarifgroupe = ({
 
     if (type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
       dataToSubmit.category_id = formData.category_id;
+      // "ligne" n'est plus construite côté client : le backend la dérive
+      // désormais des deux communes (source de vérité unique, voir
+      // TarifGroupageController::add()).
       dataToSubmit.commune_depart_id = formData.commune_depart_id;
-      // La ville de depart (texte) vient du nom de la commune choisie, pas
-      // d'une saisie libre - garantit une ligne toujours coherente avec
-      // commune_depart_id (voir ExpeditionTarificationService::resoudreTarifGroupageDHD).
-      const communeDepart = communes.find(c => String(c.id) === String(formData.commune_depart_id));
-      const villeDepart = (communeDepart?.nom || formData.ville_depart || '').trim().toLowerCase();
-      dataToSubmit.ligne = `${villeDepart}-${formData.ville_arrivee.trim().toLowerCase()}`;
+      dataToSubmit.commune_arrivee_id = formData.commune_arrivee_id;
       if (formData.montant_minimum !== '' && formData.pourcentage_prestation_minimum !== '') {
         dataToSubmit.montant_minimum = parseFloat(formData.montant_minimum);
         dataToSubmit.pourcentage_prestation_minimum = parseFloat(formData.pourcentage_prestation_minimum);
@@ -318,22 +325,35 @@ const Addtarifgroupe = ({
                 )}
               </div>
 
-              {/* Arrival City - assistée par countries.dev selon le pays choisi */}
+              {/* Arrival Commune - referentiel structure (tous backoffices
+                  confondus, filtre par le pays de destination choisi), plus
+                  aucune agence n'est necessaire pour configurer ce tarif -
+                  seulement une commune existante dans ce pays. */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                  Ville d'arrivée <span className="text-red-500">*</span>
+                  Commune d'arrivée <span className="text-red-500">*</span>
                 </label>
-                <CityAutocomplete
-                  countryCode={formData.code_pays}
-                  value={formData.ville_arrivee}
-                  onChange={(v) => handleInputChange('ville_arrivee', v)}
-                  error={errors.ville_arrivee}
-                  placeholder="ex: Paris"
+                <SearchableDropdown
+                  value={formData.commune_arrivee_id}
+                  onChange={(v) => handleInputChange('commune_arrivee_id', v)}
+                  options={communesArrivee.map((c) => ({ label: c.nom, value: c.id }))}
+                  placeholder={
+                    !formData.code_pays
+                      ? 'Choisissez d\'abord un pays...'
+                      : isLoadingCommunesArrivee
+                        ? 'Chargement...'
+                        : 'Sélectionner une commune...'
+                  }
+                  error={errors.commune_arrivee_id}
+                  themeColor="emerald"
                 />
-                {errors.ville_arrivee && (
+                {errors.commune_arrivee_id && (
                   <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <span>⚠️</span> {errors.ville_arrivee}
+                    <span>⚠️</span> {errors.commune_arrivee_id}
                   </p>
+                )}
+                {formData.code_pays && !isLoadingCommunesArrivee && communesArrivee.length === 0 && (
+                  <p className="text-[10px] text-amber-600 mt-1">Aucune commune configurée pour ce pays. Un backoffice doit d'abord y exister.</p>
                 )}
               </div>
             </div>

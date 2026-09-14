@@ -67,8 +67,7 @@ const AgencePartenaire = () => {
       const search = searchTerm.toLowerCase();
       return (
         agence.nom_agence?.toLowerCase().includes(search) ||
-        agence.ville?.toLowerCase().includes(search) ||
-        agence.commune?.toLowerCase().includes(search) ||
+        agence.commune?.nom?.toLowerCase().includes(search) ||
         agence.adresse?.toLowerCase().includes(search) ||
         agence.code_agence?.toLowerCase().includes(search) ||
         agence.telephone?.toLowerCase().includes(search)
@@ -102,7 +101,7 @@ const AgencePartenaire = () => {
   const exportRows = useMemo(() => filteredAgences.map((agence) => ({
     code: agence.code_agence || '',
     nom: agence.nom_agence || '',
-    commune: agence.commune || '',
+    commune: agence.commune?.nom || '',
     adresse: agence.adresse || '',
     telephone: agence.telephone || '',
     actif: agence.actif ? 'Oui' : 'Non',
@@ -230,7 +229,7 @@ const AgencePartenaire = () => {
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-1.5 text-slate-700 font-semibold text-sm">
                           <MapPinned className="h-4 w-4 text-slate-400" />
-                          {[agence.commune, agence.adresse].filter(Boolean).join(' ')}
+                          {[agence.commune?.nom, agence.adresse].filter(Boolean).join(' ')}
                         </div>
                       </td>
                       <td className="px-6 py-3 font-semibold text-sm">{agence.telephone}</td>
@@ -279,7 +278,7 @@ const AgencePartenaire = () => {
                       <div className="space-y-1.5 pl-1">
                         <div className="flex items-center gap-2 text-slate-400">
                           <MapPinned size={14} strokeWidth={1.5} className="shrink-0" />
-                          <span className="text-xs font-medium text-slate-500 truncate tracking-tight">{[agence.commune, agence.adresse].filter(Boolean).join(' ')}</span>
+                          <span className="text-xs font-medium text-slate-500 truncate tracking-tight">{[agence.commune?.nom, agence.adresse].filter(Boolean).join(' ')}</span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-400">
                           <Phone size={14} strokeWidth={1.5} className="shrink-0" />
