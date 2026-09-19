@@ -118,6 +118,15 @@ const ParcelHistory = () => {
                 return { label: 'À contrôler', styles: 'bg-amber-50 text-amber-600 border-amber-100', icon: ClipboardCheck };
             case 'depart_expedition_succes':
                 return { label: 'Contrôlé / Validé', styles: 'bg-emerald-50 text-emerald-600 border-emerald-100', icon: ShieldCheck };
+            // Interville (le backoffice n'agit jamais dessus, juste consultation) :
+            case 'accepted':
+                return { label: 'Acceptée', styles: 'bg-slate-50 text-slate-600 border-slate-100', icon: Package };
+            case 'recu_agence_depart':
+                return { label: 'Reçue à l\'agence de départ', styles: 'bg-blue-50 text-blue-600 border-blue-100', icon: Building2 };
+            case 'recu_agence_destination':
+                return { label: 'Reçue à destination', styles: 'bg-emerald-50 text-emerald-600 border-emerald-100', icon: ShieldCheck };
+            case 'termined':
+                return { label: 'Terminée', styles: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: ShieldCheck };
             default:
                 return { label: status || 'En attente', styles: 'bg-slate-50 text-slate-600 border-slate-100', icon: Package };
         }
@@ -301,8 +310,17 @@ const ParcelHistory = () => {
                                     <tr>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Colis / Désignation</th>
                                         <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Date</th>
-                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Provenance</th>
-                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Destination</th>
+                                        {activeTab === 'interville' ? (
+                                            <>
+                                                <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Trajet</th>
+                                                <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Agence d'arrivée</th>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Provenance</th>
+                                                <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Destination</th>
+                                            </>
+                                        )}
                                         <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Action</th>
                                     </tr>
                                 </thead>
@@ -319,77 +337,102 @@ const ParcelHistory = () => {
                                                         </span>
                                                     </div>
 
-                                                    {/* Middle: Breakdown Flow */}
-                                                    <div className="flex items-center gap-6">
-                                                        <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Base</span>
-                                                            <span className="text-xs font-semibold text-slate-600 tabular-nums">
-                                                                {Number(group.expedition?.montant_base || 0).toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Prestation</span>
-                                                            <span className="text-xs font-semibold text-blue-600 tabular-nums">
-                                                                +{Number(group.expedition?.montant_prestation || 0).toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Emballage</span>
-                                                            <span className="text-xs font-semibold text-slate-600 tabular-nums">
-                                                                +{Number(group.expedition?.frais_emballage || 0).toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                        {Number(group.expedition?.frais_annexes || 0) > 0 && (
-                                                            <div className="flex items-baseline gap-1.5">
-                                                                <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Annexes</span>
-                                                                <span className="text-xs font-semibold text-amber-600 tabular-nums">
-                                                                    +{Number(group.expedition?.frais_annexes || 0).toLocaleString()}
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                    {activeTab === 'interville' ? (
+                                                        <>
+                                                            {/* Statut du cycle Interville */}
+                                                            {(() => {
+                                                                const statusInfo = getStatusInfo(group.expedition?.statut_expedition);
+                                                                const StatusIcon = statusInfo.icon;
+                                                                return (
+                                                                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold uppercase tracking-wider border shadow-sm ${statusInfo.styles}`}>
+                                                                        <StatusIcon size={13} />
+                                                                        {statusInfo.label}
+                                                                    </div>
+                                                                );
+                                                            })()}
 
-                                                    {/* Right: Total & Status & Actions */}
-                                                    <div className="ml-auto flex items-center gap-6">
-                                                        {/* Financial Total Section */}
-                                                        <div className="flex items-center gap-4 pr-6 border-r border-slate-200">
-                                                            <div className="flex flex-col items-end leading-none">
-                                                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-[0.15em] mb-1">Total Expédition</span>
-                                                                <div className="flex items-baseline gap-1">
-                                                                    <span className="text-[14px] font-semibold text-slate-900">
-                                                                        {Number(group.expedition?.montant_expedition || 0).toLocaleString()}
-                                                                    </span>
-                                                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{getCurrencyLabel()}</span>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className={`px-2 py-1 rounded text-xs font-semibold uppercase tracking-wider border shadow-sm transition-all
-                                                                ${group.expedition?.statut_paiement === 'paye'
-                                                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                                    : 'bg-amber-50 text-amber-600 border-amber-100'
-                                                                }`}>
-                                                                {group.expedition?.statut_paiement === 'paye' ? 'Payé' : 'Impayé'}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Group stats & Actions */}
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="flex flex-col items-end">
+                                                            <div className="ml-auto flex items-center gap-4">
                                                                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                                                                     {group.parcels.length} Colis
                                                                 </span>
                                                             </div>
-                                                            {canEditExpedition && (
-                                                                <button
-                                                                    onClick={() => handleEditExpedition(group.expedition)}
-                                                                    className="p-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 transition-all shadow-sm group"
-                                                                    title="Modifier l'expédition"
-                                                                >
-                                                                    <Edit2 size={13} className="group-hover:scale-110 transition-transform" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {/* Middle: Breakdown Flow */}
+                                                            <div className="flex items-center gap-6">
+                                                                <div className="flex items-baseline gap-1.5">
+                                                                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Base</span>
+                                                                    <span className="text-xs font-semibold text-slate-600 tabular-nums">
+                                                                        {Number(group.expedition?.montant_base || 0).toLocaleString()}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-baseline gap-1.5">
+                                                                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Prestation</span>
+                                                                    <span className="text-xs font-semibold text-blue-600 tabular-nums">
+                                                                        +{Number(group.expedition?.montant_prestation || 0).toLocaleString()}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-baseline gap-1.5">
+                                                                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Emballage</span>
+                                                                    <span className="text-xs font-semibold text-slate-600 tabular-nums">
+                                                                        +{Number(group.expedition?.frais_emballage || 0).toLocaleString()}
+                                                                    </span>
+                                                                </div>
+                                                                {Number(group.expedition?.frais_annexes || 0) > 0 && (
+                                                                    <div className="flex items-baseline gap-1.5">
+                                                                        <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Annexes</span>
+                                                                        <span className="text-xs font-semibold text-amber-600 tabular-nums">
+                                                                            +{Number(group.expedition?.frais_annexes || 0).toLocaleString()}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Right: Total & Status & Actions */}
+                                                            <div className="ml-auto flex items-center gap-6">
+                                                                {/* Financial Total Section */}
+                                                                <div className="flex items-center gap-4 pr-6 border-r border-slate-200">
+                                                                    <div className="flex flex-col items-end leading-none">
+                                                                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-[0.15em] mb-1">Total Expédition</span>
+                                                                        <div className="flex items-baseline gap-1">
+                                                                            <span className="text-[14px] font-semibold text-slate-900">
+                                                                                {Number(group.expedition?.montant_expedition || 0).toLocaleString()}
+                                                                            </span>
+                                                                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{getCurrencyLabel()}</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className={`px-2 py-1 rounded text-xs font-semibold uppercase tracking-wider border shadow-sm transition-all
+                                                                        ${group.expedition?.statut_paiement === 'paye'
+                                                                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                                            : 'bg-amber-50 text-amber-600 border-amber-100'
+                                                                        }`}>
+                                                                        {group.expedition?.statut_paiement === 'paye' ? 'Payé' : 'Impayé'}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Group stats & Actions */}
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="flex flex-col items-end">
+                                                                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                                                            {group.parcels.length} Colis
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    )}
+
+                                                    {canEditExpedition && (
+                                                        <button
+                                                            onClick={() => handleEditExpedition(group.expedition)}
+                                                            className="p-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 transition-all shadow-sm group"
+                                                            title="Modifier l'expédition"
+                                                        >
+                                                            <Edit2 size={13} className="group-hover:scale-110 transition-transform" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -414,18 +457,39 @@ const ParcelHistory = () => {
                                                                 {new Date(parcel.expedition?.date_expedition_depart || parcel.expedition?.created_at || parcel.expedition?.updated_at).toLocaleDateString('fr-FR')}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-3">
-                                                            <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold ">
-                                                                <Building2 size={16} className="text-slate-400" />
-                                                                {parcel.expedition?.agence?.nom_agence}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-3">
-                                                            <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold uppercase">
-                                                                <MapPin size={16} className="text-slate-400" />
-                                                                {parcel.expedition?.pays_destination}
-                                                            </div>
-                                                        </td>
+                                                        {activeTab === 'interville' ? (
+                                                            <>
+                                                                <td className="px-6 py-3">
+                                                                    <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold">
+                                                                        <MapPin size={16} className="text-slate-400" />
+                                                                        {parcel.expedition?.commune_depart_nom || '—'}
+                                                                        <ArrowRight size={12} className="text-slate-300" />
+                                                                        {parcel.expedition?.commune_arrivee_nom || '—'}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-3">
+                                                                    <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold">
+                                                                        <Building2 size={16} className="text-slate-400" />
+                                                                        {parcel.expedition?.agence_arrivee?.nom_agence || 'Non choisie'}
+                                                                    </div>
+                                                                </td>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <td className="px-6 py-3">
+                                                                    <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold ">
+                                                                        <Building2 size={16} className="text-slate-400" />
+                                                                        {parcel.expedition?.agence?.nom_agence}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-3">
+                                                                    <div className="flex items-center gap-1.5 text-slate-800 text-sm font-semibold uppercase">
+                                                                        <MapPin size={16} className="text-slate-400" />
+                                                                        {parcel.expedition?.pays_destination}
+                                                                    </div>
+                                                                </td>
+                                                            </>
+                                                        )}
                                                         <td className="px-6 py-3 text-right">
                                                             <button
                                                                 onClick={() => handleViewParcel(parcel)}
@@ -445,19 +509,28 @@ const ParcelHistory = () => {
 
                         {/* Mobile Cards */}
                         <div className="md:hidden space-y-4">
-                            {groupedParcels.map(group => (
+                            {groupedParcels.map(group => {
+                                const statusInfo = getStatusInfo(group.expedition?.statut_expedition);
+                                const StatusIcon = statusInfo.icon;
+                                return (
                                 <div key={group.id} className="bg-slate-50/50 rounded-xl border border-slate-200 overflow-hidden">
                                     <div className="px-4 py-3 bg-slate-100/50 border-b border-slate-200 flex items-center justify-between">
                                         <div className="flex flex-col">
                                             <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
                                                 <Truck size={12} /> {group.expedition?.reference || 'N/A'}
                                             </span>
-                                            <span className="text-xs text-slate-500 uppercase font-bold mt-0.5 flex items-center gap-2">
-                                                {Number(group.expedition?.montant_expedition || 0).toLocaleString()} {getCurrencyLabel()}
-                                                <span className={`px-1 rounded ${group.expedition?.statut_paiement === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                    {group.expedition?.statut_paiement === 'paye' ? 'PAYÉ' : 'NON PAYÉ'}
+                                            {activeTab === 'interville' ? (
+                                                <span className={`inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-xs font-bold uppercase w-fit border ${statusInfo.styles}`}>
+                                                    <StatusIcon size={11} /> {statusInfo.label}
                                                 </span>
-                                            </span>
+                                            ) : (
+                                                <span className="text-xs text-slate-500 uppercase font-bold mt-0.5 flex items-center gap-2">
+                                                    {Number(group.expedition?.montant_expedition || 0).toLocaleString()} {getCurrencyLabel()}
+                                                    <span className={`px-1 rounded ${group.expedition?.statut_paiement === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                        {group.expedition?.statut_paiement === 'paye' ? 'PAYÉ' : 'NON PAYÉ'}
+                                                    </span>
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="flex items-center">
                                             <span className="text-xs font-bold bg-white px-2 py-1 rounded border border-slate-200 text-slate-500">
@@ -473,6 +546,22 @@ const ParcelHistory = () => {
                                             )}
                                         </div>
                                     </div>
+                                    {activeTab === 'interville' && (
+                                        <div className="px-4 py-2.5 bg-white border-b border-slate-100 space-y-1.5">
+                                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                                                <MapPin size={13} className="text-slate-400 flex-shrink-0" />
+                                                <span className="truncate">
+                                                    {group.expedition?.commune_depart_nom || '—'} → {group.expedition?.commune_arrivee_nom || '—'}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                                                <Building2 size={13} className="text-slate-400 flex-shrink-0" />
+                                                <span className="truncate">
+                                                    {group.expedition?.agence_arrivee?.nom_agence || 'Agence d\'arrivée non choisie'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="divide-y divide-slate-100">
                                         {group.parcels.map((parcel) => {
                                             const TypeIcon = getTypeIcon(parcel.code_colis);
@@ -505,7 +594,8 @@ const ParcelHistory = () => {
                                         })}
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </>
                 )}
