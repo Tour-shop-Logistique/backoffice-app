@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchParcels, updateExpeditionInfo } from '../redux/slices/parcelSlice';
+import { fetchParcels, fetchInterville, updateExpeditionInfo } from '../redux/slices/parcelSlice';
 import { ROUTES } from '../routes';
 import Modal from '../components/common/Modal';
 import useHasPermission from '../hooks/useHasPermission';
+import { getCurrencyLabel } from '../utils/format';
 import {
     Package,
     Search,
@@ -31,11 +32,20 @@ import {
 const ParcelHistory = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { items, isLoading, hasLoaded } = useSelector(state => state.parcels.historyList);
+    // Onglet "Extraville" (historique des contrôles) vs "Interville" : le
+    // backoffice n'intervient jamais sur l'Interville (cahier des charges
+    // §8.1, géré uniquement par les agences de départ/arrivée) mais doit
+    // pouvoir la consulter en lecture seule.
+    const [activeTab, setActiveTab] = useState('extraville');
+    const historyState = useSelector(state => state.parcels.historyList);
+    const intervilleState = useSelector(state => state.parcels.intervilleList);
+    const { items, isLoading, hasLoaded } = activeTab === 'interville' ? intervilleState : historyState;
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const isUpdatingExpedition = useSelector(state => state.parcels.isUpdatingExpedition);
-    const canEditExpedition = useHasPermission('expeditions.update_info');
+    // Interville : lecture seule, le backoffice n'y intervient jamais
+    // (cahier des charges §8.1) - pas de bouton d'édition sur cet onglet.
+    const canEditExpedition = useHasPermission('expeditions.update_info') && activeTab !== 'interville';
 
     // Expedition Edit State
     const [isExpeditionModalOpen, setIsExpeditionModalOpen] = useState(false);
@@ -49,19 +59,22 @@ const ParcelHistory = () => {
 
     useEffect(() => {
         if (!hasLoaded && !isLoading) {
-            dispatch(fetchParcels({
-                listType: 'history'
-            }));
+            if (activeTab === 'interville') {
+                dispatch(fetchInterville({}));
+            } else {
+                dispatch(fetchParcels({ listType: 'history' }));
+            }
         }
-    }, [dispatch, hasLoaded, isLoading]);
+    }, [dispatch, hasLoaded, isLoading, activeTab]);
 
     const fetchData = async () => {
         setIsRefreshing(true);
-        await dispatch(fetchParcels({
-            listType: 'history',
-            date_debut: dateDebut || null,
-            date_fin: dateFin || null
-        }));
+        const params = { date_debut: dateDebut || null, date_fin: dateFin || null };
+        if (activeTab === 'interville') {
+            await dispatch(fetchInterville(params));
+        } else {
+            await dispatch(fetchParcels({ listType: 'history', ...params }));
+        }
         setIsRefreshing(false);
     };
 
@@ -162,7 +175,9 @@ const ParcelHistory = () => {
                             Historique des Contrôles
                         </h1>
                         <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
-                            Consultez la liste des colis déjà contrôlés et validés
+                            {activeTab === 'interville'
+                                ? "Consultez les expéditions Interville, gérées entièrement par les agences"
+                                : "Consultez la liste des colis déjà contrôlés et validés"}
                         </p>
                     </div>
 
@@ -176,6 +191,26 @@ const ParcelHistory = () => {
                             <span className="hidden md:inline md:ml-2 uppercase tracking-widest text-xs">Actualiser</span>
                         </button>
                     </div>
+                </div>
+
+                {/* ONGLETS Extraville / Interville */}
+                <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 w-fit">
+                    <button
+                        onClick={() => setActiveTab('extraville')}
+                        className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-all ${
+                            activeTab === 'extraville' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                    >
+                        Extraville
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('interville')}
+                        className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-all ${
+                            activeTab === 'interville' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                    >
+                        Interville
+                    </button>
                 </div>
             </header>
 
@@ -324,7 +359,7 @@ const ParcelHistory = () => {
                                                                     <span className="text-[14px] font-semibold text-slate-900">
                                                                         {Number(group.expedition?.montant_expedition || 0).toLocaleString()}
                                                                     </span>
-                                                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">CFA</span>
+                                                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{getCurrencyLabel()}</span>
                                                                 </div>
                                                             </div>
 
@@ -418,7 +453,7 @@ const ParcelHistory = () => {
                                                 <Truck size={12} /> {group.expedition?.reference || 'N/A'}
                                             </span>
                                             <span className="text-xs text-slate-500 uppercase font-bold mt-0.5 flex items-center gap-2">
-                                                {Number(group.expedition?.montant_expedition || 0).toLocaleString()} CFA
+                                                {Number(group.expedition?.montant_expedition || 0).toLocaleString()} {getCurrencyLabel()}
                                                 <span className={`px-1 rounded ${group.expedition?.statut_paiement === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                                                     {group.expedition?.statut_paiement === 'paye' ? 'PAYÉ' : 'NON PAYÉ'}
                                                 </span>

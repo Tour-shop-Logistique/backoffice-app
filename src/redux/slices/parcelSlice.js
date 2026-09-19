@@ -49,6 +49,41 @@ export const fetchParcels = createAsyncThunk(
     }
 );
 
+// Interville : le backoffice n'y intervient jamais (agence de départ et
+// d'arrivée gèrent seules tout le parcours, cahier des charges §8.1) mais
+// doit pouvoir consulter ces expéditions en lecture seule - pas de filtre
+// de statut ni de mode, on veut voir tout le cycle de vie.
+export const fetchInterville = createAsyncThunk(
+    'parcels/fetchInterville',
+    async ({ date_debut = null, date_fin = null } = {}, { rejectWithValue }) => {
+        try {
+            let url = `/backoffice/list-expedition?type_expedition=interville`;
+            if (date_debut) url += `&date_debut=${date_debut}`;
+            if (date_fin) url += `&date_fin=${date_fin}`;
+
+            const response = await api.get(url);
+            let finalData = response.data;
+
+            if (response.data.data) {
+                const flattenedParcels = [];
+                response.data.data.forEach(expedition => {
+                    const { colis, ...expeditionInfo } = expedition;
+                    if (colis && Array.isArray(colis)) {
+                        colis.forEach(c => {
+                            flattenedParcels.push({ ...c, expedition: expeditionInfo });
+                        });
+                    }
+                });
+                finalData = { ...response.data, data: flattenedParcels };
+            }
+
+            return finalData;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
 export const fetchIncomingParcels = createAsyncThunk(
     'parcels/fetchIncomingParcels',
     async ({ date_debut = null, date_fin = null } = {}, { rejectWithValue }) => {
@@ -265,6 +300,15 @@ const initialState = {
         error: null,
         lastUpdated: null
     },
+    // List for Interville expeditions (lecture seule, backoffice spectateur)
+    intervilleList: {
+        items: [],
+        meta: { current_page: 1, last_page: 1, per_page: 15, total: 0 },
+        isLoading: false,
+        hasLoaded: false,
+        error: null,
+        lastUpdated: null
+    },
     // Detail view state
     currentParcel: null,
     isLoadingDetail: false,
@@ -369,6 +413,7 @@ const parcelSlice = createSlice({
                 patch(state.todoList);
                 patch(state.historyList);
                 patch(state.incomingList);
+                patch(state.intervilleList);
 
                 data.forEach(updated => {
                     if (state.currentParcel && state.currentParcel.id === updated.id) {
@@ -389,6 +434,7 @@ const parcelSlice = createSlice({
                 patch(state.todoList);
                 patch(state.historyList);
                 patch(state.incomingList);
+                patch(state.intervilleList);
 
                 const currentMatch = data.find(d => d.id === state.currentParcel?.expedition?.id);
                 if (currentMatch) {
@@ -643,6 +689,23 @@ const parcelSlice = createSlice({
             .addCase(fetchIncomingParcels.rejected, (state, action) => {
                 state.incomingList.isLoading = false;
                 state.incomingList.error = action.payload;
+            })
+
+            // Fetch Interville (lecture seule)
+            .addCase(fetchInterville.pending, (state) => {
+                state.intervilleList.isLoading = true;
+                state.intervilleList.error = null;
+            })
+            .addCase(fetchInterville.fulfilled, (state, action) => {
+                state.intervilleList.isLoading = false;
+                state.intervilleList.hasLoaded = true;
+                state.intervilleList.items = action.payload.data || [];
+                state.intervilleList.meta = action.payload.meta || state.intervilleList.meta;
+                state.intervilleList.lastUpdated = new Date().toISOString();
+            })
+            .addCase(fetchInterville.rejected, (state, action) => {
+                state.intervilleList.isLoading = false;
+                state.intervilleList.error = action.payload;
             })
 
 
