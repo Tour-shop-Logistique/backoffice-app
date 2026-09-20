@@ -210,7 +210,7 @@ const ParcelHistory = () => {
                             activeTab === 'extraville' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
                         }`}
                     >
-                        Extraville
+                        International
                     </button>
                     <button
                         onClick={() => setActiveTab('interville')}
