@@ -247,26 +247,6 @@ const Historique = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-3 md:mt-0">
-              {/* Onglets International / Interville */}
-              <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 w-fit">
-                <button
-                  onClick={() => setActiveTab('international')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
-                    activeTab === 'international' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  International
-                </button>
-                <button
-                  onClick={() => setActiveTab('interville')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
-                    activeTab === 'interville' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  Interville
-                </button>
-              </div>
-
               {activeTab === 'international' && (
               <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
                 <div className="flex items-center flex-1 px-1 sm:px-3 gap-1 sm:gap-2">
@@ -330,6 +310,26 @@ const Historique = () => {
                   Exporter PDF
                 </button>
               )}
+
+              {/* Onglets International / Interville : toujours en dernier sur la ligne */}
+              <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 w-fit">
+                <button
+                  onClick={() => setActiveTab('international')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                    activeTab === 'international' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  International
+                </button>
+                <button
+                  onClick={() => setActiveTab('interville')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                    activeTab === 'interville' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  Interville
+                </button>
+              </div>
             </div>
           </div>
         </header>
