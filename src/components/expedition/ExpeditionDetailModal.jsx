@@ -61,10 +61,19 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
             acteurs: [
                 {
                     key: 'backoffice_depart',
-                    label: 'Backoffice (Départ)',
-                    highlight: isDepart,
+                    // Un seul backoffice sur toute la course en Interville
+                    // (départ = arrivée, même pays) - la part retard, qui
+                    // alimente un bloc "Backoffice (Arrivée)" distinct en
+                    // International, est donc regroupée ici.
+                    label: isInterville ? 'Backoffice' : 'Backoffice (Départ)',
+                    highlight: isDepart || isArrivee,
                     apiTotal: acc.backoffice_depart,
-                    lines: [
+                    lines: isInterville ? [
+                        { label: 'Montant expédition (base)', value: selectedExpedition.montant_base },
+                        { label: "Frais d'emballage (part)", value: com.emballage?.backoffice },
+                        { label: 'Frais annexes', value: selectedExpedition.frais_annexes },
+                        { label: 'Frais de retard (part)', value: com.retard?.tourshop },
+                    ] : [
                         { label: 'Montant expédition (base)', value: selectedExpedition.montant_base },
                         { label: "Frais d'emballage (part)", value: com.emballage?.backoffice },
                         { label: 'Frais annexes', value: selectedExpedition.frais_annexes },
@@ -98,7 +107,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
             key: 'arrivee',
             title: 'Arrivée',
             acteurs: [
-                {
+                ...(isInterville ? [] : [{
                     key: 'backoffice_arrivee',
                     label: 'Backoffice (Arrivée)',
                     highlight: isArrivee,
@@ -106,7 +115,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                     lines: [
                         { label: 'Frais de retard (part)', value: com.retard?.tourshop },
                     ],
-                },
+                }]),
                 {
                     key: 'agence_arrivee',
                     label: "Agence d'arrivée",
