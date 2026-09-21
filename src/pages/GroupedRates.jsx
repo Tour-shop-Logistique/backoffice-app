@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { getCurrencyLabel } from '../utils/format';
 import {
   PlusCircle,
   Loader2,
@@ -94,6 +95,13 @@ const GroupedRates = () => {
   };
 
   const openModal = (tarif = null) => {
+    // Catégories chargées à l'ouverture plutôt que de compter sur un fetch
+    // déclenché ailleurs (bouton Actualiser) : sans ça, le champ Catégorie
+    // du formulaire restait vide tant que hasLoadedCategories n'avait pas
+    // été mis à true par une autre action de la page.
+    if (!hasLoadedCategories) {
+      dispatch(fetchCategories({ silent: true }));
+    }
     setTarifToEdit(tarif);
     setShowModal(true);
   };
@@ -197,11 +205,11 @@ const GroupedRates = () => {
     { header: 'Type', key: 'type' },
     { header: 'Catégorie', key: 'categorie' },
     { header: 'Itinéraire / Pays', key: 'itineraire' },
-    { header: 'Montant Base (FCFA)', key: 'montant_base' },
+    { header: `Montant Base (${getCurrencyLabel()})`, key: 'montant_base' },
     { header: '% Prestation', key: 'pourcentage_prestation' },
-    { header: 'Montant Prestation (FCFA)', key: 'montant_prestation' },
-    { header: 'Total (FCFA)', key: 'total' },
-    { header: 'Total Minimum (FCFA)', key: 'total_minimum' },
+    { header: `Montant Prestation (${getCurrencyLabel()})`, key: 'montant_prestation' },
+    { header: `Total (${getCurrencyLabel()})`, key: 'total' },
+    { header: `Total Minimum (${getCurrencyLabel()})`, key: 'total_minimum' },
     { header: 'Actif', key: 'actif' },
   ]), []);
 
@@ -441,7 +449,7 @@ const GroupedRates = () => {
                           </div>
                         </td>
                         <td className="px-6 py-3">
-                          <p className="font-medium text-slate-700">{(base).toLocaleString()} <span className="text-xs">FCFA</span></p>
+                          <p className="font-medium text-slate-700">{(base).toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                         </td>
                         <td className="px-6 py-3">
                           <div className="flex flex-row gap-2">
@@ -449,15 +457,15 @@ const GroupedRates = () => {
                               {prest}%
                             </span>
                             <span className="text-slate-500 font-medium mt-0.5 whitespace-nowrap">
-                              ({mp.toLocaleString()} <span className="text-xs">FCFA</span>)
+                              ({mp.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span>)
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-3">
-                          <p className="font-bold text-slate-900">{exp.toLocaleString()} <span className="text-xs">FCFA</span></p>
+                          <p className="font-bold text-slate-900">{exp.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                           {tarif.montant_expedition_minimum != null && (
                             <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100 whitespace-nowrap">
-                              Min: {Number(tarif.montant_expedition_minimum).toLocaleString()} FCFA
+                              Min: {Number(tarif.montant_expedition_minimum).toLocaleString()} {getCurrencyLabel()}
                             </span>
                           )}
                         </td>
@@ -519,7 +527,7 @@ const GroupedRates = () => {
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-xs text-slate-500 font-bold uppercase shrink-0">
-                              {exp.toLocaleString()} FCFA
+                              {exp.toLocaleString()} {getCurrencyLabel()}
                             </span>
                             <span className="text-slate-400">•</span>
                             <span className="text-xs uppercase text-slate-500 font-medium truncate">
@@ -533,7 +541,7 @@ const GroupedRates = () => {
                           )}
                           {tarif.montant_expedition_minimum != null && (
                             <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100 whitespace-nowrap">
-                              Min: {Number(tarif.montant_expedition_minimum).toLocaleString()} FCFA
+                              Min: {Number(tarif.montant_expedition_minimum).toLocaleString()} {getCurrencyLabel()}
                             </span>
                           )}
                         </div>
