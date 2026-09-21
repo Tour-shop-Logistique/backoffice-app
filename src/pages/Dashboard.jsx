@@ -151,17 +151,20 @@ const Dashboard = () => {
 
         {/* Chart */}
         <section className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-4 border-b border-slate-100">
-            <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <span aria-hidden="true">📊</span> {activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}
-            </h3>
-            <p className="text-sm text-slate-500 font-medium mt-0.5">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires quotidien'}</p>
+          <div className="p-4 border-b border-slate-100 lg:flex lg:items-center lg:justify-between lg:gap-4">
+            <div className="min-w-0">
+              <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <span aria-hidden="true">📊</span> {activeTab === 'Opérations' ? (dailyOps?.title || 'Aperçu des Flux') : (dailyFin?.title || 'Récapitulatif Financier')}
+              </h3>
+              <p className="text-sm text-slate-500 font-medium mt-0.5">{activeTab === 'Opérations' ? 'Expéditions et Réceptions' : 'Chiffre d\'affaires quotidien'}</p>
+            </div>
 
             {/* Barre de contrôles compacte — reste sur une seule ligne à
                 tous les breakpoints (le sélecteur mois/année se resserre en
                 mobile, refresh/export sont des icônes pures) plutôt que de
-                sauter à la ligne façon web classique. */}
-            <div className="flex items-center gap-2 mt-3">
+                sauter à la ligne façon web classique. À partir de lg, elle
+                rejoint le titre sur la même ligne au lieu de passer dessous. */}
+            <div className="flex items-center gap-2 mt-3 lg:mt-0 shrink-0">
               <div className="flex items-center gap-0.5 bg-slate-50 rounded-lg border border-slate-200 pl-1 flex-1 min-w-0 sm:flex-initial">
                 <select
                   value={selectedDate.month}
