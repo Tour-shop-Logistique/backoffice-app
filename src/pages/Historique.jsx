@@ -337,8 +337,9 @@ const Historique = () => {
         </header>
       </div>
 
-      {/* Statistiques - pas de "Gain" ni "Rôle" côté Interville, le
-          backoffice n'a jamais de commission ni de rôle dessus. */}
+      {/* Statistiques - pas de "Rôle" (départ/arrivée) côté Interville, un
+          seul backoffice gère toute la course, mais il a bien une part
+          (montant de base) comme en International, voir Total gagné. */}
       {activeTab === 'international' ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <StatCard
@@ -374,7 +375,7 @@ const Historique = () => {
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
           <StatCard
             label="Total expéditions"
             value={totals.count}
@@ -388,6 +389,13 @@ const Historique = () => {
             icon={Package}
             colorClass="text-indigo-600"
             unit=""
+          />
+          <StatCard
+            label="Part Backoffice"
+            value={totals.totalGain}
+            unit={getCurrencyLabel()}
+            icon={DollarSign}
+            colorClass="text-emerald-600"
           />
         </div>
       )}
