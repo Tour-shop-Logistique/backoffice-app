@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Modal from '../common/Modal';
 import { getExpeditionStatusLabel, getStatusStyles } from '../../utils/statusTranslations';
+import { getCurrencyLabel } from '../../utils/format';
 
 const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
     if (!selectedExpedition) return null;
@@ -48,12 +49,19 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
         return { ...actor, lines, total };
     };
 
+    // Interville : le backoffice n'intervient jamais dans le transport
+    // (cahier des charges §8.1, agences de départ/arrivée gèrent seules tout
+    // le cycle) et n'a donc structurellement aucune part - l'acteur backoffice
+    // est retiré plutôt qu'affiché à 0, montant_base/frais_annexes bruts
+    // restant non-nuls (utilisés pour le tarif) sans jamais lui revenir.
+    const isInterville = selectedExpedition.type_expedition === 'interville';
+
     const groupesActeurs = [
         {
             key: 'depart',
             title: 'Départ',
             acteurs: [
-                {
+                ...(isInterville ? [] : [{
                     key: 'backoffice_depart',
                     label: 'Backoffice (Départ)',
                     highlight: isDepart,
@@ -63,13 +71,16 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                         { label: "Frais d'emballage (part)", value: com.emballage?.backoffice },
                         { label: 'Frais annexes', value: selectedExpedition.frais_annexes },
                     ],
-                },
+                }]),
                 {
                     key: 'agence_depart',
                     label: 'Agence de départ',
                     sub: selectedExpedition.agence?.nom_agence,
                     apiTotal: acc.agence_depart,
-                    lines: [
+                    lines: isInterville ? [
+                        { label: 'Trajet interville (part)', value: com.trajet_interville?.agence_depart },
+                        { label: "Frais d'emballage (part)", value: com.emballage?.agence },
+                    ] : [
                         { label: 'Montant expédition (com.)', value: selectedExpedition.montant_prestation },
                         { label: "Frais d'enlèvement (part)", value: com.enlevement?.agence },
                         { label: "Frais d'emballage (part)", value: com.emballage?.agence },
@@ -89,7 +100,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
             key: 'arrivee',
             title: 'Arrivée',
             acteurs: [
-                {
+                ...(isInterville ? [] : [{
                     key: 'backoffice_arrivee',
                     label: 'Backoffice (Arrivée)',
                     highlight: isArrivee,
@@ -97,12 +108,14 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                     lines: [
                         { label: 'Frais de retard (part)', value: com.retard?.tourshop },
                     ],
-                },
+                }]),
                 {
                     key: 'agence_arrivee',
                     label: "Agence d'arrivée",
                     apiTotal: acc.agence_arrivee,
-                    lines: [
+                    lines: isInterville ? [
+                        { label: 'Trajet interville (part)', value: com.trajet_interville?.agence_arrivee },
+                    ] : [
                         { label: 'Frais de livraison (part)', value: com.livraison?.agence },
                         { label: 'Frais de retard (part)', value: com.retard?.agence },
                     ],
@@ -169,7 +182,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                         </div>
                         <p className="text-xl font-bold text-rose-700">
                             {fmt(acc.total_client_due)}
-                            <span className="text-sm font-bold text-rose-400 ml-1">CFA</span>
+                            <span className="text-sm font-bold text-rose-400 ml-1">{getCurrencyLabel()}</span>
                         </p>
                     </div>
                     {totalLines.length > 0 && (
@@ -177,7 +190,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                             {totalLines.map((line, i) => (
                                 <div key={i} className="flex items-center justify-between">
                                     <span className="text-sm text-rose-700/70">{line.label}</span>
-                                    <span className="text-sm font-semibold text-rose-800">{fmt(line.value)} CFA</span>
+                                    <span className="text-sm font-semibold text-rose-800">{fmt(line.value)} {getCurrencyLabel()}</span>
                                 </div>
                             ))}
                         </div>
@@ -200,7 +213,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                                                 {actor.sub && <span className="font-medium text-slate-400"> · {actor.sub}</span>}
                                             </p>
                                             <span className={`text-base font-bold shrink-0 ${actor.highlight ? 'text-white' : 'text-slate-900'}`}>
-                                                {fmt(actor.total)} CFA
+                                                {fmt(actor.total)} {getCurrencyLabel()}
                                             </span>
                                         </div>
                                         {actor.lines.length > 0 ? (
@@ -208,7 +221,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                                                 {actor.lines.map((line, i) => (
                                                     <div key={i} className="flex items-center justify-between pl-3">
                                                         <span className={`text-sm ${actor.highlight ? 'text-slate-400' : 'text-slate-500'}`}>{line.label}</span>
-                                                        <span className={`text-sm font-semibold ${actor.highlight ? 'text-slate-200' : 'text-slate-600'}`}>{fmt(line.value)} CFA</span>
+                                                        <span className={`text-sm font-semibold ${actor.highlight ? 'text-slate-200' : 'text-slate-600'}`}>{fmt(line.value)} {getCurrencyLabel()}</span>
                                                     </div>
                                                 ))}
                                             </div>
