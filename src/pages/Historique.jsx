@@ -45,6 +45,11 @@ const Historique = () => {
   const [selectedExpedition, setSelectedExpedition] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Onglet Extraville/International (financier, avec gain backoffice) vs
+  // Interville (lecture seule, le backoffice n'y intervient jamais et n'a
+  // aucun gain dessus, cahier des charges §8.1) - mêmes expéditions déjà
+  // chargées, juste un filtre + affichage différent, pas un second fetch.
+  const [activeTab, setActiveTab] = useState("international");
 
   // Charger toutes les expéditions au premier rendu si pas déjà fait.
   // Le filtrage Toutes/Départs/Arrivées se fait ensuite en local sur la liste déjà chargée.
@@ -75,17 +80,17 @@ const Historique = () => {
     if (!expeditions || !Array.isArray(expeditions)) return [];
 
     return expeditions.filter((exp) => {
-      // Interville exclu : le backoffice n'y intervient jamais et n'a aucun
-      // gain dessus (cahier des charges §8.1, agences de départ/arrivée
-      // gèrent seules tout le cycle) - le lister ici polluerait les
-      // statistiques (count/départs/arrivées/export PDF) avec des lignes à
-      // gain toujours nul, sans rapport avec l'historique financier du
-      // backoffice. Consultable en lecture seule dans un onglet dédié de
-      // l'Historique des Contrôles (ParcelHistory.jsx), pas ici.
-      if (exp.type_expedition === 'interville') return false;
+      // Deux onglets distincts : International (financier, gain backoffice)
+      // et Interville (lecture seule, jamais de gain) - jamais mélangés,
+      // une ligne à gain toujours nul fausserait les stats/l'export PDF
+      // de l'onglet International.
+      const isInterville = exp.type_expedition === 'interville';
+      if (activeTab === 'interville' && !isInterville) return false;
+      if (activeTab === 'international' && isInterville) return false;
 
       // Filtre par mode (toutes / depart / arrivee) basé sur backoffice_role
-      if (filterMode !== "all") {
+      // - non pertinent pour Interville (toujours vide, pas de rôle backoffice)
+      if (activeTab === 'international' && filterMode !== "all") {
         const roles = Array.isArray(exp.backoffice_role) ? exp.backoffice_role : [];
         if (!roles.includes(filterMode)) return false;
       }
@@ -102,7 +107,7 @@ const Historique = () => {
         colisList.some((c) => c.code_colis?.toLowerCase().includes(searchLower))
       );
     });
-  }, [expeditions, searchTerm, filterMode]);
+  }, [expeditions, searchTerm, filterMode, activeTab]);
 
   // Calculer les totaux
   const totals = useMemo(() => {
@@ -235,11 +240,34 @@ const Historique = () => {
                 Historique des Expéditions
               </h1>
               <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
-                Toutes les expéditions où votre backoffice a intervenu
+                {activeTab === 'interville'
+                  ? "Expéditions Interville, gérées entièrement par les agences"
+                  : "Toutes les expéditions où votre backoffice a intervenu"}
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-3 md:mt-0">
+              {/* Onglets International / Interville */}
+              <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 w-fit">
+                <button
+                  onClick={() => setActiveTab('international')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                    activeTab === 'international' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  International
+                </button>
+                <button
+                  onClick={() => setActiveTab('interville')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                    activeTab === 'interville' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  Interville
+                </button>
+              </div>
+
+              {activeTab === 'international' && (
               <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
                 <div className="flex items-center flex-1 px-1 sm:px-3 gap-1 sm:gap-2">
                   <button
@@ -281,54 +309,86 @@ const Historique = () => {
                   {isLoadingExpeditions || isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                 </button>
               </div>
+              )}
+              {activeTab === 'interville' && (
+                <button
+                  onClick={() => loadExpeditions()}
+                  disabled={isLoadingExpeditions || isRefreshing}
+                  className="p-2.5 bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50 shrink-0 shadow-sm"
+                >
+                  {isLoadingExpeditions || isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                </button>
+              )}
 
-              <button
-                onClick={exportToPDF}
-                disabled={filteredExpeditions.length === 0}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10 disabled:opacity-50 shrink-0"
-              >
-                <FileDown size={14} />
-                Exporter PDF
-              </button>
+              {activeTab === 'international' && (
+                <button
+                  onClick={exportToPDF}
+                  disabled={filteredExpeditions.length === 0}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-md shadow-slate-900/10 disabled:opacity-50 shrink-0"
+                >
+                  <FileDown size={14} />
+                  Exporter PDF
+                </button>
+              )}
             </div>
           </div>
         </header>
       </div>
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <StatCard 
-          label="Total expéditions"
-          value={totals.count}
-          icon={Package}
-          colorClass="text-slate-900"
-          unit=""
-        />
-        
-        <StatCard 
-          label="Total gagné"
-          value={totals.totalGain}
-          unit={getCurrencyLabel()}
-          icon={DollarSign}
-          colorClass="text-emerald-600"
-        />
-        
-        <StatCard 
-          label="En départ"
-          value={totals.departCount}
-          icon={MapPin}
-          colorClass="text-orange-600"
-          unit=""
-        />
-        
-        <StatCard 
-          label="En arrivée"
-          value={totals.arriveeCount}
-          icon={MapPin}
-          colorClass="text-purple-600"
-          unit=""
-        />
-      </div>
+      {/* Statistiques - pas de "Gain" ni "Rôle" côté Interville, le
+          backoffice n'a jamais de commission ni de rôle dessus. */}
+      {activeTab === 'international' ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <StatCard
+            label="Total expéditions"
+            value={totals.count}
+            icon={Package}
+            colorClass="text-slate-900"
+            unit=""
+          />
+
+          <StatCard
+            label="Total gagné"
+            value={totals.totalGain}
+            unit={getCurrencyLabel()}
+            icon={DollarSign}
+            colorClass="text-emerald-600"
+          />
+
+          <StatCard
+            label="En départ"
+            value={totals.departCount}
+            icon={MapPin}
+            colorClass="text-orange-600"
+            unit=""
+          />
+
+          <StatCard
+            label="En arrivée"
+            value={totals.arriveeCount}
+            icon={MapPin}
+            colorClass="text-purple-600"
+            unit=""
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+          <StatCard
+            label="Total expéditions"
+            value={totals.count}
+            icon={Package}
+            colorClass="text-slate-900"
+            unit=""
+          />
+          <StatCard
+            label="Total colis"
+            value={filteredExpeditions.reduce((sum, exp) => sum + (Array.isArray(exp.colis) ? exp.colis.length : 0), 0)}
+            icon={Package}
+            colorClass="text-indigo-600"
+            unit=""
+          />
+        </div>
+      )}
 
         {/* Tableau des expéditions */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-black transition-all">
@@ -376,15 +436,28 @@ const Historique = () => {
                   <th className="px-6 py-3.5 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">
                     Expédition
                   </th>
-                  <th className="px-6 py-3.5 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">
-                    Destination
-                  </th>
-                  <th className="px-6 py-3.5 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">
-                    Rôle
-                  </th>
-                  <th className="px-6 py-3.5 text-right text-sm font-bold text-slate-500 uppercase tracking-wider">
-                    Gain
-                  </th>
+                  {activeTab === 'interville' ? (
+                    <>
+                      <th className="px-6 py-3.5 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">
+                        Trajet
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">
+                        Agence d'arrivée
+                      </th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="px-6 py-3.5 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">
+                        Destination
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">
+                        Rôle
+                      </th>
+                      <th className="px-6 py-3.5 text-right text-sm font-bold text-slate-500 uppercase tracking-wider">
+                        Gain
+                      </th>
+                    </>
+                  )}
                   <th className="px-6 py-3.5 text-left text-sm font-bold text-slate-500 uppercase tracking-wider">
                     Statut
                   </th>
@@ -415,33 +488,51 @@ const Historique = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-base text-slate-700">
-                        <MapPin size={16} className="text-slate-400 shrink-0" />
-                        {exp.pays_destination || 'N/A'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-1.5">
-                        {(exp.backoffice_role || []).map((role, i) => (
-                          <span
-                            key={i}
-                            className={`inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold ${
-                              role === 'depart'
-                                ? 'bg-orange-100 text-orange-700'
-                                : 'bg-purple-100 text-purple-700'
-                            }`}
-                          >
-                            {role === 'depart' ? 'Départ' : 'Arrivée'}
+                    {activeTab === 'interville' ? (
+                      <>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2 text-base text-slate-700">
+                            <MapPin size={16} className="text-slate-400 shrink-0" />
+                            {exp.commune_depart_nom || '—'} → {exp.commune_arrivee_nom || '—'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-base text-slate-700">
+                            {exp.agence_arrivee?.nom_agence || 'Non choisie'}
                           </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-bold text-emerald-600 text-base">
-                        {(exp.backoffice_gain || 0).toLocaleString()} {getCurrencyLabel()}
-                      </span>
-                    </td>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2 text-base text-slate-700">
+                            <MapPin size={16} className="text-slate-400 shrink-0" />
+                            {exp.pays_destination || 'N/A'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-1.5">
+                            {(exp.backoffice_role || []).map((role, i) => (
+                              <span
+                                key={i}
+                                className={`inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold ${
+                                  role === 'depart'
+                                    ? 'bg-orange-100 text-orange-700'
+                                    : 'bg-purple-100 text-purple-700'
+                                }`}
+                              >
+                                {role === 'depart' ? 'Départ' : 'Arrivée'}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <span className="font-bold text-emerald-600 text-base">
+                            {(exp.backoffice_gain || 0).toLocaleString()} {getCurrencyLabel()}
+                          </span>
+                        </td>
+                      </>
+                    )}
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-sm font-semibold ${getStatusStyles(exp.statut_expedition)}`}>
                         {getExpeditionStatusLabel(exp.statut_expedition)}
