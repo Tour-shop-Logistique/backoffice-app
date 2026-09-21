@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { X } from 'lucide-react';
 import SearchableDropdown from '../common/SearchableDropdown';
-import { AFRICAN_COUNTRY_OPTIONS, NON_AFRICAN_COUNTRY_OPTIONS } from '../../utils/countries';
+import { COUNTRY_OPTIONS, AFRICAN_COUNTRY_OPTIONS } from '../../utils/countries';
 import { fetchCommunes } from '../../redux/slices/communeSlice';
 import communeService from '../../services/communeService';
+import { getCurrencyLabel } from '../../utils/format';
 
 
 
@@ -278,7 +279,8 @@ const Addtarifgroupe = ({
               )}
             </div>
 
-            {/* Pays de destination (hors Afrique - DHD ne va jamais vers l'Afrique) */}
+            {/* Pays de destination - tous pays, y compris africains (seul
+                Groupage Afrique restreint la liste aux pays africains) */}
             <div className="mt-6">
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 <span className="inline-flex items-center gap-2">
@@ -288,7 +290,7 @@ const Addtarifgroupe = ({
               <SearchableDropdown
                 value={formData.code_pays}
                 onChange={(code) => handleInputChange('code_pays', code)}
-                options={NON_AFRICAN_COUNTRY_OPTIONS.map((c) => ({ label: c.label, value: c.id }))}
+                options={COUNTRY_OPTIONS.map((c) => ({ label: c.label, value: c.id }))}
                 placeholder="Rechercher un pays..."
                 error={errors.code_pays}
                 themeColor="emerald"
@@ -369,7 +371,7 @@ const Addtarifgroupe = ({
               2
             </div>
             <h3 className="text-lg font-semibold text-slate-800">
-              {formData.type_expedition === 'GROUPAGE_AFRIQUE' ? 'Destination Afrique' : 'Pays de destination (hors Afrique)'}
+              {formData.type_expedition === 'GROUPAGE_AFRIQUE' ? 'Destination Afrique' : 'Pays de destination'}
             </h3>
           </div>
 
@@ -383,7 +385,7 @@ const Addtarifgroupe = ({
             <SearchableDropdown
               value={formData.code_pays}
               onChange={(code) => handleInputChange('code_pays', code)}
-              options={(formData.type_expedition === 'GROUPAGE_AFRIQUE' ? AFRICAN_COUNTRY_OPTIONS : NON_AFRICAN_COUNTRY_OPTIONS).map((c) => ({ label: c.label, value: c.id }))}
+              options={(formData.type_expedition === 'GROUPAGE_AFRIQUE' ? AFRICAN_COUNTRY_OPTIONS : COUNTRY_OPTIONS).map((c) => ({ label: c.label, value: c.id }))}
               placeholder="Rechercher un pays..."
               error={errors.code_pays}
             />
@@ -412,7 +414,7 @@ const Addtarifgroupe = ({
             {/* Base Amount */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Montant base (FCFA) <span className="text-red-500">*</span>
+                Montant base ({getCurrencyLabel()}) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -425,7 +427,7 @@ const Addtarifgroupe = ({
                   placeholder="1000"
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500">
-                  FCFA
+                  {getCurrencyLabel()}
                 </div>
               </div>
               {errors.montant_base && (
@@ -504,7 +506,7 @@ const Addtarifgroupe = ({
           <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-orange-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Montant minimum (FCFA)</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Montant minimum ({getCurrencyLabel()})</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -514,7 +516,7 @@ const Addtarifgroupe = ({
                     className={`w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white transition-all font-medium text-slate-800 ${errors.montant_minimum ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
                     placeholder="13500"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500">FCFA</div>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500">{getCurrencyLabel()}</div>
                 </div>
                 {errors.montant_minimum && (
                   <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><span>⚠️</span> {errors.montant_minimum}</p>
