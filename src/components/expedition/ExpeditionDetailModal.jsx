@@ -62,18 +62,14 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                 {
                     key: 'backoffice_depart',
                     // Un seul backoffice sur toute la course en Interville
-                    // (départ = arrivée, même pays) - la part retard, qui
-                    // alimente un bloc "Backoffice (Arrivée)" distinct en
-                    // International, est donc regroupée ici.
+                    // (départ = arrivée, même pays), pas de bloc "Backoffice
+                    // (Arrivée)" séparé comme en International - et pas de
+                    // frais de retard du tout en Interville (pas de délai de
+                    // passage par le backoffice, retrait direct à l'agence).
                     label: isInterville ? 'Backoffice' : 'Backoffice (Départ)',
                     highlight: isDepart || isArrivee,
                     apiTotal: acc.backoffice_depart,
-                    lines: isInterville ? [
-                        { label: 'Montant expédition (base)', value: selectedExpedition.montant_base },
-                        { label: "Frais d'emballage (part)", value: com.emballage?.backoffice },
-                        { label: 'Frais annexes', value: selectedExpedition.frais_annexes },
-                        { label: 'Frais de retard (part)', value: com.retard?.tourshop },
-                    ] : [
+                    lines: [
                         { label: 'Montant expédition (base)', value: selectedExpedition.montant_base },
                         { label: "Frais d'emballage (part)", value: com.emballage?.backoffice },
                         { label: 'Frais annexes', value: selectedExpedition.frais_annexes },
