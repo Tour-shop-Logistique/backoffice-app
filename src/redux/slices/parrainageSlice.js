@@ -4,9 +4,12 @@ import parrainageService from '../../services/parrainageService';
 const initialState = {
   taux: null,
   clients: [],
+  retraits: [],
   isLoadingTaux: false,
   isLoadingClients: false,
+  isLoadingRetraits: false,
   isSaving: false,
+  isSavingRetrait: false,
   error: null,
   tauxHasLoaded: false,
   clientsHasLoaded: false,
@@ -57,6 +60,30 @@ export const fetchParrainageClients = createAsyncThunk(
       const { parrainage } = getState();
       if (parrainage.isLoadingClients) return false;
     },
+  }
+);
+
+export const fetchRetraitsParrainage = createAsyncThunk(
+  'parrainage/fetchRetraitsParrainage',
+  async (parrainId, { rejectWithValue }) => {
+    try {
+      return await parrainageService.getRetraits(parrainId);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response?.data);
+    }
+  }
+);
+
+export const createRetraitParrainage = createAsyncThunk(
+  'parrainage/createRetraitParrainage',
+  async (retraitData, { rejectWithValue }) => {
+    try {
+      return await parrainageService.createRetrait(retraitData);
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(error.response?.data);
+    }
   }
 );
 
@@ -111,6 +138,39 @@ const parrainageSlice = createSlice({
       })
       .addCase(fetchParrainageClients.rejected, (state, action) => {
         state.isLoadingClients = false;
+        state.error = action.payload;
+      })
+
+      .addCase(fetchRetraitsParrainage.pending, (state) => {
+        state.isLoadingRetraits = true;
+        state.error = null;
+      })
+      .addCase(fetchRetraitsParrainage.fulfilled, (state, action) => {
+        state.isLoadingRetraits = false;
+        state.retraits = Array.isArray(action.payload) ? action.payload : [];
+      })
+      .addCase(fetchRetraitsParrainage.rejected, (state, action) => {
+        state.isLoadingRetraits = false;
+        state.error = action.payload;
+      })
+
+      .addCase(createRetraitParrainage.pending, (state) => {
+        state.isSavingRetrait = true;
+        state.error = null;
+      })
+      .addCase(createRetraitParrainage.fulfilled, (state, action) => {
+        state.isSavingRetrait = false;
+        // Met à jour le solde du client concerné localement (évite un
+        // rechargement complet de la liste des clients juste pour ça).
+        const nouveauSolde = action.payload?.nouveau_solde;
+        const parrainId = action.payload?.retrait?.parrain_id;
+        if (parrainId && nouveauSolde !== undefined) {
+          const client = state.clients.find((c) => c.id === parrainId);
+          if (client) client.solde_parrainage = nouveauSolde;
+        }
+      })
+      .addCase(createRetraitParrainage.rejected, (state, action) => {
+        state.isSavingRetrait = false;
         state.error = action.payload;
       });
   },

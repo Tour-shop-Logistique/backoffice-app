@@ -15,10 +15,24 @@ const getClients = async () => {
   return response.data.clients;
 };
 
+const getRetraits = async (parrainId) => {
+  const response = await api.get('/backoffice/parrainage/retraits', {
+    params: parrainId ? { parrain_id: parrainId } : {},
+  });
+  return response.data.retraits;
+};
+
+const createRetrait = async (retraitData) => {
+  const response = await api.post('/backoffice/parrainage/retraits', retraitData);
+  return response.data;
+};
+
 const parrainageService = {
   getTaux,
   updateTaux,
   getClients,
+  getRetraits,
+  createRetrait,
 };
 
 export default parrainageService;
