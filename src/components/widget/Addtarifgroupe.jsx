@@ -40,6 +40,11 @@ const Addtarifgroupe = ({
   });
   const [errors, setErrors] = useState({});
 
+  // La catégorie système "Colis Accompagnés" (is_default) n'est liée qu'au
+  // type d'expédition CA (voir CategoryProduct::DEFAULT_CATEGORY_NAME côté
+  // backend) - on ne doit jamais pouvoir y enregistrer un tarif DHD dessus.
+  const dhdCategories = categories.filter((c) => !c.is_default);
+
   // Communes d'arrivée : filtrées par le pays de destination choisi, tous
   // backoffices confondus (pas seulement celui du backoffice courant, voir
   // communeService.getCommunesByPays - la destination DHD peut appartenir à
@@ -261,12 +266,12 @@ const Addtarifgroupe = ({
               </label>
 
               <SearchableDropdown
-                value={categories.find(c => c.id.toString() === formData.category_id)?.nom || ''}
+                value={dhdCategories.find(c => c.id.toString() === formData.category_id)?.nom || ''}
                 onChange={(categoryName) => {
-                  const category = categories.find(c => c.nom === categoryName);
+                  const category = dhdCategories.find(c => c.nom === categoryName);
                   handleInputChange('category_id', category ? category.id.toString() : '');
                 }}
-                options={categories.map(c => c.nom)}
+                options={dhdCategories.map(c => c.nom)}
                 placeholder="Sélectionner..."
                 error={errors.category_id}
                 themeColor="emerald"
