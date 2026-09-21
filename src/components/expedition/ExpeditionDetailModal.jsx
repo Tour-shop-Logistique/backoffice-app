@@ -49,11 +49,9 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
         return { ...actor, lines, total };
     };
 
-    // Interville : le backoffice n'intervient jamais dans le transport
-    // (cahier des charges §8.1, agences de départ/arrivée gèrent seules tout
-    // le cycle) et n'a donc structurellement aucune part - l'acteur backoffice
-    // est retiré plutôt qu'affiché à 0, montant_base/frais_annexes bruts
-    // restant non-nuls (utilisés pour le tarif) sans jamais lui revenir.
+    // Interville : le backoffice centralise le montant de base comme pour
+    // l'international et reverse ensuite leur commission aux agences - il a
+    // donc bien une part ici (voir Expedition::getAccountingDetailsAttribute).
     const isInterville = selectedExpedition.type_expedition === 'interville';
 
     const groupesActeurs = [
@@ -61,7 +59,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
             key: 'depart',
             title: 'Départ',
             acteurs: [
-                ...(isInterville ? [] : [{
+                {
                     key: 'backoffice_depart',
                     label: 'Backoffice (Départ)',
                     highlight: isDepart,
@@ -71,7 +69,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                         { label: "Frais d'emballage (part)", value: com.emballage?.backoffice },
                         { label: 'Frais annexes', value: selectedExpedition.frais_annexes },
                     ],
-                }]),
+                },
                 {
                     key: 'agence_depart',
                     label: 'Agence de départ',
@@ -100,7 +98,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
             key: 'arrivee',
             title: 'Arrivée',
             acteurs: [
-                ...(isInterville ? [] : [{
+                {
                     key: 'backoffice_arrivee',
                     label: 'Backoffice (Arrivée)',
                     highlight: isArrivee,
@@ -108,7 +106,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                     lines: [
                         { label: 'Frais de retard (part)', value: com.retard?.tourshop },
                     ],
-                }]),
+                },
                 {
                     key: 'agence_arrivee',
                     label: "Agence d'arrivée",
