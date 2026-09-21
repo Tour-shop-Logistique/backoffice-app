@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAccountingData, setAccountingFilters } from '../redux/slices/parcelSlice';
+import { getCurrencyLabel } from '../utils/format';
 import {
   DollarSign,
   TrendingUp,
@@ -40,7 +41,7 @@ import { createPDFHeader, createPDFFooter, createSummaryCards, formatPDFNumber, 
 
 const Comptabilite = () => {
   const dispatch = useDispatch();
-  const { items, summary, filters, hasLoaded, isLoading, lastUpdated } = useSelector(state => state.parcels.accounting);
+  const { items, filters, hasLoaded, isLoading, lastUpdated } = useSelector(state => state.parcels.accounting);
   const { pays: paysBackoffice } = useSelector(state => state.backoffice);
   const [dateDebut, setDateDebut] = useState(filters.date_debut);
   const [dateFin, setDateFin] = useState(filters.date_fin);
@@ -51,6 +52,7 @@ const Comptabilite = () => {
 
   // Plus besoin de modal pour les dates - utilisation de champs directs
   const [filterMode, setFilterMode] = useState(filters.mode); // null, 'depart', 'reception'
+  const [accountingScope, setAccountingScope] = useState('international'); // international, interville
 
   useEffect(() => {
     if (!hasLoaded) {
@@ -74,6 +76,12 @@ const Comptabilite = () => {
     let result = items;
     const country = paysBackoffice;
 
+    result = result.filter(exp =>
+      accountingScope === 'interville'
+        ? exp.type_expedition === 'interville'
+        : exp.type_expedition !== 'interville'
+    );
+
     if (filterMode === 'depart') {
       result = result.filter(exp => exp.pays_depart === country);
     } else if (filterMode === 'reception') {
@@ -88,38 +96,13 @@ const Comptabilite = () => {
       exp.pays_destination?.toLowerCase().includes(s) ||
       exp.agence?.nom_agence?.toLowerCase().includes(s)
     );
-  }, [items, searchTerm, filterMode]);
+  }, [items, searchTerm, filterMode, accountingScope]);
 
   const totals = useMemo(() => {
-    // Si aucun mode de filtrage local n'est actif, on utilise le summary global de l'API
-    if (!filterMode && summary) {
-      const result = {
-        today: 0,
-        todayBackoffice: 0,
-        total: summary.potential?.total_client_due || 0,
-        backoffice: summary.potential?.total_backoffice || 0,
-        agence_depart: summary.potential?.total_agence_depart || 0,
-        agence_arrivee: summary.potential?.total_agence_arrivee || 0,
-        livreur_depart: summary.potential?.total_livreur_depart || 0,
-        livreur_arrivee: summary.potential?.total_livreur_arrivee || 0,
-        realTotal: summary.real?.total_cash_received || 0,
-        realCount: summary.real?.count_transactions || 0,
-        tourshop: 0
-      };
-
-      const todayStr = format(new Date(), 'yyyy-MM-dd');
-      items.forEach(exp => {
-        const dateSource = exp.date_expedition_depart || exp.created_at;
-        if (dateSource && format(new Date(dateSource), 'yyyy-MM-dd') === todayStr) {
-          result.today += (exp.accounting_details?.total_client_due || 0);
-          result.todayBackoffice += (exp.accounting_details?.backoffice_depart || 0) + (exp.accounting_details?.backoffice_arrivee || 0);
-        }
-      });
-
-      return result;
-    }
-
-    // Si on a un filtre local (Depart/Reception), on doit recalculer les totaux à partir de la liste filtrée
+    // International et Interville sont deux périmètres distincts : le
+    // summary du backend agrège toute la période sans distinguer le scope,
+    // donc on recalcule toujours localement à partir de filteredItems (déjà
+    // filtré par scope) plutôt que d'utiliser summary tel quel.
     const result = {
       today: 0,
       todayBackoffice: 0,
@@ -180,7 +163,7 @@ const Comptabilite = () => {
     });
 
     return result;
-  }, [items, summary, filteredItems, filterMode]);
+  }, [filteredItems, filterMode]);
 
   const dailyBreakdown = useMemo(() => {
     const groups = {};
@@ -218,9 +201,9 @@ const Comptabilite = () => {
 
     // Cartes de synthèse inspirées du design Historique
     createSummaryCards(doc, [
-      { title: "CA ATTENDU (DÛ)", value: `${formatPDFNumber(totals.total)} CFA`, colorClass: "text-slate-900" },
-      { title: "PART BACKOFFICE", value: `${formatPDFNumber(totals.backoffice)} CFA`, colorClass: "text-emerald-600" },
-      { title: "PART AGENCES", value: `${formatPDFNumber(totals.agence_depart + totals.agence_arrivee)} CFA`, colorClass: "text-orange-600" },
+      { title: "CA ATTENDU (DÛ)", value: `${formatPDFNumber(totals.total)} ${getCurrencyLabel()}`, colorClass: "text-slate-900" },
+      { title: "PART BACKOFFICE", value: `${formatPDFNumber(totals.backoffice)} ${getCurrencyLabel()}`, colorClass: "text-emerald-600" },
+      { title: "PART AGENCES", value: `${formatPDFNumber(totals.agence_depart + totals.agence_arrivee)} ${getCurrencyLabel()}`, colorClass: "text-orange-600" },
       { title: "VOL. EXPEDITIONS", value: filteredItems.length.toString(), colorClass: "text-purple-600" }
     ]);
 
@@ -342,6 +325,27 @@ const Comptabilite = () => {
           </div>
         </header>
 
+        {/* Scope de comptabilité - International et Interville sont deux
+            périmètres distincts, chacun avec ses propres chiffres */}
+        <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-lg w-fit">
+          {[
+            { id: 'international', label: 'International' },
+            { id: 'interville', label: 'Interville' }
+          ].map(scope => (
+            <button
+              key={scope.id}
+              onClick={() => setAccountingScope(scope.id)}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                accountingScope === scope.id
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              {scope.label}
+            </button>
+          ))}
+        </div>
+
         {/* SEARCH & FILTERS ROW */}
         <div className="flex flex-col md:flex-row gap-3 items-stretch">
           <div className="relative flex-1">
@@ -384,23 +388,23 @@ const Comptabilite = () => {
           label="CA Attendu"
           value={totals.total}
           icon={Wallet}
-          unit="CFA"
+          unit={getCurrencyLabel()}
           colorClass="text-slate-900"
         />
 
-        <StatCard 
+        <StatCard
           label="Part Backoffice"
           value={totals.backoffice}
           icon={DollarSign}
-          unit="CFA"
+          unit={getCurrencyLabel()}
           colorClass="text-emerald-600"
         />
 
-        <StatCard 
+        <StatCard
           label="Part Agences"
           value={totals.agence_depart + totals.agence_arrivee}
           icon={Building2}
-          unit="CFA"
+          unit={getCurrencyLabel()}
           colorClass="text-orange-600"
         />
 
