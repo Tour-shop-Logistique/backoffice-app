@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchDashboardStats, fetchDashboardRecap } from '../redux/slices/parcelSlice';
 import { ROUTES } from '../routes';
 import { getCountryName } from '../utils/countries';
+import { getCurrencyLabel } from '../utils/format';
 import {
   Loader2,
   RefreshCw,
@@ -87,6 +88,10 @@ const Dashboard = () => {
     { emoji: '🚚', label: 'Arrivages prévus', value: op.arrivages_prevus || 0, bg: 'bg-emerald-50', ring: 'hover:ring-emerald-200', border: 'group-hover:border-emerald-300', href: ROUTES.INCOMING_PARCELS },
     { emoji: '📦', label: 'Réceptions du jour', value: op.receptions_du_jour || 0, bg: 'bg-purple-50', ring: 'hover:ring-purple-200', border: 'group-hover:border-purple-300', href: ROUTES.HISTORIQUE },
     { emoji: '📈', label: 'Expéditions du jour', value: op.colis_expedies_du_jour || 0, bg: 'bg-amber-50', ring: 'hover:ring-amber-200', border: 'group-hover:border-amber-300', href: ROUTES.HISTORIQUE },
+    // Lecture seule : le backoffice n'intervient jamais sur l'Interville
+    // (cahier des charges §8.1) - renvoie vers l'onglet dédié de
+    // l'Historique plutôt qu'un menu où il pourrait croire pouvoir agir.
+    { emoji: '🏙️', label: 'Expéditions Interville', value: op.interville_count || 0, bg: 'bg-pink-50', ring: 'hover:ring-pink-200', border: 'group-hover:border-pink-300', href: `${ROUTES.HISTORIQUE}?tab=interville` },
   ];
 
   return (
@@ -116,7 +121,7 @@ const Dashboard = () => {
           label sur toute la largeur en dessous (lisible sur plusieurs mots
           sans jamais couper). À partir de lg, tout repasse sur une seule
           ligne horizontale avec chevron, plus confortable en desktop. */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {kpiCards.map((kpi, i) => (
           <button
             key={i}
@@ -262,7 +267,7 @@ const Dashboard = () => {
                             </div>
                           ) : (
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-800 text-white px-2.5 py-1.5 rounded-lg text-sm font-semibold z-20 pointer-events-none whitespace-nowrap shadow-lg">
-                              {d.ca.toLocaleString()} CFA
+                              {d.ca.toLocaleString()} {getCurrencyLabel()}
                             </div>
                           )}
                         </div>

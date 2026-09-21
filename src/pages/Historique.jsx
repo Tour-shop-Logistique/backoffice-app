@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ROUTES } from '../routes';
 import { fetchBackofficeExpeditions } from '../redux/slices/backofficeSlice';
 import { format, subDays, isWithinInterval, parseISO } from 'date-fns';
@@ -33,6 +33,7 @@ import { createPDFHeader, createPDFFooter, createSummaryCards, formatPDFNumber, 
 const Historique = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { expeditions, isLoadingExpeditions, expeditionsError, hasLoadedExpeditions } = useSelector((state) => state.backoffice);
   
   console.log('Expeditions from Redux:', expeditions);
@@ -49,7 +50,8 @@ const Historique = () => {
   // Interville (lecture seule, le backoffice n'y intervient jamais et n'a
   // aucun gain dessus, cahier des charges §8.1) - mêmes expéditions déjà
   // chargées, juste un filtre + affichage différent, pas un second fetch.
-  const [activeTab, setActiveTab] = useState("international");
+  // Initialisable via ?tab=interville (ex: depuis la carte du dashboard).
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'interville' ? 'interville' : 'international');
 
   // Charger toutes les expéditions au premier rendu si pas déjà fait.
   // Le filtrage Toutes/Départs/Arrivées se fait ensuite en local sur la liste déjà chargée.
