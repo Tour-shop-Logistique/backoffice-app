@@ -5,6 +5,7 @@ import { ROUTES } from '../routes';
 import { fetchBackofficeExpeditions } from '../redux/slices/backofficeSlice';
 import { format, subDays, isWithinInterval, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { getCurrencyLabel } from '../utils/format';
 import {
   Search,
   MapPin ,
@@ -56,7 +57,7 @@ const Historique = () => {
 
   const loadExpeditions = async () => {
     if (isRefreshing || isLoadingExpeditions) return;
-    
+
     setIsRefreshing(true);
     try {
       // Pas de params : on récupère tout, le filtrage se fait en local ensuite
@@ -72,8 +73,17 @@ const Historique = () => {
   // Filtrer les expéditions selon le terme de recherche ET le mode (Toutes / Départs / Arrivées)
   const filteredExpeditions = useMemo(() => {
     if (!expeditions || !Array.isArray(expeditions)) return [];
-    
+
     return expeditions.filter((exp) => {
+      // Interville exclu : le backoffice n'y intervient jamais et n'a aucun
+      // gain dessus (cahier des charges §8.1, agences de départ/arrivée
+      // gèrent seules tout le cycle) - le lister ici polluerait les
+      // statistiques (count/départs/arrivées/export PDF) avec des lignes à
+      // gain toujours nul, sans rapport avec l'historique financier du
+      // backoffice. Consultable en lecture seule dans un onglet dédié de
+      // l'Historique des Contrôles (ParcelHistory.jsx), pas ici.
+      if (exp.type_expedition === 'interville') return false;
+
       // Filtre par mode (toutes / depart / arrivee) basé sur backoffice_role
       if (filterMode !== "all") {
         const roles = Array.isArray(exp.backoffice_role) ? exp.backoffice_role : [];
@@ -138,13 +148,13 @@ const Historique = () => {
       title: "HISTORIQUE EXPEDITIONS",
       subtitle: modeLabel,
       period: period,
-      metadata1: `GAIN TOTAL: ${formatPDFNumber(totals.totalGain)} CFA`
+      metadata1: `GAIN TOTAL: ${formatPDFNumber(totals.totalGain)} ${getCurrencyLabel()}`
     });
 
     // Cartes de synthèse inspirées du design Historique
     createSummaryCards(doc, [
       { title: "Total Expéditions", value: filteredExpeditions.length.toString(), colorClass: "text-slate-900" },
-      { title: "Gain Total", value: `${formatPDFNumber(totals.totalGain)} CFA`, colorClass: "text-emerald-600" },
+      { title: "Gain Total", value: `${formatPDFNumber(totals.totalGain)} ${getCurrencyLabel()}`, colorClass: "text-emerald-600" },
       { title: "En départ", value: totals.departCount.toString(), colorClass: "text-orange-600" },
       { title: "En arrivée", value: totals.arriveeCount.toString(), colorClass: "text-purple-600" }
     ]);
@@ -169,7 +179,7 @@ const Historique = () => {
             `${format(new Date(exp.date_expedition_depart || exp.created_at), 'dd/MM/yyyy')}\n${cleanPDFText(exp.agence?.nom_agence || 'N/A')}`,
             cleanPDFText(exp.pays_destination || 'N/A'),
             roles,
-            `${formatPDFNumber(exp.backoffice_gain || 0)} CFA`,
+            `${formatPDFNumber(exp.backoffice_gain || 0)} ${getCurrencyLabel()}`,
             cleanPDFText(getExpeditionStatusLabel(exp.statut_expedition))
         ];
     });
@@ -298,7 +308,7 @@ const Historique = () => {
         <StatCard 
           label="Total gagné"
           value={totals.totalGain}
-          unit="CFA"
+          unit={getCurrencyLabel()}
           icon={DollarSign}
           colorClass="text-emerald-600"
         />
@@ -429,7 +439,7 @@ const Historique = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <span className="font-bold text-emerald-600 text-base">
-                        {(exp.backoffice_gain || 0).toLocaleString()} CFA
+                        {(exp.backoffice_gain || 0).toLocaleString()} {getCurrencyLabel()}
                       </span>
                     </td>
                     <td className="px-6 py-4">
