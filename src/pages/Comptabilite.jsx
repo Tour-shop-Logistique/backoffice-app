@@ -35,6 +35,7 @@ import { fr } from 'date-fns/locale';
 import Modal from '../components/common/Modal';
 import ViewDetailsButton from '../components/common/ViewDetailsButton';
 import ExpeditionDetailModal from '../components/expedition/ExpeditionDetailModal';
+import ConvertedAmount from '../components/common/ConvertedAmount';
 import StatCard from '../components/agence/StatCard';
 import { getExpeditionStatusLabel, getStatusStyles } from '../utils/statusTranslations';
 import { createPDFHeader, createPDFFooter, createSummaryCards, formatPDFNumber, cleanPDFText } from '../utils/pdfHelper';
@@ -504,13 +505,13 @@ const Comptabilite = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="font-bold text-slate-900 text-base">{clientTotal.toLocaleString()}</span>
+                        <ConvertedAmount amount={clientTotal} sourceCurrency={exp.devise_origine} className="font-bold text-slate-900 text-base" />
                       </td>
                       <td className="px-6 py-4 text-right bg-slate-50/50 group-hover:bg-slate-100/50 transition-colors">
-                        <span className="font-bold text-slate-900 text-base">{boNet.toLocaleString()}</span>
+                        <ConvertedAmount amount={boNet} sourceCurrency={exp.devise_origine} className="font-bold text-slate-900 text-base" />
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="font-bold text-blue-600 text-base">{agencyPart.toLocaleString()}</span>
+                        <ConvertedAmount amount={agencyPart} sourceCurrency={exp.devise_origine} className="font-bold text-blue-600 text-base" />
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex flex-col gap-1.5 items-center">
