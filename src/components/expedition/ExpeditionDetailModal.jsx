@@ -11,9 +11,15 @@ import {
 import Modal from '../common/Modal';
 import { getExpeditionStatusLabel, getStatusStyles } from '../../utils/statusTranslations';
 import { getCurrencyLabel } from '../../utils/format';
+import ConvertedAmount from '../common/ConvertedAmount';
 
 const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
     if (!selectedExpedition) return null;
+
+    // Tous les montants de cette expédition sont exprimés dans sa propre
+    // devise d'origine (celle du pays de départ), pas celle du backoffice
+    // qui consulte - voir Expedition::devise_origine côté backend.
+    const deviseLabel = getCurrencyLabel(selectedExpedition.devise_origine);
 
     const getTypeLabel = (type) => {
         if (!type) return 'N/A';
@@ -184,8 +190,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                             <p className="text-base font-bold text-rose-900">Total payé par le client</p>
                         </div>
                         <p className="text-xl font-bold text-rose-700">
-                            {fmt(acc.total_client_due)}
-                            <span className="text-sm font-bold text-rose-400 ml-1">{getCurrencyLabel()}</span>
+                            <ConvertedAmount amount={acc.total_client_due} sourceCurrency={selectedExpedition.devise_origine} />
                         </p>
                     </div>
                     {totalLines.length > 0 && (
@@ -193,7 +198,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                             {totalLines.map((line, i) => (
                                 <div key={i} className="flex items-center justify-between">
                                     <span className="text-sm text-rose-700/70">{line.label}</span>
-                                    <span className="text-sm font-semibold text-rose-800">{fmt(line.value)} {getCurrencyLabel()}</span>
+                                    <span className="text-sm font-semibold text-rose-800">{fmt(line.value)} {deviseLabel}</span>
                                 </div>
                             ))}
                         </div>
@@ -216,7 +221,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                                                 {actor.sub && <span className="font-medium text-slate-400"> · {actor.sub}</span>}
                                             </p>
                                             <span className={`text-base font-bold shrink-0 ${actor.highlight ? 'text-white' : 'text-slate-900'}`}>
-                                                {fmt(actor.total)} {getCurrencyLabel()}
+                                                {fmt(actor.total)} {deviseLabel}
                                             </span>
                                         </div>
                                         {actor.lines.length > 0 ? (
@@ -224,7 +229,7 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                                                 {actor.lines.map((line, i) => (
                                                     <div key={i} className="flex items-center justify-between pl-3">
                                                         <span className={`text-sm ${actor.highlight ? 'text-slate-400' : 'text-slate-500'}`}>{line.label}</span>
-                                                        <span className={`text-sm font-semibold ${actor.highlight ? 'text-slate-200' : 'text-slate-600'}`}>{fmt(line.value)} {getCurrencyLabel()}</span>
+                                                        <span className={`text-sm font-semibold ${actor.highlight ? 'text-slate-200' : 'text-slate-600'}`}>{fmt(line.value)} {deviseLabel}</span>
                                                     </div>
                                                 ))}
                                             </div>

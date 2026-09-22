@@ -24,6 +24,7 @@ import {
   FileDown
 } from 'lucide-react';
 import Modal from '../components/common/Modal';
+import ConvertedAmount from '../components/common/ConvertedAmount';
 import ViewDetailsButton from '../components/common/ViewDetailsButton';
 import ExpeditionDetailModal from '../components/expedition/ExpeditionDetailModal';
 import StatCard from '../components/agence/StatCard';
@@ -537,9 +538,7 @@ const Historique = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <span className="font-bold text-emerald-600 text-base">
-                            {(exp.backoffice_gain || 0).toLocaleString()} {getCurrencyLabel()}
-                          </span>
+                          <ConvertedAmount amount={exp.backoffice_gain} sourceCurrency={exp.devise_origine} className="font-bold text-emerald-600 text-base" />
                         </td>
                       </>
                     )}
