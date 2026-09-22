@@ -578,7 +578,7 @@ const Parcels = () => {
                                     <span className="text-sm font-bold text-slate-800 tracking-tight">
                                       {Number(Number(group.expedition?.montant_expedition || 0) + Number(group.expedition?.frais_emballage || 0)).toLocaleString()}
                                     </span>
-                                    <span className="text-xs font-medium text-slate-500 uppercase">{getCurrencyLabel()}</span>
+                                    <span className="text-xs font-medium text-slate-500 uppercase">{getCurrencyLabel(group.expedition?.devise_origine)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -602,7 +602,7 @@ const Parcels = () => {
                                     <span className="text-sm font-bold text-slate-800 tracking-tight">
                                       {Number(group.expedition?.frais_annexes || 0).toLocaleString()}
                                     </span>
-                                    <span className="text-xs font-medium text-slate-500 uppercase">{getCurrencyLabel()}</span>
+                                    <span className="text-xs font-medium text-slate-500 uppercase">{getCurrencyLabel(group.expedition?.devise_origine)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -1012,7 +1012,7 @@ const Parcels = () => {
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 font-bold uppercase">Frais Annexes</span>
                 <span className="text-slate-900 font-bold">
-                  {fraisAnnexesMontant.toLocaleString()} <span className="text-xs text-slate-500">{getCurrencyLabel()}</span>
+                  {fraisAnnexesMontant.toLocaleString()} <span className="text-xs text-slate-500">{getCurrencyLabel(liveSelectedExpedition?.devise_origine)}</span>
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -1050,7 +1050,7 @@ const Parcels = () => {
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 font-bold uppercase">Montant Expédition</span>
                 <span className="text-indigo-600 font-bold">
-                  {Number(liveSelectedExpedition?.montant_expedition || 0).toLocaleString()} <span className="text-xs text-slate-500">{getCurrencyLabel()}</span>
+                  {Number(liveSelectedExpedition?.montant_expedition || 0).toLocaleString()} <span className="text-xs text-slate-500">{getCurrencyLabel(liveSelectedExpedition?.devise_origine)}</span>
                 </span>
               </div>
               <div className="flex justify-between items-center">

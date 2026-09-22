@@ -399,7 +399,7 @@ const ParcelHistory = () => {
                                                                             <span className="text-[14px] font-semibold text-slate-900">
                                                                                 {Number(group.expedition?.montant_expedition || 0).toLocaleString()}
                                                                             </span>
-                                                                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{getCurrencyLabel()}</span>
+                                                                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{getCurrencyLabel(group.expedition?.devise_origine)}</span>
                                                                         </div>
                                                                     </div>
 
@@ -525,7 +525,7 @@ const ParcelHistory = () => {
                                                 </span>
                                             ) : (
                                                 <span className="text-xs text-slate-500 uppercase font-bold mt-0.5 flex items-center gap-2">
-                                                    {Number(group.expedition?.montant_expedition || 0).toLocaleString()} {getCurrencyLabel()}
+                                                    {Number(group.expedition?.montant_expedition || 0).toLocaleString()} {getCurrencyLabel(group.expedition?.devise_origine)}
                                                     <span className={`px-1 rounded ${group.expedition?.statut_paiement === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                                                         {group.expedition?.statut_paiement === 'paye' ? 'PAYÉ' : 'NON PAYÉ'}
                                                     </span>

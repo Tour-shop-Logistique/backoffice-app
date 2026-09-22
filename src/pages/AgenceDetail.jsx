@@ -749,7 +749,7 @@ const AgenceDetail = () => {
                                                                 <td className="px-6 py-4 text-right">
                                                                     <div className="flex flex-col">
                                                                         <span className="font-semibold text-slate-900">
-                                                                            {Number(expo.montant_expedition).toLocaleString()} <span className="text-xs font-medium text-slate-500">{getCurrencyLabel()}</span>
+                                                                            {Number(expo.montant_expedition).toLocaleString()} <span className="text-xs font-medium text-slate-500">{getCurrencyLabel(expo.devise_origine)}</span>
                                                                         </span>
                                                                         <span className="text-xs text-slate-500 font-medium">
                                                                             {expo.colis?.length} colis
@@ -800,7 +800,7 @@ const AgenceDetail = () => {
                                                             <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
                                                                 <div>
                                                                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Montant Total</p>
-                                                                    <p className="text-sm font-bold text-slate-900">{Number(expo.montant_expedition).toLocaleString()} {getCurrencyLabel()}</p>
+                                                                    <p className="text-sm font-bold text-slate-900">{Number(expo.montant_expedition).toLocaleString()} {getCurrencyLabel(expo.devise_origine)}</p>
                                                                 </div>
                                                                 <div className="text-right">
                                                                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Paiement</p>
