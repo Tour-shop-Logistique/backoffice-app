@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Check, MapPin } from 'lucide-react';
 import { sortFormatsColisParTaille } from '../../utils/formatColisSort';
+import { getCurrencyLabel } from '../../utils/format';
 
 const inputClasses = "w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white transition-all font-medium text-slate-800";
 const labelClasses = "block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1";
@@ -223,7 +224,7 @@ const IntervilleTarifForm = ({ id = "interville-tarif-form", onSubmit, initialDa
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Détails du Prix</h3>
 
           <div className="space-y-1.5 mb-4">
-            <label className={labelClasses}>Montant de Base (FCFA)</label>
+            <label className={labelClasses}>Montant de Base ({getCurrencyLabel()})</label>
             <input
               type="number"
               value={formData.montant_base}

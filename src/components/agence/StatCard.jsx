@@ -1,6 +1,7 @@
 import React from 'react';
+import { getCurrencyLabel } from '../../utils/format';
 
-const StatCard = ({ label, value, unit = "CFA", icon: Icon, variant = "white", colorClass = "text-slate-900", subtitle }) => {
+const StatCard = ({ label, value, unit = getCurrencyLabel(), icon: Icon, variant = "white", colorClass = "text-slate-900", subtitle }) => {
     const isDark = variant === "dark";
     
     // Déterminer la couleur de fond pour l'icône selon la couleur du texte

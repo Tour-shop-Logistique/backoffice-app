@@ -1,5 +1,6 @@
 import React from 'react';
 import { Package, MapPin as MapPinIcon } from 'lucide-react';
+import { getCurrencyLabel } from '../../utils/format';
 
 const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
     if (tariffs.length === 0) return null;
@@ -66,7 +67,7 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className="font-semibold text-slate-600 text-sm">
-                                        {Number(tarif.montant_base).toLocaleString()} <span className="text-xs text-slate-500 uppercase">CFA</span>
+                                        {Number(tarif.montant_base).toLocaleString()} <span className="text-xs text-slate-500 uppercase">{getCurrencyLabel()}</span>
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">
@@ -75,14 +76,14 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                             {tarif.pourcentage_prestation}%
                                         </span>
                                         <span className="text-slate-500 text-xs font-semibold">
-                                            ({Number(tarif.montant_prestation).toLocaleString()} <span className="text-xs">CFA</span>)
+                                            ({Number(tarif.montant_prestation).toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span>)
                                         </span>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex flex-col">
                                         <span className="text-green-600 font-bold text-base tracking-tight">
-                                            {Number(tarif.montant_expedition).toLocaleString()} <span className="text-xs text-slate-500 uppercase font-semibold">CFA</span>
+                                            {Number(tarif.montant_expedition).toLocaleString()} <span className="text-xs text-slate-500 uppercase font-semibold">{getCurrencyLabel()}</span>
                                         </span>
                                     </div>
                                 </td>
@@ -115,7 +116,7 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                         </div>
                                     </div>
                                     <span className="text-xs font-bold text-emerald-600 shrink-0">
-                                        {Number(total).toLocaleString()} <span className="text-xs">CFA</span>
+                                        {Number(total).toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span>
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-4 text-xs text-slate-500 font-medium px-1">
@@ -137,18 +138,18 @@ const AgencyTariffTable = ({ tariffs, type, getTypeLabel }) => {
                                         </p>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <p className="text-sm font-bold text-emerald-600">{Number(total).toLocaleString()} <span className="text-xs">CFA</span></p>
+                                        <p className="text-sm font-bold text-emerald-600">{Number(total).toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                                         <p className="text-xs text-slate-500 font-medium">Prix Final</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50">
                                     <div>
                                         <p className="text-xs text-slate-500 uppercase font-bold">Montant Base</p>
-                                        <p className="text-xs font-semibold text-slate-700">{Number(mb).toLocaleString()} CFA</p>
+                                        <p className="text-xs font-semibold text-slate-700">{Number(mb).toLocaleString()} {getCurrencyLabel()}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-xs text-slate-500 uppercase font-bold">Prestation</p>
-                                        <p className="text-xs font-semibold text-orange-600">{pp}% ({Number(mp).toLocaleString()} CFA)</p>
+                                        <p className="text-xs font-semibold text-orange-600">{pp}% ({Number(mp).toLocaleString()} {getCurrencyLabel()})</p>
                                     </div>
                                 </div>
                             </div>

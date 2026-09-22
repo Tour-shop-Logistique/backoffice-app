@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { getCurrencyLabel } from './format';
 
 /**
  * Crée un en-tête PDF moderne et professionnel pour tous les rapports
@@ -132,21 +133,22 @@ export const createSummaryCards = (doc, cards) => {
     doc.setFont("helvetica", "bold");
     doc.setTextColor(valueColor[0], valueColor[1], valueColor[2]);
     
-    // Gestion spécifique du CFA pour qu'il soit plus petit
+    // Gestion spécifique de la devise pour qu'elle soit plus petite
     const fullValue = String(card.value);
-    if (fullValue.includes(' CFA')) {
-        const numberPart = fullValue.replace(' CFA', '');
+    const currencySuffix = ` ${getCurrencyLabel()}`;
+    if (fullValue.includes(currencySuffix)) {
+        const numberPart = fullValue.replace(currencySuffix, '');
         const numberWidth = doc.getTextWidth(numberPart);
-        doc.setFontSize(9); // CFA beaucoup plus petit
-        const cfaWidth = doc.getTextWidth(' CFA');
-        const totalW = numberWidth + cfaWidth;
+        doc.setFontSize(9); // Devise beaucoup plus petite
+        const currencyWidth = doc.getTextWidth(currencySuffix);
+        const totalW = numberWidth + currencyWidth;
         const startX = centerX - (totalW / 2);
-        
+
         doc.setFontSize(20);
         doc.text(numberPart, startX, statsY + 8);
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.text(' CFA', startX + numberWidth, statsY + 8);
+        doc.text(currencySuffix, startX + numberWidth, statsY + 8);
     } else {
         doc.text(fullValue, centerX, statsY + 8, { align: 'center' });
     }

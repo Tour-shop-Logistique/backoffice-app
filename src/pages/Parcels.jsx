@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchParcels, updateExpeditionInfo, confirmExpeditionDepart, controlParcels, blockParcels, assignParcels } from '../redux/slices/parcelSlice';
+import { getCurrencyLabel } from '../utils/format';
 import { fetchAgencesByCountry } from '../redux/slices/agenceSlice';
 import { showNotification } from "../redux/slices/uiSlice";
 import { ROUTES } from '../routes';
@@ -577,7 +578,7 @@ const Parcels = () => {
                                     <span className="text-sm font-bold text-slate-800 tracking-tight">
                                       {Number(Number(group.expedition?.montant_expedition || 0) + Number(group.expedition?.frais_emballage || 0)).toLocaleString()}
                                     </span>
-                                    <span className="text-xs font-medium text-slate-500 uppercase">CFA</span>
+                                    <span className="text-xs font-medium text-slate-500 uppercase">{getCurrencyLabel()}</span>
                                   </div>
                                 </div>
                               </div>
@@ -601,7 +602,7 @@ const Parcels = () => {
                                     <span className="text-sm font-bold text-slate-800 tracking-tight">
                                       {Number(group.expedition?.frais_annexes || 0).toLocaleString()}
                                     </span>
-                                    <span className="text-xs font-medium text-slate-500 uppercase">CFA</span>
+                                    <span className="text-xs font-medium text-slate-500 uppercase">{getCurrencyLabel()}</span>
                                   </div>
                                 </div>
                               </div>
@@ -903,7 +904,7 @@ const Parcels = () => {
                   className="w-full pl-10 pr-16 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-bold text-slate-900 transition-all"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 uppercase tracking-wider pointer-events-none">
-                  FCFA
+                  {getCurrencyLabel()}
                 </span>
               </div>
             </div>
@@ -1011,7 +1012,7 @@ const Parcels = () => {
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 font-bold uppercase">Frais Annexes</span>
                 <span className="text-slate-900 font-bold">
-                  {fraisAnnexesMontant.toLocaleString()} <span className="text-xs text-slate-500">CFA</span>
+                  {fraisAnnexesMontant.toLocaleString()} <span className="text-xs text-slate-500">{getCurrencyLabel()}</span>
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -1049,7 +1050,7 @@ const Parcels = () => {
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 font-bold uppercase">Montant Expédition</span>
                 <span className="text-indigo-600 font-bold">
-                  {Number(liveSelectedExpedition?.montant_expedition || 0).toLocaleString()} <span className="text-xs text-slate-500">CFA</span>
+                  {Number(liveSelectedExpedition?.montant_expedition || 0).toLocaleString()} <span className="text-xs text-slate-500">{getCurrencyLabel()}</span>
                 </span>
               </div>
               <div className="flex justify-between items-center">

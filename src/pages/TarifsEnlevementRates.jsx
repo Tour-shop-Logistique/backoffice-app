@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { getCurrencyLabel } from '../utils/format';
 import { useDispatch, useSelector } from "react-redux";
 import {
     fetchEnlevementTranchesKm,
@@ -162,7 +163,7 @@ const TarifsEnlevementRates = () => {
         { header: 'Véhicule', key: 'vehicule' },
         { header: 'Km min', key: 'km_min' },
         { header: 'Km max', key: 'km_max' },
-        { header: 'Montant (FCFA)', key: 'montant' },
+        { header: `Montant (${getCurrencyLabel()})`, key: 'montant' },
         { header: 'Actif', key: 'actif' },
     ]), []);
 
@@ -272,7 +273,7 @@ const TarifsEnlevementRates = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-3">
-                                                    <p className="font-bold text-slate-900">{(parseFloat(tranche.montant) || 0).toLocaleString()} <span className="text-xs">FCFA</span></p>
+                                                    <p className="font-bold text-slate-900">{(parseFloat(tranche.montant) || 0).toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
                                                     {canToggleStatus ? (
@@ -316,7 +317,7 @@ const TarifsEnlevementRates = () => {
                                                         {tranche.km_min} km — {formatKmMax(tranche.km_max)}
                                                     </p>
                                                     <p className="text-xs text-slate-500 font-bold uppercase">
-                                                        {(parseFloat(tranche.montant) || 0).toLocaleString()} FCFA
+                                                        {(parseFloat(tranche.montant) || 0).toLocaleString()} {getCurrencyLabel()}
                                                     </p>
                                                 </div>
                                             </div>

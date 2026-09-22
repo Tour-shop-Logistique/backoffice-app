@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getCurrencyLabel } from '../../utils/format';
 
 /**
  * Formulaire d'une seule tranche (véhicule, km_min, km_max, montant) pour
@@ -99,7 +100,7 @@ const TarifEnlevementTrancheKmForm = ({ id = "tranche-km-form", onSubmit, initia
       </div>
 
       <div>
-        <label className={labelClasses}>Montant (FCFA)</label>
+        <label className={labelClasses}>Montant ({getCurrencyLabel()})</label>
         <input
           type="number"
           value={formData.montant}

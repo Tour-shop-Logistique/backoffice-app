@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { getCurrencyLabel } from '../utils/format';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchMissionsEnAttente,
@@ -197,7 +198,7 @@ const MissionsGroupage = () => {
                           </div>
                         </td>
                         <td className="px-6 py-3 text-slate-600">
-                          {mission.montant_fixe != null ? `${mission.montant_fixe} FCFA` : 'À saisir'}
+                          {mission.montant_fixe != null ? `${mission.montant_fixe} ${getCurrencyLabel()}` : 'À saisir'}
                         </td>
                         <td className="px-6 py-3">
                           <div className="flex items-center justify-end">
@@ -227,7 +228,7 @@ const MissionsGroupage = () => {
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-semibold text-slate-900 text-sm truncate">{mission.expedition?.reference || '—'}</span>
                       <span className="text-xs text-slate-600 flex-shrink-0">
-                        {mission.montant_fixe != null ? `${mission.montant_fixe} FCFA` : 'À saisir'}
+                        {mission.montant_fixe != null ? `${mission.montant_fixe} ${getCurrencyLabel()}` : 'À saisir'}
                       </span>
                     </div>
 
@@ -300,7 +301,7 @@ const MissionsGroupage = () => {
 
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">
-              Tarif (FCFA)
+              Tarif ({getCurrencyLabel()})
             </label>
             <input
               type="number"

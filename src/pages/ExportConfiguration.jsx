@@ -8,6 +8,7 @@ import { fetchLivreurs } from '../redux/slices/livreurSlice';
 import { fetchAgents } from '../redux/slices/agentSlice';
 import { fetchRoles } from '../redux/slices/roleSlice';
 import { fetchTauxParrainage, fetchParrainageClients } from '../redux/slices/parrainageSlice';
+import { getCurrencyLabel } from '../utils/format';
 import { fetchAgences } from '../redux/slices/agenceSlice';
 import { fetchProduits, fetchCategories } from '../redux/slices/produitSlice';
 import { showNotification } from '../redux/slices/uiSlice';
@@ -131,10 +132,10 @@ export default function ExportConfiguration() {
           columns: [
             { header: 'Indice', key: 'indice' },
             { header: 'Destination', key: 'destination' },
-            { header: 'Montant Base (FCFA)', key: 'montant_base' },
+            { header: `Montant Base (${getCurrencyLabel()})`, key: 'montant_base' },
             { header: '% Prestation', key: 'pourcentage_prestation' },
-            { header: 'Montant Prestation (FCFA)', key: 'montant_prestation' },
-            { header: 'Total (FCFA)', key: 'total' },
+            { header: `Montant Prestation (${getCurrencyLabel()})`, key: 'montant_prestation' },
+            { header: `Total (${getCurrencyLabel()})`, key: 'total' },
             { header: 'Actif', key: 'actif' },
           ],
           rows: (t.tarifs || []).map((tarif) => {
@@ -158,11 +159,11 @@ export default function ExportConfiguration() {
             { header: 'Type', key: 'type' },
             { header: 'Catégorie', key: 'categorie' },
             { header: 'Itinéraire / Pays', key: 'itineraire' },
-            { header: 'Montant Base (FCFA)', key: 'montant_base' },
+            { header: `Montant Base (${getCurrencyLabel()})`, key: 'montant_base' },
             { header: '% Prestation', key: 'pourcentage_prestation' },
-            { header: 'Montant Prestation (FCFA)', key: 'montant_prestation' },
-            { header: 'Total (FCFA)', key: 'total' },
-            { header: 'Total Minimum (FCFA)', key: 'total_minimum' },
+            { header: `Montant Prestation (${getCurrencyLabel()})`, key: 'montant_prestation' },
+            { header: `Total (${getCurrencyLabel()})`, key: 'total' },
+            { header: `Total Minimum (${getCurrencyLabel()})`, key: 'total_minimum' },
             { header: 'Actif', key: 'actif' },
           ],
           rows: (t.groupedTarifs || []).map((tarif) => {
@@ -189,10 +190,10 @@ export default function ExportConfiguration() {
             { header: 'Commune A', key: 'commune_a' },
             { header: 'Commune B', key: 'commune_b' },
             { header: 'Format', key: 'format' },
-            { header: 'Montant Base (FCFA)', key: 'montant_base' },
+            { header: `Montant Base (${getCurrencyLabel()})`, key: 'montant_base' },
             { header: '% Commission départ', key: 'pourcentage_commission_depart' },
             { header: '% Commission arrivée', key: 'pourcentage_commission_arrivee' },
-            { header: 'Total (FCFA)', key: 'total' },
+            { header: `Total (${getCurrencyLabel()})`, key: 'total' },
             { header: 'Actif', key: 'actif' },
           ],
           rows: (t.intervilleTarifs || []).map((tarif) => {
@@ -218,7 +219,7 @@ export default function ExportConfiguration() {
             { header: 'Véhicule', key: 'vehicule' },
             { header: 'Km min', key: 'km_min' },
             { header: 'Km max', key: 'km_max' },
-            { header: 'Montant (FCFA)', key: 'montant' },
+            { header: `Montant (${getCurrencyLabel()})`, key: 'montant' },
             { header: 'Actif', key: 'actif' },
           ],
           rows: (t.enlevementTranchesKm || []).map((tr) => ({
@@ -335,7 +336,7 @@ export default function ExportConfiguration() {
             { header: 'Téléphone', key: 'telephone' },
             { header: 'Code parrainage', key: 'code_parrainage' },
             { header: 'Filleuls', key: 'filleuls' },
-            { header: 'Solde bonus (FCFA)', key: 'solde' },
+            { header: `Solde bonus (${getCurrencyLabel()})`, key: 'solde' },
           ],
           rows: [
             {

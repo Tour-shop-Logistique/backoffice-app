@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { getCurrencyLabel } from '../utils/format';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -252,9 +253,9 @@ const AgenceDetail = () => {
 
         // Cartes de synthèse inspirées du design Historique
         createSummaryCards(doc, [
-          { title: "POTENTIEL (DÛ)", value: `${formatPDFNumber(summary.potential?.total_client_due || 0)} CFA`, colorClass: "text-slate-900" },
-          { title: "PART BACKOFFICE", value: `${formatPDFNumber(summary.potential?.total_backoffice || 0)} CFA`, colorClass: "text-emerald-600" },
-          { title: "PART AGENCE", value: `${formatPDFNumber(summary.potential?.total_agence || 0)} CFA`, colorClass: "text-orange-600" },
+          { title: "POTENTIEL (DÛ)", value: `${formatPDFNumber(summary.potential?.total_client_due || 0)} ${getCurrencyLabel()}`, colorClass: "text-slate-900" },
+          { title: "PART BACKOFFICE", value: `${formatPDFNumber(summary.potential?.total_backoffice || 0)} ${getCurrencyLabel()}`, colorClass: "text-emerald-600" },
+          { title: "PART AGENCE", value: `${formatPDFNumber(summary.potential?.total_agence || 0)} ${getCurrencyLabel()}`, colorClass: "text-orange-600" },
           { title: "VOL. EXPEDITIONS", value: (summary.count || 0).toString(), colorClass: "text-purple-600" }
         ]);
 
@@ -748,7 +749,7 @@ const AgenceDetail = () => {
                                                                 <td className="px-6 py-4 text-right">
                                                                     <div className="flex flex-col">
                                                                         <span className="font-semibold text-slate-900">
-                                                                            {Number(expo.montant_expedition).toLocaleString()} <span className="text-xs font-medium text-slate-500">CFA</span>
+                                                                            {Number(expo.montant_expedition).toLocaleString()} <span className="text-xs font-medium text-slate-500">{getCurrencyLabel()}</span>
                                                                         </span>
                                                                         <span className="text-xs text-slate-500 font-medium">
                                                                             {expo.colis?.length} colis
@@ -799,7 +800,7 @@ const AgenceDetail = () => {
                                                             <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
                                                                 <div>
                                                                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Montant Total</p>
-                                                                    <p className="text-sm font-bold text-slate-900">{Number(expo.montant_expedition).toLocaleString()} CFA</p>
+                                                                    <p className="text-sm font-bold text-slate-900">{Number(expo.montant_expedition).toLocaleString()} {getCurrencyLabel()}</p>
                                                                 </div>
                                                                 <div className="text-right">
                                                                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Paiement</p>
@@ -952,21 +953,21 @@ const AgenceDetail = () => {
                                     label="CA Attendu"
                                     value={currentAgencyAccounting.summary?.potential?.total_client_due}
                                     icon={Wallet}
-                                    unit="CFA"
+                                    unit={getCurrencyLabel()}
                                     colorClass="text-slate-900"
                                 />
                                 <StatCard
                                     label="Part Backoffice"
                                     value={currentAgencyAccounting.summary?.potential?.total_backoffice}
                                     icon={Briefcase}
-                                    unit="CFA"
+                                    unit={getCurrencyLabel()}
                                     colorClass="text-emerald-600"
                                 />
                                 <StatCard
                                     label="Part Agence"
                                     value={currentAgencyAccounting.summary?.potential?.total_agence}
                                     icon={BadgeCheck}
-                                    unit="CFA"
+                                    unit={getCurrencyLabel()}
                                     colorClass="text-orange-600"
                                 />
                                 <StatCard

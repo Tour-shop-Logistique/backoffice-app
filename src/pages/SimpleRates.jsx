@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { getCurrencyLabel } from '../utils/format';
 import { useDispatch, useSelector } from "react-redux";
 import {
     fetchTarifs,
@@ -218,10 +219,10 @@ const SimpleRates = () => {
     const exportColumns = useMemo(() => ([
         { header: 'Indice', key: 'indice' },
         { header: 'Destination', key: 'destination' },
-        { header: 'Montant Base (FCFA)', key: 'montant_base' },
+        { header: `Montant Base (${getCurrencyLabel()})`, key: 'montant_base' },
         { header: '% Prestation', key: 'pourcentage_prestation' },
-        { header: 'Montant Prestation (FCFA)', key: 'montant_prestation' },
-        { header: 'Total (FCFA)', key: 'total' },
+        { header: `Montant Prestation (${getCurrencyLabel()})`, key: 'montant_prestation' },
+        { header: `Total (${getCurrencyLabel()})`, key: 'total' },
         { header: 'Actif', key: 'actif' },
     ]), []);
 
@@ -400,7 +401,7 @@ const SimpleRates = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-3">
-                                                    <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-xs">FCFA</span></p>
+                                                    <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                                                 </td>
                                                 <td className="px-6 py-3">
                                                     <div className="flex flex-row gap-2">
@@ -408,12 +409,12 @@ const SimpleRates = () => {
                                                             {pp}%
                                                         </span>
                                                         <span className="text-slate-500 font-medium mt-0.5 whitespace-nowrap">
-                                                            ({mp.toLocaleString()} <span className="text-xs">FCFA</span>)
+                                                            ({mp.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span>)
                                                         </span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-3">
-                                                    <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-xs">FCFA</span></p>
+                                                    <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
                                                     {canToggleStatus ? (
@@ -468,7 +469,7 @@ const SimpleRates = () => {
                                                         {tarif.zone?.nom || tarif.pays || '?'}
                                                     </p>
                                                     <p className="text-xs text-slate-500 font-bold uppercase">
-                                                        {total.toLocaleString()} FCFA
+                                                        {total.toLocaleString()} {getCurrencyLabel()}
                                                     </p>
                                                 </div>
                                             </div>

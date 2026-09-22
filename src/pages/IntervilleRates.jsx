@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { getCurrencyLabel } from '../utils/format';
 import { useDispatch, useSelector } from "react-redux";
 import {
     fetchIntervilleTarifs,
@@ -247,10 +248,10 @@ const IntervilleRates = () => {
         { header: 'Commune A', key: 'commune_a' },
         { header: 'Commune B', key: 'commune_b' },
         { header: 'Format', key: 'format' },
-        { header: 'Montant Base (FCFA)', key: 'montant_base' },
+        { header: `Montant Base (${getCurrencyLabel()})`, key: 'montant_base' },
         { header: '% Commission départ', key: 'pourcentage_commission_depart' },
         { header: '% Commission arrivée', key: 'pourcentage_commission_arrivee' },
-        { header: 'Total (FCFA)', key: 'total' },
+        { header: `Total (${getCurrencyLabel()})`, key: 'total' },
         { header: 'Actif', key: 'actif' },
     ]), []);
 
@@ -414,7 +415,7 @@ const IntervilleRates = () => {
                                                     <FormatBadge format={tarif.format_colis} />
                                                 </td>
                                                 <td className="px-6 py-3">
-                                                    <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-xs">FCFA</span></p>
+                                                    <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                                                 </td>
                                                 <td className="px-6 py-3">
                                                     <div className="flex flex-row gap-2">
@@ -437,7 +438,7 @@ const IntervilleRates = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-3">
-                                                    <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-xs">FCFA</span></p>
+                                                    <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
                                                     {canToggleStatus ? (
@@ -488,7 +489,7 @@ const IntervilleRates = () => {
                                                     <div className="flex items-center gap-2">
                                                         <FormatBadge format={tarif.format_colis} />
                                                         <p className="text-xs text-slate-500 font-bold uppercase">
-                                                            {total.toLocaleString()} FCFA
+                                                            {total.toLocaleString()} {getCurrencyLabel()}
                                                         </p>
                                                     </div>
                                                 </div>
