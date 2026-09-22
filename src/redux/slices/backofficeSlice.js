@@ -82,6 +82,7 @@ const backofficeSlice = createSlice({
     loading: 'idle',
     backoffice_id: cachedConfig?.id || null,
     pays: cachedConfig?.pays || null,
+    devise: cachedConfig?.devise || 'XOF',
     error: null,
     expeditions: [],
     isLoadingExpeditions: false,
@@ -98,6 +99,7 @@ const backofficeSlice = createSlice({
       state.loading = 'idle';
       state.backoffice_id = null;
       state.pays = null;
+      state.devise = 'XOF';
       state.error = null;
       clearBackofficeCache();
     },
@@ -144,6 +146,7 @@ const backofficeSlice = createSlice({
         if (action.payload) {
           state.backoffice_id = action.payload.id;
           state.pays = action.payload.pays;
+          state.devise = action.payload.devise || 'XOF';
           console.log(state.pays, "state.pays");
           // Sauvegarder dans le cache
           saveBackofficeToCache(action.payload);

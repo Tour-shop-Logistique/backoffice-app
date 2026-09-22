@@ -21,6 +21,7 @@ import SearchableDropdown from '../components/common/SearchableDropdown';
 import PhoneInput from '../components/common/PhoneInput';
 import { COUNTRY_OPTIONS } from '../utils/countries';
 import { splitPhoneNumber, joinPhoneNumber } from '../utils/phoneCountries';
+import { CURRENCY_OPTIONS } from '../utils/format';
 
 const BackofficeSetup = () => {
     const dispatch = useDispatch();
@@ -39,6 +40,7 @@ const BackofficeSetup = () => {
         adresse: '',
         ville: '',
         code_pays: 'SN',
+        devise: 'XOF',
         email: '',
     });
 
@@ -59,6 +61,7 @@ const BackofficeSetup = () => {
                 adresse: config.adresse || '',
                 ville: config.ville || '',
                 code_pays: config.code_pays || 'SN',
+                devise: config.devise || 'XOF',
                 email: config.email || '',
             });
             const tel = splitPhoneNumber(config.telephone);
@@ -269,6 +272,19 @@ const BackofficeSetup = () => {
                                     disabled={readOnly}
                                     themeColor="emerald"
                                 />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className={labelBase}>Devise <span className="text-rose-500">*</span></label>
+                                <SearchableDropdown
+                                    value={formData.devise}
+                                    onChange={(code) => setFormData(prev => ({ ...prev, devise: code }))}
+                                    options={CURRENCY_OPTIONS}
+                                    placeholder="Sélectionner..."
+                                    disabled={readOnly}
+                                    themeColor="emerald"
+                                />
+                                <p className="text-[11px] text-slate-400">Préremplie selon le pays, modifiable si besoin.</p>
                             </div>
 
                             <div className="space-y-1.5">
