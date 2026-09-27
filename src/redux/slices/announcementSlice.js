@@ -31,6 +31,21 @@ export const createAnnouncement = createAsyncThunk(
     }
 );
 
+export const updateAnnouncement = createAsyncThunk(
+    'announcements/update',
+    async ({ id, payload }, { rejectWithValue }) => {
+        try {
+            const response = await api.put(`/backoffice/announcements/${id}`, payload);
+            if (response.data.success) {
+                return response.data.data;
+            }
+            return rejectWithValue("Impossible de modifier l'annonce");
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || error.message || "Erreur lors de la modification de l'annonce");
+        }
+    }
+);
+
 export const deleteAnnouncement = createAsyncThunk(
     'announcements/delete',
     async (announcementId, { rejectWithValue }) => {
@@ -97,6 +112,19 @@ const announcementSlice = createSlice({
                 state.items.unshift(action.payload.announcement);
             })
             .addCase(createAnnouncement.rejected, (state, action) => {
+                state.isSending = false;
+                state.error = action.payload;
+            })
+            .addCase(updateAnnouncement.pending, (state) => {
+                state.isSending = true;
+                state.error = null;
+            })
+            .addCase(updateAnnouncement.fulfilled, (state, action) => {
+                state.isSending = false;
+                const idx = state.items.findIndex((a) => a.id === action.payload.id);
+                if (idx !== -1) state.items[idx] = { ...state.items[idx], ...action.payload };
+            })
+            .addCase(updateAnnouncement.rejected, (state, action) => {
                 state.isSending = false;
                 state.error = action.payload;
             })

@@ -2,9 +2,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Megaphone, Plus, Trash2, Loader2, Users, Building2, Globe, MapPin, Search, Clock, ChevronLeft, ChevronRight, CalendarClock, RefreshCw, Eye, CheckCircle2 } from 'lucide-react';
+import { Megaphone, Plus, Trash2, Loader2, Users, Building2, Globe, MapPin, Search, Clock, ChevronLeft, ChevronRight, CalendarClock, RefreshCw, Eye, CheckCircle2, Pencil, XCircle, Hourglass } from 'lucide-react';
 import { showNotification } from '../redux/slices/uiSlice';
-import { fetchAnnouncements, createAnnouncement, deleteAnnouncement, bulkDeleteAnnouncements } from '../redux/slices/announcementSlice';
+import { fetchAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, bulkDeleteAnnouncements } from '../redux/slices/announcementSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
 import { fetchCommunes } from '../redux/slices/communeSlice';
 import Modal from '../components/common/Modal';
@@ -34,10 +34,12 @@ const Announcements = () => {
   const { agences, hasLoaded: agencesLoaded } = useSelector((state) => state.agences);
   const { communes, hasLoaded: communesLoaded, isLoading: communesLoading } = useSelector((state) => state.communes);
   const canCreate = useHasPermission('announcements.create');
+  const canEdit = useHasPermission('announcements.edit');
   const canDelete = useHasPermission('announcements.delete');
   const canBulkDelete = useHasPermission('announcements.bulk_delete');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [toDelete, setToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -98,7 +100,23 @@ const Announcements = () => {
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setEditingId(null);
     setForm(emptyForm);
+  };
+
+  const openEditModal = (a) => {
+    setEditingId(a.id);
+    setForm({
+      titre: a.titre,
+      message: a.message,
+      targetMode: a.agence ? TARGET_MODES.AGENCE : TARGET_MODES.ALL,
+      agence_id: a.agence?.id || '',
+      pays_cible: [],
+      communes_cible: [],
+      scheduled_at: a.scheduled_at ? a.scheduled_at.slice(0, 16) : '',
+    });
+    setSelectedAnnouncement(null);
+    setIsModalOpen(true);
   };
 
   const togglePays = (pays) => {
@@ -128,13 +146,18 @@ const Announcements = () => {
     if (form.scheduled_at) payload.scheduled_at = new Date(form.scheduled_at).toISOString();
 
     try {
-      const result = await dispatch(createAnnouncement(payload)).unwrap();
-      dispatch(showNotification({
-        type: 'success',
-        message: form.scheduled_at
-          ? 'Annonce programmée avec succès.'
-          : `Annonce envoyée à ${result.nbDestinataires ?? '?'} agence(s).`,
-      }));
+      if (editingId) {
+        await dispatch(updateAnnouncement({ id: editingId, payload })).unwrap();
+        dispatch(showNotification({ type: 'success', message: 'Annonce mise à jour.' }));
+      } else {
+        const result = await dispatch(createAnnouncement(payload)).unwrap();
+        dispatch(showNotification({
+          type: 'success',
+          message: form.scheduled_at
+            ? 'Annonce programmée avec succès.'
+            : `Annonce envoyée à ${result.nbDestinataires ?? '?'} agence(s).`,
+        }));
+      }
       closeModal();
     } catch (err) {
       dispatch(showNotification({ type: 'error', message: err || "Erreur lors de l'envoi de l'annonce" }));
@@ -305,6 +328,7 @@ const Announcements = () => {
                   </th>
                   <th className="px-6 py-4">Annonce</th>
                   <th className="px-6 py-4">Destinataire</th>
+                  <th className="px-6 py-4 text-center">Statut</th>
                   <th className="px-6 py-4 text-center">Lectures</th>
                   <th className="px-6 py-4">Envoyée le</th>
                   <th className="px-6 py-4 text-center">Actions</th>
@@ -336,11 +360,28 @@ const Announcements = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="text-sm font-semibold text-slate-700">{a.nb_lectures}</span>
+                      {a.statut === 'programmee' ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 whitespace-nowrap">
+                          <Hourglass size={12} />
+                          Programmée
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 whitespace-nowrap">
+                          <CheckCircle2 size={12} />
+                          Envoyée
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-sm font-semibold text-slate-700 tabular-nums">
+                        {a.nb_lectures}{a.nb_destinataires != null ? `/${a.nb_destinataires}` : ''}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-xs text-slate-500 whitespace-nowrap">
-                        {format(new Date(a.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                        {a.statut === 'programmee' && a.scheduled_at
+                          ? `Prévue le ${format(new Date(a.scheduled_at), 'dd MMM yyyy à HH:mm', { locale: fr })}`
+                          : format(new Date(a.sent_at || a.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
@@ -351,12 +392,22 @@ const Announcements = () => {
                       >
                         <Eye size={16} />
                       </button>
+                      {canEdit && a.statut === 'programmee' && (
+                        <button
+                          onClick={() => openEditModal(a)}
+                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          title="Modifier la programmation"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      )}
                       {canDelete && (
                         <button
                           onClick={() => setToDelete(a)}
                           className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title={a.statut === 'programmee' ? 'Annuler la programmation' : 'Supprimer'}
                         >
-                          <Trash2 size={16} />
+                          {a.statut === 'programmee' ? <XCircle size={16} /> : <Trash2 size={16} />}
                         </button>
                       )}
                     </td>
@@ -395,12 +446,12 @@ const Announcements = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title="Nouvelle annonce"
+        title={editingId ? "Modifier l'annonce programmée" : 'Nouvelle annonce'}
         subtitle="Diffusée aux agences concernées"
         size="md"
         onConfirm={handleSubmit}
         isLoading={isSending}
-        confirmLabel={form.scheduled_at ? 'Programmer' : 'Envoyer'}
+        confirmLabel={editingId ? 'Enregistrer' : (form.scheduled_at ? 'Programmer' : 'Envoyer')}
       >
         <div className="space-y-4">
           <div>
@@ -531,18 +582,29 @@ const Announcements = () => {
         size="md"
         position="right"
         footer={
-          canDelete ? (
-            <button
-              onClick={() => {
-                setToDelete(selectedAnnouncement);
-                setSelectedAnnouncement(null);
-              }}
-              className="flex items-center gap-2 px-4 py-2.5 text-red-600 text-xs font-bold uppercase tracking-widest hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <Trash2 size={14} />
-              Supprimer cette annonce
-            </button>
-          ) : null
+          <div className="flex items-center gap-2">
+            {canEdit && selectedAnnouncement?.statut === 'programmee' && (
+              <button
+                onClick={() => openEditModal(selectedAnnouncement)}
+                className="flex items-center gap-2 px-4 py-2.5 text-indigo-600 text-xs font-bold uppercase tracking-widest hover:bg-indigo-50 rounded-lg transition-colors"
+              >
+                <Pencil size={14} />
+                Modifier
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={() => {
+                  setToDelete(selectedAnnouncement);
+                  setSelectedAnnouncement(null);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 text-red-600 text-xs font-bold uppercase tracking-widest hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <Trash2 size={14} />
+                {selectedAnnouncement?.statut === 'programmee' ? 'Annuler la programmation' : 'Supprimer cette annonce'}
+              </button>
+            )}
+          </div>
         }
       >
         {selectedAnnouncement && (
@@ -569,17 +631,30 @@ const Announcements = () => {
                   <CheckCircle2 size={15} className="text-emerald-600" />
                 </div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Lectures</p>
-                <p className="text-2xl font-black text-slate-900 tabular-nums leading-none">{selectedAnnouncement.nb_lectures}</p>
+                <p className="text-2xl font-black text-slate-900 tabular-nums leading-none">
+                  {selectedAnnouncement.nb_lectures}
+                  {selectedAnnouncement.nb_destinataires != null && (
+                    <span className="text-base text-slate-400 font-bold">/{selectedAnnouncement.nb_destinataires}</span>
+                  )}
+                </p>
               </div>
 
               <div className="col-span-2 rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                  <Clock size={15} className="text-amber-600" />
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${selectedAnnouncement.statut === 'programmee' ? 'bg-amber-500/10' : 'bg-amber-500/10'}`}>
+                  {selectedAnnouncement.statut === 'programmee' ? (
+                    <Hourglass size={15} className="text-amber-600" />
+                  ) : (
+                    <Clock size={15} className="text-amber-600" />
+                  )}
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Envoyée le</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                    {selectedAnnouncement.statut === 'programmee' ? 'Programmée pour le' : 'Envoyée le'}
+                  </p>
                   <p className="text-sm font-bold text-slate-900">
-                    {format(new Date(selectedAnnouncement.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                    {selectedAnnouncement.statut === 'programmee' && selectedAnnouncement.scheduled_at
+                      ? format(new Date(selectedAnnouncement.scheduled_at), 'dd MMMM yyyy à HH:mm', { locale: fr })
+                      : format(new Date(selectedAnnouncement.sent_at || selectedAnnouncement.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
                   </p>
                 </div>
               </div>
@@ -593,8 +668,12 @@ const Announcements = () => {
         onClose={() => setToDelete(null)}
         onConfirm={handleDelete}
         isLoading={isDeleting}
-        title="Supprimer l'annonce"
-        message={`L'annonce "${toDelete?.titre}" sera définitivement supprimée.`}
+        title={toDelete?.statut === 'programmee' ? 'Annuler la programmation' : "Supprimer l'annonce"}
+        message={
+          toDelete?.statut === 'programmee'
+            ? `L'annonce "${toDelete?.titre}" ne sera jamais envoyée.`
+            : `L'annonce "${toDelete?.titre}" sera définitivement supprimée.`
+        }
       />
 
       <DeleteModal
