@@ -14,12 +14,14 @@ import {
   LayoutGrid,
   Filter,
   ChevronDown,
-  Check
+  Check,
+  MapPin
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { showNotification } from '../redux/slices/uiSlice';
 import { fetchCategories } from "../redux/slices/produitSlice";
 import { fetchGroupedTarifs, addGroupedTarif, editGroupedTarif, updateGroupedTarifStatus, deleteGroupedTarif } from "../redux/slices/tarificationSlice";
+import { normalizeSearch } from '../utils/normalizeSearch';
 import Addtarifgroupe from '../components/widget/Addtarifgroupe';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
@@ -63,6 +65,9 @@ const GroupedRates = () => {
   const [updatingStatus, setUpdatingStatus] = useState({});
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const typeDropdownRef = useRef(null);
+  const [itineraireFiltre, setItineraireFiltre] = useState('all');
+  const [isItineraireDropdownOpen, setIsItineraireDropdownOpen] = useState(false);
+  const itineraireDropdownRef = useRef(null);
 
   const { groupedTarifs, isLoadingGrouped: isLoading, error, groupedHasLoaded } = useSelector(
     (state) => state.tarification
@@ -73,6 +78,9 @@ const GroupedRates = () => {
     const handleClickOutside = (event) => {
       if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target)) {
         setIsTypeDropdownOpen(false);
+      }
+      if (itineraireDropdownRef.current && !itineraireDropdownRef.current.contains(event.target)) {
+        setIsItineraireDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -173,16 +181,29 @@ const GroupedRates = () => {
     }
   };
 
-  // 1. Filtrer d'abord par recherche et type (pour les compteurs)
+  // Itinéraires distincts présents dans les tarifs chargés, pour le filtre déroulant.
+  const itinerairesDisponibles = useMemo(() => {
+    const set = new Set((groupedTarifs || []).map(formatItineraire).filter(Boolean));
+    return Array.from(set).sort();
+  }, [groupedTarifs]);
+
+  // 1. Filtrer d'abord par recherche, type et itinéraire (pour les compteurs)
   const filteredBySearchAndType = useMemo(() => {
+    const search = normalizeSearch(searchTerm);
     return (groupedTarifs || []).filter(tarif => {
-      const matchesSearch =
-        (tarif.category?.nom || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (tarif.pays || "").toLowerCase().includes(searchTerm.toLowerCase());
+      const haystack = [
+        tarif.category?.nom,
+        tarif.pays,
+        tarif.commune_depart?.nom,
+        tarif.commune_arrivee?.nom,
+        tarif.ligne,
+      ].map(normalizeSearch).join(' ');
+      const matchesSearch = haystack.includes(search);
       const matchesType = activeType === "all" || tarif.type_expedition?.toUpperCase() === activeType.toUpperCase();
-      return matchesSearch && matchesType;
+      const matchesItineraire = itineraireFiltre === 'all' || formatItineraire(tarif) === itineraireFiltre;
+      return matchesSearch && matchesType && matchesItineraire;
     });
-  }, [groupedTarifs, searchTerm, activeType]);
+  }, [groupedTarifs, searchTerm, activeType, itineraireFiltre]);
 
   // 2. Filtrer par statut pour l'affichage
   const filteredTarifs = useMemo(() => {
@@ -281,12 +302,12 @@ const GroupedRates = () => {
         </header>
 
         {/* SEARCH & FILTERS SECTION */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <div className="md:col-span-3 relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
             <input
               type="text"
-              placeholder="Rechercher par pays ou catégorie..."
+              placeholder="Rechercher par pays, itinéraire ou catégorie..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
@@ -338,6 +359,53 @@ const GroupedRates = () => {
                     >
                       <span className="truncate">{mode.label}</span>
                       {activeType === mode.id && <Check className="h-4 w-4 text-slate-900" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="relative" ref={itineraireDropdownRef}>
+            <button
+              onClick={() => setIsItineraireDropdownOpen(!isItineraireDropdownOpen)}
+              className="flex items-center justify-between w-full px-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-all text-sm font-medium text-slate-700"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <MapPin className={`h-4 w-4 transition-colors ${isItineraireDropdownOpen ? 'text-slate-900' : 'text-slate-400'}`} />
+                <span className="truncate pl-1 pr-2">
+                  {itineraireFiltre === 'all' ? 'Tous les itinéraires' : itineraireFiltre}
+                </span>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isItineraireDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isItineraireDropdownOpen && (
+              <div className="absolute w-full top-full left-0 right-0 mt-2 py-1.5 bg-white border border-slate-200 rounded-lg shadow-xl shadow-slate-200/50 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="max-h-64 overflow-y-auto">
+                  <button
+                    onClick={() => {
+                      setItineraireFiltre('all');
+                      setIsItineraireDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${itineraireFiltre === 'all' ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    <span>Tous les itinéraires</span>
+                    {itineraireFiltre === 'all' && <Check className="h-4 w-4 text-slate-900" />}
+                  </button>
+
+                  {itinerairesDisponibles.length > 0 && <div className="h-px bg-slate-100 my-1 mx-2" />}
+
+                  {itinerairesDisponibles.map((itineraire) => (
+                    <button
+                      key={itineraire}
+                      onClick={() => {
+                        setItineraireFiltre(itineraire);
+                        setIsItineraireDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${itineraireFiltre === itineraire ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      <span className="truncate">{itineraire}</span>
+                      {itineraireFiltre === itineraire && <Check className="h-4 w-4 text-slate-900 shrink-0" />}
                     </button>
                   ))}
                 </div>

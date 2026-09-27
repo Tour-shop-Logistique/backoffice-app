@@ -30,6 +30,7 @@ import {
     Package
 } from "lucide-react";
 import { showNotification } from '../redux/slices/uiSlice';
+import { normalizeSearch } from '../utils/normalizeSearch';
 
 const SimpleRates = () => {
     const dispatch = useDispatch();
@@ -183,12 +184,17 @@ const SimpleRates = () => {
     const filteredBySearch = useMemo(() => {
         if (!Array.isArray(tarifs)) return [];
         const raw = tarifs.filter((t) => t && t.type_expedition === "simple");
+        const search = normalizeSearch(searchTerm);
 
         return raw.filter(tarif => {
             const indice = tarif.indice?.toString() || '';
-            const zoneName = (tarif.zone?.nom || tarif.pays || '').toLowerCase();
-            const search = searchTerm.toLowerCase();
-            const matchesSearch = indice.includes(search) || zoneName.includes(search);
+            const haystack = [
+                indice,
+                tarif.zone?.nom,
+                tarif.pays,
+                ...(tarif.zone?.pays || []),
+            ].map(normalizeSearch).join(' ');
+            const matchesSearch = haystack.includes(search);
             const matchesZone = filterZone === 'all' || tarif.zone_destination_id === filterZone;
             return matchesSearch && matchesZone;
         });
@@ -292,7 +298,7 @@ const SimpleRates = () => {
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
                         <input
                             type="text"
-                            placeholder="Rechercher par indice ou pays..."
+                            placeholder="Rechercher par indice, zone ou pays..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
