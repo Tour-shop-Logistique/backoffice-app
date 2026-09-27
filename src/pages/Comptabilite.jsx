@@ -37,6 +37,7 @@ import ViewDetailsButton from '../components/common/ViewDetailsButton';
 import ExpeditionDetailModal from '../components/expedition/ExpeditionDetailModal';
 import ConvertedAmount from '../components/common/ConvertedAmount';
 import StatCard from '../components/agence/StatCard';
+import BilanMensuel from '../components/comptabilite/BilanMensuel';
 import { getExpeditionStatusLabel, getStatusStyles } from '../utils/statusTranslations';
 import { createPDFHeader, createPDFFooter, createSummaryCards, formatPDFNumber, cleanPDFText } from '../utils/pdfHelper';
 
@@ -54,6 +55,7 @@ const Comptabilite = () => {
   // Plus besoin de modal pour les dates - utilisation de champs directs
   const [filterMode, setFilterMode] = useState(filters.mode); // null, 'depart', 'reception'
   const [accountingScope, setAccountingScope] = useState('international'); // international, interville
+  const [activeTab, setActiveTab] = useState('detail'); // detail, bilan
 
   useEffect(() => {
     if (!hasLoaded) {
@@ -326,66 +328,92 @@ const Comptabilite = () => {
           </div>
         </header>
 
-        {/* Scope de comptabilité - International et Interville sont deux
-            périmètres distincts, chacun avec ses propres chiffres */}
-        <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-lg w-fit">
+        {/* Tabs : détail des expéditions / bilan mensuel structuré */}
+        <div className="flex items-center gap-1 p-1 bg-white rounded-lg border border-slate-200 shadow-sm w-fit">
           {[
-            { id: 'international', label: 'International' },
-            { id: 'interville', label: 'Interville' }
-          ].map(scope => (
+            { id: 'detail', label: 'Détail expéditions' },
+            { id: 'bilan', label: 'Bilan mensuel' },
+          ].map((tab) => (
             <button
-              key={scope.id}
-              onClick={() => setAccountingScope(scope.id)}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
-                accountingScope === scope.id
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-300 hover:text-white'
+                activeTab === tab.id ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              {scope.label}
+              {tab.label}
             </button>
           ))}
         </div>
 
-        {/* SEARCH & FILTERS ROW */}
-        <div className="flex flex-col md:flex-row gap-3 items-stretch">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              type="text"
-              placeholder="Rechercher par référence, agence ou pays..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium transition-all shadow-sm"
-            />
-          </div>
+        {activeTab === 'detail' && (
+          <>
+            {/* Scope de comptabilité - International et Interville sont deux
+                périmètres distincts, chacun avec ses propres chiffres */}
+            <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-lg w-fit">
+              {[
+                { id: 'international', label: 'International' },
+                { id: 'interville', label: 'Interville' }
+              ].map(scope => (
+                <button
+                  key={scope.id}
+                  onClick={() => setAccountingScope(scope.id)}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                    accountingScope === scope.id
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  {scope.label}
+                </button>
+              ))}
+            </div>
 
-          <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm shrink-0">
-            <button
-              onClick={() => updateMode(null)}
-              className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === null ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              Tout
-            </button>
-            <button
-              onClick={() => updateMode('depart')}
-              className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'depart' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              Départs
-            </button>
-            <button
-              onClick={() => updateMode('reception')}
-              className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'reception' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              Arrivées
-            </button>
-          </div>
-        </div>
+            {/* SEARCH & FILTERS ROW */}
+            <div className="flex flex-col md:flex-row gap-3 items-stretch">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Rechercher par référence, agence ou pays..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium transition-all shadow-sm"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm shrink-0">
+                <button
+                  onClick={() => updateMode(null)}
+                  className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === null ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
+                >
+                  Tout
+                </button>
+                <button
+                  onClick={() => updateMode('depart')}
+                  className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'depart' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
+                >
+                  Départs
+                </button>
+                <button
+                  onClick={() => updateMode('reception')}
+                  className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${filterMode === 'reception' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
+                >
+                  Arrivées
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
+      {activeTab === 'bilan' && <BilanMensuel />}
+
+      {activeTab === 'detail' && (
+      <>
       {/* Statistiques */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <StatCard 
+        <StatCard
           label="CA Attendu"
           value={totals.total}
           icon={Wallet}
@@ -409,7 +437,7 @@ const Comptabilite = () => {
           colorClass="text-orange-600"
         />
 
-        <StatCard 
+        <StatCard
           label="Expéditions"
           value={filteredItems.length}
           icon={Package}
@@ -550,6 +578,8 @@ const Comptabilite = () => {
           </div>
         </div>
       </div>
+      </>
+      )}
 
       {/* Modal Détails Expédition */}
       <ExpeditionDetailModal

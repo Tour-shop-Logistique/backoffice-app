@@ -272,6 +272,18 @@ export const fetchAccountingData = createAsyncThunk(
     }
 );
 
+export const fetchBilanMensuel = createAsyncThunk(
+    'parcels/fetchBilanMensuel',
+    async ({ month, year }, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/backoffice/bilan`, { params: { month, year } });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
 const initialState = {
     // List for "To Control" (is_controlled=false)
     todoList: {
@@ -339,6 +351,14 @@ const initialState = {
         isLoading: false,
         error: null,
         lastUpdated: null
+    },
+    // Bilan mensuel structuré (benefice backoffice)
+    bilan: {
+        data: null,
+        filters: { month: new Date().getMonth() + 1, year: new Date().getFullYear() },
+        isLoading: false,
+        error: null,
+        loadedFor: null, // { month, year } du dernier bilan charge avec succes
     }
 };
 
@@ -725,6 +745,22 @@ const parcelSlice = createSlice({
             .addCase(fetchAccountingData.rejected, (state, action) => {
                 state.accounting.isLoading = false;
                 state.accounting.error = action.payload;
+            })
+
+            // Bilan mensuel
+            .addCase(fetchBilanMensuel.pending, (state) => {
+                state.bilan.isLoading = true;
+                state.bilan.error = null;
+            })
+            .addCase(fetchBilanMensuel.fulfilled, (state, action) => {
+                state.bilan.isLoading = false;
+                state.bilan.data = action.payload.bilan;
+                state.bilan.filters = action.payload.filters;
+                state.bilan.loadedFor = action.payload.filters;
+            })
+            .addCase(fetchBilanMensuel.rejected, (state, action) => {
+                state.bilan.isLoading = false;
+                state.bilan.error = action.payload;
             })
             // Block Parcels
             .addCase(blockParcels.pending, (state) => {
