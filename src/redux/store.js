@@ -6,6 +6,8 @@ import communeReducer from './slices/communeSlice';
 import livreurReducer from './slices/livreurSlice';
 import missionGroupageReducer from './slices/missionGroupageSlice';
 import parrainageReducer from './slices/parrainageSlice';
+import marketplaceModerationReducer from './slices/marketplaceModerationSlice';
+import abonnementBackofficeReducer from './slices/abonnementBackofficeSlice';
 import tarificationReducer from './slices/tarificationSlice';
 import backofficeReducer from './slices/backofficeSlice';
 import produitReducer from './slices/produitSlice';
@@ -27,6 +29,8 @@ export const store = configureStore({
     livreurs: livreurReducer,
     missionGroupage: missionGroupageReducer,
     parrainage: parrainageReducer,
+    marketplaceModeration: marketplaceModerationReducer,
+    abonnementBackoffice: abonnementBackofficeReducer,
     tarification: tarificationReducer,
     backoffice: backofficeReducer,
     produits: produitReducer,

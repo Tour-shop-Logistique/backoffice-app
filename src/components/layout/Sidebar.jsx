@@ -16,6 +16,7 @@ import {
   Bike,
   Truck,
   Gift,
+  ShoppingBag,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectUnreadConversationsCount } from "../../redux/slices/messageSlice";
@@ -37,6 +38,7 @@ const PAGE_KEY_BY_HREF = {
   "/livreurs": "livreurs",
   "/missions-groupage": "missions",
   "/parrainage": "parrainage",
+  "/marketplace": "marketplace",
   "/produits": "produits",
   "/agents": "agents",
 };
@@ -84,6 +86,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         // Masqué pour l'instant (chantier livreurs pas encore prêt côté produit) :
         // { name: "Livreurs", href: "/livreurs", icon: Bike, color: "text-cyan-400" },
         { name: "Parrainage", href: "/parrainage", icon: Gift, color: "text-pink-400" },
+        { name: "Marketplace", href: "/marketplace", icon: ShoppingBag, color: "text-orange-400" },
         { name: "Produits & Catégories", href: "/produits", icon: Tag, color: "text-rose-400" },
         { name: "Équipe & Accès", href: "/agents", icon: Users, color: "text-indigo-400", adminOnly: true },
       ],

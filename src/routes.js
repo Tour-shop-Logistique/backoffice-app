@@ -9,6 +9,7 @@ export const ROUTES = {
     LIVREURS: '/livreurs',
     MISSIONS_GROUPAGE: '/missions-groupage',
     PARRAINAGE: '/parrainage',
+    MARKETPLACE: '/marketplace',
     AGENCE_PARTENAIRE: '/agence-partenaire',
     AGENCE_DETAIL: '/agence-partenaire/:id',
     PRODUITS: '/produits',

@@ -17,6 +17,7 @@ export const PAGE_RESOURCE_MAP = {
   livreurs: ["livreurs"],
   missions: ["missions"],
   parrainage: ["parrainage"],
+  marketplace: ["marketplace"],
   produits: ["produits", "product_categories"],
   agents: ["agents"],
 };
