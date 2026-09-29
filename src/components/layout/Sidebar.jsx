@@ -83,8 +83,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       items: [
         { name: "Tarification", href: "/tarification", icon: DollarSign, color: "text-emerald-400" },
         { name: "Zones et Communes", href: "/zones-communes", icon: Globe, color: "text-sky-400" },
-        // Masqué pour l'instant (chantier livreurs pas encore prêt côté produit) :
-        // { name: "Livreurs", href: "/livreurs", icon: Bike, color: "text-cyan-400" },
+        { name: "Livreurs", href: "/livreurs", icon: Bike, color: "text-cyan-400" },
         { name: "Parrainage", href: "/parrainage", icon: Gift, color: "text-pink-400" },
         { name: "Marketplace", href: "/marketplace", icon: ShoppingBag, color: "text-orange-400" },
         { name: "Produits & Catégories", href: "/produits", icon: Tag, color: "text-rose-400" },

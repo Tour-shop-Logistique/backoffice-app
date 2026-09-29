@@ -9,7 +9,10 @@ import {
   Search,
   RefreshCw,
   Edit3,
-  Phone
+  Phone,
+  List,
+  UserCheck,
+  Banknote
 } from 'lucide-react';
 import Modal from '../components/common/Modal';
 import LivreurForm from '../components/common/LivreurForm';
@@ -18,10 +21,25 @@ import ExportButton from '../components/common/ExportButton';
 import { showNotification } from '../redux/slices/uiSlice';
 import DeleteModal from '../components/common/DeleteModal';
 import useHasPermission from '../hooks/useHasPermission';
+import LivreursEnAttenteTab from '../components/livreurs/LivreursEnAttenteTab';
+import RetraitsLivreurTab from '../components/livreurs/RetraitsLivreurTab';
 
 const VEHICULE_LABELS = { moto: 'Moto', voiture: 'Voiture' };
 
+const TABS = [
+  { id: 'liste', label: 'Livreurs', icon: List },
+  { id: 'en_attente', label: 'En attente', icon: UserCheck },
+  { id: 'retraits', label: 'Retraits', icon: Banknote },
+];
+
+/**
+ * Page à onglets : liste des livreurs rattachés au backoffice (gestion
+ * classique déjà existante), validation des inscriptions self-service avec
+ * KYC, et traitement des demandes de retrait de solde - voir
+ * docs/PARCOURS_LIVREUR_API.md pour le détail du parcours livreur.
+ */
 const Livreurs = () => {
+  const [activeTab, setActiveTab] = useState('liste');
   const dispatch = useDispatch();
   const { livreurs, isLoading, hasLoaded } = useSelector((state) => state.livreurs);
   const canCreate = useHasPermission('livreurs.create');
@@ -173,51 +191,77 @@ const Livreurs = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
-                title="Rafraîchir"
-              >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span className="hidden md:inline md:ml-2">Rafraîchir</span>
-              </button>
-
-              <ExportButton
-                columns={exportColumns}
-                rows={exportRows}
-                filename="livreurs"
-                title="Livreurs"
-              />
-
-              {canCreate && (
+            {activeTab === 'liste' && (
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
-                  title="Ajouter"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="inline-flex items-center justify-center p-3 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50 shadow-sm"
+                  title="Rafraîchir"
                 >
-                  <PlusCircle className="h-4 w-4" />
-                  <span className="hidden md:inline md:ml-2">Ajouter</span>
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span className="hidden md:inline md:ml-2">Rafraîchir</span>
                 </button>
-              )}
-            </div>
+
+                <ExportButton
+                  columns={exportColumns}
+                  rows={exportRows}
+                  filename="livreurs"
+                  title="Livreurs"
+                />
+
+                {canCreate && (
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center p-3 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow-lg transition-all"
+                    title="Ajouter"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    <span className="hidden md:inline md:ml-2">Ajouter</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </header>
 
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
-          <input
-            type="text"
-            placeholder="Rechercher un livreur (nom, téléphone)..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
-          />
+        <div className="flex items-center gap-1 p-1 bg-white rounded-lg border border-slate-200 shadow-sm w-fit">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                activeTab === id ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <Icon size={14} />
+              {label}
+            </button>
+          ))}
         </div>
+
+        {activeTab === 'liste' && (
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+            <input
+              type="text"
+              placeholder="Rechercher un livreur (nom, téléphone)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all text-sm placeholder:text-slate-400 text-black font-medium"
+            />
+          </div>
+        )}
       </div>
 
-      <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className={activeTab === 'en_attente' ? '' : 'hidden'}>
+        <LivreursEnAttenteTab />
+      </div>
+      <div className={activeTab === 'retraits' ? '' : 'hidden'}>
+        <RetraitsLivreurTab />
+      </div>
+
+      <div className={`bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden ${activeTab === 'liste' ? '' : 'hidden'}`}>
         <div className="border-b border-slate-200 bg-slate-50/50">
           <div className="flex overflow-x-auto">
             <button

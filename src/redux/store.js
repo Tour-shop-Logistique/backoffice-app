@@ -4,6 +4,7 @@ import authReducer from './slices/authSlice';
 import zoneReducer from './slices/zoneSlice';
 import communeReducer from './slices/communeSlice';
 import livreurReducer from './slices/livreurSlice';
+import livreurValidationReducer from './slices/livreurValidationSlice';
 import missionGroupageReducer from './slices/missionGroupageSlice';
 import parrainageReducer from './slices/parrainageSlice';
 import marketplaceModerationReducer from './slices/marketplaceModerationSlice';
@@ -27,6 +28,7 @@ export const store = configureStore({
     zones: zoneReducer,
     communes: communeReducer,
     livreurs: livreurReducer,
+    livreurValidation: livreurValidationReducer,
     missionGroupage: missionGroupageReducer,
     parrainage: parrainageReducer,
     marketplaceModeration: marketplaceModerationReducer,
