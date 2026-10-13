@@ -182,7 +182,7 @@ const AnnoncesMarketplaceTab = () => {
         title={toView?.titre || 'Détail de l\'annonce'}
         subtitle="Fiche produit"
         size="md"
-        showCloseButton
+        position="right"
       >
         {isLoadingAnnonce && !selectedAnnonce ? (
           <div className="flex items-center justify-center py-12">
