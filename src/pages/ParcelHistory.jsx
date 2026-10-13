@@ -619,8 +619,9 @@ const ParcelHistory = () => {
                             <Euro className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                             <input
                                 type="number"
+                                min="0"
                                 value={fraisExpedition}
-                                onChange={(e) => setFraisExpedition(e.target.value)}
+                                onChange={(e) => setFraisExpedition(e.target.value !== '' && Number(e.target.value) < 0 ? '0' : e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-slate-900 text-sm font-medium"
                                 placeholder="0.00"
                             />
