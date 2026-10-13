@@ -42,6 +42,8 @@ const Agents = () => {
     prenoms: '',
     indicatif_telephone: '',
     telephone: '',
+    whatsapp_indicatif: '',
+    whatsapp_local: '',
     email: '',
     password: '',
     password_confirmation: '',
@@ -135,6 +137,8 @@ const Agents = () => {
       prenoms: '',
       indicatif_telephone: '',
       telephone: '',
+      whatsapp_indicatif: '',
+      whatsapp_local: '',
       email: '',
       password: '',
       password_confirmation: '',
@@ -288,11 +292,14 @@ const Agents = () => {
     if (!agentForm.nom || !agentForm.prenoms || !agentForm.indicatif_telephone || !agentForm.telephone || !agentForm.email) {
       return dispatch(showNotification({ type: 'error', message: 'Veuillez remplir tous les champs obligatoires.' }));
     }
+    if (!editingAgent && (!agentForm.whatsapp_indicatif || !agentForm.whatsapp_local)) {
+      return dispatch(showNotification({ type: 'error', message: 'Veuillez renseigner le numéro WhatsApp.' }));
+    }
 
     setIsSubmitting(true);
     try {
       if (editingAgent) {
-        const { id, ...updateData } = agentForm;
+        const { id, whatsapp_indicatif, whatsapp_local, ...updateData } = agentForm;
         if (!updateData.password) {
           delete updateData.password;
           delete updateData.password_confirmation;
@@ -312,7 +319,12 @@ const Agents = () => {
           setIsSubmitting(false);
           return dispatch(showNotification({ type: 'error', message: 'Le mot de passe est requis pour un nouvel agent.' }));
         }
-        const result = await dispatch(addAgent({ ...agentForm, role_id: agentForm.role_id || null })).unwrap();
+        const { whatsapp_indicatif, whatsapp_local, ...agentData } = agentForm;
+        const result = await dispatch(addAgent({
+          ...agentData,
+          whatsapp_number: `${whatsapp_indicatif}${whatsapp_local}`,
+          role_id: agentForm.role_id || null,
+        })).unwrap();
         if (result.success || result) {
           dispatch(showNotification({ type: 'success', message: 'Agent créé avec succès.' }));
           closeModal();
@@ -893,6 +905,19 @@ const Agents = () => {
               inputClassName={inputStyle}
             />
           </div>
+
+          {!editingAgent && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">WhatsApp <span className="text-red-500">*</span></label>
+              <PhoneInput
+                dialCode={agentForm.whatsapp_indicatif}
+                localNumber={agentForm.whatsapp_local}
+                onDialCodeChange={(dialCode) => setAgentForm((prev) => ({ ...prev, whatsapp_indicatif: dialCode }))}
+                onLocalNumberChange={(whatsapp_local) => setAgentForm((prev) => ({ ...prev, whatsapp_local }))}
+                inputClassName={inputStyle}
+              />
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email <span className="text-red-500">*</span></label>

@@ -13,6 +13,8 @@ const RegisterForm = ({ onSuccess, onVerificationRequired, switchToLogin }) => {
         prenoms: '',
         indicatif_telephone: '',
         telephone: '',
+        whatsapp_indicatif: '',
+        whatsapp_local: '',
         email: '',
         password: '',
         password_confirmation: '',
@@ -34,8 +36,19 @@ const RegisterForm = ({ onSuccess, onVerificationRequired, switchToLogin }) => {
             alert("Veuillez sélectionner l'indicatif téléphonique.");
             return;
         }
+        if (!formData.whatsapp_indicatif || !formData.whatsapp_local) {
+            alert('Veuillez renseigner le numéro WhatsApp.');
+            return;
+        }
 
-        dispatch(register(formData)).then((result) => {
+        const payload = {
+            ...formData,
+            whatsapp_number: `${formData.whatsapp_indicatif}${formData.whatsapp_local}`,
+        };
+        delete payload.whatsapp_indicatif;
+        delete payload.whatsapp_local;
+
+        dispatch(register(payload)).then((result) => {
             if (register.fulfilled.match(result)) {
                 if (onSuccess) onSuccess();
                 if (onVerificationRequired) {
@@ -94,6 +107,17 @@ const RegisterForm = ({ onSuccess, onVerificationRequired, switchToLogin }) => {
                         localNumber={formData.telephone}
                         onDialCodeChange={(dialCode) => setFormData({ ...formData, indicatif_telephone: dialCode })}
                         onLocalNumberChange={(telephone) => setFormData({ ...formData, telephone })}
+                        inputClassName={inputBase}
+                    />
+                </div>
+
+                <div className="space-y-0.5">
+                    <label className={labelBase}>Numéro WhatsApp</label>
+                    <PhoneInput
+                        dialCode={formData.whatsapp_indicatif}
+                        localNumber={formData.whatsapp_local}
+                        onDialCodeChange={(dialCode) => setFormData({ ...formData, whatsapp_indicatif: dialCode })}
+                        onLocalNumberChange={(whatsapp_local) => setFormData({ ...formData, whatsapp_local })}
                         inputClassName={inputBase}
                     />
                 </div>
