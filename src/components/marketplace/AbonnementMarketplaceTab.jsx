@@ -15,6 +15,11 @@ import { getCurrencyLabel } from '../../utils/format';
 import useHasPermission from '../../hooks/useHasPermission';
 import Modal from '../common/Modal';
 
+// Empêche la saisie d'une valeur négative dans un champ number contrôlé -
+// min="0" seul n'empêche pas de taper "-5" au clavier, seulement les
+// flèches du spinner natif et la validation de formulaire HTML.
+const rejectNegative = (value) => (value !== '' && Number(value) < 0 ? '0' : value);
+
 const ECHEANCE_STATUT_LABELS = {
   a_payer: { label: 'À payer', className: 'bg-slate-100 text-slate-600' },
   rappel_envoye: { label: 'Rappel envoyé', className: 'bg-amber-50 text-amber-700' },
@@ -303,8 +308,9 @@ const AbonnementMarketplaceTab = () => {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Montant vendeur</label>
             <input
               type="number"
+              min="0"
               value={formData.montant_vendeur}
-              onChange={(e) => setFormData((p) => ({ ...p, montant_vendeur: e.target.value }))}
+              onChange={(e) => setFormData((p) => ({ ...p, montant_vendeur: rejectNegative(e.target.value) }))}
               className={inputBase}
             />
           </div>
@@ -312,8 +318,9 @@ const AbonnementMarketplaceTab = () => {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Montant livreur</label>
             <input
               type="number"
+              min="0"
               value={formData.montant_livreur}
-              onChange={(e) => setFormData((p) => ({ ...p, montant_livreur: e.target.value }))}
+              onChange={(e) => setFormData((p) => ({ ...p, montant_livreur: rejectNegative(e.target.value) }))}
               className={inputBase}
             />
           </div>
@@ -321,8 +328,9 @@ const AbonnementMarketplaceTab = () => {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Périodicité (jours)</label>
             <input
               type="number"
+              min="0"
               value={formData.periodicite_jours}
-              onChange={(e) => setFormData((p) => ({ ...p, periodicite_jours: e.target.value }))}
+              onChange={(e) => setFormData((p) => ({ ...p, periodicite_jours: rejectNegative(e.target.value) }))}
               className={inputBase}
             />
           </div>
@@ -330,8 +338,9 @@ const AbonnementMarketplaceTab = () => {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Délai de rappel (jours avant échéance)</label>
             <input
               type="number"
+              min="0"
               value={formData.delai_rappel_jours}
-              onChange={(e) => setFormData((p) => ({ ...p, delai_rappel_jours: e.target.value }))}
+              onChange={(e) => setFormData((p) => ({ ...p, delai_rappel_jours: rejectNegative(e.target.value) }))}
               className={inputBase}
             />
           </div>
