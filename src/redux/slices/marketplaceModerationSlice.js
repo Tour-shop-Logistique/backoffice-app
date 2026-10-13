@@ -4,8 +4,10 @@ import marketplaceModerationService from '../../services/marketplaceModerationSe
 const initialState = {
   annonces: { data: [], pagination: null },
   commandes: { data: [], pagination: null },
+  selectedAnnonce: null,
   isLoadingAnnonces: false,
   isLoadingCommandes: false,
+  isLoadingAnnonce: false,
   isSaving: false,
   error: null,
   annoncesHasLoaded: false,
@@ -17,6 +19,17 @@ export const fetchMarketplaceAnnonces = createAsyncThunk(
   async (params = {}, { rejectWithValue }) => {
     try {
       return await marketplaceModerationService.getAnnonces(params);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const fetchMarketplaceAnnonce = createAsyncThunk(
+  'marketplaceModeration/fetchAnnonce',
+  async (id, { rejectWithValue }) => {
+    try {
+      return await marketplaceModerationService.getAnnonce(id);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -49,9 +62,25 @@ export const fetchMarketplaceCommandes = createAsyncThunk(
 const marketplaceModerationSlice = createSlice({
   name: 'marketplaceModeration',
   initialState,
-  reducers: {},
+  reducers: {
+    clearSelectedAnnonce: (state) => {
+      state.selectedAnnonce = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchMarketplaceAnnonce.pending, (state) => {
+        state.isLoadingAnnonce = true;
+      })
+      .addCase(fetchMarketplaceAnnonce.fulfilled, (state, action) => {
+        state.isLoadingAnnonce = false;
+        state.selectedAnnonce = action.payload;
+      })
+      .addCase(fetchMarketplaceAnnonce.rejected, (state, action) => {
+        state.isLoadingAnnonce = false;
+        state.error = action.payload;
+      })
+
       .addCase(fetchMarketplaceAnnonces.pending, (state) => {
         state.isLoadingAnnonces = true;
         state.error = null;
@@ -95,5 +124,7 @@ const marketplaceModerationSlice = createSlice({
       });
   },
 });
+
+export const { clearSelectedAnnonce } = marketplaceModerationSlice.actions;
 
 export default marketplaceModerationSlice.reducer;

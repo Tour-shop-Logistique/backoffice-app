@@ -5,6 +5,11 @@ const getAnnonces = async (params = {}) => {
   return response.data.annonces;
 };
 
+const getAnnonce = async (id) => {
+  const response = await api.get(`/marketplace/backoffice/annonces/show/${id}`);
+  return response.data.annonce;
+};
+
 const masquerAnnonce = async (id) => {
   const response = await api.post(`/marketplace/backoffice/annonces/${id}/masquer`);
   return response.data;
@@ -22,6 +27,7 @@ const getCommande = async (id) => {
 
 const marketplaceModerationService = {
   getAnnonces,
+  getAnnonce,
   masquerAnnonce,
   getCommandes,
   getCommande,
