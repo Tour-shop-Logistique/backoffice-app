@@ -6,9 +6,13 @@ import { getCurrencyLabel } from '../../utils/format';
 const inputClasses = "w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white transition-all font-medium text-slate-800";
 const labelClasses = "block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1";
 
-const formatCurrency = (value) => new Intl.NumberFormat('fr-FR', {
-  style: 'currency', currency: 'XOF', minimumFractionDigits: 0
-}).format(value || 0);
+// Pas d'Intl.NumberFormat({style: 'currency'}) : cette API exige un vrai
+// code ISO 4217, alors que getCurrencyLabel() retourne un libellé affichable
+// ('FCFA', '€'...) pas forcément un code valide pour Intl - et le code XOF
+// figé ici affichait toujours "F CFA" même pour un backoffice en EUR/USD.
+// Même pattern que AgencyTariffTable.jsx : séparer le nombre formaté du
+// libellé de devise.
+const formatCurrency = (value) => `${Number(value || 0).toLocaleString('fr-FR')} ${getCurrencyLabel()}`;
 
 const CommuneSelect = ({ label, value, onChange, communes, excludeId, disabled }) => {
   const [isOpen, setIsOpen] = useState(false);

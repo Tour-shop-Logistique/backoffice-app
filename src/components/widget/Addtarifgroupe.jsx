@@ -200,13 +200,13 @@ const Addtarifgroupe = ({
     handleFormSubmit(dataToSubmit);
   };
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0
-    }).format(value || 0);
-  };
+  // Pas d'Intl.NumberFormat({style: 'currency'}) : cette API exige un vrai
+  // code ISO 4217, alors que getCurrencyLabel() retourne un libellé
+  // affichable ('FCFA', '€'...) pas forcément un code valide pour Intl - et
+  // le code XOF figé ici affichait toujours "F CFA" même pour un backoffice
+  // en EUR/USD. Même pattern que AgencyTariffTable.jsx : séparer le nombre
+  // formaté du libellé de devise.
+  const formatCurrency = (value) => `${Number(value || 0).toLocaleString('fr-FR')} ${getCurrencyLabel()}`;
 
   const calculateTotal = () => {
     const base = parseFloat(formData.montant_base) || 0;

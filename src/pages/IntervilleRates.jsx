@@ -423,7 +423,7 @@ const IntervilleRates = () => {
                                                             {tarif.pourcentage_commission_depart}%
                                                         </span>
                                                         <span className="text-slate-500 font-medium mt-0.5 whitespace-nowrap">
-                                                            ({mDepart.toLocaleString()} F)
+                                                            ({mDepart.toLocaleString()} {getCurrencyLabel()})
                                                         </span>
                                                     </div>
                                                 </td>
@@ -433,7 +433,7 @@ const IntervilleRates = () => {
                                                             {tarif.pourcentage_commission_arrivee}%
                                                         </span>
                                                         <span className="text-slate-500 font-medium mt-0.5 whitespace-nowrap">
-                                                            ({mArrivee.toLocaleString()} F)
+                                                            ({mArrivee.toLocaleString()} {getCurrencyLabel()})
                                                         </span>
                                                     </div>
                                                 </td>

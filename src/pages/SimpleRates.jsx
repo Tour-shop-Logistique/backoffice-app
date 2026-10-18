@@ -505,7 +505,7 @@ const SimpleRates = () => {
                                                 <span className="text-xs text-slate-500 font-bold">Prestation</span>
                                                 <div className="flex flex-row items-center gap-2">
                                                     <span className="text-xs font-semibold text-orange-600">{pp}%</span>
-                                                    <span className="text-xs text-slate-500 font-medium">({mp.toLocaleString()} F)</span>
+                                                    <span className="text-xs text-slate-500 font-medium">({mp.toLocaleString()} {getCurrencyLabel()})</span>
                                                 </div>
                                             </div>
                                         </div>
