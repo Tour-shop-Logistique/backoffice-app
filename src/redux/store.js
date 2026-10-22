@@ -7,6 +7,7 @@ import livreurReducer from './slices/livreurSlice';
 import livreurValidationReducer from './slices/livreurValidationSlice';
 import missionGroupageReducer from './slices/missionGroupageSlice';
 import parrainageReducer from './slices/parrainageSlice';
+import fluxFinancierReducer from './slices/fluxFinancierSlice';
 import marketplaceModerationReducer from './slices/marketplaceModerationSlice';
 import abonnementBackofficeReducer from './slices/abonnementBackofficeSlice';
 import tarificationReducer from './slices/tarificationSlice';
@@ -31,6 +32,7 @@ export const store = configureStore({
     livreurValidation: livreurValidationReducer,
     missionGroupage: missionGroupageReducer,
     parrainage: parrainageReducer,
+    fluxFinancier: fluxFinancierReducer,
     marketplaceModeration: marketplaceModerationReducer,
     abonnementBackoffice: abonnementBackofficeReducer,
     tarification: tarificationReducer,

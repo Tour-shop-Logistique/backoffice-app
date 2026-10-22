@@ -163,7 +163,9 @@ const TarifsEnlevementRates = () => {
         { header: 'Véhicule', key: 'vehicule' },
         { header: 'Km min', key: 'km_min' },
         { header: 'Km max', key: 'km_max' },
-        { header: `Montant (${getCurrencyLabel()})`, key: 'montant' },
+        { header: `Standard (${getCurrencyLabel()})`, key: 'montant' },
+        { header: 'Taux express', key: 'taux_express' },
+        { header: `Express (${getCurrencyLabel()})`, key: 'montant_express' },
         { header: 'Actif', key: 'actif' },
     ]), []);
 
@@ -173,6 +175,8 @@ const TarifsEnlevementRates = () => {
         km_min: parseFloat(t.km_min) || 0,
         km_max: t.km_max == null ? 'Illimité' : parseFloat(t.km_max),
         montant: parseFloat(t.montant) || 0,
+        taux_express: t.taux_express ?? '',
+        montant_express: t.taux_express ? Math.round(parseFloat(t.montant) * parseFloat(t.taux_express)) : '',
         actif: t.actif ? 'Oui' : 'Non',
     })), [tranches, communes]);
 
@@ -256,7 +260,8 @@ const TarifsEnlevementRates = () => {
                                     <thead className="bg-slate-50/50 border-b border-slate-200">
                                         <tr>
                                             <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Distance</th>
-                                            <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Montant</th>
+                                            <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Standard</th>
+                                            <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Express</th>
                                             <th className="px-6 py-3 text-center font-bold text-slate-500 uppercase tracking-wider text-xs">Statut</th>
                                             <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
                                         </tr>
@@ -274,6 +279,16 @@ const TarifsEnlevementRates = () => {
                                                 </td>
                                                 <td className="px-6 py-3">
                                                     <p className="font-bold text-slate-900">{(parseFloat(tranche.montant) || 0).toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
+                                                </td>
+                                                <td className="px-6 py-3">
+                                                    {tranche.taux_express ? (
+                                                        <div>
+                                                            <p className="font-bold text-amber-600">{Math.round(parseFloat(tranche.montant) * parseFloat(tranche.taux_express)).toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
+                                                            <p className="text-[10px] text-slate-400">×{parseFloat(tranche.taux_express)}</p>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-slate-400">Non configuré</span>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
                                                     {canToggleStatus ? (
@@ -317,8 +332,13 @@ const TarifsEnlevementRates = () => {
                                                         {tranche.km_min} km — {formatKmMax(tranche.km_max)}
                                                     </p>
                                                     <p className="text-xs text-slate-500 font-bold uppercase">
-                                                        {(parseFloat(tranche.montant) || 0).toLocaleString()} {getCurrencyLabel()}
+                                                        Standard : {(parseFloat(tranche.montant) || 0).toLocaleString()} {getCurrencyLabel()}
                                                     </p>
+                                                    {tranche.taux_express && (
+                                                        <p className="text-xs text-amber-600 font-bold">
+                                                            Express : {Math.round(parseFloat(tranche.montant) * parseFloat(tranche.taux_express)).toLocaleString()} {getCurrencyLabel()} (×{parseFloat(tranche.taux_express)})
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                             {canToggleStatus ? (

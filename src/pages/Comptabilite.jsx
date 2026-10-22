@@ -38,6 +38,7 @@ import ExpeditionDetailModal from '../components/expedition/ExpeditionDetailModa
 import ConvertedAmount from '../components/common/ConvertedAmount';
 import StatCard from '../components/agence/StatCard';
 import BilanMensuel from '../components/comptabilite/BilanMensuel';
+import FluxAgences from '../components/comptabilite/FluxAgences';
 import { getExpeditionStatusLabel, getStatusStyles } from '../utils/statusTranslations';
 import { createPDFHeader, createPDFFooter, createSummaryCards, formatPDFNumber, cleanPDFText } from '../utils/pdfHelper';
 
@@ -333,6 +334,7 @@ const Comptabilite = () => {
           {[
             { id: 'detail', label: 'Détail expéditions' },
             { id: 'bilan', label: 'Bilan mensuel' },
+            { id: 'flux', label: 'Flux agences' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -408,6 +410,8 @@ const Comptabilite = () => {
       </div>
 
       {activeTab === 'bilan' && <BilanMensuel />}
+
+      {activeTab === 'flux' && <FluxAgences />}
 
       {activeTab === 'detail' && (
       <>

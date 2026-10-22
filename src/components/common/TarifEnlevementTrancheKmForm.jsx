@@ -9,7 +9,7 @@ import { getCurrencyLabel } from '../../utils/format';
  * commune : deux grilles indépendantes, une par véhicule.
  */
 const TarifEnlevementTrancheKmForm = ({ id = "tranche-km-form", onSubmit, initialData, communeId, defaultTypeVehicule = 'moto' }) => {
-  const [formData, setFormData] = useState({ type_vehicule: defaultTypeVehicule, km_min: '', km_max: '', montant: '' });
+  const [formData, setFormData] = useState({ type_vehicule: defaultTypeVehicule, km_min: '', km_max: '', montant: '', taux_express: '' });
 
   useEffect(() => {
     if (initialData) {
@@ -19,6 +19,7 @@ const TarifEnlevementTrancheKmForm = ({ id = "tranche-km-form", onSubmit, initia
         km_min: (parseFloat(initialData.km_min) || 0).toString(),
         km_max: initialData.km_max != null ? parseFloat(initialData.km_max).toString() : '',
         montant: (parseFloat(initialData.montant) || 0).toString(),
+        taux_express: initialData.taux_express != null ? parseFloat(initialData.taux_express).toString() : '',
       });
     } else {
       setFormData(prev => ({ ...prev, type_vehicule: defaultTypeVehicule }));
@@ -33,6 +34,7 @@ const TarifEnlevementTrancheKmForm = ({ id = "tranche-km-form", onSubmit, initia
       km_min: parseFloat(formData.km_min),
       km_max: formData.km_max === '' ? null : parseFloat(formData.km_max),
       montant: parseFloat(formData.montant),
+      taux_express: formData.taux_express === '' ? null : parseFloat(formData.taux_express),
     };
     if (formData.id) submissionData.id = formData.id;
     onSubmit(submissionData);
@@ -100,7 +102,7 @@ const TarifEnlevementTrancheKmForm = ({ id = "tranche-km-form", onSubmit, initia
       </div>
 
       <div>
-        <label className={labelClasses}>Montant ({getCurrencyLabel()})</label>
+        <label className={labelClasses}>Montant standard ({getCurrencyLabel()})</label>
         <input
           type="number"
           value={formData.montant}
@@ -110,6 +112,25 @@ const TarifEnlevementTrancheKmForm = ({ id = "tranche-km-form", onSubmit, initia
           className={inputClasses}
           required
         />
+      </div>
+
+      <div>
+        <label className={labelClasses}>Taux express (multiplicateur)</label>
+        <input
+          type="number"
+          value={formData.taux_express}
+          onChange={(e) => setFormData(prev => ({ ...prev, taux_express: e.target.value }))}
+          placeholder="Ex: 1.5"
+          min="1"
+          step="0.01"
+          className={inputClasses}
+        />
+        {formData.montant && formData.taux_express && (
+          <p className="text-xs text-slate-500 mt-1 ml-1">
+            Prix express : <span className="font-semibold text-slate-700">{Math.round(parseFloat(formData.montant) * parseFloat(formData.taux_express))} {getCurrencyLabel()}</span>
+          </p>
+        )}
+        <p className="text-xs text-slate-400 mt-0.5 ml-1">Laisser vide si le mode express n'est pas disponible pour cette tranche.</p>
       </div>
     </form>
   );

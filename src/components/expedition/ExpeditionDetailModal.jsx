@@ -7,11 +7,37 @@ import {
     MapPin,
     Smartphone,
     Wallet,
+    ReceiptText,
+    ExternalLink,
 } from 'lucide-react';
 import Modal from '../common/Modal';
 import { getExpeditionStatusLabel, getStatusStyles } from '../../utils/statusTranslations';
 import { getCurrencyLabel } from '../../utils/format';
 import ConvertedAmount from '../common/ConvertedAmount';
+
+const PREUVE_OBJETS = {
+    montant_expedition: "Montant de l'expédition",
+    frais_annexes: 'Frais annexes',
+    frais_enlevement: "Frais d'enlèvement",
+    frais_livraison: 'Frais de livraison',
+    tout_compris: 'Tout compris',
+    remboursement: 'Remboursement',
+    autre: 'Autre',
+};
+
+const PREUVE_METHODES = {
+    mobile_money: 'Mobile Money',
+    bank_transfer: 'Virement bancaire',
+    cash: 'Espèces',
+    card: 'Carte bancaire',
+    other: 'Autre',
+};
+
+const PREUVE_BADGES = {
+    en_attente: { label: 'En attente', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+    confirmee: { label: 'Confirmée', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    rejetee: { label: 'Rejetée', className: 'bg-rose-50 text-rose-700 border-rose-200' },
+};
 
 const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
     if (!selectedExpedition) return null;
@@ -204,6 +230,61 @@ const ExpeditionDetailModal = ({ isOpen, onClose, selectedExpedition }) => {
                         </div>
                     )}
                 </div>
+
+                {/* Preuves de paiement : les règlements se font hors
+                    plateforme, le backoffice les consulte sans intervenir
+                    (seule l'agence concernée confirme ou rejette). */}
+                {selectedExpedition.preuves_paiement?.length > 0 && (
+                    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
+                            <ReceiptText size={16} className="text-slate-500" />
+                            <p className="text-sm font-bold text-slate-800">Preuves de paiement</p>
+                            <span className="text-xs text-slate-400">
+                                ({selectedExpedition.preuves_paiement.length})
+                            </span>
+                        </div>
+                        <div className="divide-y divide-slate-100">
+                            {selectedExpedition.preuves_paiement.map((preuve) => {
+                                const badge = PREUVE_BADGES[preuve.statut] || PREUVE_BADGES.en_attente;
+                                return (
+                                    <div key={preuve.id} className="px-4 py-3 flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-sm font-medium text-slate-800">
+                                                    {PREUVE_OBJETS[preuve.objet_paiement] || preuve.objet_paiement}
+                                                </span>
+                                                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${badge.className}`}>
+                                                    {badge.label}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm font-semibold text-slate-900 mt-0.5">
+                                                {fmt(preuve.montant)} {deviseLabel}
+                                            </p>
+                                            <p className="text-xs text-slate-400 mt-0.5">
+                                                {PREUVE_METHODES[preuve.methode_paiement] || preuve.methode_paiement}
+                                                {preuve.reference_transaction && ` — ${preuve.reference_transaction}`}
+                                            </p>
+                                            {preuve.motif_rejet && (
+                                                <p className="text-xs text-rose-600 mt-1">Motif : {preuve.motif_rejet}</p>
+                                            )}
+                                        </div>
+                                        {preuve.photo_path && (
+                                            <a
+                                                href={preuve.photo_path}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors shrink-0"
+                                            >
+                                                <ExternalLink size={13} />
+                                                Voir
+                                            </a>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {/* Détail des parts de chaque acteur, groupé par Départ / Arrivée */}
                 <div className="space-y-4">
