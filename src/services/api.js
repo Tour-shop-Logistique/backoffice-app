@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getStore } from '../redux/storeAccessor';
+import { ERROR_MESSAGES, isSafeMessage, sanitizeErrorPayload } from '../utils/errorMessages';
 
 // URL racine du backend, SANS suffixe /api (ex: https://api.tourshop-express.com)
 export const API_URL = import.meta.env.VITE_API_URL;
@@ -74,6 +75,19 @@ api.interceptors.response.use(
     } else {
       // Erreur lors de la configuration de la requête
       console.error('🚫 Request Setup Error:', error.message);
+    }
+    // Aucun texte technique (SQL, chemin, erreur axios brute) ne doit atteindre
+    // l'interface : on remplace le corps et le message par des messages prédéfinis
+    // avant que les slices/pages ne les lisent (response.data.message, error.message).
+    if (error.response) {
+      error.response.data = sanitizeErrorPayload(error.response.data, error.response.status);
+      error.message = error.response.data.message;
+    } else if (error.code === 'ECONNABORTED') {
+      error.message = ERROR_MESSAGES.TIMEOUT;
+    } else if (error.request) {
+      error.message = ERROR_MESSAGES.NETWORK;
+    } else if (!isSafeMessage(error.message)) {
+      error.message = ERROR_MESSAGES.DEFAULT;
     }
     return Promise.reject(error);
   }
