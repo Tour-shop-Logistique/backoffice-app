@@ -384,10 +384,10 @@ export default function Produits() {
         <header className="space-y-3 md:space-y-0 text-black">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-lg font-bold text-slate-900">
                 Produits et Catégories
-              </h1>
-              <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
+              </h2>
+              <p className="text-sm text-slate-500 mt-0.5">
                 Gérez vos produits et catégories en toute simplicité
               </p>
             </div>

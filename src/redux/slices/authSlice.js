@@ -180,6 +180,12 @@ const authSlice = createSlice({
         // Persistance locale avec le vrai rôle
         localStorage.setItem('user', JSON.stringify(action.payload.user));
         localStorage.setItem('token', action.payload.token);
+        // Connexion réelle : la session n'est pas à verrouiller (voir IdleLock).
+        try {
+          sessionStorage.setItem('session_alive', '1');
+          sessionStorage.removeItem('session_locked');
+          localStorage.setItem('last_activity_at', String(Date.now()));
+        } catch { /* stockage indisponible */ }
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;

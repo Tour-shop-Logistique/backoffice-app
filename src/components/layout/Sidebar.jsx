@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectUnreadConversationsCount } from "../../redux/slices/messageSlice";
+import { selectLivreursEnAttenteCount } from "../../redux/slices/livreurValidationSlice";
 import { canAccessPage as checkCanAccessPage } from "../../utils/permissions";
 
 import logo from "../../assets/logo_transparent.png";
@@ -47,6 +48,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const { user } = useSelector(state => state.auth);
   const { isConfigured } = useSelector(state => state.backoffice);
   const unreadConversationsCount = useSelector(selectUnreadConversationsCount);
+  const livreursEnAttenteCount = useSelector(selectLivreursEnAttenteCount);
+  const parcelsTodoCount = useSelector(state => state.parcels.todoList.meta.total);
+  const incomingCount = useSelector(state => state.parcels.incomingList.meta.total);
+  const missionsCount = useSelector(state => state.missionGroupage.missions.length);
   const location = useLocation(); // Hook inside component
 
   const isAdmin = user?.role === 'is_backoffice_admin';
@@ -64,9 +69,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     {
       label: "Logistique",
       items: [
-        { name: "Colis à contrôler", href: "/parcels", icon: ClipboardCheck, color: "text-blue-400" },
-        { name: "Arrivages prévus", href: "/incoming-parcels", icon: ArrowDownToLine, color: "text-emerald-400" },
-        { name: "Missions groupage", href: "/missions-groupage", icon: Truck, color: "text-orange-400" },
+        { name: "Contrôle colis", href: "/parcels", icon: ClipboardCheck, color: "text-blue-400", badge: parcelsTodoCount },
+        { name: "Réception colis", href: "/incoming-parcels", icon: ArrowDownToLine, color: "text-emerald-400", badge: incomingCount },
+        { name: "Assigner livreurs", href: "/missions-groupage", icon: Truck, color: "text-orange-400", badge: missionsCount },
         { name: "Historique", href: "/historique", icon: History, color: "text-slate-400" },
       ],
     },
@@ -76,15 +81,15 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         { name: "Agences partenaires", href: "/agence-partenaire", icon: Store, color: "text-purple-400" },
         { name: "Comptabilité", href: "/comptabilite", icon: Wallet, color: "text-amber-400" },
         { name: "Communication", href: "/messages", icon: MessageSquare, color: "text-cyan-400" },
+        { name: "Livreurs", href: "/livreurs", icon: Bike, color: "text-cyan-400", badge: livreursEnAttenteCount },
+        { name: "Parrainage", href: "/parrainage", icon: Gift, color: "text-pink-400" },
       ],
     },
     {
       label: "Configuration",
       items: [
         { name: "Tarification", href: "/tarification", icon: DollarSign, color: "text-emerald-400" },
-        { name: "Zones et Communes", href: "/zones-communes", icon: Globe, color: "text-sky-400" },
-        { name: "Livreurs", href: "/livreurs", icon: Bike, color: "text-cyan-400" },
-        { name: "Parrainage", href: "/parrainage", icon: Gift, color: "text-pink-400" },
+        { name: "Zones & Communes", href: "/zones-communes", icon: Globe, color: "text-sky-400" },
         { name: "Marketplace", href: "/marketplace", icon: ShoppingBag, color: "text-orange-400" },
         { name: "Produits & Catégories", href: "/produits", icon: Tag, color: "text-rose-400" },
         { name: "Équipe & Accès", href: "/agents", icon: Users, color: "text-indigo-400", adminOnly: true },
@@ -163,7 +168,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             <div className="space-y-1">
               {section.items.map((item) => {
                 const active = isLinkActive(item.href);
-                const showBadge = item.href === "/messages" && unreadConversationsCount > 0;
+                const badgeCount = item.href === "/messages"
+                  ? unreadConversationsCount
+                  : (item.badge ?? 0);
+                const showBadge = badgeCount > 0;
                 return (
                   <NavLink
                     key={item.name}
@@ -185,7 +193,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                     <span className="flex-1 leading-tight">{item.name}</span>
                     {showBadge && (
                       <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-[10px] font-bold rounded-full shadow-sm shadow-red-500/40 ring-1 ring-red-400/20 shrink-0">
-                        {unreadConversationsCount > 99 ? "99+" : unreadConversationsCount}
+                        {badgeCount > 99 ? "99+" : badgeCount}
                       </span>
                     )}
                     {active && !showBadge && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />}

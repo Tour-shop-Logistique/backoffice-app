@@ -12,6 +12,7 @@ import ExportButton from '../components/common/ExportButton';
 import PhoneInput from '../components/common/PhoneInput';
 import PermissionMatrix from '../components/roles/PermissionMatrix';
 import useHasPermission from '../hooks/useHasPermission';
+import Tabs from '../components/common/Tabs';
 
 const Agents = () => {
   const dispatch = useDispatch();
@@ -487,28 +488,14 @@ const Agents = () => {
         </header>
 
         {/* MAIN TABS: Agents / Roles */}
-        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1.5 w-fit shadow-sm">
-          <button
-            type="button"
-            onClick={() => setActiveTab('agents')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors ${
-              activeTab === 'agents' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-            }`}
-          >
-            <Users size={14} />
-            Agents
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('roles')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors ${
-              activeTab === 'roles' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-            }`}
-          >
-            <KeyRound size={14} />
-            Rôles
-          </button>
-        </div>
+        <Tabs
+          tabs={[
+            { id: 'agents', label: 'Agents', icon: Users },
+            { id: 'roles', label: 'Rôles', icon: KeyRound },
+          ]}
+          active={activeTab}
+          onChange={setActiveTab}
+        />
 
         {/* SEARCH BAR */}
         {activeTab === 'agents' && (

@@ -6,6 +6,7 @@ import { selectUnreadConversationsCount } from '../redux/slices/messageSlice';
 import Announcements from './Announcements';
 import Messages from './Messages';
 import { ROUTES } from '../routes';
+import Tabs from '../components/common/Tabs';
 
 const TABS = [
   { key: 'annonces', label: 'Annonces', icon: Megaphone, path: ROUTES.ANNOUNCEMENTS },
@@ -35,32 +36,18 @@ const Communication = () => {
           </p>
         </header>
 
-        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1.5 w-fit shadow-sm">
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.key;
-            const showBadge = tab.key === 'messages' && unreadConversationsCount > 0;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => handleTabChange(tab)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors ${
-                  isActive
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                }`}
-              >
-                <tab.icon size={14} />
-                {tab.label}
-                {showBadge && (
-                  <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full">
-                    {unreadConversationsCount > 99 ? '99+' : unreadConversationsCount}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        <Tabs
+          className="w-full sm:w-auto"
+          tabs={TABS.map((tab) => ({
+            id: tab.key,
+            label: tab.label,
+            icon: tab.icon,
+            count: tab.key === 'messages' ? unreadConversationsCount : undefined,
+            alert: true,
+          }))}
+          active={activeTab}
+          onChange={(key) => handleTabChange(TABS.find((tab) => tab.key === key))}
+        />
       </div>
 
       {/* Les deux pages restent montees en permanence (juste masquees) pour ne

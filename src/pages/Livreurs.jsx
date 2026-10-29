@@ -23,6 +23,7 @@ import DeleteModal from '../components/common/DeleteModal';
 import useHasPermission from '../hooks/useHasPermission';
 import LivreursEnAttenteTab from '../components/livreurs/LivreursEnAttenteTab';
 import RetraitsLivreurTab from '../components/livreurs/RetraitsLivreurTab';
+import Tabs from '../components/common/Tabs';
 
 const VEHICULE_LABELS = { moto: 'Moto', voiture: 'Voiture' };
 
@@ -225,20 +226,7 @@ const Livreurs = () => {
           </div>
         </header>
 
-        <div className="flex items-center gap-1 p-1 bg-white rounded-lg border border-slate-200 shadow-sm w-fit">
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
-                activeTab === id ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <Icon size={14} />
-              {label}
-            </button>
-          ))}
-        </div>
+        <Tabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
 
         {activeTab === 'liste' && (
           <div className="relative group">

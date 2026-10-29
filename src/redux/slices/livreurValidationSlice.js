@@ -172,4 +172,6 @@ const livreurValidationSlice = createSlice({
   },
 });
 
+export const selectLivreursEnAttenteCount = (state) => state.livreurValidation.livreursEnAttente.length;
+
 export default livreurValidationSlice.reducer;

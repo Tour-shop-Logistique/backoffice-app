@@ -26,7 +26,7 @@ const Parrainage = lazy(() => import('./pages/Parrainage'));
 const Marketplace = lazy(() => import('./pages/Marketplace'));
 const AgencePartenaire = lazy(() => import('./pages/AgencePartenaire'));
 const AgenceDetail = lazy(() => import('./pages/AgenceDetail'));
-const Produits = lazy(() => import('./pages/produits'));
+const Produits = lazy(() => import('./pages/Catalogue'));
 const BackofficeSetup = lazy(() => import('./pages/BackofficeSetup'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const ParcelControl = lazy(() => import('./pages/ParcelControl'));

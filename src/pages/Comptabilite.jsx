@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAccountingData, setAccountingFilters } from '../redux/slices/parcelSlice';
 import { getCurrencyLabel } from '../utils/format';
+import Tabs from '../components/common/Tabs';
 import {
   DollarSign,
   TrendingUp,
@@ -330,23 +331,15 @@ const Comptabilite = () => {
         </header>
 
         {/* Tabs : détail des expéditions / bilan mensuel structuré */}
-        <div className="flex items-center gap-1 p-1 bg-white rounded-lg border border-slate-200 shadow-sm w-fit">
-          {[
+        <Tabs
+          tabs={[
             { id: 'detail', label: 'Détail expéditions' },
             { id: 'bilan', label: 'Bilan mensuel' },
             { id: 'flux', label: 'Flux agences' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
-                activeTab === tab.id ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+          ]}
+          active={activeTab}
+          onChange={setActiveTab}
+        />
 
         {activeTab === 'detail' && (
           <>

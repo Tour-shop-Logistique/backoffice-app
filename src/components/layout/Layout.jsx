@@ -14,6 +14,7 @@ import { ROUTES } from '../../routes';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import PushNotificationPrompt from '../common/PushNotificationPrompt';
+import IdleLock from '../common/IdleLock';
 import { Building2 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -75,6 +76,7 @@ const Layout = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-surface-50">
+      <IdleLock />
       <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="flex-1 flex flex-col overflow-hidden md:ml-64">
         <Topbar toggleSidebar={toggleSidebar} />

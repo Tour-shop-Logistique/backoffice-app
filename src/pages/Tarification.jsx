@@ -1,12 +1,18 @@
 import React, { useState } from "react";
+import { Globe, Layers, ArrowLeftRight, PackageCheck } from "lucide-react";
 import SimpleRates from "./SimpleRates";
 import GroupedRates from "./GroupedRates";
-import IntervilleConfig from "./IntervilleConfig";
+import IntervilleRates from "./IntervilleRates";
+import TarifsEnlevementRates from "./TarifsEnlevementRates";
+import Tabs from "../components/common/Tabs";
 
+// La grille de tranches km sert à la fois l'enlèvement ET la livraison à
+// domicile (grille partagée, voir MissionService côté backend).
 const TABS = [
-  { id: "simple", label: "Internationale (LD)", fullLabel: "Tarification Internationale (LD)" },
-  { id: "groupee", label: "Internationale (Groupage)", fullLabel: "Tarification Internationale (Groupage)" },
-  { id: "interville", label: "Interville (National)", fullLabel: "Tarification Interville (National)" },
+  { id: "simple", label: "Internationale (LD)", shortLabel: "LD", icon: Globe },
+  { id: "groupee", label: "Internationale (Groupage)", shortLabel: "Groupage", icon: Layers },
+  { id: "interville", label: "Interville (National)", shortLabel: "Interville", icon: ArrowLeftRight },
+  { id: "enlevement", label: "Enlèvement & Livraison à domicile", shortLabel: "Enlèvement & Livraison", icon: PackageCheck },
 ];
 
 const Tarification = () => {
@@ -14,31 +20,20 @@ const Tarification = () => {
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
-      <div className="sticky top-[-24px] md:top-[-32px] z-40 bg-[#f1f5f9] -mx-6 px-6 md:-mx-8 md:px-8 pt-4 lg:pt-2 pb-3">
-        {/* Onglets pleine largeur en 3 colonnes égales sur mobile (labels
-            raccourcis, pas d'icônes) ; largeur naturelle avec libellé complet
-            à partir de md. */}
-        <div className="grid grid-cols-3 md:inline-flex md:w-fit bg-white rounded-lg border border-slate-200 p-1 shadow-sm gap-1 md:gap-0">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-2 md:px-4 py-2 rounded-md text-xs md:text-sm font-medium text-center transition-all ${
-                activeTab === tab.id
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <span className="md:hidden">{tab.label}</span>
-              <span className="hidden md:inline">{tab.fullLabel}</span>
-            </button>
-          ))}
-        </div>
+      <div className="sticky top-[-24px] md:top-[-32px] z-40 bg-[#f1f5f9] -mx-6 px-6 md:-mx-8 md:px-8 pt-4 lg:pt-2 space-y-3">
+        <header>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Tarification</h1>
+          <p className="text-sm md:text-base text-slate-500 mt-0.5 font-medium">
+            Grilles de prix par type d'expédition et par service à domicile
+          </p>
+        </header>
+        <Tabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
       </div>
 
       {activeTab === "simple" && <SimpleRates />}
       {activeTab === "groupee" && <GroupedRates />}
-      {activeTab === "interville" && <IntervilleConfig />}
+      {activeTab === "interville" && <IntervilleRates />}
+      {activeTab === "enlevement" && <TarifsEnlevementRates />}
     </div>
   );
 };
