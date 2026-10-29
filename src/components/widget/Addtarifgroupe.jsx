@@ -34,9 +34,7 @@ const Addtarifgroupe = ({
     commune_depart_id: '',
     commune_arrivee_id: '',
     montant_base: '',
-    pourcentage_prestation: '',
-    montant_minimum: '',
-    pourcentage_prestation_minimum: ''
+    pourcentage_prestation: ''
   });
   const [errors, setErrors] = useState({});
 
@@ -75,9 +73,7 @@ const Addtarifgroupe = ({
         commune_depart_id: tarifToEdit.commune_depart_id || '',
         commune_arrivee_id: tarifToEdit.commune_arrivee_id || '',
         montant_base: tarifToEdit.montant_base || '',
-        pourcentage_prestation: tarifToEdit.pourcentage_prestation || '',
-        montant_minimum: tarifToEdit.montant_minimum ?? '',
-        pourcentage_prestation_minimum: tarifToEdit.pourcentage_prestation_minimum ?? ''
+        pourcentage_prestation: tarifToEdit.pourcentage_prestation || ''
       });
     }
   }, [tarifToEdit]);
@@ -105,9 +101,7 @@ const Addtarifgroupe = ({
       commune_depart_id: '',
       commune_arrivee_id: '',
       montant_base: '',
-      pourcentage_prestation: '',
-      montant_minimum: '',
-      pourcentage_prestation_minimum: ''
+      pourcentage_prestation: ''
     }));
     setErrors({});
   };
@@ -151,17 +145,6 @@ const Addtarifgroupe = ({
       newErrors.pourcentage_prestation = 'Pourcentage requis';
     }
 
-    // Le tarif minimum est optionnel, mais si l'un des deux champs est
-    // renseigné, l'autre devient requis (les deux vont toujours de pair).
-    const hasMontantMinimum = formData.montant_minimum !== '' && formData.montant_minimum !== null;
-    const hasPourcentageMinimum = formData.pourcentage_prestation_minimum !== '' && formData.pourcentage_prestation_minimum !== null;
-    if (hasMontantMinimum && !hasPourcentageMinimum) {
-      newErrors.pourcentage_prestation_minimum = 'Pourcentage du minimum requis';
-    }
-    if (hasPourcentageMinimum && !hasMontantMinimum) {
-      newErrors.montant_minimum = 'Montant du minimum requis';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -185,14 +168,10 @@ const Addtarifgroupe = ({
       // TarifGroupageController::add()).
       dataToSubmit.commune_depart_id = formData.commune_depart_id;
       dataToSubmit.commune_arrivee_id = formData.commune_arrivee_id;
-      if (formData.montant_minimum !== '' && formData.pourcentage_prestation_minimum !== '') {
-        dataToSubmit.montant_minimum = parseFloat(formData.montant_minimum);
-        dataToSubmit.pourcentage_prestation_minimum = parseFloat(formData.pourcentage_prestation_minimum);
-      }
     }
 
     // code_pays s'ajoute pour les 4 types geo-dependants (le bloc DHD
-    // ci-dessus reste separe : ligne/category_id/plancher lui sont propres).
+    // ci-dessus reste separe : ligne/category_id lui sont propres).
     if (type_expedition === 'GROUPAGE_AFRIQUE' || type_expedition === 'GROUPAGE_CA' || type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
       dataToSubmit.code_pays = formData.code_pays;
     }
@@ -494,88 +473,6 @@ const Addtarifgroupe = ({
           )}
         </div>
       </div>
-
-      {/* STEP 4: Minimum Tariff (DHD only) */}
-      {(formData.type_expedition === 'GROUPAGE_DHD_AERIEN' || formData.type_expedition === 'GROUPAGE_DHD_MARITIME') && (
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold text-sm shadow-lg">
-              4
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-slate-800">Tarif minimum (optionnel)</h3>
-              <p className="text-xs text-slate-500">Plancher appliqué si le tarif calculé pour cette ligne tombe en dessous</p>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-orange-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Montant minimum ({getCurrencyLabel()})</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={formData.montant_minimum}
-                    onChange={(e) => handleInputChange('montant_minimum', e.target.value)}
-                    min="0"
-                    className={`w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white transition-all font-medium text-slate-800 ${errors.montant_minimum ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
-                    placeholder="13500"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500">{getCurrencyLabel()}</div>
-                </div>
-                {errors.montant_minimum && (
-                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><span>⚠️</span> {errors.montant_minimum}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Prestation agence (minimum)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={formData.pourcentage_prestation_minimum}
-                    onChange={(e) => handleInputChange('pourcentage_prestation_minimum', e.target.value)}
-                    min="0"
-                    max="100"
-                    className={`w-full px-3 py-2.5 border rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white transition-all font-medium text-slate-800 ${errors.pourcentage_prestation_minimum ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
-                    placeholder="10"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-orange-600">%</div>
-                </div>
-                {errors.pourcentage_prestation_minimum && (
-                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><span>⚠️</span> {errors.pourcentage_prestation_minimum}</p>
-                )}
-              </div>
-            </div>
-
-            {formData.montant_minimum !== '' && formData.pourcentage_prestation_minimum !== '' && (
-              <div className="mt-4 p-3 bg-white rounded-md border border-gray-200">
-                <div className="text-xs text-slate-600 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Base:</span>
-                    <span className="font-semibold">{formatCurrency(parseFloat(formData.montant_minimum) || 0)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Prestation ({formData.pourcentage_prestation_minimum}%):</span>
-                    <span className="font-semibold text-orange-600">
-                      +{formatCurrency((parseFloat(formData.montant_minimum) || 0) * (parseFloat(formData.pourcentage_prestation_minimum) || 0) / 100)}
-                    </span>
-                  </div>
-                  <div className="border-t border-gray-200 pt-1 mt-1"></div>
-                  <div className="flex justify-between font-bold text-sm">
-                    <span>Total:</span>
-                    <span className="text-emerald-600">
-                      {formatCurrency(
-                        (parseFloat(formData.montant_minimum) || 0) +
-                        ((parseFloat(formData.montant_minimum) || 0) * (parseFloat(formData.pourcentage_prestation_minimum) || 0)) / 100
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
     </form>
   );

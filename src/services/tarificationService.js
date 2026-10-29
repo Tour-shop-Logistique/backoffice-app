@@ -65,6 +65,21 @@ const updateGroupedTarifStatus = async (arg) => {
   return response.data;
 };
 
+const getMinimumsLigne = async () => {
+  const response = await api.get('/tarification/list-minimum-ligne');
+  return response.data.minimums;
+};
+
+const saveMinimumLigne = async (data) => {
+  const response = await api.post('/tarification/save-minimum-ligne', data);
+  return response.data;
+};
+
+const deleteMinimumLigne = async (id) => {
+  const response = await api.delete(`/tarification/delete-minimum-ligne/${id}`);
+  return response.data;
+};
+
 const getIntervilleTarifs = async () => {
   const response = await api.get('/tarification/list-interville');
   return response.data.tarifs;
@@ -153,6 +168,9 @@ const tarificationService = {
   editGroupedTarif,
   deleteGroupedTarif,
   updateGroupedTarifStatus,
+  getMinimumsLigne,
+  saveMinimumLigne,
+  deleteMinimumLigne,
   getIntervilleTarifs,
   addIntervilleTarif,
   addIntervilleTarifBulk,

@@ -23,6 +23,7 @@ import { fetchCategories } from "../redux/slices/produitSlice";
 import { fetchGroupedTarifs, addGroupedTarif, editGroupedTarif, updateGroupedTarifStatus, deleteGroupedTarif } from "../redux/slices/tarificationSlice";
 import { normalizeSearch } from '../utils/normalizeSearch';
 import Addtarifgroupe from '../components/widget/Addtarifgroupe';
+import MinimumLignesPanel from '../components/widget/MinimumLignesPanel';
 import Modal from '../components/common/Modal';
 import DeleteModal from '../components/common/DeleteModal';
 import RowActions from '../components/common/RowActions';
@@ -230,7 +231,6 @@ const GroupedRates = () => {
     { header: '% Prestation', key: 'pourcentage_prestation' },
     { header: `Montant Prestation (${getCurrencyLabel()})`, key: 'montant_prestation' },
     { header: `Total (${getCurrencyLabel()})`, key: 'total' },
-    { header: `Total Minimum (${getCurrencyLabel()})`, key: 'total_minimum' },
     { header: 'Actif', key: 'actif' },
   ]), []);
 
@@ -247,7 +247,6 @@ const GroupedRates = () => {
       pourcentage_prestation: prest,
       montant_prestation: mp,
       total: exp,
-      total_minimum: tarif.montant_expedition_minimum != null ? Number(tarif.montant_expedition_minimum) : '',
       actif: tarif.actif ? 'Oui' : 'Non',
     };
   }), [filteredTarifs]);
@@ -415,6 +414,8 @@ const GroupedRates = () => {
         </div>
       </div>
 
+      <MinimumLignesPanel tarifs={groupedTarifs} />
+
       {/* TABS + CONTENT - Mobile Optimized */}
       <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {/* Tabs */}
@@ -531,11 +532,6 @@ const GroupedRates = () => {
                         </td>
                         <td className="px-6 py-3">
                           <p className="font-bold text-slate-900">{exp.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
-                          {tarif.montant_expedition_minimum != null && (
-                            <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100 whitespace-nowrap">
-                              Min: {Number(tarif.montant_expedition_minimum).toLocaleString()} {getCurrencyLabel()}
-                            </span>
-                          )}
                         </td>
                         <td className="px-6 py-3 text-center">
                           {canToggleStatus ? (
@@ -605,11 +601,6 @@ const GroupedRates = () => {
                           {tarif.category && (
                             <span className="text-sm font-semibold text-blue-600 truncate">
                               Catégorie : {tarif.category?.nom}
-                            </span>
-                          )}
-                          {tarif.montant_expedition_minimum != null && (
-                            <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100 whitespace-nowrap">
-                              Min: {Number(tarif.montant_expedition_minimum).toLocaleString()} {getCurrencyLabel()}
                             </span>
                           )}
                         </div>
