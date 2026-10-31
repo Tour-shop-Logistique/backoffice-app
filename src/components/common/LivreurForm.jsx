@@ -17,6 +17,7 @@ const LivreurForm = ({ id = "livreur-form", onSubmit, initialData }) => {
     type_vehicule: 'moto',
     numero_vehicule: '',
     zone_de_livraison_km: '',
+    est_interne: false,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -36,6 +37,7 @@ const LivreurForm = ({ id = "livreur-form", onSubmit, initialData }) => {
         type_vehicule: initialData.type_vehicule || 'moto',
         numero_vehicule: initialData.numero_vehicule || '',
         zone_de_livraison_km: initialData.zone_de_livraison_km ?? '',
+        est_interne: initialData.est_interne ?? false,
       });
     }
   }, [initialData]);
@@ -74,6 +76,7 @@ const LivreurForm = ({ id = "livreur-form", onSubmit, initialData }) => {
         type_vehicule: formData.type_vehicule,
         numero_vehicule: formData.numero_vehicule || null,
         zone_de_livraison_km: formData.zone_de_livraison_km === '' ? null : parseFloat(formData.zone_de_livraison_km),
+        est_interne: formData.est_interne,
       });
     } else {
       onSubmit({
@@ -214,6 +217,23 @@ const LivreurForm = ({ id = "livreur-form", onSubmit, initialData }) => {
           />
         </div>
       </div>
+
+      {isEditing && (
+        <label className="flex items-start gap-3 cursor-pointer select-none pt-1">
+          <input
+            type="checkbox"
+            checked={formData.est_interne}
+            onChange={(e) => setFormData((prev) => ({ ...prev, est_interne: e.target.checked }))}
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900/20"
+          />
+          <span className="text-sm text-slate-700">
+            <span className="font-semibold">Livreur interne</span>
+            <span className="block text-slate-500 text-xs mt-0.5">
+              Reçoit les missions d'enlèvement groupé en plus des missions express.
+            </span>
+          </span>
+        </label>
+      )}
     </form>
   );
 };
