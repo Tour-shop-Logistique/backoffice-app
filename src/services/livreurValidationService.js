@@ -5,8 +5,8 @@ const getLivreursEnAttente = async () => {
   return response.data.livreurs;
 };
 
-const validerLivreur = async (livreurId) => {
-  const response = await api.post(`/backoffice/livreurs/${livreurId}/valider`);
+const validerLivreur = async (livreurId, estInterne = false) => {
+  const response = await api.post(`/backoffice/livreurs/${livreurId}/valider`, { est_interne: estInterne });
   return response.data;
 };
 

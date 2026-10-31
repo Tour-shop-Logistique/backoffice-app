@@ -25,9 +25,9 @@ export const fetchLivreursEnAttente = createAsyncThunk(
 
 export const validerLivreur = createAsyncThunk(
   'livreurValidation/valider',
-  async (livreurId, { rejectWithValue }) => {
+  async ({ livreurId, estInterne }, { rejectWithValue }) => {
     try {
-      await livreurValidationService.validerLivreur(livreurId);
+      await livreurValidationService.validerLivreur(livreurId, estInterne);
       return livreurId;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);

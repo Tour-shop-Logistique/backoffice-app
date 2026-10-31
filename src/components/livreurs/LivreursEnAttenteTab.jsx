@@ -32,6 +32,7 @@ const LivreursEnAttenteTab = () => {
   const [selected, setSelected] = useState(null);
   const [action, setAction] = useState(null); // { livreur, mode: 'valider' | 'rejeter' }
   const [commentaire, setCommentaire] = useState('');
+  const [estInterne, setEstInterne] = useState(false);
 
   const refresh = () => dispatch(fetchLivreursEnAttente());
 
@@ -56,7 +57,7 @@ const LivreursEnAttenteTab = () => {
     if (!action) return;
     try {
       if (action.mode === 'valider') {
-        await dispatch(validerLivreur(action.livreur.id)).unwrap();
+        await dispatch(validerLivreur({ livreurId: action.livreur.id, estInterne })).unwrap();
         dispatch(showNotification({ type: 'success', message: 'Livreur validé, son compte est maintenant actif.' }));
       } else {
         await dispatch(rejeterLivreur({ livreurId: action.livreur.id, commentaire: commentaire || null })).unwrap();
@@ -64,6 +65,7 @@ const LivreursEnAttenteTab = () => {
       }
       setAction(null);
       setCommentaire('');
+      setEstInterne(false);
     } catch (err) {
       dispatch(showNotification({ type: 'error', message: err || 'Erreur lors du traitement.' }));
     }
@@ -308,7 +310,7 @@ const LivreursEnAttenteTab = () => {
       {/* Modal confirmation valider/rejeter */}
       <Modal
         isOpen={!!action}
-        onClose={() => { setAction(null); setCommentaire(''); }}
+        onClose={() => { setAction(null); setCommentaire(''); setEstInterne(false); }}
         title={action?.mode === 'valider' ? "Confirmer la validation" : "Confirmer le rejet"}
         subtitle={action?.livreur ? nomComplet(action.livreur) : ''}
         size="sm"
@@ -320,10 +322,26 @@ const LivreursEnAttenteTab = () => {
         {action?.livreur && (
           <div className="space-y-4">
             {action.mode === 'valider' ? (
-              <p className="text-sm text-slate-600">
-                Le compte de <strong>{nomComplet(action.livreur)}</strong> sera activé et le livreur
-                pourra se connecter et recevoir des missions.
-              </p>
+              <div className="space-y-4">
+                <p className="text-sm text-slate-600">
+                  Le compte de <strong>{nomComplet(action.livreur)}</strong> sera activé et le livreur
+                  pourra se connecter et recevoir des missions.
+                </p>
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={estInterne}
+                    onChange={(e) => setEstInterne(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900/20"
+                  />
+                  <span className="text-sm text-slate-700">
+                    <span className="font-semibold">Livreur interne</span>
+                    <span className="block text-slate-500 text-xs mt-0.5">
+                      Reçoit les missions d'enlèvement groupé en plus des missions express.
+                    </span>
+                  </span>
+                </label>
+              </div>
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-slate-600">
