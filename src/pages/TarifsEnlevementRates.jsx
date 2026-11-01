@@ -175,8 +175,8 @@ const TarifsEnlevementRates = () => {
         km_min: parseFloat(t.km_min) || 0,
         km_max: t.km_max == null ? 'Illimité' : parseFloat(t.km_max),
         montant: parseFloat(t.montant) || 0,
-        taux_express: t.taux_express ?? '',
-        montant_express: t.taux_express ? Math.round(parseFloat(t.montant) * parseFloat(t.taux_express)) : '',
+        taux_express: t.taux_express != null ? `${parseFloat(t.taux_express)}%` : '',
+        montant_express: t.taux_express != null ? Math.round(parseFloat(t.montant) * (1 + parseFloat(t.taux_express) / 100)) : '',
         actif: t.actif ? 'Oui' : 'Non',
     })), [tranches, communes]);
 
@@ -281,10 +281,10 @@ const TarifsEnlevementRates = () => {
                                                     <p className="font-bold text-slate-900">{(parseFloat(tranche.montant) || 0).toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                                                 </td>
                                                 <td className="px-6 py-3">
-                                                    {tranche.taux_express ? (
+                                                    {tranche.taux_express != null ? (
                                                         <div>
-                                                            <p className="font-bold text-amber-600">{Math.round(parseFloat(tranche.montant) * parseFloat(tranche.taux_express)).toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
-                                                            <p className="text-[10px] text-slate-400">×{parseFloat(tranche.taux_express)}</p>
+                                                            <p className="font-bold text-amber-600">{Math.round(parseFloat(tranche.montant) * (1 + parseFloat(tranche.taux_express) / 100)).toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
+                                                            <p className="text-[10px] text-slate-400">+{parseFloat(tranche.taux_express)}%</p>
                                                         </div>
                                                     ) : (
                                                         <span className="text-xs text-slate-400">Non configuré</span>
@@ -334,9 +334,9 @@ const TarifsEnlevementRates = () => {
                                                     <p className="text-xs text-slate-500 font-bold uppercase">
                                                         Standard : {(parseFloat(tranche.montant) || 0).toLocaleString()} {getCurrencyLabel()}
                                                     </p>
-                                                    {tranche.taux_express && (
+                                                    {tranche.taux_express != null && (
                                                         <p className="text-xs text-amber-600 font-bold">
-                                                            Express : {Math.round(parseFloat(tranche.montant) * parseFloat(tranche.taux_express)).toLocaleString()} {getCurrencyLabel()} (×{parseFloat(tranche.taux_express)})
+                                                            Express : {Math.round(parseFloat(tranche.montant) * (1 + parseFloat(tranche.taux_express) / 100)).toLocaleString()} {getCurrencyLabel()} (+{parseFloat(tranche.taux_express)}%)
                                                         </p>
                                                     )}
                                                 </div>
