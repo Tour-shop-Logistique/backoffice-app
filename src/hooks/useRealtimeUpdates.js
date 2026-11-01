@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getEcho } from '../services/echo';
-import { realtimeModelUpdated, fetchDashboardRecap } from '../redux/slices/parcelSlice';
+import { realtimeModelUpdated, fetchDashboardRecap, fetchParcels } from '../redux/slices/parcelSlice';
 import { realtimeExpeditionUpdated } from '../redux/slices/backofficeSlice';
 import { appendMessageToConversation, updateMessageInConversation, removeMessageFromConversation } from '../redux/slices/messageSlice';
 import { updateUserRole } from '../redux/slices/authSlice';
@@ -17,6 +17,17 @@ import soundNotification from '../utils/soundNotification';
  * Un seul listener pour toutes les entités — pas besoin d'en ajouter un par
  * nouveau cas d'usage côté backend.
  */
+// Actions qui peuvent ajouter un nouveau colis dans la liste "à contrôler" :
+// un refetch complet est nécessaire car realtimeModelUpdated ne fait que patcher
+// les lignes existantes, jamais en insérer de nouvelles.
+const TODO_REFETCH_ACTIONS = new Set([
+  'colis_shipped_to_warehouse', // agence envoie à l'entrepôt
+  'colis_received_depart',      // agence reçoit au départ
+  'status_changed',             // transition peut faire entrer en "à contrôler"
+  'controlled',                 // contrôle backoffice déclenche mise à jour liste
+  'enlevement_demande',         // client demande enlèvement
+]);
+
 export default function useRealtimeUpdates(backofficeId, navigate) {
   const dispatch = useDispatch();
   // Nécessaire pour ne pas insérer une expédition "created" dans les arrivages
@@ -24,6 +35,8 @@ export default function useRealtimeUpdates(backofficeId, navigate) {
   // seul le backoffice du pays de destination doit voir apparaître le colis).
   const backofficeCountry = useSelector((state) => state.backoffice?.config?.pays);
   const currentUserId = useSelector((state) => state.auth?.user?.id);
+  // Debounce pour regrouper les rafales d'events (ex. batch de contrôle)
+  const todoRefetchTimer = useRef(null);
 
   useEffect(() => {
     if (!backofficeId) return;
@@ -89,12 +102,24 @@ export default function useRealtimeUpdates(backofficeId, navigate) {
       if (payload.model === 'Expedition' || payload.model === 'Colis') {
         dispatch(realtimeExpeditionUpdated(payload));
       }
+
+      // Refetch todoList sur les actions susceptibles d'ajouter de nouvelles
+      // lignes : realtimeModelUpdated ne patch que l'existant, il ne peut pas
+      // insérer un colis qui n'est pas encore dans le state.
+      if (TODO_REFETCH_ACTIONS.has(payload.action)) {
+        clearTimeout(todoRefetchTimer.current);
+        todoRefetchTimer.current = setTimeout(() => {
+          dispatch(fetchParcels({ listType: 'todo' }));
+        }, 1000);
+      }
+
       // Rafraîchit les compteurs du dashboard à chaque changement, peu coûteux.
       dispatch(fetchDashboardRecap());
     });
 
     return () => {
       echo.leave(`backoffice.${backofficeId}`);
+      clearTimeout(todoRefetchTimer.current);
     };
   }, [backofficeId, dispatch, backofficeCountry, currentUserId, navigate]);
 }
