@@ -192,9 +192,9 @@ const Parcels = () => {
   const handleDepartClick = (expedition, colisCount) => {
     const target = { ...expedition, colis_count: colisCount };
     setSelectedExpedition(target);
+    setLienTracking(expedition.code_suivi_expedition || '');
     if (!expedition.infos_depart_renseignees) {
       setFraisExpedition('');
-      setLienTracking(expedition.code_suivi_expedition || '');
       setIsExpeditionModalOpen(true);
     } else {
       setIsConfirmModalOpen(true);
@@ -248,6 +248,17 @@ const Parcels = () => {
     if (!selectedExpedition) return;
 
     try {
+      // Si LD et que le code tracking a été modifié dans ce modal (pas encore
+      // sauvegardé), on le persiste avant de confirmer le départ.
+      const trackingActuel = liveSelectedExpedition?.code_suivi_expedition || '';
+      if (liveSelectedExpedition?.type_expedition === 'simple' && lienTracking.trim() !== trackingActuel) {
+        await dispatch(updateExpeditionInfo({
+          id: selectedExpedition.id,
+          frais_annexes: liveSelectedExpedition?.frais_annexes ?? '',
+          code_suivi_expedition: lienTracking.trim(),
+        })).unwrap();
+      }
+
       await dispatch(confirmExpeditionDepart(selectedExpedition.id)).unwrap();
 
       dispatch(showNotification({
@@ -411,6 +422,9 @@ const Parcels = () => {
   const decisionAgenceRequise = fraisAnnexesMontant > 0 && !liveSelectedExpedition?.frais_decision_agence_prise;
   // Les frais restent modifiables tant qu'ils n'ont pas été effectivement payés.
   const fraisModifiables = liveSelectedExpedition?.statut_paiement_frais !== 'paye';
+  // LD (simple) exige un code de suivi avant de confirmer le départ.
+  const isLD = liveSelectedExpedition?.type_expedition === 'simple';
+  const trackingManquant = isLD && !lienTracking.trim();
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
@@ -964,8 +978,8 @@ const Parcels = () => {
               <button
                 type="button"
                 onClick={handleConfirmDepartAction}
-                disabled={isUpdatingExpedition || decisionAgenceRequise || agenceReceptionManquante}
-                title={agenceReceptionManquante ? "Renseignez l'agence de réception pour chaque colis" : undefined}
+                disabled={isUpdatingExpedition || decisionAgenceRequise || agenceReceptionManquante || trackingManquant}
+                title={trackingManquant ? "Renseignez le code de suivi pour ce transport routier" : agenceReceptionManquante ? "Renseignez l'agence de réception pour chaque colis" : undefined}
                 className="w-full sm:w-auto px-6 py-2.5 bg-slate-900 hover:bg-slate-800 shadow-slate-900/10 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg disabled:opacity-50"
               >
                 {isUpdatingExpedition ? <Loader2 className="animate-spin h-5 w-5" /> : 'Confirmer'}
@@ -994,6 +1008,29 @@ const Parcels = () => {
                   L'agence de départ n'a pas encore confirmé le règlement des frais annexes. Le départ ne peut pas être validé tant qu'elle n'a pas choisi entre "payé maintenant" et "à percevoir à l'arrivée".
                 </p>
               </div>
+            </div>
+          )}
+
+          {isLD && (
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest px-1">
+                Code de suivi / Tracking <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative group">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors" size={18} />
+                <input
+                  type="text"
+                  value={lienTracking}
+                  onChange={(e) => setLienTracking(e.target.value)}
+                  placeholder="Ex : TRACK-123456"
+                  className={`w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-bold text-slate-900 transition-all placeholder:font-normal ${
+                    trackingManquant ? 'border-rose-300 bg-rose-50/30' : 'border-slate-200'
+                  }`}
+                />
+              </div>
+              {trackingManquant && (
+                <p className="text-xs text-rose-600 font-medium px-1">Requis pour les expéditions LD avant de confirmer le départ.</p>
+              )}
             </div>
           )}
 
