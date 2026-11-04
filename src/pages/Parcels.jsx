@@ -384,8 +384,6 @@ const Parcels = () => {
     });
   }, [liveSelectedColis]);
 
-  const agenceReceptionManquante = liveSelectedColis.some(c => !agenceReceptionParColis[c.code_colis]);
-
   const handleAssignAgenceReception = async (code, agenceId) => {
     setAgenceReceptionParColis(prev => ({ ...prev, [code]: agenceId }));
     if (!agenceId) return;
@@ -425,6 +423,8 @@ const Parcels = () => {
   // LD (simple) exige un code de suivi avant de confirmer le départ.
   const isLD = liveSelectedExpedition?.type_expedition === 'simple';
   const trackingManquant = isLD && !lienTracking.trim();
+  // Pour LD, pas d'agence de réception à assigner (FedEx/DHL prend le relais).
+  const agenceReceptionManquante = !isLD && liveSelectedColis.some(c => !agenceReceptionParColis[c.code_colis]);
 
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12 font-sans">
@@ -1104,9 +1104,9 @@ const Parcels = () => {
             </div>
           </div>
 
-          {/* Agence de réception : choisie ici, au départ, plutôt que par
-              le backoffice d'arrivée après réception. */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+          {/* Agence de réception : uniquement pour les expéditions non-LD.
+              Pour LD, FedEx/DHL gère la livraison finale. */}
+          {!isLD && <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Building2 size={16} className="text-slate-400" />
@@ -1153,7 +1153,7 @@ const Parcels = () => {
                 ))}
               </div>
             )}
-          </div>
+          </div>}
         </div>
       </Modal>
 
