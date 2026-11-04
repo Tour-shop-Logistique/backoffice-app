@@ -214,6 +214,18 @@ export const receiveParcels = createAsyncThunk(
     }
 );
 
+export const marquerLivraisonLD = createAsyncThunk(
+    'parcels/marquerLivraisonLD',
+    async (id, { rejectWithValue }) => {
+        try {
+            const response = await api.put(`/backoffice/expedition-ld-livree/${id}`);
+            return { id, data: response.data };
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
 export const assignParcels = createAsyncThunk(
     'parcels/assignParcels',
     async (payload, { rejectWithValue }) => {
@@ -616,6 +628,28 @@ const parcelSlice = createSlice({
             .addCase(confirmExpeditionDepart.rejected, (state) => {
                 state.isUpdatingExpedition = false;
             })
+
+            // Marquer livraison LD
+            .addCase(marquerLivraisonLD.pending, (state) => {
+                state.isUpdatingExpedition = true;
+            })
+            .addCase(marquerLivraisonLD.fulfilled, (state, action) => {
+                state.isUpdatingExpedition = false;
+                const { id } = action.payload;
+                const setTermined = (list) => {
+                    list.items.forEach(parcel => {
+                        if (parcel.expedition?.id === id) {
+                            parcel.expedition.statut_expedition = 'termined';
+                        }
+                    });
+                };
+                setTermined(state.historyList);
+                setTermined(state.incomingList);
+            })
+            .addCase(marquerLivraisonLD.rejected, (state) => {
+                state.isUpdatingExpedition = false;
+            })
+
             // Control Parcels (Bulk)
             .addCase(controlParcels.pending, (state) => {
                 state.isBulkControlling = true;

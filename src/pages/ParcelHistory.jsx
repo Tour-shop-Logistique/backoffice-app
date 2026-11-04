@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchParcels, fetchInterville, updateExpeditionInfo } from '../redux/slices/parcelSlice';
+import { fetchParcels, fetchInterville, updateExpeditionInfo, marquerLivraisonLD } from '../redux/slices/parcelSlice';
+import { showNotification } from '../redux/slices/uiSlice';
 import { ROUTES } from '../routes';
 import Modal from '../components/common/Modal';
 import useHasPermission from '../hooks/useHasPermission';
@@ -46,6 +47,7 @@ const ParcelHistory = () => {
     // Interville : lecture seule, le backoffice n'y intervient jamais
     // (cahier des charges §8.1) - pas de bouton d'édition sur cet onglet.
     const canEditExpedition = useHasPermission('expeditions.update_info') && activeTab !== 'interville';
+    const canConfirmDepart = useHasPermission('expeditions.confirm_depart');
 
     // Expedition Edit State
     const [isExpeditionModalOpen, setIsExpeditionModalOpen] = useState(false);
@@ -110,6 +112,15 @@ const ParcelHistory = () => {
         }));
 
         setIsExpeditionModalOpen(false);
+    };
+
+    const handleMarquerLivraisonLD = async (expeditionId) => {
+        try {
+            await dispatch(marquerLivraisonLD(expeditionId)).unwrap();
+            dispatch(showNotification({ type: 'success', message: 'Expédition marquée comme livrée à destination.' }));
+        } catch (error) {
+            dispatch(showNotification({ type: 'error', message: error.message || 'Erreur lors du marquage de la livraison.' }));
+        }
     };
 
     const getStatusInfo = (status) => {
@@ -433,6 +444,16 @@ const ParcelHistory = () => {
                                                             <Edit2 size={13} className="group-hover:scale-110 transition-transform" />
                                                         </button>
                                                     )}
+                                                    {canConfirmDepart && group.expedition?.type_expedition === 'simple' && group.expedition?.statut_expedition === 'depart_expedition_succes' && (
+                                                        <button
+                                                            onClick={() => handleMarquerLivraisonLD(group.expedition.id)}
+                                                            disabled={isUpdatingExpedition}
+                                                            className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 rounded-lg text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm disabled:opacity-50"
+                                                            title="Marquer comme livré à destination (LD)"
+                                                        >
+                                                            Livré
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -532,16 +553,25 @@ const ParcelHistory = () => {
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="flex items-center">
+                                        <div className="flex items-center gap-1.5">
                                             <span className="text-xs font-bold bg-white px-2 py-1 rounded border border-slate-200 text-slate-500">
                                                 {group.parcels.length}
                                             </span>
                                             {canEditExpedition && (
                                                 <button
                                                     onClick={() => handleEditExpedition(group.expedition)}
-                                                    className="ml-2 p-1.5 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-blue-600 active:bg-slate-50"
+                                                    className="p-1.5 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-blue-600 active:bg-slate-50"
                                                 >
                                                     <Edit2 size={14} />
+                                                </button>
+                                            )}
+                                            {canConfirmDepart && group.expedition?.type_expedition === 'simple' && group.expedition?.statut_expedition === 'depart_expedition_succes' && (
+                                                <button
+                                                    onClick={() => handleMarquerLivraisonLD(group.expedition.id)}
+                                                    disabled={isUpdatingExpedition}
+                                                    className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 rounded text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                                                >
+                                                    Livré
                                                 </button>
                                             )}
                                         </div>
