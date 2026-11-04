@@ -51,7 +51,7 @@ const Addtarifgroupe = ({
   const [isLoadingCommunesArrivee, setIsLoadingCommunesArrivee] = useState(false);
 
   useEffect(() => {
-    if (!formData.code_pays || !['GROUPAGE_DHD_AERIEN', 'GROUPAGE_DHD_MARITIME'].includes(formData.type_expedition)) {
+    if (!formData.code_pays || !['GROUPAGE_DHD_AERIEN', 'GROUPAGE_DHD_MARITIME', 'GROUPAGE_CA'].includes(formData.type_expedition)) {
       setCommunesArrivee([]);
       return;
     }
@@ -132,6 +132,10 @@ const Addtarifgroupe = ({
       if (!formData.commune_depart_id) newErrors.commune_depart_id = 'Commune de départ requise';
       if (!formData.commune_arrivee_id) newErrors.commune_arrivee_id = 'Commune d\'arrivée requise';
     }
+    if (type_expedition === 'GROUPAGE_CA') {
+      if (!formData.commune_depart_id) newErrors.commune_depart_id = 'Commune de départ requise';
+      if (!formData.commune_arrivee_id) newErrors.commune_arrivee_id = 'Commune d\'arrivée requise';
+    }
 
     // code_pays est desormais requis pour les 4 types geo-dependants
     // (GROUPAGE_AFRIQUE -> pays africain uniquement ; GROUPAGE_CA et DHD ->
@@ -163,9 +167,10 @@ const Addtarifgroupe = ({
 
     if (type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
       dataToSubmit.category_id = formData.category_id;
-      // "ligne" n'est plus construite côté client : le backend la dérive
-      // désormais des deux communes (source de vérité unique, voir
-      // TarifGroupageController::add()).
+      dataToSubmit.commune_depart_id = formData.commune_depart_id;
+      dataToSubmit.commune_arrivee_id = formData.commune_arrivee_id;
+    }
+    if (type_expedition === 'GROUPAGE_CA') {
       dataToSubmit.commune_depart_id = formData.commune_depart_id;
       dataToSubmit.commune_arrivee_id = formData.commune_arrivee_id;
     }
@@ -347,38 +352,97 @@ const Addtarifgroupe = ({
         </div>
       )}
 
-      {/* STEP 2: Destination (Afrique uniquement, ou CA hors Afrique) */}
-      {(formData.type_expedition === 'GROUPAGE_AFRIQUE' || formData.type_expedition === 'GROUPAGE_CA') && (
+      {/* STEP 2: Destination Afrique (pays uniquement) */}
+      {formData.type_expedition === 'GROUPAGE_AFRIQUE' && (
         <div className="relative">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold text-sm shadow-lg">
               2
             </div>
-            <h3 className="text-lg font-semibold text-slate-800">
-              {formData.type_expedition === 'GROUPAGE_AFRIQUE' ? 'Destination Afrique' : 'Pays de destination'}
-            </h3>
+            <h3 className="text-lg font-semibold text-slate-800">Destination Afrique</h3>
           </div>
-
           <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-orange-200 shadow-sm">
             <label className="block text-sm font-semibold text-slate-700 mb-2">
-              <span className="inline-flex items-center gap-2">
-                Pays <span className="text-red-500">*</span>
-              </span>
+              <span className="inline-flex items-center gap-2">Pays <span className="text-red-500">*</span></span>
             </label>
-
             <SearchableDropdown
               value={formData.code_pays}
               onChange={(code) => handleInputChange('code_pays', code)}
-              options={(formData.type_expedition === 'GROUPAGE_AFRIQUE' ? AFRICAN_COUNTRY_OPTIONS : COUNTRY_OPTIONS).map((c) => ({ label: c.label, value: c.id }))}
+              options={AFRICAN_COUNTRY_OPTIONS.map((c) => ({ label: c.label, value: c.id }))}
               placeholder="Rechercher un pays..."
               error={errors.code_pays}
             />
-
             {errors.code_pays && (
               <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
                 <span>⚠️</span> {errors.code_pays}
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* STEP 2: Itinéraire CA (pays + communes départ/arrivée, sans catégorie) */}
+      {formData.type_expedition === 'GROUPAGE_CA' && (
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold text-sm shadow-lg">
+              2
+            </div>
+            <h3 className="text-lg font-semibold text-slate-800">Itinéraire CA</h3>
+          </div>
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-orange-200 shadow-sm space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                <span className="inline-flex items-center gap-2">Pays de destination <span className="text-red-500">*</span></span>
+              </label>
+              <SearchableDropdown
+                value={formData.code_pays}
+                onChange={(code) => { handleInputChange('code_pays', code); handleInputChange('commune_arrivee_id', ''); }}
+                options={COUNTRY_OPTIONS.map((c) => ({ label: c.label, value: c.id }))}
+                placeholder="Rechercher un pays..."
+                error={errors.code_pays}
+              />
+              {errors.code_pays && (
+                <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1"><span>⚠️</span> {errors.code_pays}</p>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Commune de départ <span className="text-red-500">*</span>
+                </label>
+                <SearchableDropdown
+                  value={formData.commune_depart_id}
+                  onChange={(v) => handleInputChange('commune_depart_id', v)}
+                  options={communes.map((c) => ({ label: c.nom, value: c.id }))}
+                  placeholder={isLoadingCommunes ? 'Chargement...' : 'Sélectionner...'}
+                  error={errors.commune_depart_id}
+                  themeColor="blue"
+                />
+                {errors.commune_depart_id && (
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><span>⚠️</span> {errors.commune_depart_id}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Commune d'arrivée <span className="text-red-500">*</span>
+                </label>
+                <SearchableDropdown
+                  value={formData.commune_arrivee_id}
+                  onChange={(v) => handleInputChange('commune_arrivee_id', v)}
+                  options={communesArrivee.map((c) => ({ label: c.nom, value: c.id }))}
+                  placeholder={!formData.code_pays ? 'Choisissez d\'abord un pays...' : isLoadingCommunesArrivee ? 'Chargement...' : 'Sélectionner...'}
+                  error={errors.commune_arrivee_id}
+                  themeColor="emerald"
+                />
+                {errors.commune_arrivee_id && (
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><span>⚠️</span> {errors.commune_arrivee_id}</p>
+                )}
+                {formData.code_pays && !isLoadingCommunesArrivee && communesArrivee.length === 0 && (
+                  <p className="text-[10px] text-amber-600 mt-1">Aucune commune configurée pour ce pays.</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
