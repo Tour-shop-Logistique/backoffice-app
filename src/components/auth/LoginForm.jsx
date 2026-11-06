@@ -5,7 +5,7 @@ import { login } from '../../redux/slices/authSlice';
 import { Loader2, Eye, EyeOff, User, Lock } from 'lucide-react';
 import { ROUTES } from '../../routes';
 
-const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword }) => {
+const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword, onVerificationRequired }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { isLoading, error, isAuthenticated } = useSelector((state) => state.auth);
@@ -35,7 +35,11 @@ const LoginForm = ({ onSuccess, switchToRegister, switchToForgotPassword }) => {
             ? { email: identifier, password: formData.password }
             : { telephone: identifier, password: formData.password };
 
-        dispatch(login(credentials));
+        dispatch(login(credentials)).then((action) => {
+            if (action.type === login.rejected.type && action.payload?.code === 'EMAIL_NOT_VERIFIED' && onVerificationRequired) {
+                onVerificationRequired(action.payload.email);
+            }
+        });
     };
 
     return (

@@ -102,6 +102,10 @@ const WelcomePage = () => {
                   onSuccess={() => { }}
                   switchToRegister={() => setActiveView('register')}
                   switchToForgotPassword={() => setActiveView('forgot')}
+                  onVerificationRequired={(email) => {
+                    setVerificationEmail(email);
+                    setActiveView('verify-email');
+                  }}
                 />
               )}
 
