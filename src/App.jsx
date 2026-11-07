@@ -12,6 +12,7 @@ import ScrollToTop from './components/common/ScrollToTop';
 // Composants statiques pour navigation instantanée
 import Layout from './components/layout/Layout';
 import WelcomePage from './pages/WelcomePage';
+import Inscription from './pages/Inscription';
 
 // Pages chargées à la demande (code-splitting par route)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -55,6 +56,7 @@ function App() {
         <Routes>
           {/* Routes Publiques */}
           <Route path={ROUTES.HOME} element={<WelcomePage />} />
+          <Route path="/inscription" element={<Inscription />} />
 
           {/* Routes Protégées (Backoffice) */}
           <Route
