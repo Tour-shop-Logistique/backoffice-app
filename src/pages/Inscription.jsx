@@ -116,7 +116,7 @@ const Inscription = () => {
 
     const aside = (
         <>
-            <h1 className="text-3xl font-bold leading-tight mb-3">Ouvrez le backoffice de votre pays</h1>
+            <h1 className="text-3xl font-bold leading-tight mb-3 text-white">Ouvrez le backoffice de votre pays</h1>
             <p className="text-white/70 mb-10 max-w-sm">
                 Deux étapes, quelques minutes. Logo, tarifs et zones se configurent ensuite depuis les paramètres.
             </p>

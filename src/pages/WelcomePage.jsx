@@ -36,7 +36,7 @@ const WelcomePage = () => {
 
   const aside = (
     <>
-      <h1 className="text-4xl font-bold leading-tight">
+      <h1 className="text-4xl font-bold leading-tight text-white">
         Pilotez vos<br />
         <span className="text-emerald-400">opérations.</span>
       </h1>
