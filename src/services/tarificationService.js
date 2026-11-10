@@ -136,6 +136,11 @@ const updateEnlevementTrancheKmStatus = async (trancheId) => {
   return response.data;
 };
 
+const appliquerTauxExpressGlobalEnlevement = async (payload) => {
+  const response = await api.put('/tarification/taux-express-global-enlevement-tranches-km', payload);
+  return response.data;
+};
+
 const getFormatsColis = async () => {
   const response = await api.get('/tarification/list-formats-colis');
   return response.data.formats;
@@ -182,6 +187,7 @@ const tarificationService = {
   editEnlevementTrancheKm,
   deleteEnlevementTrancheKm,
   updateEnlevementTrancheKmStatus,
+  appliquerTauxExpressGlobalEnlevement,
   getFormatsColis,
   addFormatColis,
   editFormatColis,

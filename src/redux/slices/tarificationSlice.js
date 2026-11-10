@@ -320,6 +320,17 @@ export const deleteEnlevementTrancheKm = createAsyncThunk(
   }
 );
 
+export const appliquerTauxExpressGlobalEnlevement = createAsyncThunk(
+  'tarification/appliquerTauxExpressGlobalEnlevement',
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await tarificationService.appliquerTauxExpressGlobalEnlevement(payload);
+    } catch (error) {
+      return rejectWithValue(error.response?.data);
+    }
+  }
+);
+
 export const updateEnlevementTrancheKmStatus = createAsyncThunk(
   'tarification/updateEnlevementTrancheKmStatus',
   async (trancheId, { rejectWithValue }) => {
@@ -665,6 +676,15 @@ const tarificationSlice = createSlice({
         state.enlevementTranchesKm = state.enlevementTranchesKm.map((t) =>
           t.id === trancheId
             ? { ...t, ...trancheData, ...(updated && updated.id ? updated : {}) }
+            : t
+        );
+      })
+
+      .addCase(appliquerTauxExpressGlobalEnlevement.fulfilled, (state, action) => {
+        const { commune_id, type_vehicule, taux_express } = action.meta.arg;
+        state.enlevementTranchesKm = state.enlevementTranchesKm.map((t) =>
+          String(t.commune_id) === String(commune_id) && (t.type_vehicule || 'moto') === type_vehicule
+            ? { ...t, taux_express }
             : t
         );
       })

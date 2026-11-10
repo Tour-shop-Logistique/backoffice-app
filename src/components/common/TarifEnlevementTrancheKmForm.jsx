@@ -8,7 +8,7 @@ import { getCurrencyLabel } from '../../utils/format';
  * backend. Le véhicule n'est jamais modifiable à l'édition, comme la
  * commune : deux grilles indépendantes, une par véhicule.
  */
-const TarifEnlevementTrancheKmForm = ({ id = "tranche-km-form", onSubmit, initialData, communeId, defaultTypeVehicule = 'moto' }) => {
+const TarifEnlevementTrancheKmForm = ({ id = "tranche-km-form", onSubmit, initialData, communeId, defaultTypeVehicule = 'moto', defaultKmMin = '' }) => {
   const [formData, setFormData] = useState({ type_vehicule: defaultTypeVehicule, km_min: '', km_max: '', montant: '', taux_express: '' });
 
   useEffect(() => {
@@ -22,9 +22,11 @@ const TarifEnlevementTrancheKmForm = ({ id = "tranche-km-form", onSubmit, initia
         taux_express: initialData.taux_express != null ? parseFloat(initialData.taux_express).toString() : '',
       });
     } else {
-      setFormData(prev => ({ ...prev, type_vehicule: defaultTypeVehicule }));
+      // km_min pré-rempli avec la fin de la dernière tranche pour enchaîner
+      // la grille sans trou (reste modifiable).
+      setFormData(prev => ({ ...prev, type_vehicule: defaultTypeVehicule, km_min: defaultKmMin !== '' && defaultKmMin != null ? String(defaultKmMin) : prev.km_min }));
     }
-  }, [initialData, defaultTypeVehicule]);
+  }, [initialData, defaultTypeVehicule, defaultKmMin]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -101,6 +103,7 @@ const TarifEnlevementTrancheKmForm = ({ id = "tranche-km-form", onSubmit, initia
         </div>
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
       <div>
         <label className={labelClasses}>Montant standard ({getCurrencyLabel()})</label>
         <input
@@ -135,6 +138,7 @@ const TarifEnlevementTrancheKmForm = ({ id = "tranche-km-form", onSubmit, initia
           </p>
         )}
         <p className="text-xs text-slate-400 mt-0.5 ml-1">Laisser vide si le mode express n'est pas disponible pour cette tranche.</p>
+      </div>
       </div>
     </form>
   );

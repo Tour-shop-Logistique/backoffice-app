@@ -7,6 +7,7 @@ import {
     editEnlevementTrancheKm,
     deleteEnlevementTrancheKm,
     updateEnlevementTrancheKmStatus,
+    appliquerTauxExpressGlobalEnlevement,
 } from "../redux/slices/tarificationSlice";
 import { fetchCommunes } from "../redux/slices/communeSlice";
 
@@ -28,6 +29,8 @@ import {
     Loader2,
     ChevronLeft,
     ChevronRight,
+    Zap,
+    AlertTriangle,
 } from "lucide-react";
 import { showNotification } from '../redux/slices/uiSlice';
 
@@ -52,6 +55,8 @@ const TarifsEnlevementRates = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [trancheToDelete, setTrancheToDelete] = useState(null);
     const [updatingStatus, setUpdatingStatus] = useState({});
+    const [tauxGlobal, setTauxGlobal] = useState('');
+    const [isApplyingTaux, setIsApplyingTaux] = useState(false);
 
     useEffect(() => {
         if (!hasLoadedTranches && !isLoading) {
@@ -155,6 +160,69 @@ const TarifsEnlevementRates = () => {
 
     const formatKmMax = (kmMax) => kmMax == null ? 'et plus' : `${kmMax} km`;
 
+    // Distances non couvertes par la grille active : un devis tombant dans
+    // un trou échoue côté backend ("Aucun tarif défini pour cette distance").
+    // Seules les tranches actives comptent (une tranche désactivée = trou).
+    const trousGrille = (() => {
+        const actives = trancheSelectionnees.filter(t => t.actif);
+        if (trancheSelectionnees.length === 0) return [];
+        if (actives.length === 0) return ['Aucune tranche active : aucune distance n\'est couverte.'];
+        const trous = [];
+        const fmt = (v) => `${parseFloat(v)} km`;
+        if ((parseFloat(actives[0].km_min) || 0) > 0) {
+            trous.push(`De 0 km à ${fmt(actives[0].km_min)}`);
+        }
+        for (let i = 1; i < actives.length; i++) {
+            const finPrecedente = actives[i - 1].km_max;
+            if (finPrecedente != null && parseFloat(actives[i].km_min) > parseFloat(finPrecedente)) {
+                trous.push(`De ${fmt(finPrecedente)} à ${fmt(actives[i].km_min)}`);
+            }
+        }
+        const derniere = actives[actives.length - 1];
+        if (derniere.km_max != null) {
+            trous.push(`Au-delà de ${fmt(derniere.km_max)} (ajoutez une dernière tranche sans maximum)`);
+        }
+        return trous;
+    })();
+
+    // Fin de la dernière tranche : km_min suggéré pour la prochaine.
+    const derniereTranche = trancheSelectionnees[trancheSelectionnees.length - 1];
+    const kmMinSuggere = derniereTranche ? (derniereTranche.km_max != null ? parseFloat(derniereTranche.km_max) : '') : 0;
+
+    // Taux commun à toutes les tranches de la grille affichée (null si
+    // les taux diffèrent ou si aucun n'est configuré) - sert à pré-remplir
+    // le champ "taux global".
+    const tauxCommun = (() => {
+        if (trancheSelectionnees.length === 0) return null;
+        const taux = new Set(trancheSelectionnees.map(t => t.taux_express == null ? null : parseFloat(t.taux_express)));
+        return taux.size === 1 ? [...taux][0] : null;
+    })();
+
+    useEffect(() => {
+        setTauxGlobal(tauxCommun != null ? String(tauxCommun) : '');
+    }, [selectedCommuneId, selectedVehicule, tauxCommun]);
+
+    const handleAppliquerTauxGlobal = async (retirer = false) => {
+        const valeur = retirer ? null : parseFloat(tauxGlobal);
+        if (!retirer && (isNaN(valeur) || valeur < 0 || valeur > 500)) {
+            dispatch(showNotification({ type: 'error', message: 'Saisissez un taux entre 0 et 500 %.' }));
+            return;
+        }
+        setIsApplyingTaux(true);
+        try {
+            const res = await dispatch(appliquerTauxExpressGlobalEnlevement({
+                commune_id: selectedCommuneId,
+                type_vehicule: selectedVehicule,
+                taux_express: valeur,
+            })).unwrap();
+            dispatch(showNotification({ type: 'success', message: res?.message || 'Taux express appliqué.' }));
+        } catch (error) {
+            dispatch(showNotification({ type: 'error', message: error?.message || "Erreur lors de l'application du taux." }));
+        } finally {
+            setIsApplyingTaux(false);
+        }
+    };
+
     // Export de la grille complète (toutes communes/véhicules confondus),
     // pas juste la vue détail affichée à l'écran - plus utile comme filet
     // de sécurité pour reconstituer toute la configuration.
@@ -243,6 +311,68 @@ const TarifsEnlevementRates = () => {
                         })}
                     </div>
                 </div>
+
+                {trousGrille.length > 0 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg md:rounded-xl p-4 flex items-start gap-3">
+                        <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                            <p className="font-semibold text-amber-900 text-sm">Grille incomplète : certaines distances n'ont pas de tarif</p>
+                            <p className="text-xs text-amber-800 mt-0.5">Un enlèvement ou une livraison sur ces distances sera refusé au client.</p>
+                            <ul className="mt-2 space-y-0.5 text-xs text-amber-900 font-medium list-disc pl-4">
+                                {trousGrille.map((trou) => <li key={trou}>{trou}</li>)}
+                            </ul>
+                        </div>
+                    </div>
+                )}
+
+                {canEdit && trancheSelectionnees.length > 0 && (
+                    <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div className="flex items-start gap-3 min-w-0">
+                            <div className="p-2 rounded-lg bg-amber-50 text-amber-600 shrink-0">
+                                <Zap size={16} />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="font-semibold text-slate-900 text-sm">Taux express global</p>
+                                <p className="text-xs text-slate-500">
+                                    Applique le même pourcentage aux {trancheSelectionnees.length} tranches <span className="capitalize">{selectedVehicule}</span> de cette commune. Chaque tranche reste modifiable ensuite.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center shrink-0">
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="500"
+                                    step="0.01"
+                                    inputMode="decimal"
+                                    value={tauxGlobal}
+                                    onChange={(e) => setTauxGlobal(e.target.value)}
+                                    placeholder="Ex : 30"
+                                    className="w-full sm:w-28 pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 font-medium focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900"
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>
+                            </div>
+                            <button
+                                onClick={() => handleAppliquerTauxGlobal(false)}
+                                disabled={isApplyingTaux || tauxGlobal === ''}
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-white text-sm font-medium bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-all disabled:opacity-50"
+                            >
+                                {isApplyingTaux && <Loader2 size={14} className="animate-spin" />}
+                                Appliquer à toutes
+                            </button>
+                            {trancheSelectionnees.some(t => t.taux_express != null) && (
+                                <button
+                                    onClick={() => handleAppliquerTauxGlobal(true)}
+                                    disabled={isApplyingTaux}
+                                    className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-50"
+                                >
+                                    Retirer l'express
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     {trancheSelectionnees.length === 0 ? (
@@ -396,7 +526,7 @@ const TarifsEnlevementRates = () => {
                     isLoading={isSubmitting}
                     confirmLabel="Enregistrer"
                 >
-                    <TarifEnlevementTrancheKmForm id="add-tranche-km-form" onSubmit={handleAddTranche} communeId={selectedCommuneId} defaultTypeVehicule={selectedVehicule} />
+                    <TarifEnlevementTrancheKmForm id="add-tranche-km-form" onSubmit={handleAddTranche} communeId={selectedCommuneId} defaultTypeVehicule={selectedVehicule} defaultKmMin={isModalOpen ? kmMinSuggere : ''} />
                 </Modal>
 
                 <Modal

@@ -71,7 +71,7 @@ const IntervilleRates = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const { intervilleTarifs: tarifs, isLoadingInterville: isLoading, hasLoaded: hasLoadedTarifs, formatsColis, formatsColisHasLoaded, isLoadingFormatsColis } = useSelector((state) => state.tarification);
+    const { intervilleTarifs: tarifs, isLoadingInterville: isLoading, intervilleHasLoaded: hasLoadedTarifs, formatsColis, formatsColisHasLoaded, isLoadingFormatsColis } = useSelector((state) => state.tarification);
     const { communes, hasLoaded: hasLoadedCommunes, isLoading: isLoadingCommunes } = useSelector((state) => state.communes);
 
     const [isModalOpen, setIsModalOpen] = useState(false);

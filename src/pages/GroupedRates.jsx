@@ -64,8 +64,7 @@ const GroupedRates = () => {
   const [tarifToDelete, setTarifToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState({});
-  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
-  const typeDropdownRef = useRef(null);
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);  const typeDropdownRef = useRef(null);
   const [itineraireFiltre, setItineraireFiltre] = useState('all');
   const [isItineraireDropdownOpen, setIsItineraireDropdownOpen] = useState(false);
   const itineraireDropdownRef = useRef(null);
@@ -414,7 +413,6 @@ const GroupedRates = () => {
         </div>
       </div>
 
-      <MinimumLignesPanel tarifs={groupedTarifs} />
 
       {/* TABS + CONTENT - Mobile Optimized */}
       <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -448,11 +446,22 @@ const GroupedRates = () => {
             >
               Inactives ({counts.inactive})
             </button>
+            <button
+              onClick={() => setFilterStatus('minimums')}
+              className={`px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap transition-all ${filterStatus === 'minimums'
+                ? 'text-amber-700 border-b-2 border-amber-600 bg-white'
+                : 'text-slate-500 hover:text-slate-700'
+                }`}
+            >
+              Minimums par ligne
+            </button>
           </div>
         </div>
 
         {/* Body Content */}
-        {isLoading && (groupedTarifs || []).length === 0 ? (
+        {filterStatus === 'minimums' ? (
+          <MinimumLignesPanel tarifs={groupedTarifs} />
+        ) : isLoading && (groupedTarifs || []).length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-6">
             <Loader2 className="h-10 w-10 text-slate-900 animate-spin mb-3" />
             <p className="text-slate-500 text-sm font-medium">Chargement des tarifs...</p>

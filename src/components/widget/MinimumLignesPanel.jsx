@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
-import { ChevronDown, Loader2, Trash2, Edit2, Check, X } from 'lucide-react';
+import { Loader2, Trash2, Edit2, Check, X } from 'lucide-react';
 import tarificationService from '../../services/tarificationService';
 import { showNotification } from '../../redux/slices/uiSlice';
 import { getCurrencyLabel } from '../../utils/format';
@@ -12,6 +12,11 @@ const TYPES_DHD = {
 };
 
 const cle = (type, departId, arriveeId) => `${type}|${departId}|${arriveeId}`;
+const fmt = (v) => Number(v || 0).toLocaleString();
+
+// Survit au démontage du panneau (changement d'onglet) : l'API n'est appelée
+// qu'au premier affichage puis après chaque enregistrement/suppression.
+let cacheMinimums = null;
 
 /**
  * Tarif minimum par ligne DHD : si le total calculé d'une expédition sur une
@@ -23,8 +28,7 @@ const MinimumLignesPanel = ({ tarifs }) => {
   const dispatch = useDispatch();
   const canEdit = useHasPermission('tarification_groupage.edit');
   const canDelete = useHasPermission('tarification_groupage.delete');
-  const [open, setOpen] = useState(false);
-  const [minimums, setMinimums] = useState([]);
+  const [minimums, setMinimums] = useState(cacheMinimums ?? []);
   const [isLoading, setIsLoading] = useState(false);
   const [editingKey, setEditingKey] = useState(null);
   const [form, setForm] = useState({ montant_minimum: '', pourcentage_prestation_minimum: '' });
@@ -33,7 +37,8 @@ const MinimumLignesPanel = ({ tarifs }) => {
   const charger = useCallback(async () => {
     setIsLoading(true);
     try {
-      setMinimums(await tarificationService.getMinimumsLigne());
+      cacheMinimums = await tarificationService.getMinimumsLigne();
+      setMinimums(cacheMinimums);
     } catch {
       dispatch(showNotification({ type: 'error', message: 'Impossible de charger les tarifs minimum.' }));
     } finally {
@@ -42,8 +47,8 @@ const MinimumLignesPanel = ({ tarifs }) => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (open) charger();
-  }, [open, charger]);
+    if (cacheMinimums === null) charger();
+  }, [charger]);
 
   const lignes = useMemo(() => {
     const parCle = new Map();
@@ -109,109 +114,153 @@ const MinimumLignesPanel = ({ tarifs }) => {
     }
   };
 
-  if (lignes.length === 0) return null;
+  if (lignes.length === 0) {
+    return <p className="py-16 text-center text-sm text-slate-500">Aucune ligne DHD : créez d'abord un tarif DHD Aérien ou Maritime.</p>;
+  }
+
+  if (isLoading && minimums.length === 0) {
+    return <div className="py-16 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-400" /></div>;
+  }
 
   const totalForm = (parseFloat(form.montant_minimum) || 0) * (1 + (parseFloat(form.pourcentage_prestation_minimum) || 0) / 100);
+  const inputCls = 'w-full px-2 py-1.5 border border-slate-300 rounded-md bg-white text-sm font-medium text-slate-800 focus:ring-2 focus:ring-amber-500 focus:border-amber-500';
 
-  return (
-    <div className="bg-white rounded-lg md:rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors"
-      >
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-slate-900">Tarif minimum par ligne</p>
-          <p className="text-xs text-slate-500">Appliqué si le total calculé de l'expédition est inférieur</p>
-        </div>
-        <ChevronDown className={`h-4 w-4 text-slate-500 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+  const actions = (ligne, m, enEdition) => enEdition ? (
+    <div className="flex justify-end gap-1">
+      <button type="button" onClick={() => setEditingKey(null)} disabled={isSaving} className="p-2 rounded-md text-slate-500 hover:bg-slate-100" aria-label="Annuler">
+        <X className="h-4 w-4" />
       </button>
-
-      {open && (
-        <div className="border-t border-slate-200 divide-y divide-slate-100">
-          {isLoading && minimums.length === 0 ? (
-            <div className="p-6 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
-          ) : lignes.map((ligne) => {
-            const m = minimumDe(ligne);
-            const enEdition = editingKey === ligne.key;
-            return (
-              <div key={ligne.key} className="px-4 py-3 flex flex-col gap-3">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 truncate">{ligne.itineraire}</p>
-                    <p className="text-xs text-slate-500">{TYPES_DHD[ligne.type]}</p>
-                  </div>
-                  {!enEdition && (
-                    <div className="flex items-center gap-2 shrink-0">
-                      {m ? (
-                        <span className="px-2 py-1 rounded text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100 whitespace-nowrap">
-                          Min : {Number(m.montant_expedition_minimum).toLocaleString()} {getCurrencyLabel()}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-400">Non défini</span>
-                      )}
-                      {canEdit && (
-                        <button type="button" onClick={() => commencerEdition(ligne)} className="p-2 rounded-md text-slate-500 hover:bg-slate-100" aria-label="Modifier le minimum">
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                      )}
-                      {m && canDelete && (
-                        <button type="button" onClick={() => supprimer(m)} className="p-2 rounded-md text-red-500 hover:bg-red-50" aria-label="Supprimer le minimum">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {enEdition && (
-                  <div className="flex flex-col gap-3 rounded-lg bg-amber-50/60 border border-amber-100 p-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <label className="text-xs font-semibold text-slate-700">
-                        Montant minimum ({getCurrencyLabel()})
-                        <input
-                          type="number"
-                          min="0"
-                          value={form.montant_minimum}
-                          onChange={(e) => setForm((f) => ({ ...f, montant_minimum: e.target.value }))}
-                          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          placeholder="10000"
-                        />
-                      </label>
-                      <label className="text-xs font-semibold text-slate-700">
-                        Prestation agence (%)
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={form.pourcentage_prestation_minimum}
-                          onChange={(e) => setForm((f) => ({ ...f, pourcentage_prestation_minimum: e.target.value }))}
-                          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-slate-800 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          placeholder="10"
-                        />
-                      </label>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs text-slate-600">
-                        Total facturé : <span className="font-bold text-emerald-600">{Math.round(totalForm * 100) / 100} {getCurrencyLabel()}</span>
-                      </p>
-                      <div className="flex gap-2">
-                        <button type="button" onClick={() => setEditingKey(null)} disabled={isSaving} className="h-9 px-3 rounded-md border border-slate-300 text-sm text-slate-600 hover:bg-white inline-flex items-center gap-1">
-                          <X className="h-4 w-4" /> Annuler
-                        </button>
-                        <button type="button" onClick={() => enregistrer(ligne)} disabled={isSaving} className="h-9 px-3 rounded-md bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 disabled:opacity-60 inline-flex items-center gap-1">
-                          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Enregistrer
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+      <button type="button" onClick={() => enregistrer(ligne)} disabled={isSaving} className="p-2 rounded-md bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60" aria-label="Enregistrer">
+        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+      </button>
+    </div>
+  ) : (
+    <div className="flex justify-end gap-1">
+      {canEdit && (
+        <button type="button" onClick={() => commencerEdition(ligne)} className="p-2 rounded-md text-slate-500 hover:bg-slate-100" aria-label={m ? 'Modifier le minimum' : 'Définir le minimum'}>
+          <Edit2 className="h-4 w-4" />
+        </button>
+      )}
+      {m && canDelete && (
+        <button type="button" onClick={() => supprimer(m)} className="p-2 rounded-md text-red-500 hover:bg-red-50" aria-label="Supprimer le minimum">
+          <Trash2 className="h-4 w-4" />
+        </button>
       )}
     </div>
+  );
+
+  return (
+    <>
+      <p className="px-4 md:px-6 py-3 text-xs text-slate-500 border-b border-slate-100">
+        Le minimum remplace le total de l'expédition (toutes catégories confondues) quand celui-ci lui est inférieur.
+      </p>
+
+      {/* Desktop */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50/50 border-b border-slate-200">
+            <tr>
+              <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Type</th>
+              <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Itinéraire</th>
+              <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Montant minimum</th>
+              <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Prestation</th>
+              <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Total minimum</th>
+              <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200">
+            {lignes.map((ligne) => {
+              const m = minimumDe(ligne);
+              const enEdition = editingKey === ligne.key;
+              return (
+                <tr key={ligne.key} className={enEdition ? 'bg-amber-50/50' : 'hover:bg-slate-50/50 transition-colors'}>
+                  <td className="px-6 py-3">
+                    <span className={`text-sm font-semibold px-2 py-1 rounded uppercase ${ligne.type.includes('aerien') ? 'bg-blue-100 text-blue-700' : 'bg-indigo-100 text-indigo-700'}`}>
+                      {TYPES_DHD[ligne.type]}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3 font-semibold uppercase text-slate-700">{ligne.itineraire}</td>
+                  <td className="px-6 py-3">
+                    {enEdition ? (
+                      <input type="number" min="0" value={form.montant_minimum} onChange={(e) => setForm((f) => ({ ...f, montant_minimum: e.target.value }))} className={`${inputCls} max-w-[9rem]`} placeholder="10000" autoFocus />
+                    ) : m ? (
+                      <span className="font-medium text-slate-700">{fmt(m.montant_minimum)} <span className="text-xs">{getCurrencyLabel()}</span></span>
+                    ) : <span className="text-slate-400">—</span>}
+                  </td>
+                  <td className="px-6 py-3">
+                    {enEdition ? (
+                      <input type="number" min="0" max="100" value={form.pourcentage_prestation_minimum} onChange={(e) => setForm((f) => ({ ...f, pourcentage_prestation_minimum: e.target.value }))} className={`${inputCls} max-w-[6rem]`} placeholder="10" />
+                    ) : m ? (
+                      <div className="flex gap-2">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold">{Number(m.pourcentage_prestation_minimum)}%</span>
+                        <span className="text-slate-500 font-medium whitespace-nowrap">({fmt(m.montant_prestation_minimum)} <span className="text-xs">{getCurrencyLabel()}</span>)</span>
+                      </div>
+                    ) : <span className="text-slate-400">—</span>}
+                  </td>
+                  <td className="px-6 py-3">
+                    {enEdition ? (
+                      <span className="font-bold text-emerald-600">{fmt(Math.round(totalForm * 100) / 100)} <span className="text-xs">{getCurrencyLabel()}</span></span>
+                    ) : m ? (
+                      <span className="font-bold text-slate-900">{fmt(m.montant_expedition_minimum)} <span className="text-xs">{getCurrencyLabel()}</span></span>
+                    ) : <span className="text-xs text-slate-400">Non défini</span>}
+                  </td>
+                  <td className="px-6 py-3">{actions(ligne, m, enEdition)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile */}
+      <div className="md:hidden divide-y divide-slate-200">
+        {lignes.map((ligne) => {
+          const m = minimumDe(ligne);
+          const enEdition = editingKey === ligne.key;
+          return (
+            <div key={ligne.key} className={`p-3 space-y-2.5 ${enEdition ? 'bg-amber-50/50' : ''}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900 text-sm uppercase truncate">{ligne.itineraire}</p>
+                  <p className="text-xs text-slate-500">{TYPES_DHD[ligne.type]}</p>
+                </div>
+                {actions(ligne, m, enEdition)}
+              </div>
+              {enEdition ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="text-xs font-semibold text-slate-600">
+                    Montant ({getCurrencyLabel()})
+                    <input type="number" min="0" value={form.montant_minimum} onChange={(e) => setForm((f) => ({ ...f, montant_minimum: e.target.value }))} className={`${inputCls} mt-1`} />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-600">
+                    Prestation (%)
+                    <input type="number" min="0" max="100" value={form.pourcentage_prestation_minimum} onChange={(e) => setForm((f) => ({ ...f, pourcentage_prestation_minimum: e.target.value }))} className={`${inputCls} mt-1`} />
+                  </label>
+                  <p className="col-span-2 text-xs text-slate-600">Total : <span className="font-bold text-emerald-600">{fmt(Math.round(totalForm * 100) / 100)} {getCurrencyLabel()}</span></p>
+                </div>
+              ) : m ? (
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                    <p className="text-[11px] text-slate-500 font-bold">Base</p>
+                    <p className="text-xs font-semibold text-slate-700">{fmt(m.montant_minimum)}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                    <p className="text-[11px] text-slate-500 font-bold">Prestation</p>
+                    <p className="text-xs font-semibold text-orange-600">{Number(m.pourcentage_prestation_minimum)}%</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                    <p className="text-[11px] text-slate-500 font-bold">Total</p>
+                    <p className="text-xs font-bold text-slate-900">{fmt(m.montant_expedition_minimum)}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400">Minimum non défini</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 };
 
