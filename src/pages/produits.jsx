@@ -26,7 +26,6 @@ import useHasPermission from '../hooks/useHasPermission';
 // Accompagnés" y est toujours éligible implicitement, jamais un choix).
 const ELIGIBILITE_FIELDS = [
   { key: 'eligible_ld', label: 'Éligible LD (livraison à domicile)', help: "Décochez si ce produit ne peut pas voyager en mode LD." },
-  { key: 'eligible_afrique', label: 'Éligible Groupage Afrique', help: "Décochez si ce produit ne peut pas voyager vers une destination africaine en groupage." },
   { key: 'eligible_dhd_aerien', label: 'Éligible DHD Aérien', help: "Décochez si ce produit est interdit en soute avion (ex: matières inflammables)." },
   { key: 'eligible_dhd_maritime', label: 'Éligible DHD Maritime', help: "Décochez si ce produit ne peut pas voyager en fret maritime." },
 ];
@@ -347,7 +346,6 @@ export default function Produits() {
     { header: 'Désignation', key: 'designation' },
     { header: 'Catégorie', key: 'categorie' },
     { header: 'Éligible LD', key: 'eligible_ld' },
-    { header: 'Éligible Groupage Afrique', key: 'eligible_afrique' },
     { header: 'Éligible DHD Aérien', key: 'eligible_dhd_aerien' },
     { header: 'Éligible DHD Maritime', key: 'eligible_dhd_maritime' },
     { header: 'Actif', key: 'actif' },
@@ -358,7 +356,6 @@ export default function Produits() {
     designation: p.designation,
     categorie: categories?.find(c => String(c.id) === String(p.category_id))?.nom || '',
     eligible_ld: p.eligible_ld === false ? 'Non' : 'Oui',
-    eligible_afrique: p.eligible_afrique === false ? 'Non' : 'Oui',
     eligible_dhd_aerien: p.eligible_dhd_aerien === false ? 'Non' : 'Oui',
     eligible_dhd_maritime: p.eligible_dhd_maritime === false ? 'Non' : 'Oui',
     actif: p.actif ? 'Oui' : 'Non',
@@ -588,11 +585,6 @@ export default function Produits() {
                                 Non éligible LD
                               </span>
                             )}
-                            {produit.eligible_afrique === false && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
-                                Non éligible Afrique
-                              </span>
-                            )}
                             {produit.eligible_dhd_aerien === false && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
                                 Non éligible DHD Aérien
@@ -671,11 +663,6 @@ export default function Produits() {
                       {produit.eligible_ld === false && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
                           Non éligible LD
-                        </span>
-                      )}
-                      {produit.eligible_afrique === false && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
-                          Non éligible Afrique
                         </span>
                       )}
                       {produit.eligible_dhd_aerien === false && (

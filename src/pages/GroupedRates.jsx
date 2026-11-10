@@ -175,7 +175,7 @@ const GroupedRates = () => {
     switch (type?.toUpperCase()) {
       case 'GROUPAGE_DHD_AERIEN': return 'DHD Aérien';
       case 'GROUPAGE_DHD_MARITIME': return 'DHD Maritime';
-      case 'GROUPAGE_AFRIQUE': return 'Afrique';
+      // GROUPAGE_AFRIQUE retiré du projet
       case 'GROUPAGE_CA': return 'Colis Accompagnés';
       default: return type || 'N/A';
     }
@@ -344,7 +344,6 @@ const GroupedRates = () => {
                   {[
                     { id: 'GROUPAGE_DHD_AERIEN', label: 'Groupage DHD Aérien' },
                     { id: 'GROUPAGE_DHD_MARITIME', label: 'Groupage DHD Maritime' },
-                    { id: 'GROUPAGE_AFRIQUE', label: 'Groupage Afrique' },
                     { id: 'GROUPAGE_CA', label: 'Groupage Colis Accompagnés' }
                   ].map((mode) => (
                     <button
@@ -503,7 +502,7 @@ const GroupedRates = () => {
                           <div className="flex flex-col">
                             <span className={`text-sm font-semibold px-2 py-1 w-fit rounded uppercase ${tarif.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' :
                               tarif.type_expedition?.includes('maritime') ? 'bg-indigo-100 text-indigo-700' :
-                                tarif.type_expedition?.includes('afrique') ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                                'bg-emerald-100 text-emerald-700'
                               }`}>
                               {getTypeLabel(tarif.type_expedition)}
                             </span>

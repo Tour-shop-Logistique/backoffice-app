@@ -83,7 +83,7 @@ const Addtarifgroupe = ({
       case 'GROUPAGE_DHD_AERIEN': return 'avion';
       case 'GROUPAGE_DHD_MARITIME': return 'bateau';
       case 'GROUPAGE_CA': return 'colis';
-      case 'GROUPAGE_AFRIQUE': return 'afrique';
+      // GROUPAGE_AFRIQUE retiré du projet
       default: return 'avion';
     }
   };
@@ -137,10 +137,7 @@ const Addtarifgroupe = ({
       if (!formData.commune_arrivee_id) newErrors.commune_arrivee_id = 'Commune d\'arrivée requise';
     }
 
-    // code_pays est desormais requis pour les 4 types geo-dependants
-    // (GROUPAGE_AFRIQUE -> pays africain uniquement ; GROUPAGE_CA et DHD ->
-    // tous pays hors Afrique), meme regle que cote backend (TypeExpeditionGeoRule).
-    if (type_expedition === 'GROUPAGE_AFRIQUE' || type_expedition === 'GROUPAGE_CA' || type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
+    if (type_expedition === 'GROUPAGE_CA' || type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
       if (!formData.code_pays) newErrors.code_pays = 'Pays requis';
     }
 
@@ -175,9 +172,7 @@ const Addtarifgroupe = ({
       dataToSubmit.commune_arrivee_id = formData.commune_arrivee_id;
     }
 
-    // code_pays s'ajoute pour les 4 types geo-dependants (le bloc DHD
-    // ci-dessus reste separe : ligne/category_id lui sont propres).
-    if (type_expedition === 'GROUPAGE_AFRIQUE' || type_expedition === 'GROUPAGE_CA' || type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
+    if (type_expedition === 'GROUPAGE_CA' || type_expedition === 'GROUPAGE_DHD_AERIEN' || type_expedition === 'GROUPAGE_DHD_MARITIME') {
       dataToSubmit.code_pays = formData.code_pays;
     }
 
@@ -220,7 +215,6 @@ const Addtarifgroupe = ({
             options={[
               { value: 'GROUPAGE_DHD_AERIEN', label: '✈️ DHD Aérien' },
               { value: 'GROUPAGE_DHD_MARITIME', label: '🚢 DHD Maritime' },
-              { value: 'GROUPAGE_AFRIQUE', label: '🌍 Afrique' },
               { value: 'GROUPAGE_CA', label: '📦 Colis Accompagnés' }
             ]}
             placeholder="Sélectionner le type..."
@@ -268,8 +262,7 @@ const Addtarifgroupe = ({
               )}
             </div>
 
-            {/* Pays de destination - tous pays, y compris africains (seul
-                Groupage Afrique restreint la liste aux pays africains) */}
+            {/* Pays de destination */}
             <div className="mt-6">
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 <span className="inline-flex items-center gap-2">
@@ -352,35 +345,6 @@ const Addtarifgroupe = ({
         </div>
       )}
 
-      {/* STEP 2: Destination Afrique (pays uniquement) */}
-      {formData.type_expedition === 'GROUPAGE_AFRIQUE' && (
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold text-sm shadow-lg">
-              2
-            </div>
-            <h3 className="text-lg font-semibold text-slate-800">Destination Afrique</h3>
-          </div>
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-orange-200 shadow-sm">
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              <span className="inline-flex items-center gap-2">Pays <span className="text-red-500">*</span></span>
-            </label>
-            <SearchableDropdown
-              value={formData.code_pays}
-              onChange={(code) => handleInputChange('code_pays', code)}
-              options={AFRICAN_COUNTRY_OPTIONS.map((c) => ({ label: c.label, value: c.id }))}
-              placeholder="Rechercher un pays..."
-              error={errors.code_pays}
-            />
-            {errors.code_pays && (
-              <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
-                <span>⚠️</span> {errors.code_pays}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* STEP 2: Itinéraire CA (pays + communes départ/arrivée, sans catégorie) */}
       {formData.type_expedition === 'GROUPAGE_CA' && (
         <div className="relative">
@@ -451,7 +415,7 @@ const Addtarifgroupe = ({
       <div className="relative">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-lg">
-            {(formData.type_expedition === 'GROUPAGE_DHD_AERIEN' || formData.type_expedition === 'GROUPAGE_DHD_MARITIME' || formData.type_expedition === 'GROUPAGE_AFRIQUE' || formData.type_expedition === 'GROUPAGE_CA') ? '3' : '2'}
+            {(formData.type_expedition === 'GROUPAGE_DHD_AERIEN' || formData.type_expedition === 'GROUPAGE_DHD_MARITIME' || formData.type_expedition === 'GROUPAGE_CA') ? '3' : '2'}
           </div>
           <h3 className="text-lg font-semibold text-slate-800">Tarification</h3>
         </div>
