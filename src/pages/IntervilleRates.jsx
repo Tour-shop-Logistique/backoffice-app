@@ -402,7 +402,17 @@ const IntervilleRates = () => {
                         {/* Desktop Table — virtualisée */}
                         <div className="hidden md:block">
                             <div ref={tableContainerRef} className="overflow-auto" style={{ maxHeight: 600 }}>
-                                <table className="w-full text-sm">
+                                <table className="w-full text-sm table-fixed">
+                                    <colgroup>
+                                        <col style={{ width: '20%' }} />
+                                        <col style={{ width: '12%' }} />
+                                        <col style={{ width: '14%' }} />
+                                        <col style={{ width: '18%' }} />
+                                        <col style={{ width: '18%' }} />
+                                        <col style={{ width: '12%' }} />
+                                        <col style={{ width: '3%' }} />
+                                        <col style={{ width: '3%' }} />
+                                    </colgroup>
                                     <thead className="bg-slate-50/50 border-b border-slate-200 sticky top-0 z-10">
                                         <tr>
                                             <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Trajet</th>
