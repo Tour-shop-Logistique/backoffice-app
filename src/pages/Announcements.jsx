@@ -20,9 +20,9 @@ const TARGET_MODES = {
 };
 
 const CIBLES = [
-  { key: 'agences', label: 'Agences', icon: Building2 },
-  { key: 'clients', label: 'Clients', icon: UserRound },
-  { key: 'livreurs', label: 'Livreurs', icon: Truck },
+  { key: 'agences', label: 'Agences', description: 'Partenaires du réseau', icon: Building2 },
+  { key: 'clients', label: 'Clients', description: "Utilisateurs de l'app client", icon: UserRound },
+  { key: 'livreurs', label: 'Livreurs', description: "Utilisateurs de l'app livreur", icon: Truck },
 ];
 
 const TYPE_LECTEUR = {
@@ -501,191 +501,230 @@ const Announcements = () => {
         onClose={closeModal}
         title={editingId ? "Modifier l'annonce programmée" : 'Nouvelle annonce'}
         subtitle={form.cibles.length ? `Pour : ${CIBLES.filter((c) => form.cibles.includes(c.key)).map((c) => c.label.toLowerCase()).join(', ')}` : 'Aucun destinataire choisi'}
-        size="lg"
+        size="4xl"
         onConfirm={handleSubmit}
         isLoading={isSending}
         confirmLabel={editingId ? 'Enregistrer' : (form.programmer ? 'Programmer' : 'Envoyer')}
       >
-        <div className="space-y-5">
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Titre</label>
-            <input
-              type="text"
-              value={form.titre}
-              maxLength={255}
-              onChange={(e) => setForm((p) => ({ ...p, titre: e.target.value }))}
-              placeholder="Ex : Nouvelle procédure de retrait"
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-baseline justify-between mb-2">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Message</label>
-              <span className={`text-[11px] tabular-nums ${form.message.length > MESSAGE_MAX * 0.9 ? 'text-amber-600 font-semibold' : 'text-slate-400'}`}>
-                {form.message.length}/{MESSAGE_MAX}
-              </span>
+        <div className="grid gap-6 md:grid-cols-5 md:gap-8">
+          <div className="space-y-5 md:col-span-3">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Titre</label>
+              <input
+                type="text"
+                value={form.titre}
+                maxLength={255}
+                onChange={(e) => setForm((p) => ({ ...p, titre: e.target.value }))}
+                placeholder="Ex : Nouvelle procédure de retrait"
+                className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+              />
             </div>
-            <textarea
-              value={form.message}
-              maxLength={MESSAGE_MAX}
-              onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))}
-              placeholder="Détail du message à communiquer..."
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm text-slate-900 leading-relaxed transition-all min-h-[120px] resize-y"
-            />
-          </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Destinataires</label>
-            <div className="grid grid-cols-3 gap-2">
-              {CIBLES.map(({ key, label, icon: Icon }) => {
-                const actif = form.cibles.includes(key);
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    aria-pressed={actif}
-                    onClick={() => toggleCible(key)}
-                    className={`relative flex flex-col items-center gap-1.5 px-2 py-3.5 rounded-xl border text-xs font-bold transition-all active:scale-[0.98] ${
-                      actif
-                        ? 'bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10'
-                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    {actif && (
-                      <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-white text-slate-900 flex items-center justify-center">
-                        <Check size={10} strokeWidth={3} />
-                      </span>
-                    )}
-                    <Icon size={18} />
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {ciblesAgences && (
-            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-3">
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Quelles agences ?</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-white border border-slate-200 rounded-lg">
-                {[
-                  { mode: TARGET_MODES.ALL, label: 'Toutes', icon: Users },
-                  { mode: TARGET_MODES.AGENCE, label: 'Une agence', icon: Building2 },
-                  { mode: TARGET_MODES.PAYS, label: 'Par pays', icon: Globe },
-                  { mode: TARGET_MODES.VILLES, label: 'Par ville', icon: MapPin },
-                ].map(({ mode, label, icon: Icon }) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setForm((p) => ({ ...p, targetMode: mode }))}
-                    className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-bold transition-all ${
-                      form.targetMode === mode ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Icon size={13} />
-                    {label}
-                  </button>
-                ))}
+            <div>
+              <div className="flex items-baseline justify-between mb-1.5">
+                <label className="block text-sm font-semibold text-slate-700">Message</label>
+                <span className={`text-xs tabular-nums ${form.message.length > MESSAGE_MAX * 0.9 ? 'text-amber-600 font-semibold' : 'text-slate-400'}`}>
+                  {form.message.length}/{MESSAGE_MAX}
+                </span>
               </div>
-
-              {form.targetMode === TARGET_MODES.AGENCE && (
-                <select
-                  value={form.agence_id}
-                  onChange={(e) => setForm((p) => ({ ...p, agence_id: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all"
-                >
-                  <option value="">Sélectionner une agence</option>
-                  {(agences || []).filter((a) => a.actif).map((a) => (
-                    <option key={a.id} value={a.id}>{a.nom_agence}</option>
-                  ))}
-                </select>
-              )}
-
-              {form.targetMode === TARGET_MODES.PAYS && (
-                <div className="flex flex-wrap gap-2">
-                  {paysDisponibles.map((pays) => (
-                    <button
-                      key={pays}
-                      type="button"
-                      onClick={() => togglePays(pays)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                        form.pays_cible.includes(pays)
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {pays}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {form.targetMode === TARGET_MODES.VILLES && (
-                <div className="flex flex-wrap gap-2">
-                  {communesDisponibles.map((commune) => (
-                    <button
-                      key={commune.id}
-                      type="button"
-                      onClick={() => toggleCommune(commune.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                        form.communes_cible.includes(commune.id)
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {commune.nom}
-                    </button>
-                  ))}
-                  {communesDisponibles.length === 0 && (
-                    <p className="text-xs text-slate-400">Aucune commune n'est encore utilisée par une agence.</p>
-                  )}
-                </div>
-              )}
-
-              {(form.cibles.includes('clients') || form.cibles.includes('livreurs')) && form.targetMode !== TARGET_MODES.ALL && (
-                <p className="text-[11px] text-slate-500">Ce filtre ne concerne que les agences : clients et livreurs reçoivent l'annonce partout.</p>
-              )}
+              <textarea
+                value={form.message}
+                maxLength={MESSAGE_MAX}
+                onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))}
+                placeholder="Détail du message à communiquer..."
+                className="w-full px-3.5 py-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 leading-relaxed placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all min-h-[180px] resize-y"
+              />
             </div>
-          )}
 
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Envoi</label>
-            {!editingId && (
-              <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-lg mb-2">
-                {[
-                  { programmer: false, label: 'Immédiat', icon: Send },
-                  { programmer: true, label: 'Programmer', icon: CalendarClock },
-                ].map(({ programmer, label, icon: Icon }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setForm((p) => ({ ...p, programmer }))}
-                    className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-bold transition-all ${
-                      form.programmer === programmer ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                    }`}
+            <div>
+              <p className="text-sm font-semibold text-slate-700 mb-1.5">Aperçu</p>
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3">
+                <div className="flex gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200/70">
+                  <span className="w-9 h-9 shrink-0 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <Megaphone size={17} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className={`text-sm font-semibold truncate ${form.titre.trim() ? 'text-slate-900' : 'text-slate-400'}`}>
+                        {form.titre.trim() || 'Titre de l’annonce'}
+                      </p>
+                      <span className="text-[11px] text-slate-400 shrink-0">maintenant</span>
+                    </div>
+                    <p className={`text-xs mt-0.5 line-clamp-3 whitespace-pre-line break-words ${form.message.trim() ? 'text-slate-600' : 'text-slate-400'}`}>
+                      {form.message.trim() || 'Le message apparaîtra ici, tel que vos destinataires le verront.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-5 md:col-span-2 md:border-l md:border-slate-100 md:pl-8">
+            <div>
+              <p className="text-sm font-semibold text-slate-700 mb-1.5">Destinataires</p>
+              <div className="space-y-2">
+                {CIBLES.map(({ key, label, description, icon: Icon }) => {
+                  const actif = form.cibles.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      role="checkbox"
+                      aria-checked={actif}
+                      onClick={() => toggleCible(key)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                        actif
+                          ? 'border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-500'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className={`w-9 h-9 shrink-0 rounded-lg flex items-center justify-center ${actif ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
+                        <Icon size={17} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold text-slate-900">{label}</span>
+                        <span className="block text-xs text-slate-500">{description}</span>
+                      </span>
+                      <span className={`w-5 h-5 shrink-0 rounded-md border flex items-center justify-center ${actif ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'}`}>
+                        {actif && <Check size={13} strokeWidth={3} />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {ciblesAgences && (
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-1.5">Quelles agences ?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { mode: TARGET_MODES.ALL, label: 'Toutes', icon: Users },
+                    { mode: TARGET_MODES.AGENCE, label: 'Une agence', icon: Building2 },
+                    { mode: TARGET_MODES.PAYS, label: 'Par pays', icon: Globe },
+                    { mode: TARGET_MODES.VILLES, label: 'Par ville', icon: MapPin },
+                  ].map(({ mode, label, icon: Icon }) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setForm((p) => ({ ...p, targetMode: mode }))}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
+                        form.targetMode === mode
+                          ? 'border-indigo-500 bg-indigo-50/60 text-indigo-700 ring-1 ring-indigo-500'
+                          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Icon size={14} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {form.targetMode === TARGET_MODES.AGENCE && (
+                  <select
+                    value={form.agence_id}
+                    onChange={(e) => setForm((p) => ({ ...p, agence_id: e.target.value }))}
+                    className="w-full mt-2 px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
                   >
-                    <Icon size={13} />
-                    {label}
-                  </button>
-                ))}
+                    <option value="">Sélectionner une agence</option>
+                    {(agences || []).filter((a) => a.actif).map((a) => (
+                      <option key={a.id} value={a.id}>{a.nom_agence}</option>
+                    ))}
+                  </select>
+                )}
+
+                {form.targetMode === TARGET_MODES.PAYS && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {paysDisponibles.map((pays) => (
+                      <button
+                        key={pays}
+                        type="button"
+                        onClick={() => togglePays(pays)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                          form.pays_cible.includes(pays)
+                            ? 'bg-indigo-600 text-white border-indigo-600'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        {pays}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {form.targetMode === TARGET_MODES.VILLES && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {communesDisponibles.map((commune) => (
+                      <button
+                        key={commune.id}
+                        type="button"
+                        onClick={() => toggleCommune(commune.id)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                          form.communes_cible.includes(commune.id)
+                            ? 'bg-indigo-600 text-white border-indigo-600'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        {commune.nom}
+                      </button>
+                    ))}
+                    {communesDisponibles.length === 0 && (
+                      <p className="text-xs text-slate-400">Aucune commune n'est encore utilisée par une agence.</p>
+                    )}
+                  </div>
+                )}
+
+                {(form.cibles.includes('clients') || form.cibles.includes('livreurs')) && form.targetMode !== TARGET_MODES.ALL && (
+                  <p className="text-xs text-slate-500 mt-2">Ce choix ne concerne que les agences : clients et livreurs reçoivent l'annonce partout.</p>
+                )}
               </div>
             )}
-            {form.programmer && (
-              <>
+
+            <div>
+              <p className="text-sm font-semibold text-slate-700 mb-1.5">Envoi</p>
+              {!editingId && (
+                <div className="space-y-2">
+                  {[
+                    { programmer: false, label: 'Maintenant', description: 'Diffusée dès la validation', icon: Send },
+                    { programmer: true, label: 'Programmer', description: 'À une date et une heure précises', icon: CalendarClock },
+                  ].map(({ programmer, label, description, icon: Icon }) => {
+                    const actif = form.programmer === programmer;
+                    return (
+                      <button
+                        key={label}
+                        type="button"
+                        role="radio"
+                        aria-checked={actif}
+                        onClick={() => setForm((p) => ({ ...p, programmer }))}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                          actif
+                            ? 'border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-500'
+                            : 'border-slate-200 bg-white hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center ${actif ? 'border-indigo-600' : 'border-slate-300'}`}>
+                          {actif && <span className="w-2 h-2 rounded-full bg-indigo-600" />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold text-slate-900">{label}</span>
+                          <span className="block text-xs text-slate-500">{description}</span>
+                        </span>
+                        <Icon size={16} className={actif ? 'text-indigo-600' : 'text-slate-400'} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {form.programmer && (
                 <input
                   type="datetime-local"
                   value={form.scheduled_at}
                   min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
                   onChange={(e) => setForm((p) => ({ ...p, scheduled_at: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all"
+                  className="w-full mt-2 px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
                 />
-                <p className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-1.5">
-                  <Clock size={12} />
-                  L'annonce partira automatiquement à la date et l'heure choisies.
-                </p>
-              </>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </Modal>
