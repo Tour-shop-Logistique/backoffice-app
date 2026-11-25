@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { getCurrencyLabel } from '../utils/format';
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -247,6 +248,23 @@ const SimpleRates = () => {
         };
     }), [simpleTarifs]);
 
+    const tableContainerRef = useRef(null);
+    const mobileContainerRef = useRef(null);
+
+    const tableVirtualizer = useVirtualizer({
+        count: simpleTarifs.length,
+        getScrollElement: () => tableContainerRef.current,
+        estimateSize: () => 53,
+        overscan: 10,
+    });
+
+    const mobileVirtualizer = useVirtualizer({
+        count: simpleTarifs.length,
+        getScrollElement: () => mobileContainerRef.current,
+        estimateSize: () => 130,
+        overscan: 5,
+    });
+
     return (
         <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
 
@@ -371,169 +389,194 @@ const SimpleRates = () => {
                     </div>
                 ) : (
                     <>
-                        {/* Desktop Table */}
-                        <div className="hidden md:block overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="bg-slate-50/50 border-b border-slate-200">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Indice</th>
-                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Destination</th>
-                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Montant Base</th>
-                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Prestation</th>
-                                        <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Total</th>
-                                        <th className="px-6 py-3 text-center font-bold text-slate-500 uppercase tracking-wider text-xs">Statut</th>
-                                        <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-200">
-                                    {simpleTarifs.map((tarif) => {
-                                        const zoneName = tarif.zone?.nom || tarif.pays || 'Zone ?';
-                                        const mb = parseFloat(tarif.montant_base) || 0;
-                                        const pp = parseFloat(tarif.pourcentage_prestation) || 0;
-                                        const mp = mb * (pp / 100);
-                                        const total = mb + mp;
+                        {/* Desktop Table — virtualisée */}
+                        <div className="hidden md:block">
+                            <div ref={tableContainerRef} className="overflow-auto" style={{ maxHeight: 600 }}>
+                                <table className="w-full text-sm">
+                                    <thead className="bg-slate-50/50 border-b border-slate-200 sticky top-0 z-10">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Indice</th>
+                                            <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Destination</th>
+                                            <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Montant Base</th>
+                                            <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Prestation</th>
+                                            <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Total</th>
+                                            <th className="px-6 py-3 text-center font-bold text-slate-500 uppercase tracking-wider text-xs">Statut</th>
+                                            <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody
+                                        className="divide-y divide-slate-200"
+                                        style={{ height: tableVirtualizer.getTotalSize(), position: 'relative' }}
+                                    >
+                                        {tableVirtualizer.getVirtualItems().map((virtualRow) => {
+                                            const tarif = simpleTarifs[virtualRow.index];
+                                            const zoneName = tarif.zone?.nom || tarif.pays || 'Zone ?';
+                                            const mb = parseFloat(tarif.montant_base) || 0;
+                                            const pp = parseFloat(tarif.pourcentage_prestation) || 0;
+                                            const mp = mb * (pp / 100);
+                                            const total = mb + mp;
 
-                                        return (
-                                            <tr key={tarif.id} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="px-6 py-3">
-                                                    <div className="inline-flex items-center justify-center px-2.5 py-1 rounded bg-blue-100 text-slate-700 font-bold text-xs border border-slate-200">
-                                                        {tarif.indice}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <MapPin size={14} className="text-slate-400" />
-                                                        <p className="font-semibold text-slate-900">{zoneName}</p>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-3">
-                                                    <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
-                                                </td>
-                                                <td className="px-6 py-3">
-                                                    <div className="flex flex-row gap-2">
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold w-fit">
-                                                            {pp}%
-                                                        </span>
-                                                        <span className="text-slate-500 font-medium mt-0.5 whitespace-nowrap">
-                                                            ({mp.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span>)
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-3">
-                                                    <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
-                                                </td>
-                                                <td className="px-6 py-3 text-center">
-                                                    {canToggleStatus ? (
-                                                        <button
-                                                            onClick={() => handleStatusChange(tarif)}
-                                                            disabled={updatingStatus[tarif.id]}
-                                                            className="group relative flex items-center gap-3 transition-all active:scale-95 mx-auto disabled:opacity-50"
-                                                            title={`Cliquez pour ${tarif.actif ? 'désactiver' : 'activer'}`}
-                                                        >
-                                                            <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                                                                <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-5' : 'translate-x-0'}`} />
-                                                            </div>
-                                                        </button>
-                                                    ) : (
-                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                            {tarif.actif ? 'Actif' : 'Inactif'}
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-3">
-                                                    <div className="flex justify-end">
-                                                        <RowActions
-                                                            onEdit={canEdit ? () => handleOpenEditModal(tarif) : undefined}
-                                                            onDelete={canDelete ? () => handleOpenDeleteModal(tarif) : undefined}
-                                                        />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                                            return (
+                                                <tr
+                                                    key={tarif.id}
+                                                    data-index={virtualRow.index}
+                                                    ref={tableVirtualizer.measureElement}
+                                                    className="hover:bg-slate-50/50 transition-colors"
+                                                    style={{ position: 'absolute', top: virtualRow.start, left: 0, width: '100%', display: 'table', tableLayout: 'fixed' }}
+                                                >
+                                                    <td className="px-6 py-3" style={{ width: '10%' }}>
+                                                        <div className="inline-flex items-center justify-center px-2.5 py-1 rounded bg-blue-100 text-slate-700 font-bold text-xs border border-slate-200">
+                                                            {tarif.indice}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-3" style={{ width: '22%' }}>
+                                                        <div className="flex items-center gap-2">
+                                                            <MapPin size={14} className="text-slate-400" />
+                                                            <p className="font-semibold text-slate-900">{zoneName}</p>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-3" style={{ width: '18%' }}>
+                                                        <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
+                                                    </td>
+                                                    <td className="px-6 py-3" style={{ width: '22%' }}>
+                                                        <div className="flex flex-row gap-2">
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold w-fit">
+                                                                {pp}%
+                                                            </span>
+                                                            <span className="text-slate-500 font-medium mt-0.5 whitespace-nowrap">
+                                                                ({mp.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span>)
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-3" style={{ width: '14%' }}>
+                                                        <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
+                                                    </td>
+                                                    <td className="px-6 py-3 text-center" style={{ width: '7%' }}>
+                                                        {canToggleStatus ? (
+                                                            <button
+                                                                onClick={() => handleStatusChange(tarif)}
+                                                                disabled={updatingStatus[tarif.id]}
+                                                                className="group relative flex items-center gap-3 transition-all active:scale-95 mx-auto disabled:opacity-50"
+                                                                title={`Cliquez pour ${tarif.actif ? 'désactiver' : 'activer'}`}
+                                                            >
+                                                                <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                                    <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                                </div>
+                                                            </button>
+                                                        ) : (
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                                {tarif.actif ? 'Actif' : 'Inactif'}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-3" style={{ width: '7%' }}>
+                                                        <div className="flex justify-end">
+                                                            <RowActions
+                                                                onEdit={canEdit ? () => handleOpenEditModal(tarif) : undefined}
+                                                                onDelete={canDelete ? () => handleOpenDeleteModal(tarif) : undefined}
+                                                            />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
-                        {/* Mobile Cards - Native App Style */}
-                        <div className="md:hidden divide-y divide-slate-200">
-                            {simpleTarifs.map((tarif) => {
-                                const mb = parseFloat(tarif.montant_base) || 0;
-                                const pp = parseFloat(tarif.pourcentage_prestation) || 0;
-                                const mp = mb * (pp / 100);
-                                const total = mb + mp;
+                        {/* Mobile Cards — virtualisées */}
+                        <div
+                            ref={mobileContainerRef}
+                            className="md:hidden overflow-auto"
+                            style={{ maxHeight: 600 }}
+                        >
+                            <div style={{ height: mobileVirtualizer.getTotalSize(), position: 'relative' }}>
+                                {mobileVirtualizer.getVirtualItems().map((virtualRow) => {
+                                    const tarif = simpleTarifs[virtualRow.index];
+                                    const mb = parseFloat(tarif.montant_base) || 0;
+                                    const pp = parseFloat(tarif.pourcentage_prestation) || 0;
+                                    const mp = mb * (pp / 100);
+                                    const total = mb + mp;
 
-                                return (
-                                    <div key={tarif.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="flex items-center gap-2.5 min-w-0">
-                                                <div className="px-2 py-1 rounded bg-blue-100 text-slate-700 font-bold text-xs border border-slate-200 shrink-0">
-                                                    {tarif.indice}
+                                    return (
+                                        <div
+                                            key={tarif.id}
+                                            data-index={virtualRow.index}
+                                            ref={mobileVirtualizer.measureElement}
+                                            className="p-3 space-y-2.5 active:bg-slate-50 transition-colors border-b border-slate-200"
+                                            style={{ position: 'absolute', top: virtualRow.start, left: 0, width: '100%' }}
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <div className="px-2 py-1 rounded bg-blue-100 text-slate-700 font-bold text-xs border border-slate-200 shrink-0">
+                                                        {tarif.indice}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold text-slate-900 text-sm truncate">
+                                                            {tarif.zone?.nom || tarif.pays || '?'}
+                                                        </p>
+                                                        <p className="text-xs text-slate-500 font-bold uppercase">
+                                                            {total.toLocaleString()} {getCurrencyLabel()}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-semibold text-slate-900 text-sm truncate">
-                                                        {tarif.zone?.nom || tarif.pays || '?'}
-                                                    </p>
-                                                    <p className="text-xs text-slate-500 font-bold uppercase">
-                                                        {total.toLocaleString()} {getCurrencyLabel()}
-                                                    </p>
+                                                {canToggleStatus ? (
+                                                    <button
+                                                        onClick={() => handleStatusChange(tarif)}
+                                                        disabled={updatingStatus[tarif.id]}
+                                                        className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                                                    >
+                                                        <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                            <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                        </div>
+                                                    </button>
+                                                ) : (
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                        {tarif.actif ? 'Actif' : 'Inactif'}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
+                                                    <span className="text-xs text-slate-500 font-bold">Montant Base</span>
+                                                    <span className="text-xs font-semibold text-slate-700">{mb.toLocaleString()}</span>
+                                                </div>
+                                                <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
+                                                    <span className="text-xs text-slate-500 font-bold">Prestation</span>
+                                                    <div className="flex flex-row items-center gap-2">
+                                                        <span className="text-xs font-semibold text-orange-600">{pp}%</span>
+                                                        <span className="text-xs text-slate-500 font-medium">({mp.toLocaleString()} {getCurrencyLabel()})</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            {canToggleStatus ? (
-                                                <button
-                                                    onClick={() => handleStatusChange(tarif)}
-                                                    disabled={updatingStatus[tarif.id]}
-                                                    className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
-                                                >
-                                                    <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                                                        <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-4' : 'translate-x-0'}`} />
-                                                    </div>
-                                                </button>
-                                            ) : (
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                    {tarif.actif ? 'Actif' : 'Inactif'}
-                                                </span>
+
+                                            {(canEdit || canDelete) && (
+                                                <div className="flex gap-2">
+                                                    {canEdit && (
+                                                        <button
+                                                            onClick={() => handleOpenEditModal(tarif)}
+                                                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
+                                                        >
+                                                            <Edit3 size={13} />
+                                                            Modifier
+                                                        </button>
+                                                    )}
+                                                    {canDelete && (
+                                                        <button
+                                                            onClick={() => handleOpenDeleteModal(tarif)}
+                                                            className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
-
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
-                                                <span className="text-xs text-slate-500 font-bold">Montant Base</span>
-                                                <span className="text-xs font-semibold text-slate-700">{mb.toLocaleString()}</span>
-                                            </div>
-                                            <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
-                                                <span className="text-xs text-slate-500 font-bold">Prestation</span>
-                                                <div className="flex flex-row items-center gap-2">
-                                                    <span className="text-xs font-semibold text-orange-600">{pp}%</span>
-                                                    <span className="text-xs text-slate-500 font-medium">({mp.toLocaleString()} {getCurrencyLabel()})</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {(canEdit || canDelete) && (
-                                            <div className="flex gap-2">
-                                                {canEdit && (
-                                                    <button
-                                                        onClick={() => handleOpenEditModal(tarif)}
-                                                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
-                                                    >
-                                                        <Edit3 size={13} />
-                                                        Modifier
-                                                    </button>
-                                                )}
-                                                {canDelete && (
-                                                    <button
-                                                        onClick={() => handleOpenDeleteModal(tarif)}
-                                                        className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
-                                                    >
-                                                        <Trash2 size={15} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
                         </div>
                     </>
                 )}

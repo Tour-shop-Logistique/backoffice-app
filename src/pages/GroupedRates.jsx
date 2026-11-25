@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { getCurrencyLabel } from '../utils/format';
 import {
   PlusCircle,
@@ -250,6 +251,23 @@ const GroupedRates = () => {
     };
   }), [filteredTarifs]);
 
+  const tableContainerRef = useRef(null);
+  const mobileContainerRef = useRef(null);
+
+  const tableVirtualizer = useVirtualizer({
+    count: filteredTarifs.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 60,
+    overscan: 10,
+  });
+
+  const mobileVirtualizer = useVirtualizer({
+    count: filteredTarifs.length,
+    getScrollElement: () => mobileContainerRef.current,
+    estimateSize: () => 140,
+    overscan: 5,
+  });
+
   return (
     <div className="space-y-4 pb-6 md:space-y-6 md:pb-12">
 
@@ -475,199 +493,217 @@ const GroupedRates = () => {
           </div>
         ) : (
           <>
-            {/* Desktop Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50/50 border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Type / Catégorie</th>
-                    <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Itinéraire / Pays</th>
-                    <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Montant Base</th>
-                    <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Prestation</th>
-                    <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Total</th>
-                    <th className="px-6 py-3 text-center font-bold text-slate-500 uppercase tracking-wider text-xs">Statut</th>
-                    <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {filteredTarifs.map((tarif) => {
-                    const base = parseFloat(tarif.tarif_minimum || tarif.montant_base) || 0;
-                    const prest = parseFloat(tarif.pourcentage_prestation) || 0;
-                    const mp = parseFloat(tarif.montant_prestation) || base * prest / 100;
-                    const exp = parseFloat(tarif.montant_expedition) || base + mp;
+            {/* Desktop Table — virtualisée */}
+            <div className="hidden md:block">
+              <div ref={tableContainerRef} className="overflow-auto" style={{ maxHeight: 600 }}>
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50/50 border-b border-slate-200 sticky top-0 z-10">
+                    <tr>
+                      <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Type / Catégorie</th>
+                      <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Itinéraire / Pays</th>
+                      <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Montant Base</th>
+                      <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Prestation</th>
+                      <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Total</th>
+                      <th className="px-6 py-3 text-center font-bold text-slate-500 uppercase tracking-wider text-xs">Statut</th>
+                      <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    className="divide-y divide-slate-200"
+                    style={{ height: tableVirtualizer.getTotalSize(), position: 'relative' }}
+                  >
+                    {tableVirtualizer.getVirtualItems().map((virtualRow) => {
+                      const tarif = filteredTarifs[virtualRow.index];
+                      const base = parseFloat(tarif.tarif_minimum || tarif.montant_base) || 0;
+                      const prest = parseFloat(tarif.pourcentage_prestation) || 0;
+                      const mp = parseFloat(tarif.montant_prestation) || base * prest / 100;
+                      const exp = parseFloat(tarif.montant_expedition) || base + mp;
 
-                    return (
-                      <tr key={tarif.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-3">
-                          <div className="flex flex-col">
-                            <span className={`text-sm font-semibold px-2 py-1 w-fit rounded uppercase ${tarif.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' :
-                              tarif.type_expedition?.includes('maritime') ? 'bg-indigo-100 text-indigo-700' :
-                                'bg-emerald-100 text-emerald-700'
-                              }`}>
-                              {getTypeLabel(tarif.type_expedition)}
-                            </span>
-                            {tarif.category && <div className="flex items-center gap-1 mt-1.5">
-                              <span className="font-semibold text-sm text-slate-900 tracking-tight">
-                                → {tarif.category?.nom}
+                      return (
+                        <tr
+                          key={tarif.id}
+                          data-index={virtualRow.index}
+                          ref={tableVirtualizer.measureElement}
+                          className="hover:bg-slate-50/50 transition-colors"
+                          style={{ position: 'absolute', top: virtualRow.start, left: 0, width: '100%', display: 'table', tableLayout: 'fixed' }}
+                        >
+                          <td className="px-6 py-3" style={{ width: '22%' }}>
+                            <div className="flex flex-col">
+                              <span className={`text-sm font-semibold px-2 py-1 w-fit rounded uppercase ${tarif.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' :
+                                tarif.type_expedition?.includes('maritime') ? 'bg-indigo-100 text-indigo-700' :
+                                  'bg-emerald-100 text-emerald-700'
+                                }`}>
+                                {getTypeLabel(tarif.type_expedition)}
                               </span>
-                            </div>}
-                          </div>
-                        </td>
-                        <td className="px-6 py-3">
-                          <div className="flex items-center gap-2">
-                            {tarif.ligne ? (
-                              <Package size={14} className="text-slate-400" />
+                              {tarif.category && <div className="flex items-center gap-1 mt-1.5">
+                                <span className="font-semibold text-sm text-slate-900 tracking-tight">
+                                  → {tarif.category?.nom}
+                                </span>
+                              </div>}
+                            </div>
+                          </td>
+                          <td className="px-6 py-3" style={{ width: '22%' }}>
+                            <div className="flex items-center gap-2">
+                              {tarif.ligne ? (
+                                <Package size={14} className="text-slate-400" />
+                              ) : (
+                                <Globe size={14} className="text-slate-400" />
+                              )}
+                              <p className="font-semibold uppercase text-slate-700">
+                                {formatItineraire(tarif) || 'N/A'}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-3" style={{ width: '16%' }}>
+                            <p className="font-medium text-slate-700">{base.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
+                          </td>
+                          <td className="px-6 py-3" style={{ width: '20%' }}>
+                            <div className="flex flex-row gap-2">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold w-fit">
+                                {prest}%
+                              </span>
+                              <span className="text-slate-500 font-medium mt-0.5 whitespace-nowrap">
+                                ({mp.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span>)
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-3" style={{ width: '12%' }}>
+                            <p className="font-bold text-slate-900">{exp.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
+                          </td>
+                          <td className="px-6 py-3 text-center" style={{ width: '5%' }}>
+                            {canToggleStatus ? (
+                              <button
+                                onClick={() => handleStatusToggle(tarif.id)}
+                                disabled={updatingStatus[tarif.id]}
+                                className="group relative flex items-center gap-3 transition-all active:scale-95 mx-auto disabled:opacity-50"
+                                title={`Cliquez pour ${tarif.actif ? 'désactiver' : 'activer'}`}
+                              >
+                                <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                  <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-5' : 'translate-x-0'}`} />
+                                </div>
+                              </button>
                             ) : (
-                              <Globe size={14} className="text-slate-400" />
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                {tarif.actif ? 'Actif' : 'Inactif'}
+                              </span>
                             )}
-                            <p className="font-semibold uppercase text-slate-700">
-                              {formatItineraire(tarif) || 'N/A'}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-3">
-                          <p className="font-medium text-slate-700">{(base).toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
-                        </td>
-                        <td className="px-6 py-3">
-                          <div className="flex flex-row gap-2">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold w-fit">
-                              {prest}%
-                            </span>
-                            <span className="text-slate-500 font-medium mt-0.5 whitespace-nowrap">
-                              ({mp.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span>)
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-3">
-                          <p className="font-bold text-slate-900">{exp.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
-                        </td>
-                        <td className="px-6 py-3 text-center">
-                          {canToggleStatus ? (
-                            <button
-                              onClick={() => handleStatusToggle(tarif.id)}
-                              disabled={updatingStatus[tarif.id]}
-                              className="group relative flex items-center gap-3 transition-all active:scale-95 mx-auto disabled:opacity-50"
-                              title={`Cliquez pour ${tarif.actif ? 'désactiver' : 'activer'}`}
-                            >
-                              <div className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                                <div className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-5' : 'translate-x-0'}`} />
-                              </div>
-                            </button>
-                          ) : (
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                              {tarif.actif ? 'Actif' : 'Inactif'}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-3">
-                          <div className="flex justify-end">
-                            <RowActions
-                              onEdit={canEdit ? () => openModal(tarif) : undefined}
-                              onDelete={canDelete ? () => setTarifToDelete(tarif) : undefined}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td className="px-6 py-3" style={{ width: '3%' }}>
+                            <div className="flex justify-end">
+                              <RowActions
+                                onEdit={canEdit ? () => openModal(tarif) : undefined}
+                                onDelete={canDelete ? () => setTarifToDelete(tarif) : undefined}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            {/* Mobile Cards - Native App Style */}
-            <div className="md:hidden divide-y divide-slate-200">
-              {filteredTarifs.map((tarif) => {
-                const base = parseFloat(tarif.tarif_minimum || tarif.montant_base) || 0;
-                const prest = parseFloat(tarif.pourcentage_prestation) || 0;
-                const mp = parseFloat(tarif.montant_prestation) || 0;
-                const exp = parseFloat(tarif.montant_expedition) || 0;
+            {/* Mobile Cards — virtualisées */}
+            <div
+              ref={mobileContainerRef}
+              className="md:hidden overflow-auto"
+              style={{ maxHeight: 600 }}
+            >
+              <div style={{ height: mobileVirtualizer.getTotalSize(), position: 'relative' }}>
+                {mobileVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const tarif = filteredTarifs[virtualRow.index];
+                  const base = parseFloat(tarif.tarif_minimum || tarif.montant_base) || 0;
+                  const prest = parseFloat(tarif.pourcentage_prestation) || 0;
+                  const mp = parseFloat(tarif.montant_prestation) || 0;
+                  const exp = parseFloat(tarif.montant_expedition) || 0;
 
-                return (
-                  <div key={tarif.id} className="p-3 space-y-2.5 active:bg-slate-50 transition-colors">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {/* <div className={`p-2 rounded-lg shrink-0 ${tarif.type_expedition?.includes('AERIEN') ? 'bg-blue-100 text-blue-600' :
-                          tarif.type_expedition?.includes('MARITIME') ? 'bg-indigo-100 text-indigo-600' :
-                            tarif.type_expedition?.includes('AFRIQUE') ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'
-                          }`}>
-                          {getTypeIcon(tarif.type_expedition)}
-                        </div> */}
-                        <div className="min-w-0">
-                          <p className="font-semibold text-slate-900 text-sm truncate uppercase tracking-tight">
-                            {/* {tarif.category?.nom || 'SANS CATÉGORIE'} */}
-                            {getTypeLabel(tarif.type_expedition)}
-                          </p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-xs text-slate-500 font-bold uppercase shrink-0">
-                              {exp.toLocaleString()} {getCurrencyLabel()}
-                            </span>
-                            <span className="text-slate-400">•</span>
-                            <span className="text-xs uppercase text-slate-500 font-medium truncate">
-                              {formatItineraire(tarif)}
-                            </span>
+                  return (
+                    <div
+                      key={tarif.id}
+                      data-index={virtualRow.index}
+                      ref={mobileVirtualizer.measureElement}
+                      className="p-3 space-y-2.5 active:bg-slate-50 transition-colors border-b border-slate-200"
+                      style={{ position: 'absolute', top: virtualRow.start, left: 0, width: '100%' }}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-slate-900 text-sm truncate uppercase tracking-tight">
+                              {getTypeLabel(tarif.type_expedition)}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-xs text-slate-500 font-bold uppercase shrink-0">
+                                {exp.toLocaleString()} {getCurrencyLabel()}
+                              </span>
+                              <span className="text-slate-400">•</span>
+                              <span className="text-xs uppercase text-slate-500 font-medium truncate">
+                                {formatItineraire(tarif)}
+                              </span>
+                            </div>
+                            {tarif.category && (
+                              <span className="text-sm font-semibold text-blue-600 truncate">
+                                Catégorie : {tarif.category?.nom}
+                              </span>
+                            )}
                           </div>
-                          {tarif.category && (
-                            <span className="text-sm font-semibold text-blue-600 truncate">
-                              Catégorie : {tarif.category?.nom}
-                            </span>
+                        </div>
+                        {canToggleStatus ? (
+                          <button
+                            onClick={() => handleStatusToggle(tarif.id)}
+                            disabled={updatingStatus[tarif.id]}
+                            className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                          >
+                            <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                              <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-4' : 'translate-x-0'}`} />
+                            </div>
+                          </button>
+                        ) : (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                            {tarif.actif ? 'Actif' : 'Inactif'}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
+                          <span className="text-xs text-slate-500 font-bold">Montant Base</span>
+                          <span className="text-xs font-semibold text-slate-700">{base.toLocaleString()}</span>
+                        </div>
+                        <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
+                          <span className="text-xs text-slate-500 font-bold">Prestation</span>
+                          <div className="flex flex-row items-center gap-2">
+                            <span className="text-xs font-semibold text-orange-600">{prest}%</span>
+                            <span className="text-xs text-slate-500 font-medium">({mp.toLocaleString()} {getCurrencyLabel()})</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {(canEdit || canDelete) && (
+                        <div className="flex gap-2">
+                          {canEdit && (
+                            <button
+                              onClick={() => openModal(tarif)}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
+                            >
+                              <Edit3 size={13} />
+                              Modifier
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              onClick={() => setTarifToDelete(tarif)}
+                              className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
+                            >
+                              <Trash2 size={15} />
+                            </button>
                           )}
                         </div>
-                      </div>
-                      {canToggleStatus ? (
-                        <button
-                          onClick={() => handleStatusToggle(tarif.id)}
-                          disabled={updatingStatus[tarif.id]}
-                          className="flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
-                        >
-                          <div className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${tarif.actif ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                            <div className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full shadow-sm transform transition-transform duration-200 ${tarif.actif ? 'translate-x-4' : 'translate-x-0'}`} />
-                          </div>
-                        </button>
-                      ) : (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${tarif.actif ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                          {tarif.actif ? 'Actif' : 'Inactif'}
-                        </span>
                       )}
                     </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
-                        <span className="text-xs text-slate-500 font-bold">Montant Base</span>
-                        <span className="text-xs font-semibold text-slate-700">{base.toLocaleString()}</span>
-                      </div>
-                      <div className="bg-slate-50 rounded-lg p-2 flex flex-col items-center justify-center border border-slate-100">
-                        <span className="text-xs text-slate-500 font-bold">Prestation</span>
-                        <div className="flex flex-row items-center gap-2">
-                          <span className="text-xs font-semibold text-orange-600">{prest}%</span>
-                          <span className="text-xs text-slate-500 font-medium">({mp.toLocaleString()} {getCurrencyLabel()})</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {(canEdit || canDelete) && (
-                      <div className="flex gap-2">
-                        {canEdit && (
-                          <button
-                            onClick={() => openModal(tarif)}
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all active:scale-95"
-                          >
-                            <Edit3 size={13} />
-                            Modifier
-                          </button>
-                        )}
-                        {canDelete && (
-                          <button
-                            onClick={() => setTarifToDelete(tarif)}
-                            className="inline-flex items-center justify-center p-2 text-red-500 active:bg-red-50 border border-red-100 rounded-lg transition-all active:scale-95"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </>
         )}
