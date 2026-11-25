@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Megaphone, Plus, Trash2, Loader2, Users, Building2, Globe, MapPin, Search, Clock, ChevronLeft, ChevronRight, CalendarClock, RefreshCw, Eye, CheckCircle2, Pencil, XCircle, Hourglass } from 'lucide-react';
+import { Megaphone, Plus, Trash2, Loader2, Users, Building2, Globe, MapPin, Search, Clock, ChevronLeft, ChevronRight, CalendarClock, RefreshCw, Eye, CheckCircle2, Pencil, XCircle, Hourglass, Truck, UserRound, Check, Send } from 'lucide-react';
+import api from '../services/api';
 import { showNotification } from '../redux/slices/uiSlice';
 import { fetchAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, bulkDeleteAnnouncements } from '../redux/slices/announcementSlice';
 import { fetchAgences } from '../redux/slices/agenceSlice';
@@ -18,15 +19,33 @@ const TARGET_MODES = {
   VILLES: 'villes',
 };
 
+const CIBLES = [
+  { key: 'agences', label: 'Agences', icon: Building2 },
+  { key: 'clients', label: 'Clients', icon: UserRound },
+  { key: 'livreurs', label: 'Livreurs', icon: Truck },
+];
+
+const TYPE_LECTEUR = {
+  agence: { label: 'Agence', icon: Building2, tone: 'bg-blue-50 text-blue-600' },
+  client: { label: 'Client', icon: UserRound, tone: 'bg-violet-50 text-violet-600' },
+  livreur: { label: 'Livreur', icon: Truck, tone: 'bg-amber-50 text-amber-600' },
+};
+
+const MESSAGE_MAX = 2000;
+
 const emptyForm = {
   titre: '',
   message: '',
+  cibles: CIBLES.map((c) => c.key),
   targetMode: TARGET_MODES.ALL,
   agence_id: '',
   pays_cible: [],
   communes_cible: [],
+  programmer: false,
   scheduled_at: '',
 };
+
+const formatDate = (iso, pattern = 'dd MMM yyyy à HH:mm') => format(new Date(iso), pattern, { locale: fr });
 
 const Announcements = () => {
   const dispatch = useDispatch();
@@ -47,6 +66,19 @@ const Announcements = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [lectures, setLectures] = useState(null);
+  const [lecturesTab, setLecturesTab] = useState('lus');
+
+  useEffect(() => {
+    if (!selectedAnnouncement) return;
+    let annule = false;
+    setLectures(null);
+    setLecturesTab('lus');
+    api.get(`/backoffice/announcements/${selectedAnnouncement.id}/lectures`)
+      .then(({ data }) => { if (!annule) setLectures(data); })
+      .catch(() => { if (!annule) setLectures({ lecteurs: [], agences_non_lues: [], erreur: true }); });
+    return () => { annule = true; };
+  }, [selectedAnnouncement]);
 
   const [filters, setFilters] = useState({ from: '', to: '', agence_id: '', q: '', page: 1 });
   const isFirstRun = useRef(true);
@@ -109,11 +141,13 @@ const Announcements = () => {
     setForm({
       titre: a.titre,
       message: a.message,
+      cibles: a.cibles?.length ? a.cibles : ['agences'],
       targetMode: a.agence ? TARGET_MODES.AGENCE : TARGET_MODES.ALL,
       agence_id: a.agence?.id || '',
       pays_cible: [],
       communes_cible: [],
-      scheduled_at: a.scheduled_at ? a.scheduled_at.slice(0, 16) : '',
+      programmer: !!a.scheduled_at,
+      scheduled_at: a.scheduled_at ? format(new Date(a.scheduled_at), "yyyy-MM-dd'T'HH:mm") : '',
     });
     setSelectedAnnouncement(null);
     setIsModalOpen(true);
@@ -133,17 +167,36 @@ const Announcements = () => {
     }));
   };
 
+  const toggleCible = (key) => {
+    setForm((p) => ({
+      ...p,
+      cibles: p.cibles.includes(key) ? p.cibles.filter((x) => x !== key) : [...p.cibles, key],
+    }));
+  };
+
+  const ciblesAgences = form.cibles.includes('agences');
+
   const handleSubmit = async () => {
-    if (!form.titre.trim() || !form.message.trim()) {
-      dispatch(showNotification({ type: 'error', message: 'Le titre et le message sont obligatoires.' }));
+    const erreur =
+      (!form.titre.trim() || !form.message.trim()) ? 'Le titre et le message sont obligatoires.'
+      : form.cibles.length === 0 ? 'Choisissez au moins un type de destinataire.'
+      : ciblesAgences && form.targetMode === TARGET_MODES.AGENCE && !form.agence_id ? 'Sélectionnez une agence.'
+      : ciblesAgences && form.targetMode === TARGET_MODES.PAYS && form.pays_cible.length === 0 ? 'Sélectionnez au moins un pays.'
+      : ciblesAgences && form.targetMode === TARGET_MODES.VILLES && form.communes_cible.length === 0 ? 'Sélectionnez au moins une ville.'
+      : form.programmer && !form.scheduled_at ? "Choisissez la date et l'heure d'envoi."
+      : null;
+    if (erreur) {
+      dispatch(showNotification({ type: 'error', message: erreur }));
       return;
     }
 
-    const payload = { titre: form.titre.trim(), message: form.message.trim() };
-    if (form.targetMode === TARGET_MODES.AGENCE) payload.agence_id = form.agence_id || null;
-    if (form.targetMode === TARGET_MODES.PAYS) payload.pays_cible = form.pays_cible;
-    if (form.targetMode === TARGET_MODES.VILLES) payload.communes_cible = form.communes_cible;
-    if (form.scheduled_at) payload.scheduled_at = new Date(form.scheduled_at).toISOString();
+    const payload = { titre: form.titre.trim(), message: form.message.trim(), cibles: form.cibles };
+    if (ciblesAgences) {
+      if (form.targetMode === TARGET_MODES.AGENCE) payload.agence_id = form.agence_id;
+      if (form.targetMode === TARGET_MODES.PAYS) payload.pays_cible = form.pays_cible;
+      if (form.targetMode === TARGET_MODES.VILLES) payload.communes_cible = form.communes_cible;
+    }
+    if (form.programmer) payload.scheduled_at = new Date(form.scheduled_at).toISOString();
 
     try {
       if (editingId) {
@@ -153,9 +206,9 @@ const Announcements = () => {
         const result = await dispatch(createAnnouncement(payload)).unwrap();
         dispatch(showNotification({
           type: 'success',
-          message: form.scheduled_at
+          message: form.programmer
             ? 'Annonce programmée avec succès.'
-            : `Annonce envoyée à ${result.nbDestinataires ?? '?'} agence(s).`,
+            : `Annonce envoyée à ${result.nbDestinataires ?? '?'} destinataire(s).`,
         }));
       }
       closeModal();
@@ -447,129 +500,191 @@ const Announcements = () => {
         isOpen={isModalOpen}
         onClose={closeModal}
         title={editingId ? "Modifier l'annonce programmée" : 'Nouvelle annonce'}
-        subtitle="Diffusée aux agences concernées"
-        size="md"
+        subtitle={form.cibles.length ? `Pour : ${CIBLES.filter((c) => form.cibles.includes(c.key)).map((c) => c.label.toLowerCase()).join(', ')}` : 'Aucun destinataire choisi'}
+        size="lg"
         onConfirm={handleSubmit}
         isLoading={isSending}
-        confirmLabel={editingId ? 'Enregistrer' : (form.scheduled_at ? 'Programmer' : 'Envoyer')}
+        confirmLabel={editingId ? 'Enregistrer' : (form.programmer ? 'Programmer' : 'Envoyer')}
       >
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Titre</label>
             <input
               type="text"
               value={form.titre}
+              maxLength={255}
               onChange={(e) => setForm((p) => ({ ...p, titre: e.target.value }))}
-              placeholder="Ex: Nouvelle procédure de retrait"
+              placeholder="Ex : Nouvelle procédure de retrait"
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all"
             />
           </div>
+
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Message</label>
+            <div className="flex items-baseline justify-between mb-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Message</label>
+              <span className={`text-[11px] tabular-nums ${form.message.length > MESSAGE_MAX * 0.9 ? 'text-amber-600 font-semibold' : 'text-slate-400'}`}>
+                {form.message.length}/{MESSAGE_MAX}
+              </span>
+            </div>
             <textarea
               value={form.message}
+              maxLength={MESSAGE_MAX}
               onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))}
               placeholder="Détail du message à communiquer..."
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all min-h-[100px] resize-none"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm text-slate-900 leading-relaxed transition-all min-h-[120px] resize-y"
             />
           </div>
 
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Destinataires</label>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { mode: TARGET_MODES.ALL, label: 'Toutes les agences', icon: Users },
-                { mode: TARGET_MODES.AGENCE, label: 'Une agence', icon: Building2 },
-                { mode: TARGET_MODES.PAYS, label: 'Par pays', icon: Globe },
-                { mode: TARGET_MODES.VILLES, label: 'Par ville', icon: MapPin },
-              ].map(({ mode, label, icon: Icon }) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setForm((p) => ({ ...p, targetMode: mode }))}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border transition-all ${
-                    form.targetMode === mode
-                      ? 'bg-slate-900 text-white border-slate-900'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  <Icon size={14} />
-                  {label}
-                </button>
-              ))}
+            <div className="grid grid-cols-3 gap-2">
+              {CIBLES.map(({ key, label, icon: Icon }) => {
+                const actif = form.cibles.includes(key);
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={actif}
+                    onClick={() => toggleCible(key)}
+                    className={`relative flex flex-col items-center gap-1.5 px-2 py-3.5 rounded-xl border text-xs font-bold transition-all active:scale-[0.98] ${
+                      actif
+                        ? 'bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10'
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    {actif && (
+                      <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-white text-slate-900 flex items-center justify-center">
+                        <Check size={10} strokeWidth={3} />
+                      </span>
+                    )}
+                    <Icon size={18} />
+                    {label}
+                  </button>
+                );
+              })}
             </div>
-
-            {form.targetMode === TARGET_MODES.AGENCE && (
-              <select
-                value={form.agence_id}
-                onChange={(e) => setForm((p) => ({ ...p, agence_id: e.target.value }))}
-                className="w-full mt-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all"
-              >
-                <option value="">Sélectionner une agence</option>
-                {(agences || []).filter((a) => a.actif).map((a) => (
-                  <option key={a.id} value={a.id}>{a.nom_agence}</option>
-                ))}
-              </select>
-            )}
-
-            {form.targetMode === TARGET_MODES.PAYS && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {paysDisponibles.map((pays) => (
-                  <button
-                    key={pays}
-                    type="button"
-                    onClick={() => togglePays(pays)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                      form.pays_cible.includes(pays)
-                        ? 'bg-indigo-600 text-white border-indigo-600'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    {pays}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {form.targetMode === TARGET_MODES.VILLES && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {communesDisponibles.map((commune) => (
-                  <button
-                    key={commune.id}
-                    type="button"
-                    onClick={() => toggleCommune(commune.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                      form.communes_cible.includes(commune.id)
-                        ? 'bg-indigo-600 text-white border-indigo-600'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    {commune.nom}
-                  </button>
-                ))}
-                {communesDisponibles.length === 0 && (
-                  <p className="text-xs text-slate-400">Aucune commune n'est encore utilisée par une agence.</p>
-                )}
-              </div>
-            )}
           </div>
 
+          {ciblesAgences && (
+            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-3">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Quelles agences ?</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-white border border-slate-200 rounded-lg">
+                {[
+                  { mode: TARGET_MODES.ALL, label: 'Toutes', icon: Users },
+                  { mode: TARGET_MODES.AGENCE, label: 'Une agence', icon: Building2 },
+                  { mode: TARGET_MODES.PAYS, label: 'Par pays', icon: Globe },
+                  { mode: TARGET_MODES.VILLES, label: 'Par ville', icon: MapPin },
+                ].map(({ mode, label, icon: Icon }) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setForm((p) => ({ ...p, targetMode: mode }))}
+                    className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-bold transition-all ${
+                      form.targetMode === mode ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Icon size={13} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {form.targetMode === TARGET_MODES.AGENCE && (
+                <select
+                  value={form.agence_id}
+                  onChange={(e) => setForm((p) => ({ ...p, agence_id: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all"
+                >
+                  <option value="">Sélectionner une agence</option>
+                  {(agences || []).filter((a) => a.actif).map((a) => (
+                    <option key={a.id} value={a.id}>{a.nom_agence}</option>
+                  ))}
+                </select>
+              )}
+
+              {form.targetMode === TARGET_MODES.PAYS && (
+                <div className="flex flex-wrap gap-2">
+                  {paysDisponibles.map((pays) => (
+                    <button
+                      key={pays}
+                      type="button"
+                      onClick={() => togglePays(pays)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                        form.pays_cible.includes(pays)
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {pays}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {form.targetMode === TARGET_MODES.VILLES && (
+                <div className="flex flex-wrap gap-2">
+                  {communesDisponibles.map((commune) => (
+                    <button
+                      key={commune.id}
+                      type="button"
+                      onClick={() => toggleCommune(commune.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                        form.communes_cible.includes(commune.id)
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {commune.nom}
+                    </button>
+                  ))}
+                  {communesDisponibles.length === 0 && (
+                    <p className="text-xs text-slate-400">Aucune commune n'est encore utilisée par une agence.</p>
+                  )}
+                </div>
+              )}
+
+              {(form.cibles.includes('clients') || form.cibles.includes('livreurs')) && form.targetMode !== TARGET_MODES.ALL && (
+                <p className="text-[11px] text-slate-500">Ce filtre ne concerne que les agences : clients et livreurs reçoivent l'annonce partout.</p>
+              )}
+            </div>
+          )}
+
           <div>
-            <label className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
-              <CalendarClock size={14} />
-              Programmer l'envoi (optionnel)
-            </label>
-            <input
-              type="datetime-local"
-              value={form.scheduled_at}
-              onChange={(e) => setForm((p) => ({ ...p, scheduled_at: e.target.value }))}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all"
-            />
-            {form.scheduled_at && (
-              <p className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-1.5">
-                <Clock size={12} />
-                Envoi différé à la date/heure choisie, au lieu d'un envoi immédiat.
-              </p>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Envoi</label>
+            {!editingId && (
+              <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-lg mb-2">
+                {[
+                  { programmer: false, label: 'Immédiat', icon: Send },
+                  { programmer: true, label: 'Programmer', icon: CalendarClock },
+                ].map(({ programmer, label, icon: Icon }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setForm((p) => ({ ...p, programmer }))}
+                    className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-bold transition-all ${
+                      form.programmer === programmer ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    <Icon size={13} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {form.programmer && (
+              <>
+                <input
+                  type="datetime-local"
+                  value={form.scheduled_at}
+                  min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                  onChange={(e) => setForm((p) => ({ ...p, scheduled_at: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 text-sm font-medium text-slate-900 transition-all"
+                />
+                <p className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-1.5">
+                  <Clock size={12} />
+                  L'annonce partira automatiquement à la date et l'heure choisies.
+                </p>
+              </>
             )}
           </div>
         </div>
@@ -579,87 +694,48 @@ const Announcements = () => {
         isOpen={!!selectedAnnouncement}
         onClose={() => setSelectedAnnouncement(null)}
         title="Détails de l'annonce"
-        size="md"
-        position="right"
+        size="xl"
         footer={
-          <div className="flex items-center gap-2">
-            {canEdit && selectedAnnouncement?.statut === 'programmee' && (
-              <button
-                onClick={() => openEditModal(selectedAnnouncement)}
-                className="flex items-center gap-2 px-4 py-2.5 text-indigo-600 text-xs font-bold uppercase tracking-widest hover:bg-indigo-50 rounded-lg transition-colors"
-              >
-                <Pencil size={14} />
-                Modifier
-              </button>
-            )}
-            {canDelete && (
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+            {canDelete ? (
               <button
                 onClick={() => {
                   setToDelete(selectedAnnouncement);
                   setSelectedAnnouncement(null);
                 }}
-                className="flex items-center gap-2 px-4 py-2.5 text-red-600 text-xs font-bold uppercase tracking-widest hover:bg-red-50 rounded-lg transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 text-red-600 text-xs font-bold uppercase tracking-widest hover:bg-red-50 rounded-lg transition-colors"
               >
                 <Trash2 size={14} />
-                {selectedAnnouncement?.statut === 'programmee' ? 'Annuler la programmation' : 'Supprimer cette annonce'}
+                {selectedAnnouncement?.statut === 'programmee' ? 'Annuler la programmation' : 'Supprimer'}
               </button>
-            )}
+            ) : <span />}
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              <button
+                onClick={() => setSelectedAnnouncement(null)}
+                className="px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors uppercase tracking-widest"
+              >
+                Fermer
+              </button>
+              {canEdit && selectedAnnouncement?.statut === 'programmee' && (
+                <button
+                  onClick={() => openEditModal(selectedAnnouncement)}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 text-white text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
+                >
+                  <Pencil size={14} />
+                  Modifier
+                </button>
+              )}
+            </div>
           </div>
         }
       >
         {selectedAnnouncement && (
-          <div className="space-y-6">
-            <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 p-5 shadow-lg shadow-slate-900/10">
-              <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur flex items-center justify-center mb-3 ring-1 ring-white/10">
-                <Megaphone className="text-white" size={20} />
-              </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">{selectedAnnouncement.titre}</h3>
-              <p className="text-sm text-slate-300 mt-2 whitespace-pre-wrap leading-relaxed">{selectedAnnouncement.message}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-blue-50 to-white p-4">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center mb-2.5">
-                  {selectedAnnouncement.agence ? <Building2 size={15} className="text-blue-600" /> : <Users size={15} className="text-blue-600" />}
-                </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Destinataire</p>
-                <p className="text-sm font-bold text-slate-900 leading-snug">{selectedAnnouncement.cible}</p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-emerald-50 to-white p-4">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-2.5">
-                  <CheckCircle2 size={15} className="text-emerald-600" />
-                </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Lectures</p>
-                <p className="text-2xl font-black text-slate-900 tabular-nums leading-none">
-                  {selectedAnnouncement.nb_lectures}
-                  {selectedAnnouncement.nb_destinataires != null && (
-                    <span className="text-base text-slate-400 font-bold">/{selectedAnnouncement.nb_destinataires}</span>
-                  )}
-                </p>
-              </div>
-
-              <div className="col-span-2 rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${selectedAnnouncement.statut === 'programmee' ? 'bg-amber-500/10' : 'bg-amber-500/10'}`}>
-                  {selectedAnnouncement.statut === 'programmee' ? (
-                    <Hourglass size={15} className="text-amber-600" />
-                  ) : (
-                    <Clock size={15} className="text-amber-600" />
-                  )}
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
-                    {selectedAnnouncement.statut === 'programmee' ? 'Programmée pour le' : 'Envoyée le'}
-                  </p>
-                  <p className="text-sm font-bold text-slate-900">
-                    {selectedAnnouncement.statut === 'programmee' && selectedAnnouncement.scheduled_at
-                      ? format(new Date(selectedAnnouncement.scheduled_at), 'dd MMMM yyyy à HH:mm', { locale: fr })
-                      : format(new Date(selectedAnnouncement.sent_at || selectedAnnouncement.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <AnnouncementDetails
+            annonce={selectedAnnouncement}
+            lectures={lectures}
+            tab={lecturesTab}
+            onTabChange={setLecturesTab}
+          />
         )}
       </Modal>
 
@@ -684,6 +760,121 @@ const Announcements = () => {
         title="Supprimer les annonces"
         message={`${selectedIds.length} annonce(s) seront définitivement supprimée(s).`}
       />
+    </div>
+  );
+};
+
+const AnnouncementDetails = ({ annonce, lectures, tab, onTabChange }) => {
+  const programmee = annonce.statut === 'programmee';
+  const lus = annonce.nb_lectures || 0;
+  const total = annonce.nb_destinataires;
+  const taux = total ? Math.min(100, Math.round((lus / total) * 100)) : null;
+  const nonLues = lectures?.agences_non_lues || [];
+  const liste = tab === 'lus' ? (lectures?.lecteurs || []) : nonLues;
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        {programmee ? (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md font-semibold bg-amber-50 text-amber-700">
+            <Hourglass size={12} /> Programmée
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md font-semibold bg-emerald-50 text-emerald-700">
+            <CheckCircle2 size={12} /> Envoyée
+          </span>
+        )}
+        <span className="inline-flex items-center gap-1 text-slate-500">
+          <Clock size={12} />
+          {programmee && annonce.scheduled_at
+            ? `Prévue le ${formatDate(annonce.scheduled_at, 'dd MMMM yyyy à HH:mm')}`
+            : formatDate(annonce.sent_at || annonce.created_at, 'dd MMMM yyyy à HH:mm')}
+        </span>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 border-l-4 border-l-indigo-500 bg-white p-4 sm:p-5">
+        <h3 className="text-lg font-bold text-slate-900 leading-snug break-words">{annonce.titre}</h3>
+        <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-wrap break-words">{annonce.message}</p>
+      </div>
+
+      <div className="flex items-start gap-2 text-sm">
+        <Users size={16} className="text-slate-400 mt-0.5 shrink-0" />
+        <span className="text-slate-500">Destinataires :</span>
+        <span className="font-semibold text-slate-900">{annonce.cible}</span>
+      </div>
+
+      {!programmee && (
+        <>
+          <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Lectures</span>
+              <span className="text-sm text-slate-500 tabular-nums">
+                <span className="text-xl font-black text-slate-900">{lus}</span>
+                {total != null && <> / {total}</>}
+                {taux != null && <span className="ml-2 font-bold text-emerald-600">{taux}%</span>}
+              </span>
+            </div>
+            {taux != null && (
+              <div className="mt-3 h-2 rounded-full bg-slate-200 overflow-hidden">
+                <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${taux}%` }} />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="flex gap-1 p-1 bg-slate-100 rounded-lg mb-3">
+              {[
+                { key: 'lus', label: 'Ont lu', count: lectures?.lecteurs?.length },
+                { key: 'non_lus', label: 'Agences pas encore lu', count: nonLues.length },
+              ].map(({ key, label, count }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onTabChange(key)}
+                  className={`flex-1 px-3 py-2 rounded-md text-xs font-bold transition-all ${
+                    tab === key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {label}{lectures && <span className="ml-1 tabular-nums text-slate-400">({count ?? 0})</span>}
+                </button>
+              ))}
+            </div>
+
+            {!lectures ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="animate-spin text-slate-400" size={22} />
+              </div>
+            ) : lectures.erreur ? (
+              <p className="text-center text-sm text-red-600 py-6">Impossible de charger les lectures.</p>
+            ) : liste.length === 0 ? (
+              <p className="text-center text-sm text-slate-400 py-6">
+                {tab === 'lus' ? "Personne n'a encore lu cette annonce." : 'Toutes les agences ciblées ont lu l’annonce.'}
+              </p>
+            ) : (
+              <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 max-h-72 overflow-y-auto custom-scrollbar">
+                {liste.map((l, i) => {
+                  const t = TYPE_LECTEUR[l.type] || TYPE_LECTEUR.agence;
+                  const Icon = t.icon;
+                  return (
+                    <li key={i} className="flex items-center gap-3 px-3 py-2.5">
+                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${t.tone}`}>
+                        <Icon size={15} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-slate-900 truncate">{l.nom || '—'}</p>
+                        <p className="text-xs text-slate-500 truncate">{t.label}{l.detail ? ` · ${l.detail}` : ''}</p>
+                      </div>
+                      {l.read_at && (
+                        <span className="text-[11px] text-slate-400 whitespace-nowrap">{formatDate(l.read_at, 'dd MMM, HH:mm')}</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -100,11 +100,22 @@ const IncomingParcels = () => {
         );
     };
 
+    // Seuls les colis partis ET avec agence assignée sont réceptionnables.
+    const receptionnableParcels = useMemo(
+        () => filteredParcels.filter(
+            p => hasDepartedOrigin(p.expedition?.statut_expedition) && getAgencyForColis(p.code_colis)
+        ),
+        [filteredParcels]
+    );
+
     const toggleSelectAll = () => {
-        if (selectedCodes.length === filteredParcels.length && filteredParcels.length > 0) {
+        const receptionnableCodes = receptionnableParcels.map(p => p.code_colis);
+        const allSelected = receptionnableCodes.length > 0 &&
+            receptionnableCodes.every(c => selectedCodes.includes(c));
+        if (allSelected) {
             setSelectedCodes([]);
         } else {
-            setSelectedCodes(filteredParcels.map(p => p.code_colis));
+            setSelectedCodes(receptionnableCodes);
         }
     };
 
@@ -425,9 +436,13 @@ const IncomingParcels = () => {
                                             <div className="flex items-center">
                                                 <input
                                                     type="checkbox"
-                                                    checked={selectedCodes.length === filteredParcels.length && filteredParcels.length > 0}
+                                                    checked={
+                                                        receptionnableParcels.length > 0 &&
+                                                        receptionnableParcels.every(p => selectedCodes.includes(p.code_colis))
+                                                    }
                                                     onChange={toggleSelectAll}
-                                                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                                                    disabled={receptionnableParcels.length === 0}
+                                                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer disabled:opacity-40"
                                                 />
                                             </div>
                                         </th>
@@ -481,7 +496,8 @@ const IncomingParcels = () => {
                                                                 type="checkbox"
                                                                 checked={selectedCodes.includes(parcel.code_colis)}
                                                                 onChange={() => toggleSelect(parcel.code_colis)}
-                                                                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                                                                disabled={!hasDepartedOrigin(parcel.expedition?.statut_expedition) || !getAgencyForColis(parcel.code_colis)}
+                                                                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                                                             />
                                                         </div>
                                                     </td>
@@ -536,15 +552,19 @@ const IncomingParcels = () => {
                                                             {(() => {
                                                                 const departed = hasDepartedOrigin(parcel.expedition?.statut_expedition);
                                                                 const noAgency = !getAgencyForColis(parcel.code_colis);
-                                                                const disabled = isBulkControlling || validatingCode === parcel.code_colis || noAgency || !departed;
-                                                                const title = !departed
-                                                                    ? "L'expédition n'a pas encore été confirmée en transit par le backoffice de départ"
-                                                                    : noAgency ? "Agence de réception non renseignée par le backoffice de départ" : "";
+                                                                if (!departed) {
+                                                                    return (
+                                                                        <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-amber-50 border border-amber-200 text-amber-700">
+                                                                            <Loader2 size={12} className="text-amber-500" />
+                                                                            En attente de départ
+                                                                        </span>
+                                                                    );
+                                                                }
                                                                 return (
                                                                     <button
                                                                         onClick={() => handleSingleReceive(parcel.code_colis)}
-                                                                        disabled={disabled}
-                                                                        title={title}
+                                                                        disabled={isBulkControlling || validatingCode === parcel.code_colis || noAgency}
+                                                                        title={noAgency ? "Agence de réception non renseignée par le backoffice de départ" : ""}
                                                                         className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center gap-2 disabled:opacity-50 ${parcel.is_blocked ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-500/10' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/10'}`}
                                                                     >
                                                                         {validatingCode === parcel.code_colis ? <Loader2 size={12} className="animate-spin" /> : (parcel.is_blocked ? <ShieldCheck size={12} /> : <PackageCheck size={12} />)}
@@ -603,11 +623,12 @@ const IncomingParcels = () => {
                                         <div className="divide-y divide-slate-200">
                                             {group.parcels.map((parcel) => {
                                                 const isSelected = selectedCodes.includes(parcel.code_colis);
+                                                const isReceptionnable = hasDepartedOrigin(parcel.expedition?.statut_expedition) && !!getAgencyForColis(parcel.code_colis);
                                                 return (
                                                     <div
                                                         key={parcel.id}
-                                                        className={`p-4 space-y-4 transition-colors ${isSelected ? 'bg-indigo-50/50' : 'bg-white'} active:bg-slate-50`}
-                                                        onClick={() => toggleSelect(parcel.code_colis)}
+                                                        className={`p-4 space-y-4 transition-colors ${isSelected ? 'bg-indigo-50/50' : 'bg-white'} ${isReceptionnable ? 'active:bg-slate-50' : ''}`}
+                                                        onClick={() => isReceptionnable && toggleSelect(parcel.code_colis)}
                                                     >
                                                         <div className="flex items-start">
                                                             <div className="flex gap-3 w-full min-w-0">
@@ -615,11 +636,12 @@ const IncomingParcels = () => {
                                                                     <input
                                                                         type="checkbox"
                                                                         checked={isSelected}
+                                                                        disabled={!isReceptionnable}
                                                                         onChange={(e) => {
                                                                             e.stopPropagation();
-                                                                            toggleSelect(parcel.code_colis);
+                                                                            if (isReceptionnable) toggleSelect(parcel.code_colis);
                                                                         }}
-                                                                        className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                                                                        className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                                                                     />
                                                                 </div>
                                                                 <div className="min-w-0 flex-1">
@@ -662,16 +684,22 @@ const IncomingParcels = () => {
                                                                     {(() => {
                                                                         const departed = hasDepartedOrigin(parcel.expedition?.statut_expedition);
                                                                         const noAgency = !getAgencyForColis(parcel.code_colis);
+                                                                        if (!departed) {
+                                                                            return (
+                                                                                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-amber-50 border border-amber-200 text-amber-700">
+                                                                                    <Loader2 size={12} className="text-amber-500" />
+                                                                                    En attente de départ
+                                                                                </span>
+                                                                            );
+                                                                        }
                                                                         return (
                                                                             <button
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
                                                                                     handleSingleReceive(parcel.code_colis);
                                                                                 }}
-                                                                                disabled={!departed || noAgency}
-                                                                                title={!departed
-                                                                                    ? "L'expédition n'a pas encore été confirmée en transit"
-                                                                                    : noAgency ? "Agence de réception non renseignée par le backoffice de départ" : ""}
+                                                                                disabled={noAgency}
+                                                                                title={noAgency ? "Agence de réception non renseignée par le backoffice de départ" : ""}
                                                                                 className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2 disabled:opacity-50"
                                                                             >
                                                                                 <PackageCheck className="h-4 w-4" />
