@@ -402,17 +402,7 @@ const IntervilleRates = () => {
                         {/* Desktop Table — virtualisée */}
                         <div className="hidden md:block">
                             <div ref={tableContainerRef} className="overflow-auto" style={{ maxHeight: 600 }}>
-                                <table className="w-full text-sm table-fixed">
-                                    <colgroup>
-                                        <col style={{ width: '20%' }} />
-                                        <col style={{ width: '12%' }} />
-                                        <col style={{ width: '14%' }} />
-                                        <col style={{ width: '18%' }} />
-                                        <col style={{ width: '18%' }} />
-                                        <col style={{ width: '12%' }} />
-                                        <col style={{ width: '3%' }} />
-                                        <col style={{ width: '3%' }} />
-                                    </colgroup>
+                                <table className="w-full text-sm">
                                     <thead className="bg-slate-50/50 border-b border-slate-200 sticky top-0 z-10">
                                         <tr>
                                             <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Trajet</th>
@@ -425,10 +415,10 @@ const IntervilleRates = () => {
                                             <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody
-                                        className="divide-y divide-slate-200"
-                                        style={{ height: tableVirtualizer.getTotalSize(), position: 'relative' }}
-                                    >
+                                    <tbody className="divide-y divide-slate-200">
+                                        {(tableVirtualizer.getVirtualItems()[0]?.start ?? 0) > 0 && (
+                                            <tr><td colSpan={8} style={{ height: tableVirtualizer.getVirtualItems()[0].start, padding: 0 }} /></tr>
+                                        )}
                                         {tableVirtualizer.getVirtualItems().map((virtualRow) => {
                                             const tarif = intervilleTarifs[virtualRow.index];
                                             const mb = parseFloat(tarif.montant_base) || 0;
@@ -442,22 +432,21 @@ const IntervilleRates = () => {
                                                     data-index={virtualRow.index}
                                                     ref={tableVirtualizer.measureElement}
                                                     className="hover:bg-slate-50/50 transition-colors"
-                                                    style={{ position: 'absolute', top: virtualRow.start, left: 0, width: '100%', display: 'table', tableLayout: 'fixed' }}
                                                 >
-                                                    <td className="px-6 py-3" style={{ width: '20%' }}>
+                                                    <td className="px-6 py-3">
                                                         <div className="flex items-center gap-1.5 text-slate-900 font-semibold">
                                                             <span>{tarif.commune_a?.nom || '?'}</span>
                                                             <ArrowLeftRight size={12} className="text-slate-400 shrink-0" />
                                                             <span>{tarif.commune_b?.nom || '?'}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-3" style={{ width: '12%' }}>
+                                                    <td className="px-6 py-3">
                                                         <FormatBadge format={tarif.format_colis} />
                                                     </td>
-                                                    <td className="px-6 py-3" style={{ width: '14%' }}>
+                                                    <td className="px-6 py-3">
                                                         <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                                                     </td>
-                                                    <td className="px-6 py-3" style={{ width: '18%' }}>
+                                                    <td className="px-6 py-3">
                                                         <div className="flex flex-row gap-2">
                                                             <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold w-fit">
                                                                 {tarif.pourcentage_commission_depart}%
@@ -467,7 +456,7 @@ const IntervilleRates = () => {
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-3" style={{ width: '18%' }}>
+                                                    <td className="px-6 py-3">
                                                         <div className="flex flex-row gap-2">
                                                             <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold w-fit">
                                                                 {tarif.pourcentage_commission_arrivee}%
@@ -477,10 +466,10 @@ const IntervilleRates = () => {
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-3" style={{ width: '12%' }}>
+                                                    <td className="px-6 py-3">
                                                         <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                                                     </td>
-                                                    <td className="px-6 py-3 text-center" style={{ width: '3%' }}>
+                                                    <td className="px-6 py-3 text-center">
                                                         {canToggleStatus ? (
                                                             <button
                                                                 onClick={() => handleStatusChange(tarif)}
@@ -498,7 +487,7 @@ const IntervilleRates = () => {
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-3" style={{ width: '3%' }}>
+                                                    <td className="px-6 py-3">
                                                         <div className="flex justify-end">
                                                             <RowActions
                                                                 onEdit={canEdit ? () => handleOpenEditModal(tarif) : undefined}
@@ -509,6 +498,7 @@ const IntervilleRates = () => {
                                                 </tr>
                                             );
                                         })}
+                                      <tr><td colSpan={8} style={{ height: tableVirtualizer.getTotalSize() - (tableVirtualizer.getVirtualItems().at(-1)?.end ?? 0), padding: 0 }} /></tr>
                                     </tbody>
                                 </table>
                             </div>

@@ -496,16 +496,7 @@ const GroupedRates = () => {
             {/* Desktop Table — virtualisée */}
             <div className="hidden md:block">
               <div ref={tableContainerRef} className="overflow-auto" style={{ maxHeight: 600 }}>
-                <table className="w-full text-sm table-fixed">
-                  <colgroup>
-                    <col style={{ width: '22%' }} />
-                    <col style={{ width: '22%' }} />
-                    <col style={{ width: '16%' }} />
-                    <col style={{ width: '20%' }} />
-                    <col style={{ width: '12%' }} />
-                    <col style={{ width: '5%' }} />
-                    <col style={{ width: '3%' }} />
-                  </colgroup>
+                <table className="w-full text-sm">
                   <thead className="bg-slate-50/50 border-b border-slate-200 sticky top-0 z-10">
                     <tr>
                       <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Type / Catégorie</th>
@@ -517,10 +508,10 @@ const GroupedRates = () => {
                       <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
                     </tr>
                   </thead>
-                  <tbody
-                    className="divide-y divide-slate-200"
-                    style={{ height: tableVirtualizer.getTotalSize(), position: 'relative' }}
-                  >
+                  <tbody className="divide-y divide-slate-200">
+                      {(tableVirtualizer.getVirtualItems()[0]?.start ?? 0) > 0 && (
+                          <tr><td colSpan={7} style={{ height: tableVirtualizer.getVirtualItems()[0].start, padding: 0 }} /></tr>
+                      )}
                     {tableVirtualizer.getVirtualItems().map((virtualRow) => {
                       const tarif = filteredTarifs[virtualRow.index];
                       const base = parseFloat(tarif.tarif_minimum || tarif.montant_base) || 0;
@@ -534,9 +525,8 @@ const GroupedRates = () => {
                           data-index={virtualRow.index}
                           ref={tableVirtualizer.measureElement}
                           className="hover:bg-slate-50/50 transition-colors"
-                          style={{ position: 'absolute', top: virtualRow.start, left: 0, width: '100%', display: 'table', tableLayout: 'fixed' }}
                         >
-                          <td className="px-6 py-3" style={{ width: '22%' }}>
+                          <td className="px-6 py-3">
                             <div className="flex flex-col">
                               <span className={`text-sm font-semibold px-2 py-1 w-fit rounded uppercase ${tarif.type_expedition?.includes('aerien') ? 'bg-blue-100 text-blue-700' :
                                 tarif.type_expedition?.includes('maritime') ? 'bg-indigo-100 text-indigo-700' :
@@ -551,7 +541,7 @@ const GroupedRates = () => {
                               </div>}
                             </div>
                           </td>
-                          <td className="px-6 py-3" style={{ width: '22%' }}>
+                          <td className="px-6 py-3">
                             <div className="flex items-center gap-2">
                               {tarif.ligne ? (
                                 <Package size={14} className="text-slate-400" />
@@ -563,10 +553,10 @@ const GroupedRates = () => {
                               </p>
                             </div>
                           </td>
-                          <td className="px-6 py-3" style={{ width: '16%' }}>
+                          <td className="px-6 py-3">
                             <p className="font-medium text-slate-700">{base.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                           </td>
-                          <td className="px-6 py-3" style={{ width: '20%' }}>
+                          <td className="px-6 py-3">
                             <div className="flex flex-row gap-2">
                               <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold w-fit">
                                 {prest}%
@@ -576,10 +566,10 @@ const GroupedRates = () => {
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-3" style={{ width: '12%' }}>
+                          <td className="px-6 py-3">
                             <p className="font-bold text-slate-900">{exp.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                           </td>
-                          <td className="px-6 py-3 text-center" style={{ width: '5%' }}>
+                          <td className="px-6 py-3 text-center">
                             {canToggleStatus ? (
                               <button
                                 onClick={() => handleStatusToggle(tarif.id)}
@@ -597,7 +587,7 @@ const GroupedRates = () => {
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-3" style={{ width: '3%' }}>
+                          <td className="px-6 py-3">
                             <div className="flex justify-end">
                               <RowActions
                                 onEdit={canEdit ? () => openModal(tarif) : undefined}
@@ -608,6 +598,7 @@ const GroupedRates = () => {
                         </tr>
                       );
                     })}
+                    <tr><td colSpan={7} style={{ height: tableVirtualizer.getTotalSize() - (tableVirtualizer.getVirtualItems().at(-1)?.end ?? 0), padding: 0 }} /></tr>
                   </tbody>
                 </table>
               </div>

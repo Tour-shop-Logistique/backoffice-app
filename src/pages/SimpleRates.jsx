@@ -392,16 +392,7 @@ const SimpleRates = () => {
                         {/* Desktop Table — virtualisée */}
                         <div className="hidden md:block">
                             <div ref={tableContainerRef} className="overflow-auto" style={{ maxHeight: 600 }}>
-                                <table className="w-full text-sm table-fixed">
-                                    <colgroup>
-                                        <col style={{ width: '10%' }} />
-                                        <col style={{ width: '22%' }} />
-                                        <col style={{ width: '18%' }} />
-                                        <col style={{ width: '22%' }} />
-                                        <col style={{ width: '14%' }} />
-                                        <col style={{ width: '7%' }} />
-                                        <col style={{ width: '7%' }} />
-                                    </colgroup>
+                                <table className="w-full text-sm">
                                     <thead className="bg-slate-50/50 border-b border-slate-200 sticky top-0 z-10">
                                         <tr>
                                             <th className="px-6 py-3 text-left font-bold text-slate-500 uppercase tracking-wider text-xs">Indice</th>
@@ -413,10 +404,10 @@ const SimpleRates = () => {
                                             <th className="px-6 py-3 text-right font-bold text-slate-500 uppercase tracking-wider text-xs">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody
-                                        className="divide-y divide-slate-200"
-                                        style={{ height: tableVirtualizer.getTotalSize(), position: 'relative' }}
-                                    >
+                                    <tbody className="divide-y divide-slate-200">
+                                        {(tableVirtualizer.getVirtualItems()[0]?.start ?? 0) > 0 && (
+                                            <tr><td colSpan={7} style={{ height: tableVirtualizer.getVirtualItems()[0].start, padding: 0 }} /></tr>
+                                        )}
                                         {tableVirtualizer.getVirtualItems().map((virtualRow) => {
                                             const tarif = simpleTarifs[virtualRow.index];
                                             const zoneName = tarif.zone?.nom || tarif.pays || 'Zone ?';
@@ -431,23 +422,22 @@ const SimpleRates = () => {
                                                     data-index={virtualRow.index}
                                                     ref={tableVirtualizer.measureElement}
                                                     className="hover:bg-slate-50/50 transition-colors"
-                                                    style={{ position: 'absolute', top: virtualRow.start, left: 0, width: '100%', display: 'table', tableLayout: 'fixed' }}
                                                 >
-                                                    <td className="px-6 py-3" style={{ width: '10%' }}>
+                                                    <td className="px-6 py-3">
                                                         <div className="inline-flex items-center justify-center px-2.5 py-1 rounded bg-blue-100 text-slate-700 font-bold text-xs border border-slate-200">
                                                             {tarif.indice}
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-3" style={{ width: '22%' }}>
+                                                    <td className="px-6 py-3">
                                                         <div className="flex items-center gap-2">
                                                             <MapPin size={14} className="text-slate-400" />
                                                             <p className="font-semibold text-slate-900">{zoneName}</p>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-3" style={{ width: '18%' }}>
+                                                    <td className="px-6 py-3">
                                                         <p className="font-medium text-slate-700">{mb.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                                                     </td>
-                                                    <td className="px-6 py-3" style={{ width: '22%' }}>
+                                                    <td className="px-6 py-3">
                                                         <div className="flex flex-row gap-2">
                                                             <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-100 font-bold w-fit">
                                                                 {pp}%
@@ -457,10 +447,10 @@ const SimpleRates = () => {
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-3" style={{ width: '14%' }}>
+                                                    <td className="px-6 py-3">
                                                         <p className="font-bold text-slate-900">{total.toLocaleString()} <span className="text-xs">{getCurrencyLabel()}</span></p>
                                                     </td>
-                                                    <td className="px-6 py-3 text-center" style={{ width: '7%' }}>
+                                                    <td className="px-6 py-3 text-center">
                                                         {canToggleStatus ? (
                                                             <button
                                                                 onClick={() => handleStatusChange(tarif)}
@@ -478,7 +468,7 @@ const SimpleRates = () => {
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-3" style={{ width: '7%' }}>
+                                                    <td className="px-6 py-3">
                                                         <div className="flex justify-end">
                                                             <RowActions
                                                                 onEdit={canEdit ? () => handleOpenEditModal(tarif) : undefined}
@@ -489,6 +479,7 @@ const SimpleRates = () => {
                                                 </tr>
                                             );
                                         })}
+                                      <tr><td colSpan={7} style={{ height: tableVirtualizer.getTotalSize() - (tableVirtualizer.getVirtualItems().at(-1)?.end ?? 0), padding: 0 }} /></tr>
                                     </tbody>
                                 </table>
                             </div>
